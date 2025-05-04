@@ -115,7 +115,6 @@ Visit `http://localhost:3000` to see your app running.
 | [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile) | Bot protection |
 | [Next.js Middleware](https://nextjs.org/docs/middleware) | Route protection |
 | [Zod](https://zod.dev) | Data validation |
-| HTTPS | Secure communications |
 
 ## Deployment
 
