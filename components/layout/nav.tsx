@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { headers } from "next/headers"
 import Link from "next/link"
 
@@ -13,7 +14,6 @@ import {
   RiUserAddLine,
 } from "@remixicon/react"
 import { User } from "better-auth"
-import { DiOpensource } from "react-icons/di"
 
 import { auth } from "@/lib/auth"
 import {
@@ -55,7 +55,7 @@ export default async function Nav() {
         <div className="flex items-center gap-8">
           <Link href="/" className="font-heading flex items-center">
             <span className="font-heading flex items-center text-lg font-bold">
-              <DiOpensource className="text-primary mr-1 h-6 w-6" />
+              <img src="/logo.svg" alt="logo" className="h-6 w-6 mr-1" />
               Open-Launch
             </span>
           </Link>
