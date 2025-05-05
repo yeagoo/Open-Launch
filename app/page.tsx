@@ -14,6 +14,8 @@ import {
   getYesterdayProjects,
 } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
+import { SponsorCard } from "@/components/home/sponsor-card"
+import { Megaphone } from "lucide-react"
 
 export default async function Home() {
   // Récupérer les données réelles
@@ -88,6 +90,26 @@ export default async function Home() {
               </Link>
             </div>
 
+
+            {/* Featured Sponsor */}
+            <div className="space-y-3 py-5">
+              <h3 className="flex items-center gap-2 font-semibold">Featured Sponsor</h3>
+              <SponsorCard
+                name="Landing Lab"
+                description="Landing Lab provides professional landing pages."
+                url="https://www.landinglab.xyz/"
+                imageUrl="/sponsors/logolandinglab.png"
+              />
+              <SponsorCard
+                name="Your Product Here?"
+                description="Become a sponsor!"
+                url="mailto:contact@open-launch.com?subject=Sponsoring%20Inquiry%20on%20Open-Launch"
+                icon={<Megaphone size={18} className="text-muted-foreground" />}
+              />
+            </div>
+            
+
+
             {/* Categories */}
             <div className="space-y-3 py-5">
               <div className="flex items-center justify-between">
@@ -158,6 +180,10 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
+
+      
+
+         
           </div>
         </div>
       </div>
