@@ -1,122 +1,73 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-
-import {
-  Ban,
-  Loader2,
-  LucideRefreshCcw,
-  MoreHorizontal,
-  RefreshCw,
-  Search,
-  Trash,
-  UserCircle,
-  X,
-} from "lucide-react"
-import { toast, Toaster } from "sonner"
-
-import { admin } from "@/lib/auth-client"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { MoreHorizontal, Ban, UserCog, Trash2, Search, Users, Shield, RefreshCw, Filter } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { getAdminStatsAndUsers } from "@/app/actions/projects"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { admin } from "@/lib/auth-client"
 
-// Types
 type User = {
   id: string
   email: string
   name: string
-  role?: string
+  role?: string | undefined
   banned?: boolean | null
   createdAt?: string
 }
 
 export default function AdminDashboard() {
-  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
-  const [isLoading, setIsLoading] = useState<string | undefined>()
-  const [isUsersLoading, setIsUsersLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [userToDelete, setUserToDelete] = useState<string | null>(null)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [stats, setStats] = useState<{ totalLaunches: number; premiumLaunches: number; premiumPlusLaunches: number; totalUsers: number }>({ totalLaunches: 0, premiumLaunches: 0, premiumPlusLaunches: 0, totalUsers: 0 })
+  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState<string | undefined>()
+  const router = useRouter()
+  useIsMobile()
 
-  // Fetch users
-  const fetchUsers = async () => {
-    setIsUsersLoading(true)
+  // Fetch users and stats
+  const fetchUsersAndStats = async () => {
+    setLoading(true)
     try {
-      const response = await admin.listUsers({
-        query: {
-          limit: 100, // Fetch a larger number, we'll handle pagination on the client
-          sortBy: "createdAt",
-          sortDirection: "desc",
-        },
-      })
-
-      // Vérification du format de la réponse et extraction des données
-      if (response && response.data && Array.isArray(response.data.users)) {
-        setUsers(response.data.users as User[])
-        setFilteredUsers(response.data.users as User[])
-        console.log("Users loaded:", response.data.users.length)
-      } else {
-        console.error("Unexpected response format:", response)
-        setUsers([])
-        setFilteredUsers([])
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to fetch users")
+      const { users, stats } = await getAdminStatsAndUsers()
+      const mappedUsers = users.map(u => ({
+        ...u,
+        role: u.role ?? undefined,
+        createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
+      }))
+      setUsers(mappedUsers)
+      setFilteredUsers(mappedUsers)
+      setStats(stats)
+    } catch {
       setUsers([])
       setFilteredUsers([])
-    } finally {
-      setIsUsersLoading(false)
+      setStats({ totalLaunches: 0, premiumLaunches: 0, premiumPlusLaunches: 0, totalUsers: 0 })
     }
+    setLoading(false)
   }
 
-  // Filter users based on search query, role and status
+  useEffect(() => {
+    fetchUsersAndStats()
+  }, [])
+
+  // Filtres
   useEffect(() => {
     let result = [...users]
-
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter(
@@ -124,13 +75,9 @@ export default function AdminDashboard() {
           user.name?.toLowerCase().includes(query) || user.email?.toLowerCase().includes(query),
       )
     }
-
-    // Apply role filter
     if (roleFilter !== "all") {
       result = result.filter((user) => user.role === roleFilter)
     }
-
-    // Apply status filter
     if (statusFilter !== "all") {
       if (statusFilter === "banned") {
         result = result.filter((user) => user.banned === true)
@@ -138,45 +85,227 @@ export default function AdminDashboard() {
         result = result.filter((user) => user.banned !== true)
       }
     }
-
     setFilteredUsers(result)
-    setCurrentPage(1) // Reset to first page when filters change
+    setCurrentPage(1)
   }, [searchQuery, roleFilter, statusFilter, users])
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
+  const indexOfLastUser = currentPage * itemsPerPage
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
 
-  // Delete user
-  const handleDeleteUser = async (id: string) => {
-    setIsLoading(`delete-${id}`)
+  const uniqueRoles = Array.from(new Set(users.map((user) => user.role || "user")))
+
+  return (
+    <div className="max-w-5xl mx-auto pt-8 pb-16 px-2 sm:px-6 space-y-6">
+      <h1 className="text-2xl font-bold mb-4">Admin dashboard</h1>
+      <div className="grid grid-cols-2 sm:flex sm:flex-row items-stretch justify-between gap-0 rounded-md border bg-card overflow-hidden mb-6 sm:divide-x divide-border">
+        <div className="flex flex-col items-center justify-center flex-1 py-2 px-1 sm:py-3 sm:px-2">
+          <span className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Users</span>
+          <span className="font-bold text-base sm:text-xl">{stats.totalUsers}</span>
+        </div>
+        <div className="flex flex-col items-center justify-center flex-1 py-2 px-1 sm:py-3 sm:px-2  ">
+          <span className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Projects</span>
+          <span className="font-bold text-base sm:text-xl">{stats.totalLaunches}</span>
+        </div>
+        <div className="flex flex-col items-center justify-center flex-1 py-2 px-1 sm:py-3 sm:px-2 ">
+          <span className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Premium</span>
+          <span className="font-bold text-base sm:text-xl">{stats.premiumLaunches}</span>
+        </div>
+        <div className="flex flex-col items-center justify-center flex-1 py-2 px-1 sm:py-3 sm:px-2 ">
+          <span className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Premium Plus</span>
+          <span className="font-bold text-base sm:text-xl">{stats.premiumPlusLaunches}</span>
+        </div>
+      </div>
+      <div className="flex gap-1 mb-2 sm:gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 pr-2 rounded-md border text-xs w-24 max-w-[110px] sm:w-64 sm:max-w-full"
+            />
+            <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
+          </div>
+        </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="h-8 w-8 p-0 rounded-md flex items-center justify-center text-xs [&>svg:last-child]:hidden">
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </SelectTrigger>
+          <SelectContent className="rounded-md">
+            <SelectItem value="all">All roles</SelectItem>
+            {uniqueRoles.map(role => (
+              <SelectItem key={role} value={role}>{role}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 w-8 p-0 rounded-md flex items-center justify-center text-xs [&>svg:last-child]:hidden">
+            <Shield className="h-5 w-5 text-muted-foreground" />
+          </SelectTrigger>
+          <SelectContent className="rounded-md">
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="banned">Banned</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={String(itemsPerPage)} onValueChange={v => { setItemsPerPage(Number(v)); setCurrentPage(1) }}>
+          <SelectTrigger className="h-8 w-8 p-0 rounded-md flex items-center justify-center text-xs [&>svg:last-child]:hidden">
+            <Filter className="h-5 w-5 text-muted-foreground" />
+          </SelectTrigger>
+          <SelectContent className="rounded-md">
+            <SelectItem value="5">5 / page</SelectItem>
+            <SelectItem value="10">10 / page</SelectItem>
+            <SelectItem value="20">20 / page</SelectItem>
+            <SelectItem value="50">50 / page</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" variant="outline" onClick={fetchUsersAndStats} className="h-8 w-8 p-0 rounded-md flex items-center justify-center">
+          <RefreshCw className="h-5 w-5" />
+        </Button>
+      </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <svg className="animate-spin h-8 w-8 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
+      ) : (
+        <>
+          <div className="hidden sm:block">
+            <div className="rounded-md overflow-hidden border">
+              <table className="min-w-full text-sm bg-card">
+                <thead className="bg-muted/40 rounded-t-md">
+                  <tr>
+                    <th className="p-2 text-left font-semibold rounded-tl-md">User</th>
+                    <th className="p-2 text-left font-semibold">Email</th>
+                    <th className="p-2 text-center font-semibold">Role</th>
+                    <th className="p-2 text-center font-semibold">Status</th>
+                    <th className="p-2 text-right font-semibold rounded-tr-md">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-card">
+                  {currentUsers.map(user => (
+                    <tr key={user.id} className="border-t hover:bg-muted/10">
+                      <td className="p-2 font-medium truncate max-w-[120px]">{user.name || "—"}</td>
+                      <td className="p-2 text-muted-foreground truncate max-w-[180px]">{user.email}</td>
+                      <td className="p-2 text-center">
+                        <Badge variant={user.role === "admin" ? "secondary" : "outline"}>{user.role || "user"}</Badge>
+                      </td>
+                      <td className="p-2 text-center">
+                        {user.banned ? (
+                          <Badge variant="destructive">Banned</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-green-200 bg-green-50 text-green-600">Active</Badge>
+                        )}
+                      </td>
+                      <td className="p-2 text-right">
+                        <DropdownMenuUserActions 
+                          user={user} 
+                          onRefresh={fetchUsersAndStats}
+                          router={router}
+                          setIsLoading={setIsLoading}
+                          isLoading={isLoading}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="sm:hidden divide-y rounded-md border bg-card overflow-hidden text-xs">
+            <div className="flex font-semibold bg-muted/40 text-muted-foreground">
+              <div className="w-1/3 px-2 py-2">User</div>
+              <div className="w-1/3 px-2 py-2">Email</div>
+              <div className="w-1/4 px-2 py-2 text-center">Status</div>
+              <div className="w-1/6 px-2 py-2 text-right">Actions</div>
+            </div>
+            {currentUsers.map(user => (
+              <div key={user.id} className="flex items-center">
+                <div className="w-1/3 px-2 py-2 truncate font-medium">{user.name || "—"}</div>
+                <div className="w-1/3 px-2 py-2 truncate text-muted-foreground">{user.email}</div>
+                <div className="w-1/4 px-2 py-2 text-center">
+                  {user.banned ? (
+                    <Badge variant="destructive">Banned</Badge>
+                  ) : (
+                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-600">Active</Badge>
+                  )}
+                </div>
+                <div className="w-1/6 px-2 py-2 text-right">
+                  <DropdownMenuUserActions 
+                    user={user} 
+                    onRefresh={fetchUsersAndStats}
+                    router={router}
+                    setIsLoading={setIsLoading}
+                    isLoading={isLoading}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="flex justify-center items-center mt-4 gap-2">
+        <Button size="sm" variant="outline" onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+          Previous
+        </Button>
+        <span className="text-xs font-medium">{currentPage}</span>
+        <Button size="sm" variant="outline" onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0}>
+          Next
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function DropdownMenuUserActions({ 
+  user, 
+  onRefresh,
+  router,
+  setIsLoading,
+  isLoading
+}: { 
+  user: User,
+  onRefresh: () => Promise<void>,
+  router: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  setIsLoading: (value: string | undefined) => void,
+  isLoading: string | undefined
+}) {
+  // Ban user
+  const handleBanUser = async (id: string) => {
+    setIsLoading(`ban-${id}`)
     try {
-      await admin.removeUser({ userId: id })
-      toast.success("User deleted successfully")
-      fetchUsers() // Refresh the list
+      // Ban for 30 days
+      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
+      await admin.banUser({
+        userId: id,
+        banReason: "Admin action",
+        banExpiresIn: thirtyDaysInMs,
+      })
+      toast.success("User banned successfully")
+      onRefresh() // Refresh the list
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete user")
+      toast.error(error instanceof Error ? error.message : "Failed to ban user")
     } finally {
       setIsLoading(undefined)
-      setUserToDelete(null)
-      setShowDeleteDialog(false)
     }
   }
 
-  // Confirm delete dialog
-  const openDeleteDialog = (id: string) => {
-    setUserToDelete(id)
-    setShowDeleteDialog(true)
-  }
-
-  // Revoke user sessions
-  const handleRevokeSessions = async (id: string) => {
-    setIsLoading(`revoke-${id}`)
+  // Unban user
+  const handleUnbanUser = async (id: string) => {
+    setIsLoading(`unban-${id}`)
     try {
-      await admin.revokeUserSessions({ userId: id })
-      toast.success("Sessions revoked for user")
+      await admin.unbanUser({
+        userId: id,
+      })
+      toast.success("User unbanned successfully")
+      onRefresh() // Refresh the list
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to revoke sessions")
+      toast.error(error instanceof Error ? error.message : "Failed to unban user")
     } finally {
       setIsLoading(undefined)
     }
@@ -196,412 +325,53 @@ export default function AdminDashboard() {
     }
   }
 
-  // Ban user
-  const handleBanUser = async (id: string) => {
-    setIsLoading(`ban-${id}`)
+  // Delete user
+  const handleDeleteUser = async (id: string) => {
+    setIsLoading(`delete-${id}`)
     try {
-      // Ban for 30 days
-      const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
-      await admin.banUser({
-        userId: id,
-        banReason: "Admin action",
-        banExpiresIn: thirtyDaysInMs,
-      })
-      toast.success("User banned successfully")
-      fetchUsers() // Refresh the list
+      await admin.removeUser({ userId: id })
+      toast.success("User deleted successfully")
+      onRefresh() // Refresh the list
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to ban user")
+      toast.error(error instanceof Error ? error.message : "Failed to delete user")
     } finally {
       setIsLoading(undefined)
     }
   }
-
-  // Unban user
-  const handleUnbanUser = async (id: string) => {
-    setIsLoading(`unban-${id}`)
-    try {
-      await admin.unbanUser({
-        userId: id,
-      })
-      toast.success("User unbanned successfully")
-      fetchUsers() // Refresh the list
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to unban user")
-    } finally {
-      setIsLoading(undefined)
-    }
-  }
-
-  // Pagination logic
-  const indexOfLastUser = currentPage * itemsPerPage
-  const indexOfFirstUser = indexOfLastUser - itemsPerPage
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
-
-  // Get unique roles for filtering
-  const uniqueRoles = Array.from(new Set(users.map((user) => user.role || "user")))
-
-  // Reset all filters
-  const resetFilters = () => {
-    setSearchQuery("")
-    setRoleFilter("all")
-    setStatusFilter("all")
-  }
-
+  
   return (
-    <div className="container mx-auto max-w-5xl space-y-4 py-4">
-      <Toaster richColors position="top-center" />
-
-      <Card className="bg-card overflow-hidden border-0 shadow-md">
-        <CardHeader className="bg-card/80 space-y-2 border-b px-6 py-4">
-          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div>
-              <CardTitle className="text-xl font-medium tracking-tight">User Management</CardTitle>
-              <CardDescription className="text-sm">
-                Manage users and their permissions
-              </CardDescription>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => fetchUsers()}
-              className="flex h-9 items-center px-3"
-            >
-              <RefreshCw className="mr-2 h-3.5 w-3.5" />
-              <span className="text-xs">Refresh</span>
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          {/* Filters Section */}
-          <div className="border-b px-6 pb-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Search */}
-              <div className="relative sm:col-span-2">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 transform" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-9 pl-9 text-xs"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 transform"
-                  >
-                    <X className="text-muted-foreground hover:text-foreground h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Role Filter */}
-              <div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All roles</SelectItem>
-                    {uniqueRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="banned">Banned</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Reset Filters - only shown when filters are active */}
-              {(searchQuery || roleFilter !== "all" || statusFilter !== "all") && (
-                <Button
-                  variant="ghost"
-                  onClick={resetFilters}
-                  className="mt-2 h-9 text-xs sm:col-span-1 sm:mt-0 sm:justify-self-start lg:col-span-4 lg:justify-self-end"
-                >
-                  <X className="mr-1 h-3.5 w-3.5" />
-                  Reset
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* User Table */}
-          {isUsersLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="text-primary h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="text-muted-foreground w-[40%] py-3 pl-6 text-xs font-medium sm:w-[30%]">
-                        User
-                      </TableHead>
-                      <TableHead className="text-muted-foreground hidden py-3 text-xs font-medium md:table-cell">
-                        Email
-                      </TableHead>
-                      <TableHead className="text-muted-foreground py-3 text-center text-xs font-medium">
-                        Role
-                      </TableHead>
-                      <TableHead className="text-muted-foreground py-3 text-center text-xs font-medium">
-                        Status
-                      </TableHead>
-                      <TableHead className="text-muted-foreground w-[60px] py-3 pr-6 text-right text-xs font-medium">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
-                          No users found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      currentUsers.map((user) => (
-                        <TableRow key={user.id} className="group">
-                          <TableCell className="py-3 pl-6">
-                            <div className="flex flex-col">
-                              <span className="truncate text-sm font-medium">
-                                {user.name || "—"}
-                              </span>
-                              <span className="text-muted-foreground mt-0.5 truncate text-xs md:hidden">
-                                {user.email}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground hidden truncate py-3 text-xs md:table-cell">
-                            {user.email}
-                          </TableCell>
-                          <TableCell className="py-3 text-center">
-                            <Badge
-                              variant={user.role === "admin" ? "secondary" : "outline"}
-                              className="px-2 py-0.5 text-xs font-normal"
-                            >
-                              {user.role || "user"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-3 text-center">
-                            {user.banned ? (
-                              <Badge
-                                variant="destructive"
-                                className="px-2 py-0.5 text-xs font-normal"
-                              >
-                                Banned
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="border-green-200 bg-green-50 px-2 py-0.5 text-xs font-normal text-green-600 dark:border-emerald-600/30 dark:bg-emerald-950/20 dark:text-emerald-400"
-                              >
-                                Active
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="py-3 pr-6 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100"
-                                  aria-label="Open actions menu"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel className="text-xs font-medium">
-                                  Actions
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleImpersonateUser(user.id)}
-                                  disabled={isLoading === `impersonate-${user.id}`}
-                                  className="cursor-pointer text-xs"
-                                >
-                                  {isLoading === `impersonate-${user.id}` ? (
-                                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                                  ) : (
-                                    <UserCircle className="mr-2 h-3.5 w-3.5" />
-                                  )}
-                                  Impersonate
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleRevokeSessions(user.id)}
-                                  disabled={isLoading === `revoke-${user.id}`}
-                                  className="cursor-pointer text-xs"
-                                >
-                                  {isLoading === `revoke-${user.id}` ? (
-                                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                                  )}
-                                  Revoke Sessions
-                                </DropdownMenuItem>
-                                {!user.banned ? (
-                                  <DropdownMenuItem
-                                    onClick={() => handleBanUser(user.id)}
-                                    disabled={isLoading === `ban-${user.id}`}
-                                    className="cursor-pointer text-xs"
-                                  >
-                                    {isLoading === `ban-${user.id}` ? (
-                                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <Ban className="mr-2 h-3.5 w-3.5" />
-                                    )}
-                                    Ban
-                                  </DropdownMenuItem>
-                                ) : (
-                                  <DropdownMenuItem
-                                    onClick={() => handleUnbanUser(user.id)}
-                                    disabled={isLoading === `unban-${user.id}`}
-                                    className="cursor-pointer text-xs"
-                                  >
-                                    {isLoading === `unban-${user.id}` ? (
-                                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <LucideRefreshCcw className="mr-2 h-3.5 w-3.5" />
-                                    )}
-                                    Unban
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="cursor-pointer text-xs"
-                                  onClick={() => openDeleteDialog(user.id)}
-                                >
-                                  <Trash className="text-destructive mr-2 h-3.5 w-3.5" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="bg-card/50 flex items-center justify-between border-t px-6 py-3">
-                <div className="text-muted-foreground text-xs">
-                  Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to{" "}
-                  <span className="font-medium">
-                    {Math.min(indexOfLastUser, filteredUsers.length)}
-                  </span>{" "}
-                  of <span className="font-medium">{filteredUsers.length}</span> users
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-muted-foreground text-xs">Per page</span>
-                    <Select
-                      value={itemsPerPage.toString()}
-                      onValueChange={(value) => {
-                        setItemsPerPage(Number(value))
-                        setCurrentPage(1)
-                      }}
-                    >
-                      <SelectTrigger className="border-muted bg-background h-8 w-[70px] text-xs">
-                        <SelectValue placeholder={itemsPerPage} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[5, 10, 20, 50].map((size) => (
-                          <SelectItem key={size} value={size.toString()} className="text-xs">
-                            {size}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="border-input bg-background flex items-center overflow-hidden rounded-md border">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (currentPage > 1) paginate(currentPage - 1)
-                      }}
-                      disabled={currentPage === 1}
-                      className="h-8 w-8 rounded-none border-r"
-                    >
-                      <PaginationPrevious className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">Previous page</span>
-                    </Button>
-
-                    <div className="flex h-8 min-w-[40px] items-center justify-center text-xs font-medium">
-                      {currentPage}
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (currentPage < totalPages) paginate(currentPage + 1)
-                      }}
-                      disabled={currentPage === totalPages || totalPages === 0}
-                      className="h-8 w-8 rounded-none border-l"
-                    >
-                      <PaginationNext className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">Next page</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg">Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm">
-              This action cannot be undone and will permanently delete the user and all associated
-              data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel className="mt-0 text-xs">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => userToDelete && handleDeleteUser(userToDelete)}
-              disabled={isLoading === `delete-${userToDelete}`}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs"
-            >
-              {isLoading === `delete-${userToDelete}` ? (
-                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash className="mr-2 h-3.5 w-3.5" />
-              )}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44 rounded-md">
+        <DropdownMenuItem 
+          onClick={() => user.banned ? handleUnbanUser(user.id) : handleBanUser(user.id)}
+          disabled={isLoading?.startsWith(`ban-${user.id}`) || isLoading?.startsWith(`unban-${user.id}`)}
+          className="focus:bg-accent focus:text-accent-foreground group rounded-md"
+        >
+          <Ban className="mr-2 h-4 w-4 group-focus:text-white group-hover:text-white text-muted-foreground transition-colors" />
+          <span>{user.banned ? 'Unban' : 'Ban'} User</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleImpersonateUser(user.id)}
+          disabled={isLoading === `impersonate-${user.id}`}
+          className="focus:bg-accent focus:text-accent-foreground group rounded-md"
+        >
+          <UserCog className="mr-2 h-4 w-4 group-focus:text-white group-hover:text-white text-muted-foreground transition-colors" />
+          <span>Impersonate</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleDeleteUser(user.id)}
+          disabled={isLoading === `delete-${user.id}`}
+          className="text-destructive focus:bg-destructive/10 focus:text-destructive group rounded-md"
+        >
+          <Trash2 className="mr-2 h-4 w-4 group-focus:text-destructive group-hover:text-destructive text-muted-foreground transition-colors" />
+          <span>Delete User</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
