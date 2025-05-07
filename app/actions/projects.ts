@@ -14,7 +14,6 @@ import {
   project as projectTable,
   projectToCategory,
   upvote,
-  user,
 } from "@/drizzle/db/schema"
 import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
@@ -352,7 +351,7 @@ async function enrichProjectsWithUserData<T extends { id: string }>(
 
 // Récupérer les projets pour une catégorie donnée
 export async function getProjectsByCategory(categoryId: string) {
-  const userId = await getCurrentUserId() // Obtenir l'ID utilisateur
+  const userId = await getCurrentUserId() // Get user ID
 
   const projectsBase = await db
     .select({
@@ -381,10 +380,10 @@ export async function getProjectsByCategory(categoryId: string) {
         ),
       ),
     )
-    .groupBy(projectTable.id) // Grouper par tous les champs non agrégés
-    .orderBy(desc(projectTable.createdAt)) // Ordre par défaut
+    .groupBy(projectTable.id) 
+    .orderBy(desc(projectTable.createdAt)) 
 
-  // Enrichir avec les données utilisateur (upvote, categories)
+ 
   return enrichProjectsWithUserData(projectsBase, userId)
 }
 
@@ -397,31 +396,4 @@ export async function getCategoryById(categoryId: string) {
     .limit(1)
 
   return categoryData[0] || null
-}
-
-// ADMIN: Get all users and launch stats
-export async function getAdminStatsAndUsers() {
-  // Récupérer tous les utilisateurs, triés par date d'inscription décroissante
-  const users = await db.select().from(user).orderBy(desc(user.createdAt))
-
-  // Récupérer les stats de launch
-  const totalLaunches = await db.select({ count: sql`count(*)` }).from(project)
-  const premiumLaunches = await db
-    .select({ count: sql`count(*)` })
-    .from(project)
-    .where(eq(project.launchType, "premium"))
-  const premiumPlusLaunches = await db
-    .select({ count: sql`count(*)` })
-    .from(project)
-    .where(eq(project.launchType, "premium_plus"))
-
-  return {
-    users,
-    stats: {
-      totalLaunches: Number(totalLaunches[0]?.count || 0),
-      premiumLaunches: Number(premiumLaunches[0]?.count || 0),
-      premiumPlusLaunches: Number(premiumPlusLaunches[0]?.count || 0),
-      totalUsers: users.length,
-    },
-  }
 }
