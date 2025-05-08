@@ -252,8 +252,7 @@ export function SubmitProjectForm() {
         !formData.name ||
         !formData.websiteUrl ||
         !formData.description ||
-        !uploadedLogoUrl ||
-        !uploadedCoverImageUrl
+        (process.env.NODE_ENV !== "development" && (!uploadedLogoUrl || !uploadedCoverImageUrl))
       ) {
         setError("Please fill in all required project information and upload images.")
         return
@@ -315,8 +314,7 @@ export function SubmitProjectForm() {
       !formData.name ||
       !formData.websiteUrl ||
       !formData.description ||
-      !uploadedLogoUrl ||
-      !uploadedCoverImageUrl ||
+      (process.env.NODE_ENV !== "development" && (!uploadedLogoUrl || !uploadedCoverImageUrl)) ||
       formData.categories.length === 0 ||
       formData.platforms.length === 0 ||
       !formData.pricing
@@ -365,12 +363,21 @@ export function SubmitProjectForm() {
     }
 
     try {
+      const finalLogoUrl =
+        process.env.NODE_ENV === "development" && !uploadedLogoUrl
+          ? "https://placehold.co/128x128/E2E8F0/718096?text=Logo"
+          : uploadedLogoUrl!;
+      const finalCoverImageUrl =
+        process.env.NODE_ENV === "development" && !uploadedCoverImageUrl
+          ? "https://placehold.co/1080x480/E2E8F0/718096?text=Cover"
+          : uploadedCoverImageUrl!;
+
       const projectData = {
         name: formData.name,
         description: formData.description,
         websiteUrl: formData.websiteUrl,
-        logoUrl: uploadedLogoUrl,
-        coverImageUrl: uploadedCoverImageUrl,
+        logoUrl: finalLogoUrl,
+        coverImageUrl: finalCoverImageUrl,
         categories: formData.categories,
         techStack: formData.techStack,
         platforms: formData.platforms,
@@ -958,6 +965,10 @@ export function SubmitProjectForm() {
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
                       <span>Up to {LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days scheduling</span>
                     </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Dofollow link if Top 3 daily</span>
+                    </li>
                   </ul>
                 </div>
 
@@ -990,6 +1001,10 @@ export function SubmitProjectForm() {
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
                       <span>Up to {LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days scheduling</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Guaranteed Dofollow link</span>
                     </li>
                   </ul>
                 </div>
@@ -1025,6 +1040,10 @@ export function SubmitProjectForm() {
                       <span>
                         Up to {LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD} days scheduling
                       </span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Guaranteed Dofollow link</span>
                     </li>
                   </ul>
                 </div>

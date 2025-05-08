@@ -362,6 +362,8 @@ export async function getProjectsByCategory(categoryId: string) {
       logoUrl: projectTable.logoUrl,
       websiteUrl: projectTable.websiteUrl,
       launchStatus: projectTable.launchStatus,
+      launchType: projectTable.launchType,
+      dailyRanking: projectTable.dailyRanking,
       scheduledLaunchDate: projectTable.scheduledLaunchDate,
       createdAt: projectTable.createdAt,
       upvoteCount: sql<number>`cast(count(distinct ${upvote.id}) as int)`.mapWith(Number),

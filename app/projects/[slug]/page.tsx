@@ -30,6 +30,7 @@ import { RankingBadge } from "@/components/project/ranking-badge"
 import { ShareButton } from "@/components/project/share-button"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
+import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 
 // Types
 interface ProjectPageProps {
@@ -97,6 +98,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const isScheduled = projectData.launchStatus === "scheduled"
 
   const isOwner = session?.user?.id === projectData.createdBy
+
+  const websiteRelAttribute = getProjectWebsiteRelAttribute({
+    launchStatus: projectData.launchStatus,
+    launchType: projectData.launchType,
+    dailyRanking: projectData.dailyRanking,
+  })
 
   let statusDisplay = null
   if (projectData.launchStatus === "scheduled") {
@@ -253,7 +260,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       <a
                         href={projectData.websiteUrl}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel={websiteRelAttribute}
                         className="flex items-center gap-2"
                       >
                         <RiGlobalLine className="h-4 w-4" />

@@ -18,6 +18,7 @@ interface Project {
   upvoteCount: number
   commentCount?: number | null
   launchStatus: string
+  launchType?: string | null
   scheduledLaunchDate?: Date | string | null
   createdAt: Date | string
   userHasUpvoted?: boolean
@@ -90,6 +91,8 @@ export function ProjectSection({
                 upvoteCount={project.upvoteCount ?? 0}
                 commentCount={project.commentCount ?? 0}
                 launchStatus={project.launchStatus}
+                launchType={project.launchType}
+                dailyRanking={project.dailyRanking}
                 userHasUpvoted={project.userHasUpvoted ?? false}
                 categories={project.categories ?? []}
                 isAuthenticated={isAuthenticated}

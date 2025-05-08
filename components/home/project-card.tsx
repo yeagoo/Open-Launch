@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { RiExternalLinkLine } from "@remixicon/react"
 
 import { ProjectCardButtons } from "./project-card-buttons"
+import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 
 interface Category {
   id: string
@@ -22,6 +23,8 @@ interface ProjectCardProps {
   upvoteCount: number
   commentCount: number
   launchStatus: string
+  launchType?: string | null
+  dailyRanking?: number | null
   index?: number
   userHasUpvoted: boolean
   categories: Category[]
@@ -38,6 +41,8 @@ export function ProjectCard({
   upvoteCount,
   commentCount,
   launchStatus,
+  launchType,
+  dailyRanking,
   index,
   userHasUpvoted,
   categories,
@@ -87,7 +92,7 @@ export function ProjectCard({
                 <a
                   href={websiteUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel={getProjectWebsiteRelAttribute({ launchStatus, launchType, dailyRanking })}
                   className="hover:text-primary mb-px inline-flex items-center transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation()

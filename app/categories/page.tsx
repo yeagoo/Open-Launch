@@ -191,6 +191,8 @@ async function CategoryData({
               upvoteCount={project.upvoteCount ?? 0}
               commentCount={project.commentCount ?? 0}
               launchStatus={project.launchStatus}
+              launchType={project.launchType}
+              dailyRanking={project.dailyRanking}
               index={index}
               isAuthenticated={isAuthenticated}
               userHasUpvoted={project.userHasUpvoted ?? false}

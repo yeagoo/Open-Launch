@@ -72,6 +72,10 @@ export default function PricingPage() {
               <RiCheckboxCircleFill className="text-foreground/50 h-3.5 w-3.5" />
               <span>Featured on homepage</span>
             </li>
+            <li className="flex items-center gap-1.5">
+              <RiCheckboxCircleFill className="text-foreground/50 h-3.5 w-3.5" />
+              <span>Dofollow link if Top 3 daily</span>
+            </li>
           </ul>
 
           <Button variant="outline" className="mt-6 w-full" asChild>
@@ -105,6 +109,10 @@ export default function PricingPage() {
             <li className="flex items-center gap-1.5">
               <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5" />
               <span>Featured on homepage</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5" />
+              <span>Guaranteed Dofollow link</span>
             </li>
           </ul>
 
@@ -145,6 +153,10 @@ export default function PricingPage() {
             <li className="flex items-center gap-1.5">
               <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5" />
               <span>Premium spotlight placement</span>
+            </li>
+            <li className="flex items-center gap-1.5">
+              <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5" />
+              <span>Guaranteed Dofollow link</span>
             </li>
           </ul>
 
