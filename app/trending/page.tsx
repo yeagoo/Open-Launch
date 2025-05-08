@@ -3,6 +3,7 @@ import { headers } from "next/headers"
 import Link from "next/link"
 
 import { auth } from "@/lib/auth"
+import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
 import { ProjectCard } from "@/components/home/project-card"
@@ -43,7 +44,7 @@ function TrendingDataSkeleton() {
           .map((_, index) => (
             <div
               key={index}
-              className="mx-3 animate-pulse rounded-xl border border-zinc-100 bg-white/70 p-3 shadow-sm dark:border-zinc-800/50 dark:bg-zinc-900/30 sm:mx-4 sm:p-4"
+              className="mx-3 animate-pulse rounded-xl border border-zinc-100 bg-white/70 p-3 shadow-sm sm:mx-4 sm:p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30"
             >
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="flex-shrink-0">
@@ -51,13 +52,13 @@ function TrendingDataSkeleton() {
                 </div>
                 <div className="min-w-0 flex-grow">
                   <div className="flex flex-col">
-                    <div className="bg-muted h-5 w-1/3 rounded mb-2"></div>
+                    <div className="bg-muted mb-2 h-5 w-1/3 rounded"></div>
                     <div className="bg-muted h-4 w-2/3 rounded"></div>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex flex-col items-end gap-2 sm:flex-row sm:items-start">
+                <div className="flex flex-shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-start">
                   <div className="bg-muted h-10 w-10 rounded-xl border-2 border-dashed"></div>
-                  <div className="hidden sm:block bg-muted h-10 w-10 rounded-xl border-2 border-dashed"></div>
+                  <div className="bg-muted hidden h-10 w-10 rounded-xl border-2 border-dashed sm:block"></div>
                 </div>
               </div>
             </div>
@@ -78,15 +79,16 @@ async function TrendingData({
   let projects: ProjectSummary[] = [] // Utiliser le type défini
   let title
 
-  // Appeler les bonnes fonctions
   if (filter === "today") {
-    projects = await getTodayProjects()
+    projects = await getTodayProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT)
     title = "Today's Launches"
   } else if (filter === "yesterday") {
-    projects = await getYesterdayProjects()
+    projects = await getYesterdayProjects(
+      PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT,
+    )
     title = "Yesterday's Launches"
   } else {
-    projects = await getMonthBestProjects()
+    projects = await getMonthBestProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_MONTH_LIMIT)
     title = "Best of the Month"
   }
 
@@ -202,7 +204,7 @@ export default async function TrendingPage({
                 </Link>
               </div>
             </div>
-            
+
             {/* Quick Access */}
             <div className="space-y-3 py-5">
               <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
@@ -237,7 +239,7 @@ export default async function TrendingPage({
                   <Link
                     key={category.id}
                     href={`/categories?category=${category.id}`}
-                    className="-mx-2 flex items-center justify-between rounded-md p-2 hover:bg-muted/40"
+                    className="hover:bg-muted/40 -mx-2 flex items-center justify-between rounded-md p-2"
                   >
                     <span className="text-sm">{category.name}</span>
                     <span className="text-muted-foreground bg-secondary rounded-full px-2 py-0.5 text-xs">
