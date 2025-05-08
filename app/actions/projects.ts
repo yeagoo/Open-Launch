@@ -6,16 +6,13 @@ import { headers } from "next/headers"
 import { db } from "@/drizzle/db"
 import {
   category as categoryTable,
-  // pricingType,
-  // platformType,
   fumaComments,
-  launchStatus,
   project,
   project as projectTable,
   projectToCategory,
   upvote,
 } from "@/drizzle/db/schema"
-import { and, count, desc, eq, or, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 
@@ -289,14 +286,6 @@ export async function submitProject(projectData: ProjectSubmissionData) {
   }
 }
 
-// Helper pour obtenir l'ID utilisateur actuel (ou null si non connecté)
-// (Identique à celui dans home.ts, pourrait être mis dans un fichier partagé)
-async function getCurrentUserId() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  return session?.user?.id ?? null
-}
-
-// Helper pour enrichir les projets (similaire à home.ts)
 async function enrichProjectsWithUserData<T extends { id: string }>(
   projects: T[],
   userId: string | null,
@@ -349,11 +338,38 @@ async function enrichProjectsWithUserData<T extends { id: string }>(
   }))
 }
 
-// Récupérer les projets pour une catégorie donnée
-export async function getProjectsByCategory(categoryId: string) {
-  const userId = await getCurrentUserId() // Get user ID
+// Get projects by category with pagination and sorting
+export async function getProjectsByCategory(
+  categoryId: string,
+  page: number = 1,
+  limit: number = 10,
+  sort: string = "recent",
+) {
+  const session = await getSession()
+  const userId = session?.user?.id || null
 
-  const projectsBase = await db
+  let orderByClause
+  switch (sort) {
+    case "upvotes":
+      orderByClause = desc(sql`count(distinct ${upvote.id})`)
+      break
+    case "alphabetical":
+      orderByClause = asc(projectTable.name)
+      break
+    case "recent":
+    default:
+      orderByClause = desc(projectTable.createdAt)
+      break
+  }
+
+  const offset = (page - 1) * limit
+
+  const queryConditions = and(
+    eq(projectToCategory.categoryId, categoryId),
+    or(eq(projectTable.launchStatus, "ongoing"), eq(projectTable.launchStatus, "launched")),
+  )
+
+  const projectsData = await db
     .select({
       id: projectTable.id,
       name: projectTable.name,
@@ -366,30 +382,48 @@ export async function getProjectsByCategory(categoryId: string) {
       dailyRanking: projectTable.dailyRanking,
       scheduledLaunchDate: projectTable.scheduledLaunchDate,
       createdAt: projectTable.createdAt,
-      upvoteCount: sql<number>`cast(count(distinct ${upvote.id}) as int)`.mapWith(Number),
-      commentCount: sql<number>`cast(count(distinct ${fumaComments.id}) as int)`.mapWith(Number),
+      upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
+      commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
     })
     .from(projectTable)
-    .innerJoin(projectToCategory, eq(projectToCategory.projectId, projectTable.id))
+    .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
     .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-    .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
-    .where(
-      and(
-        eq(projectToCategory.categoryId, categoryId),
-        or(
-          eq(projectTable.launchStatus, launchStatus.ONGOING),
-          eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-        ),
-      ),
+    .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
+    .where(queryConditions)
+    .groupBy(
+      projectTable.id,
+      projectTable.name,
+      projectTable.slug,
+      projectTable.description,
+      projectTable.logoUrl,
+      projectTable.websiteUrl,
+      projectTable.launchStatus,
+      projectTable.launchType,
+      projectTable.dailyRanking,
+      projectTable.scheduledLaunchDate,
+      projectTable.createdAt,
     )
-    .groupBy(projectTable.id) 
-    .orderBy(desc(projectTable.createdAt)) 
+    .orderBy(orderByClause)
+    .limit(limit)
+    .offset(offset)
 
- 
-  return enrichProjectsWithUserData(projectsBase, userId)
+  const enrichedProjects = await enrichProjectsWithUserData(projectsData, userId)
+
+  const totalProjectsResult = await db
+    .select({ count: count(projectTable.id) })
+    .from(projectTable)
+    .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+    .where(queryConditions)
+
+  const totalCount = totalProjectsResult[0]?.count || 0
+
+  return {
+    projects: enrichedProjects,
+    totalCount,
+  }
 }
 
-// getCategoryById (inchangé)
+// getCategoryById
 export async function getCategoryById(categoryId: string) {
   const categoryData = await db
     .select()
