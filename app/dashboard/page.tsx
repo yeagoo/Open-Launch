@@ -39,6 +39,7 @@ interface BaseProject {
   websiteUrl?: string | null
   createdAt: string | Date
   createdBy?: string | null
+  dailyRanking?: number | null
 }
 
 export default async function Dashboard() {
@@ -57,8 +58,13 @@ export default async function Dashboard() {
 
   // Process the data to match our expected formats
   const upvotedProjects = upvotedProjectsData.map((item) => item.project) as BaseProject[]
-
   const createdProjects = createdProjectsData as BaseProject[]
+
+  // projects with badge (launched + top 3)
+  const badgeProjects = createdProjects.filter(
+    (project) =>
+      project.launchStatus === "launched" && project.dailyRanking && project.dailyRanking <= 3,
+  )
 
   const upcomingLaunches = createdProjects.filter((project) => project.launchStatus === "scheduled")
 
@@ -198,6 +204,37 @@ export default async function Dashboard() {
                 </Tabs>
               </CardContent>
             </Card>
+
+            {/* Section Badges */}
+            {badgeProjects.length > 0 && (
+              <Card className="border dark:border-zinc-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-xl font-semibold">Your Badges</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Projects you&apos;ve recently launched and ranked in the top 3
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 pt-0">
+                  {badgeProjects.map((project) => (
+                    <DashboardProjectCard
+                      key={project.id}
+                      {...project}
+                      actionButton={
+                        <Button
+                          asChild
+                          variant="default"
+                          size="sm"
+                          className="h-8 w-full px-4 text-sm font-semibold sm:w-auto"
+                          title="Voir le badge"
+                        >
+                          <Link href={`/projects/${project.slug}/badges`}>Badges</Link>
+                        </Button>
+                      }
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recent Upvotes Section */}
             <Card className="border dark:border-zinc-800">

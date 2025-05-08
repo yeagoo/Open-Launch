@@ -18,19 +18,19 @@ import {
   RiMoneyDollarCircleLine,
   RiTwitterFill,
   RiUser3Line,
+  RiVipCrownLine,
 } from "@remixicon/react"
 import { format, formatDistanceToNow } from "date-fns"
 
 import { auth } from "@/lib/auth"
+import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EditButton } from "@/components/project/edit-button"
 import { ProjectComments } from "@/components/project/project-comments"
-import { RankingBadge } from "@/components/project/ranking-badge"
 import { ShareButton } from "@/components/project/share-button"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
-import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 
 // Types
 interface ProjectPageProps {
@@ -175,7 +175,22 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <div className="flex-shrink-0">
                   {projectData.launchStatus === "launched" &&
                     (projectData.dailyRanking ? (
-                      <RankingBadge ranking={projectData.dailyRanking} />
+                      <a
+                        href={`/projects/${projectData.slug}`}
+                        target="_blank"
+                        title={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                      >
+                        <img
+                          src={`/images/badges/top${projectData.dailyRanking}-light.svg`}
+                          alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                          className="h-auto w-[195px] dark:hidden"
+                        />
+                        <img
+                          src={`/images/badges/top${projectData.dailyRanking}-dark.svg`}
+                          alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                          className="hidden h-auto w-[195px] dark:block"
+                        />
+                      </a>
                     ) : (
                       <Badge
                         variant="outline"
@@ -209,7 +224,22 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <div className="mb-4 flex justify-start sm:hidden">
                 {projectData.launchStatus === "launched" &&
                   (projectData.dailyRanking ? (
-                    <RankingBadge ranking={projectData.dailyRanking} />
+                    <a
+                      href={`/projects/${projectData.slug}`}
+                      target="_blank"
+                      title={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                    >
+                      <img
+                        src={`/images/badges/top${projectData.dailyRanking}-light.svg`}
+                        alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                        className="h-auto w-[195px] dark:hidden"
+                      />
+                      <img
+                        src={`/images/badges/top${projectData.dailyRanking}-dark.svg`}
+                        alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                        className="hidden h-auto w-[195px] dark:block"
+                      />
+                    </a>
                   ) : (
                     <Badge
                       variant="outline"
@@ -281,6 +311,31 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </div>
               </div>
             </div>
+
+            {isOwner &&
+              projectData.launchStatus === "launched" &&
+              projectData.dailyRanking &&
+              projectData.dailyRanking <= 3 && (
+                <div className="border-primary/30 bg-primary/10 text-primary mb-4 flex flex-col items-center gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:gap-3 sm:text-left">
+                  <div className="flex w-full flex-col items-center gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:text-left">
+                    <span className="text-sm font-medium">
+                      Congratulations! You earned a badge for your ranking.
+                    </span>
+                    <Button
+                      asChild
+                      variant="default"
+                      size="sm"
+                      className="flex h-8 w-full items-center gap-2 px-4 text-sm font-semibold sm:ml-2 sm:w-auto sm:justify-end"
+                      title="See your earned badges"
+                    >
+                      <Link href={`/projects/${projectData.slug}/badges`}>
+                        <RiVipCrownLine className="h-4 w-4" />
+                        Badges
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
 
             {projectData.launchStatus === "scheduled" && (
               <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800">

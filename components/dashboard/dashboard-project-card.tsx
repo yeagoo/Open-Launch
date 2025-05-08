@@ -15,8 +15,8 @@ interface DashboardProjectCardProps {
   launchStatus: string
   scheduledLaunchDate?: string | Date | null
   createdAt: string | Date
-  commentCount?: number | string | null // Ajouter commentCount
-  // On n'a pas besoin de websiteUrl ou autres ici pour la version simplifiée
+  commentCount?: number | string | null
+  actionButton?: React.ReactNode
 }
 
 export function DashboardProjectCard({
@@ -28,6 +28,7 @@ export function DashboardProjectCard({
   scheduledLaunchDate,
   createdAt,
   commentCount,
+  actionButton,
 }: DashboardProjectCardProps) {
   const projectPageUrl = `/projects/${slug}`
 
@@ -53,11 +54,8 @@ export function DashboardProjectCard({
     return null
   }
 
-  return (
-    <Link
-      href={projectPageUrl}
-      className="hover:bg-secondary/40 flex items-center gap-3 rounded-lg border p-3 transition-colors dark:border-zinc-800/50"
-    >
+  const cardContent = (
+    <>
       <Image
         src={logoUrl || "/placeholder.svg"} // Fallback si pas de logo
         alt={name}
@@ -81,8 +79,26 @@ export function DashboardProjectCard({
           )}
         </div>
       </div>
-      {/* On peut ajouter un badge de statut ici si besoin */}
-      {/* <Badge variant=\"outline\" className=\"text-xs ml-auto\">{launchStatus}</Badge> */}
+    </>
+  )
+
+  if (actionButton) {
+    return (
+      <div className="flex flex-col justify-between gap-3 rounded-lg border p-3 sm:flex-row sm:items-center dark:border-zinc-800/50">
+        <Link href={projectPageUrl} className="flex min-w-0 flex-grow items-center gap-3">
+          {cardContent}
+        </Link>
+        <div className="w-full flex-shrink-0 sm:w-auto">{actionButton}</div>
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href={projectPageUrl}
+      className="hover:bg-secondary/40 flex items-center gap-3 rounded-lg border p-3 transition-colors dark:border-zinc-800/50"
+    >
+      {cardContent}
     </Link>
   )
 }
