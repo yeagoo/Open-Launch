@@ -72,7 +72,11 @@ export function SignInForm() {
       setLoadingButtons((prevState) => ({ ...prevState, email: true }))
       setGeneralError(null)
 
-      await signIn.email(options)
+      const result = await signIn.email(options)
+      if (result?.error?.message) {
+        setGeneralError(result.error.message)
+        return
+      }
       router.push("/dashboard")
     } catch (error) {
       setGeneralError(error instanceof Error ? error.message : "An error occurred")
