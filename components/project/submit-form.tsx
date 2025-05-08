@@ -52,7 +52,11 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
-import { getLaunchAvailabilityRange, scheduleLaunch } from "@/app/actions/launch"
+import {
+  checkUserLaunchLimit,
+  getLaunchAvailabilityRange,
+  scheduleLaunch,
+} from "@/app/actions/launch"
 import type { LaunchAvailability } from "@/app/actions/launch"
 import { getAllCategories, submitProject } from "@/app/actions/projects"
 
@@ -76,7 +80,11 @@ interface DateGroup {
   dates: LaunchAvailability[]
 }
 
-export function SubmitProjectForm() {
+interface SubmitProjectFormProps {
+  userId: string
+}
+
+export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<ProjectFormData>({
@@ -106,6 +114,10 @@ export function SubmitProjectForm() {
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
+  const [isLaunchDateOverLimit, setIsLaunchDateOverLimit] = useState(false)
+  const [launchDateLimitError, setLaunchDateLimitError] = useState<string | null>(null)
+  const [isLoadingDateCheck, setIsLoadingDateCheck] = useState(false)
+
   const tagInputId = useId()
 
   const [techStackTags, setTechStackTags] = useState<Tag[]>([])
@@ -119,7 +131,6 @@ export function SubmitProjectForm() {
     }))
   }
 
-  // Vérifier si l'URL du site est déjà utilisée
   const checkWebsiteUrl = async (url: string) => {
     try {
       const response = await fetch(`/api/projects/check-url?url=${encodeURIComponent(url)}`)
@@ -245,8 +256,46 @@ export function SubmitProjectForm() {
     })
   }
 
+  const validateLaunchDateLimit = useCallback(
+    async (date: string | null) => {
+      if (!date || !userId) {
+        setIsLaunchDateOverLimit(false)
+        setLaunchDateLimitError(null)
+        setIsLoadingDateCheck(false)
+        return
+      }
+      setIsLoadingDateCheck(true)
+      setLaunchDateLimitError(null)
+      try {
+        const result = await checkUserLaunchLimit(userId, date)
+        if (!result.allowed) {
+          setIsLaunchDateOverLimit(true)
+          setLaunchDateLimitError(
+            `You have already scheduled ${result.count}/${result.limit} project(s) for this date. Please select another date.`,
+          )
+        } else {
+          setIsLaunchDateOverLimit(false)
+        }
+      } catch (err) {
+        console.error("Error checking launch date limit:", err)
+        setIsLaunchDateOverLimit(false)
+        setLaunchDateLimitError("Could not verify launch date limit. Please try again.")
+      } finally {
+        setIsLoadingDateCheck(false)
+      }
+    },
+    [userId],
+  )
+
+  useEffect(() => {
+    if (formData.scheduledDate && currentStep === 3) {
+      validateLaunchDateLimit(formData.scheduledDate)
+    }
+  }, [formData.scheduledDate, currentStep, validateLaunchDateLimit])
+
   const nextStep = () => {
     setError(null)
+    setLaunchDateLimitError(null)
     if (currentStep === 1) {
       if (
         !formData.name ||
@@ -276,22 +325,26 @@ export function SubmitProjectForm() {
         return
       }
 
-      // Vérifier le nombre de catégories
       if (formData.categories.length > 3) {
         setError("You can select a maximum of 3 categories.")
         return
       }
 
-      // Vérifier le nombre de technologies
       if (formData.techStack.length > 5) {
         setError("You can add a maximum of 5 technologies.")
         return
       }
     }
 
-    if (currentStep === 3 && !formData.scheduledDate) {
-      setError("Please select a launch date.")
-      return
+    if (currentStep === 3) {
+      if (!formData.scheduledDate) {
+        setError("Please select a launch date.")
+        return
+      }
+      if (isLaunchDateOverLimit) {
+        setError(launchDateLimitError || "This launch date is not available due to daily limit.")
+        return
+      }
     }
 
     setCurrentStep((prev) => Math.min(prev + 1, 4))
@@ -303,6 +356,7 @@ export function SubmitProjectForm() {
 
   const prevStep = () => {
     setError(null)
+    setLaunchDateLimitError(null)
     setCurrentStep((prev) => Math.max(prev - 1, 1))
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -326,7 +380,6 @@ export function SubmitProjectForm() {
       return
     }
 
-    // Vérifier si l'URL est déjà utilisée
     const urlExists = await checkWebsiteUrl(formData.websiteUrl)
     if (urlExists) {
       setError("This website URL has already been submitted. Please use a different URL.")
@@ -334,13 +387,17 @@ export function SubmitProjectForm() {
       return
     }
 
-    if (currentStep === 3 && !formData.scheduledDate) {
-      setError("Please select a launch date.")
+    if (isLaunchDateOverLimit && formData.scheduledDate) {
+      setError(
+        launchDateLimitError || "Cannot submit: The selected launch date exceeds your daily limit.",
+      )
+      setIsPending(false)
       return
     }
 
     setIsPending(true)
     setError(null)
+    setLaunchDateLimitError(null)
 
     if (formData.techStack.length === 0) {
       setError("Please enter at least one technology in the Tech Stack.")
@@ -348,14 +405,12 @@ export function SubmitProjectForm() {
       return
     }
 
-    // Vérifier le nombre de catégories
     if (formData.categories.length > 3) {
       setError("You can select a maximum of 3 categories.")
       setIsPending(false)
       return
     }
 
-    // Vérifier le nombre de technologies
     if (formData.techStack.length > 5) {
       setError("You can add a maximum of 5 technologies.")
       setIsPending(false)
@@ -366,11 +421,11 @@ export function SubmitProjectForm() {
       const finalLogoUrl =
         process.env.NODE_ENV === "development" && !uploadedLogoUrl
           ? "https://placehold.co/128x128/E2E8F0/718096?text=Logo"
-          : uploadedLogoUrl!;
+          : uploadedLogoUrl!
       const finalCoverImageUrl =
         process.env.NODE_ENV === "development" && !uploadedCoverImageUrl
           ? "https://placehold.co/1080x480/E2E8F0/718096?text=Cover"
-          : uploadedCoverImageUrl!;
+          : uploadedCoverImageUrl!
 
       const projectData = {
         name: formData.name,
@@ -398,7 +453,12 @@ export function SubmitProjectForm() {
       if (formData.scheduledDate) {
         try {
           const formattedDate = format(parseISO(formData.scheduledDate), DATE_FORMAT.API)
-          const launchSuccess = await scheduleLaunch(projectId, formattedDate, formData.launchType)
+          const launchSuccess = await scheduleLaunch(
+            projectId,
+            formattedDate,
+            formData.launchType,
+            userId,
+          )
 
           if (!launchSuccess) {
             console.error(
@@ -1119,7 +1179,13 @@ export function SubmitProjectForm() {
                     </SelectContent>
                   </Select>
 
-                  {formData.scheduledDate && (
+                  {launchDateLimitError && (
+                    <p className="text-destructive mt-2 text-xs sm:text-sm">
+                      {launchDateLimitError}
+                    </p>
+                  )}
+
+                  {formData.scheduledDate && !isLaunchDateOverLimit && (
                     <div className="bg-primary/5 border-primary/10 mt-3 flex w-fit items-center gap-1.5 rounded-md border px-3 py-2 text-sm">
                       <RiCalendarLine className="text-primary/80 h-4 w-4" />
                       <span className="text-muted-foreground">Scheduled for </span>
@@ -1369,8 +1435,16 @@ export function SubmitProjectForm() {
           <Button
             type="button"
             onClick={nextStep}
-            disabled={isPending || isUploadingLogo || isUploadingCover}
+            disabled={
+              isPending ||
+              isUploadingLogo ||
+              isUploadingCover ||
+              (currentStep === 3 && isLoadingDateCheck)
+            }
           >
+            {currentStep === 3 && isLoadingDateCheck && (
+              <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />
+            )}
             Next
             <RiArrowRightLine className="ml-2 h-4 w-4" />
           </Button>

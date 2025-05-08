@@ -12,9 +12,15 @@ import {
   project as projectTable,
 } from "@/drizzle/db/schema"
 import { addDays, format, isBefore, parse } from "date-fns"
-import { and, eq, gte, lt, sql } from "drizzle-orm"
+import { and, count as drizzleCount, eq, gte, lt, ne, sql } from "drizzle-orm"
 
-import { DATE_FORMAT, LAUNCH_LIMITS, LAUNCH_SETTINGS, LAUNCH_TYPES } from "@/lib/constants"
+import {
+  DATE_FORMAT,
+  LAUNCH_LIMITS,
+  LAUNCH_SETTINGS,
+  LAUNCH_TYPES,
+  USER_DAILY_LAUNCH_LIMIT,
+} from "@/lib/constants"
 
 export interface LaunchAvailability {
   date: string
@@ -119,12 +125,46 @@ export async function getLaunchAvailabilityRange(
   return availabilityResults
 }
 
+// vérifier la limite de lancement de l'utilisateur
+export async function checkUserLaunchLimit(
+  userId: string,
+  launchDate: string,
+): Promise<{ allowed: boolean; count: number; limit: number }> {
+  const [year, month, day] = launchDate.split("-").map(Number)
+  const dateStart = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
+  const nextDayStart = new Date(dateStart)
+  nextDayStart.setUTCDate(dateStart.getUTCDate() + 1)
+
+  const userLaunchCountResult = await db
+    .select({ value: drizzleCount(projectTable.id) })
+    .from(projectTable)
+    .where(
+      and(
+        eq(projectTable.createdBy, userId),
+        gte(projectTable.scheduledLaunchDate, dateStart), // Utiliser dateStart UTC
+        lt(projectTable.scheduledLaunchDate, nextDayStart), // Utiliser nextDayStart UTC
+        ne(projectTable.launchStatus, launchStatus.PAYMENT_FAILED), // ne compter que les lancements qui n'ont pas échoué
+      ),
+    )
+
+  const currentCount = userLaunchCountResult[0]?.value || 0
+  const limit = USER_DAILY_LAUNCH_LIMIT
+  const allowed = currentCount < limit
+
+  return { allowed, count: currentCount, limit }
+}
+
 // Fonction pour planifier un lancement
 export async function scheduleLaunch(
   projectId: string,
   date: string,
   launchTypeValue: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES],
+  userId: string | undefined,
 ): Promise<boolean> {
+  if (!userId) {
+    throw new Error("User ID is required to schedule a launch.")
+  }
+
   try {
     // Vérifier si la date est au format correct et la convertir en Date
     let parsedDate: Date
@@ -181,9 +221,19 @@ export async function scheduleLaunch(
       )
     }
 
-    // Vérifier la disponibilité
-    const availability = await getLaunchAvailability(format(parsedDate, DATE_FORMAT.API))
+    // Vérifier la limite de lancement de l'utilisateur AVANT de vérifier les slots globaux
+    const userLaunchLimitCheck = await checkUserLaunchLimit(
+      userId,
+      format(parsedDate, DATE_FORMAT.API),
+    )
+    if (!userLaunchLimitCheck.allowed) {
+      throw new Error(
+        `You have reached your daily launch limit of ${userLaunchLimitCheck.limit} project(s) for this date.`,
+      )
+    }
 
+    // Vérifier la disponibilité globale des slots
+    const availability = await getLaunchAvailability(format(parsedDate, DATE_FORMAT.API))
     let hasAvailability = false
 
     if (launchTypeValue === LAUNCH_TYPES.FREE) {

@@ -5,6 +5,8 @@ export const LAUNCH_LIMITS = {
   TOTAL_DAILY_LIMIT: 20,
 } as const
 
+export const USER_DAILY_LAUNCH_LIMIT = 1
+
 export const PROJECT_LIMITS_VARIABLES = {
   TODAY_LIMIT: 20, // par defaut
   YESTERDAY_LIMIT: 5, // par defaut

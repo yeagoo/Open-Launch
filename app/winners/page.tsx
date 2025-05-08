@@ -105,7 +105,7 @@ export default async function WinnersPage({
                       slug={winner.slug}
                       description={winner.description}
                       thumbnail={winner.logoUrl}
-                      dailyRanking={index + 1}
+                      dailyRanking={winner.dailyRanking || index + 1}
                       upvoteCount={winner.upvoteCount}
                       commentCount={winner.commentCount || 0}
                     />

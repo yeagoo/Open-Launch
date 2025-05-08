@@ -273,13 +273,13 @@ export async function getWinnersByDate(date: Date) {
       and(
         eq(projectTable.launchStatus, launchStatus.LAUNCHED),
         sql`${projectTable.dailyRanking} IS NOT NULL`,
+        sql`${projectTable.dailyRanking} <= 3`,
         sql`${projectTable.scheduledLaunchDate} >= ${dayStart.toISOString()}`,
         sql`${projectTable.scheduledLaunchDate} <= ${dayEnd.toISOString()}`,
       ),
     )
     .groupBy(projectTable.id)
     .orderBy(projectTable.dailyRanking)
-    .limit(3)
 
   return enrichProjectsWithUserData(winnersBase, userId)
 }
