@@ -74,7 +74,7 @@ export default function PricingPage() {
             </li>
             <li className="flex items-center gap-1.5">
               <RiCheckboxCircleFill className="text-foreground/50 h-3.5 w-3.5" />
-              <span>Dofollow link if Top 3 daily</span>
+              <span>Dofollow Backlink if Top 3 daily</span>
             </li>
           </ul>
 
@@ -112,7 +112,7 @@ export default function PricingPage() {
             </li>
             <li className="flex items-center gap-1.5">
               <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5" />
-              <span>Guaranteed Dofollow link</span>
+              <span>Guaranteed Dofollow Backlink</span>
             </li>
           </ul>
 
@@ -156,7 +156,7 @@ export default function PricingPage() {
             </li>
             <li className="flex items-center gap-1.5">
               <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5" />
-              <span>Guaranteed Dofollow link</span>
+              <span>Guaranteed Dofollow Backlink</span>
             </li>
           </ul>
 

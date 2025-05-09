@@ -1027,7 +1027,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Dofollow link if Top 3 daily</span>
+                      <span>Dofollow Backlink if Top 3 daily</span>
                     </li>
                   </ul>
                 </div>
@@ -1064,7 +1064,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Guaranteed Dofollow link</span>
+                      <span>Guaranteed Dofollow Backlink</span>
                     </li>
                   </ul>
                 </div>
@@ -1103,7 +1103,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Guaranteed Dofollow link</span>
+                      <span>Guaranteed Dofollow Backlink</span>
                     </li>
                   </ul>
                 </div>
