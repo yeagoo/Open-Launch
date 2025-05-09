@@ -62,12 +62,12 @@ export default function FooterSection() {
               <img
                 src="/images/badges/top1-light.svg"
                 alt="Top 1 Product Badge (Light Theme)"
-                className="w-full"
+                className="w-[150px]"
               />
               <img
                 src="/images/badges/top1-dark.svg"
                 alt="Top 1 Product Badge (Dark Theme)"
-                className="w-full"
+                className="w-[150px]"
               />
             </div>
           </div>
