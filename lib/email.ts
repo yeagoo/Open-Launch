@@ -19,7 +19,7 @@ export async function sendEmail(payload: EmailPayload) {
 
   try {
     const data = await resend.emails.send({
-      from: "Open-Launch <noreply@open-launch.com>", // Replace with your verified domain
+      from: "Open-Launch <noreply@open-launch.com>",
       to,
       subject,
       html,
