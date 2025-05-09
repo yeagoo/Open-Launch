@@ -90,7 +90,6 @@ Please follow these guidelines for commit messages:
 Feel free to:
 
 - Open an issue
-- Join our Discord community
 - Contact the maintainers
 
 Thank you for contributing to Open Launch! 🚀
