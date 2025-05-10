@@ -96,7 +96,7 @@ export async function getTodayProjects(limit: number = PROJECT_LIMITS_VARIABLES.
     .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
     .where(eq(projectTable.launchStatus, launchStatus.ONGOING))
     .groupBy(projectTable.id)
-    .orderBy(desc(projectTable.createdAt))
+    .orderBy(desc(sql`count(distinct ${upvote.id})`))
     .limit(limit)
 
   return enrichProjectsWithUserData(todayProjectsBase, userId)
