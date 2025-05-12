@@ -17,7 +17,7 @@ export const PROJECT_LIMITS_VARIABLES = {
 
 export const LAUNCH_SETTINGS = {
   PREMIUM_PRICE: 10, // USD
-  PREMIUM_PLUS_PRICE: 25, // USD
+  PREMIUM_PLUS_PRICE: 12.5, // USD
   MIN_DAYS_AHEAD: 1, // Minimum days ahead for scheduling (starting from tomorrow)
   MAX_DAYS_AHEAD: 90, // Maximum days ahead for scheduling (3 months)
   PREMIUM_MIN_DAYS_AHEAD: 1, // Premium users can schedule sooner

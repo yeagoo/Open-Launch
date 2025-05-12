@@ -1052,25 +1052,29 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                   <ul className="text-muted-foreground space-y-1.5 text-xs">
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Skip the Free Queue - Priority access</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
                       <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots/day</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Priority placement</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Up to {LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days scheduling</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
                       <span>Guaranteed Dofollow Backlink</span>
                     </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Up to {LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days scheduling</span>
+                    </li>
                   </ul>
                 </div>
 
                 <div
-                  className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1" : "hover:border-primary hover:bg-primary/5"}`}
+                  className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${
+                    formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS
+                      ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1"
+                      : "hover:border-primary hover:bg-primary/5"
+                  }`}
                   onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.PREMIUM_PLUS)}
                 >
                   {formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS && (
@@ -1085,25 +1089,31 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     <RiVipCrownLine className="text-primary h-4 w-4" />
                     Premium Plus
                   </h5>
-                  <p className="mb-3 text-2xl font-bold">${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}</p>
+                  <p className="mb-1 text-2xl font-bold">
+                    ${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}{" "}
+                    <span className="text-muted-foreground text-xs line-through">$25</span>
+                  </p>
+                  <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
+                    -50% code: OPENLAUNCH
+                  </span>
                   <ul className="text-muted-foreground space-y-1.5 text-xs">
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+                      <span>Premium Spotlight Placement</span>
+                    </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
                       <span>{LAUNCH_LIMITS.PREMIUM_PLUS_DAILY_LIMIT} exclusive slots/day</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Homepage feature</span>
+                      <span>Guaranteed Dofollow Backlink</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
                       <span>
                         Up to {LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD} days scheduling
                       </span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Guaranteed Dofollow Backlink</span>
                     </li>
                   </ul>
                 </div>
@@ -1358,26 +1368,34 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       {formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS && (
                         <>
                           <RiVipCrownLine className="text-primary h-4 w-4" />{" "}
-                          <span className="text-primary font-medium">
-                            Premium Plus Launch ($
-                            {LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE})
-                          </span>
+                          <div className="text-primary font-medium">
+                            <div>
+                              Premium Plus (${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}){" "}
+                              <span className="text-muted-foreground text-xs line-through">
+                                $25
+                              </span>
+                            </div>
+                            <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
+                              -50% code: OPENLAUNCH
+                            </span>
+                          </div>
                         </>
                       )}
                     </div>
-                    <div className="bg-muted/30 flex w-fit items-center gap-2 rounded-md border px-3 py-2">
-                      <RiCalendarLine className="text-muted-foreground h-4 w-4" />
-                      <span>
-                        {formData.scheduledDate
-                          ? format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)
-                          : "No date selected"}
-                        {formData.scheduledDate && (
-                          <span className="text-muted-foreground/70 ml-1 text-xs">
-                            {" "}
-                            • {LAUNCH_SETTINGS.LAUNCH_HOUR_UTC}:00 UTC
-                          </span>
-                        )}
-                      </span>
+                    <div className="bg-muted/30 flex h-full min-h-[60px] w-fit flex-col justify-center rounded-md border px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <RiCalendarLine className="text-muted-foreground h-4 w-4" />
+                        <span>
+                          {formData.scheduledDate
+                            ? format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)
+                            : "No date selected"}
+                        </span>
+                      </div>
+                      {formData.scheduledDate && (
+                        <span className="text-muted-foreground/70 ml-6 text-xs">
+                          {LAUNCH_SETTINGS.LAUNCH_HOUR_UTC}:00 UTC
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
