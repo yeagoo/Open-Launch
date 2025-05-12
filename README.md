@@ -49,10 +49,10 @@
 
 ### Security & Anti-Spam Features
 
-- **Rate Limiting** 
-- **Comment Rate Limiting** 
-- **Vote Rate Limiting** 
-- **API Rate Limiting** 
+- **Rate Limiting**
+- **Comment Rate Limiting**
+- **Vote Rate Limiting**
+- **API Rate Limiting**
 - **Action Cooldown**
 - **Anti-Spam Protection**
 
@@ -68,21 +68,21 @@ git clone https://github.com/drdruide/open-launch.git
 cd open-launch
 
 # Install dependencies
-npm install
+bun install
 
 # Set up environment variables
 cp .env.example .env
 
 # Initialize the database
-npm run db:generate
-npm run db:migrate
-npm run db:push
+bun run db:generate
+bun run db:migrate
+bun run db:push
 
 # Seed the categories
 bun scripts/categories.ts
 
 # Start the development server
-npm run dev
+bun run dev
 ```
 
 Visit `http://localhost:3000` to see your app running.
@@ -90,31 +90,34 @@ Visit `http://localhost:3000` to see your app running.
 ## Tech Stack
 
 ### Frontend
-| Technology | Description |
-|------------|-------------|
-| [Next.js 15](https://nextjs.org) | React framework for production |
-| [React 19](https://reactjs.org) | UI library |
-| [Tailwind CSS](https://tailwindcss.com) | Utility-first CSS framework |
-| [Shadcn/ui](https://ui.shadcn.com) | Accessible and customizable components |
+
+| Technology                              | Description                            |
+| --------------------------------------- | -------------------------------------- |
+| [Next.js 15](https://nextjs.org)        | React framework for production         |
+| [React 19](https://reactjs.org)         | UI library                             |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first CSS framework            |
+| [Shadcn/ui](https://ui.shadcn.com)      | Accessible and customizable components |
 
 ### Backend
-| Technology | Description |
-|------------|-------------|
-| [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction) | Serverless API |
-| [Drizzle ORM](https://orm.drizzle.team) | TypeScript ORM |
-| [PostgreSQL](https://www.postgresql.org) | Database |
-| [Redis](https://redis.io) | Caching and sessions |
-| [Stripe](https://stripe.com) | Payment processing |
-| [UploadThing](https://uploadthing.com) | File uploads |
-| [Resend](https://resend.com) | Transactional emails |
+
+| Technology                                                            | Description          |
+| --------------------------------------------------------------------- | -------------------- |
+| [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction) | Serverless API       |
+| [Drizzle ORM](https://orm.drizzle.team)                               | TypeScript ORM       |
+| [PostgreSQL](https://www.postgresql.org)                              | Database             |
+| [Redis](https://redis.io)                                             | Caching and sessions |
+| [Stripe](https://stripe.com)                                          | Payment processing   |
+| [UploadThing](https://uploadthing.com)                                | File uploads         |
+| [Resend](https://resend.com)                                          | Transactional emails |
 
 ### Security
-| Technology | Description |
-|------------|-------------|
-| [Better Auth](https://better-auth.com) | Authentication |
-| [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile) | Bot protection |
-| [Next.js Middleware](https://nextjs.org/docs/middleware) | Route protection |
-| [Zod](https://zod.dev) | Data validation |
+
+| Technology                                                            | Description      |
+| --------------------------------------------------------------------- | ---------------- |
+| [Better Auth](https://better-auth.com)                                | Authentication   |
+| [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile) | Bot protection   |
+| [Next.js Middleware](https://nextjs.org/docs/middleware)              | Route protection |
+| [Zod](https://zod.dev)                                                | Data validation  |
 
 ## Deployment
 
@@ -122,10 +125,10 @@ Open Launch is optimized for deployment on Vercel but can be deployed on any pla
 
 ```bash
 # Build the application
-npm run build
+bun run build
 
 # Start the production server
-npm run start
+bun run start
 ```
 
 ## Project Stats
@@ -162,7 +165,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Open Launch is an open source project that relies on community support to continue its development. If you find this project useful, please consider supporting it:
 
-- [Buy Me a Coffee](https://buymeacoffee.com/drdruide) 
+- [Buy Me a Coffee](https://buymeacoffee.com/drdruide)
 
 <div align="center">
   <a href="https://open-launch.com" target="_blank">
