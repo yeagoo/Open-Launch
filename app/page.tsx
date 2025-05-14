@@ -1,11 +1,14 @@
 import { headers } from "next/headers"
 import Link from "next/link"
 
+import { Megaphone } from "lucide-react"
+
 import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PremiumCard } from "@/components/home/premium-card"
 import { ProjectSection } from "@/components/home/project-section"
+import { SponsorCard } from "@/components/home/sponsor-card"
 import { WelcomeBanner } from "@/components/home/welcome-banner"
 import {
   getFeaturedPremiumProjects,
@@ -15,8 +18,6 @@ import {
 } from "@/app/actions/home"
 import { getLast7DaysVisitors } from "@/app/actions/plausible"
 import { getTopCategories } from "@/app/actions/projects"
-import { SponsorCard } from "@/components/home/sponsor-card"
-import { Megaphone } from "lucide-react"
 
 export default async function Home() {
   // Récupérer les données réelles
@@ -91,29 +92,26 @@ export default async function Home() {
                   <div className="text-sm font-medium">Active Launches</div>
                 </div>
               </Link>
-              
+
               {/* Last 7 Days Visitors Stat */}
               {visitorsLast7Days !== null && (
-                <div className="bg-secondary/30 hover:bg-secondary/50 border-green-500 block rounded-md border-l-4 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors">
+                <div className="bg-secondary/30 hover:bg-secondary/50 block rounded-md border-l-4 border-green-500 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="text-green-600 text-2xl font-bold">
-                      {visitorsLast7Days}
-                    </div>
+                    <div className="text-2xl font-bold text-green-600">{visitorsLast7Days}</div>
                     <div className="text-sm font-medium">Visitors (Last 7 Days)</div>
                   </div>
                 </div>
               )}
-              
             </div>
 
             {/* Featured Sponsor */}
-            <div className="space-y-3 py-5">
+            <div className="py-5">
               <h3 className="flex items-center gap-2 font-semibold">Featured Sponsor</h3>
               <SponsorCard
-                name="Landing Lab"
-                description="Landing Lab provides professional landing pages."
-                url="https://www.landinglab.xyz/"
-                imageUrl="/sponsors/logolandinglab.png"
+                name="ClawCloud Run"
+                description="In a Jiffy. Build, Deploy and Run."
+                url="https://run.claw.cloud?ref=open-launch"
+                imageUrl="https://yxucdfr9f5.ufs.sh/f/M3RHr0TmpHk58nC2t7bg1XPzV7Kxo25HAvNtwa6hLcRpjB0T"
               />
               <SponsorCard
                 name="Your Product Here?"
@@ -122,8 +120,6 @@ export default async function Home() {
                 icon={<Megaphone size={18} className="text-muted-foreground" />}
               />
             </div>
-            
-
 
             {/* Categories */}
             <div className="space-y-3 py-5">
@@ -195,10 +191,6 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
-
-      
-
-         
           </div>
         </div>
       </div>
