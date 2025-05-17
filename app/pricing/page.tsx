@@ -150,7 +150,7 @@ export default function PricingPage() {
                   </div>
 
                   <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs font-medium">
-                    -50% with code: OPENLAUNCH
+                    -50% for early users
                   </span>
                 </div>
 

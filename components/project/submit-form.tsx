@@ -1094,7 +1094,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     <span className="text-muted-foreground text-xs line-through">$25</span>
                   </p>
                   <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
-                    -50% code: OPENLAUNCH
+                    -50% for early users
                   </span>
                   <ul className="text-muted-foreground space-y-1.5 text-xs">
                     <li className="flex items-center gap-1.5">
@@ -1376,7 +1376,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                               </span>
                             </div>
                             <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
-                              -50% code: OPENLAUNCH
+                              -50% for early users
                             </span>
                           </div>
                         </>
