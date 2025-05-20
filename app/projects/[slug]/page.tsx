@@ -146,7 +146,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               />
             </div>
           ) : (
-            <div className="relative w-full pt-[15.5%] md:pt-[6.5%]">
+            <div className="relative w-full pt-[19.5%] md:pt-[6.5%]">
               <div className="from-muted/50 absolute inset-0 bg-gradient-to-b to-transparent"></div>
             </div>
           )}
@@ -204,7 +204,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </div>
               </div>
 
-              <div className="mb-4 flex justify-start sm:hidden">
+              <div className="mb-4 flex justify-start md:hidden">
                 <div className="ring-background relative -mt-16 h-28 w-28 flex-shrink-0 rounded-md ring-4">
                   <Image
                     src={projectData.logoUrl}

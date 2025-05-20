@@ -301,9 +301,9 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         !formData.name ||
         !formData.websiteUrl ||
         !formData.description ||
-        (process.env.NODE_ENV !== "development" && (!uploadedLogoUrl || !uploadedCoverImageUrl))
+        (process.env.NODE_ENV !== "development" && !uploadedLogoUrl)
       ) {
-        setError("Please fill in all required project information and upload images.")
+        setError("Please fill in all required project information and upload the logo.")
         return
       }
       try {
@@ -368,13 +368,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       !formData.name ||
       !formData.websiteUrl ||
       !formData.description ||
-      (process.env.NODE_ENV !== "development" && (!uploadedLogoUrl || !uploadedCoverImageUrl)) ||
+      (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) ||
       formData.categories.length === 0 ||
       formData.platforms.length === 0 ||
       !formData.pricing
     ) {
       setError(
-        "Some required information or images are missing. Please go back and complete all fields.",
+        "Some required information or the logo is missing. Please go back and complete all fields.",
       )
       setIsPending(false)
       return
@@ -422,10 +422,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         process.env.NODE_ENV === "development" && !uploadedLogoUrl
           ? "https://placehold.co/128x128/E2E8F0/718096?text=Logo"
           : uploadedLogoUrl!
-      const finalCoverImageUrl =
-        process.env.NODE_ENV === "development" && !uploadedCoverImageUrl
-          ? "https://placehold.co/1080x480/E2E8F0/718096?text=Cover"
-          : uploadedCoverImageUrl!
+      const finalCoverImageUrl = uploadedCoverImageUrl
 
       const projectData = {
         name: formData.name,
@@ -675,6 +672,9 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <Label htmlFor="logoUrl">
                 Logo (Max 1MB) <span className="text-red-500">*</span>
               </Label>
+              <p className="text-muted-foreground text-xs">
+                Recommended: 1:1 square image (e.g., 256x256px).
+              </p>
               {uploadedLogoUrl ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
                   <Image
@@ -745,8 +745,11 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="coverImageUrl">
-                Cover Image (Max 1MB) <span className="text-red-500">*</span>
+                Cover Image <span>(Optional)</span>
               </Label>
+              <p className="text-muted-foreground text-xs">
+                Recommended: 6:1 wide image (e.g., 2400x400px).
+              </p>
               {uploadedCoverImageUrl ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
                   <Image
@@ -790,7 +793,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     onUploadError={(error: Error) => {
                       console.error("Upload Error (Cover):", error)
                       setIsUploadingCover(false)
-                      setError(`Cover image upload failed: ${error.message}`)
+                      if (error.message.includes("FileSizeMismatch")) {
+                        setError(
+                          "Cover image upload failed: The file is too large. Please ensure it's under 1MB.",
+                        )
+                      } else {
+                        setError(`Cover image upload failed: ${error.message}`)
+                      }
                     }}
                     appearance={{
                       button: `ut-button flex items-center w-fit gap-2 border border-input bg-primary hover:bg-primary/90 hover:text-accent-foreground text-sm h-9 px-3 ${isUploadingCover ? "opacity-50 pointer-events-none" : ""}`,
@@ -1430,13 +1439,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     <form onSubmit={handleSubmit} className="space-y-8">
       {renderStepper()}
 
+      {renderStepContent()}
+
       {error && (
         <div className="bg-destructive/10 border-destructive/30 text-destructive rounded-md border p-3 text-sm">
           {error}
         </div>
       )}
-
-      {renderStepContent()}
 
       <div className="flex items-center justify-between border-t pt-6">
         <Button
