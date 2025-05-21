@@ -72,9 +72,15 @@ export default function PricingPage() {
                   <RiCheckboxCircleFill className="text-muted-foreground h-4 w-4" />
                   <span>Featured on homepage</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <RiCheckboxCircleFill className="text-muted-foreground h-4 w-4" />
-                  <span>Dofollow Backlink if Top 3 daily</span>
+                <li className="flex items-start gap-2">
+                  <RiCheckboxCircleFill className="text-muted-foreground mt-1 h-4 w-4" />
+                  <div>
+                    <span>Dofollow Backlink only if:</span>
+                    <div className="text-muted-foreground mt-1.5 space-y-1 text-xs">
+                      <div>1. Top 3 daily ranking</div>
+                      <div>2. Display our badge on your site</div>
+                    </div>
+                  </div>
                 </li>
               </ul>
             </div>
@@ -106,7 +112,17 @@ export default function PricingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <RiCheckboxCircleFill className="text-primary h-4 w-4" />
-                    <span className="font-semibold">Guaranteed Dofollow Backlink</span>
+                    <span className="font-semibold">
+                      Guaranteed Dofollow Backlink{" "}
+                      <a
+                        href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        (DR 18)
+                      </a>{" "}
+                    </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <RiCheckboxCircleFill className="text-primary h-4 w-4" />
@@ -183,6 +199,28 @@ export default function PricingPage() {
                     </div>
                   </div>
                 </div>
+                <div className="bg-primary/5 border-primary/10 rounded border p-2">
+                  <div className="flex items-start gap-2">
+                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                    <div>
+                      <p className="text-primary text-sm font-semibold">
+                        Guaranteed Dofollow Backlink
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Valuable SEO boost from our{" "}
+                        <a
+                          href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          DR 18
+                        </a>{" "}
+                        domain
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="rounded border p-2">
                   <div className="flex items-start gap-2">
                     <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
@@ -201,18 +239,6 @@ export default function PricingPage() {
                     <div>
                       <p className="text-sm font-medium">Fastest Launch Dates</p>
                       <p className="text-muted-foreground text-xs">Top priority for your project</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded border p-2">
-                  <div className="flex items-start gap-2">
-                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
-                    <div>
-                      <p className="text-sm font-medium">Guaranteed Dofollow Backlink</p>
-                      <p className="text-muted-foreground text-xs">
-                        Valuable SEO boost for your site
-                      </p>
                     </div>
                   </div>
                 </div>

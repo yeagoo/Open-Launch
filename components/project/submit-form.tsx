@@ -1036,7 +1036,17 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Dofollow Backlink if Top 3 daily</span>
+                      <span>Dofollow Backlink only if:</span>
+                    </li>
+                    <li className="flex items-start gap-1.5 pl-5">
+                      <span className="text-muted-foreground text-[11px]">
+                        1. Top 3 daily ranking
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-1.5 pl-5">
+                      <span className="text-muted-foreground text-[11px]">
+                        2. Display our badge on your site
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -1102,7 +1112,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     ${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}{" "}
                     <span className="text-muted-foreground text-xs line-through">$25</span>
                   </p>
-                  <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
+                  <span className="bg-primary/10 text-primary mb-2 inline-block rounded-full px-2 py-0.5 text-xs">
                     -50% for early users
                   </span>
                   <ul className="text-muted-foreground space-y-1.5 text-xs">

@@ -16,7 +16,7 @@ import {
   getTodayProjects,
   getYesterdayProjects,
 } from "@/app/actions/home"
-import { getLast7DaysVisitors } from "@/app/actions/plausible"
+import { getLast30DaysVisitors } from "@/app/actions/plausible"
 import { getTopCategories } from "@/app/actions/projects"
 
 export default async function Home() {
@@ -27,7 +27,7 @@ export default async function Home() {
   const topCategories = await getTopCategories(5)
   const featuredPremiumProjects = await getFeaturedPremiumProjects()
 
-  const visitorsLast7Days = await getLast7DaysVisitors()
+  const last30DaysVisitors = await getLast30DaysVisitors()
 
   // // Get session
   const session = await auth.api.getSession({
@@ -94,11 +94,11 @@ export default async function Home() {
               </Link>
 
               {/* Last 7 Days Visitors Stat */}
-              {visitorsLast7Days !== null && (
+              {last30DaysVisitors !== null && (
                 <div className="bg-secondary/30 hover:bg-secondary/50 block rounded-md border-l-4 border-green-500 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-green-600">{visitorsLast7Days}</div>
-                    <div className="text-sm font-medium">Visitors (Last 7 Days)</div>
+                    <div className="text-2xl font-bold text-green-600">{last30DaysVisitors}</div>
+                    <div className="text-sm font-medium">Visitors (Last 30 Days)</div>
                   </div>
                 </div>
               )}
