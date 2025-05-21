@@ -3,7 +3,7 @@
  */
 
 import { db } from "@/drizzle/db"
-import { project, user } from "@/drizzle/db/schema"
+import { launchType as LaunchTypeEnum, project, user } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
 interface DiscordEmbed {
@@ -140,6 +140,7 @@ export async function sendDiscordCommentNotification(
  * @param launchType Type of launch (free, premium, premium plus)
  * @param websiteUrl URL of the project website
  * @param projectUrl URL of the project page on Open-Launch
+ * @param userId ID of the user who submitted the launch notification
  */
 export async function notifyDiscordLaunch(
   projectName: string,
@@ -147,6 +148,7 @@ export async function notifyDiscordLaunch(
   launchType: string,
   websiteUrl: string,
   projectUrl: string,
+  userId?: string,
 ): Promise<boolean> {
   try {
     const webhookUrl = process.env.DISCORD_LAUNCH_WEBHOOK_URL
@@ -162,12 +164,42 @@ export async function notifyDiscordLaunch(
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ")
 
-    // Determine color based on launch type
-    let color = 0x00ff00 // Default green
-    if (launchType === "PREMIUM") {
-      color = 0xff9900 // Orange for premium
-    } else if (launchType === "PREMIUM_PLUS") {
-      color = 0xff0000 // Red for premium plus
+    // Determine color based on launch type, en utilisant les valeurs de l'enum
+    let color = 0x00ff00 // Vert par défaut pour Free (LaunchTypeEnum.FREE)
+    if (launchType === LaunchTypeEnum.PREMIUM) {
+      // comparaison directe avec la valeur de l'enum
+      color = 0xff9900 // Orange pour premium
+    } else if (launchType === LaunchTypeEnum.PREMIUM_PLUS) {
+      // comparaison directe
+      color = 0xff0000 // Rouge pour premium plus
+    }
+
+    // Récupérer les informations de l'utilisateur si userId est fourni
+    const submittedByFieldValue = await (async () => {
+      if (!userId) return "N/A (User ID not provided)"
+      try {
+        const userResult = await db
+          .select({ email: user.email, name: user.name })
+          .from(user)
+          .where(eq(user.id, userId))
+          .limit(1)
+
+        if (userResult.length > 0 && userResult[0].name && userResult[0].email) {
+          return `${userResult[0].name} (${userResult[0].email})`
+        } else {
+          console.warn(`[DiscordNotify] User info not found for ID: ${userId}`)
+          return `User ID: ${userId} (Info not fully available)`
+        }
+      } catch (error) {
+        console.error("[DiscordNotify] Error retrieving user info:", error)
+        return `User ID: ${userId} (Error fetching info)`
+      }
+    })()
+
+    const submittedByField = {
+      name: "Submitted By",
+      value: submittedByFieldValue,
+      inline: true,
     }
 
     // Create message to send to Discord
@@ -177,11 +209,11 @@ export async function notifyDiscordLaunch(
           title: "New Project Launch Scheduled",
           color: color,
           url: projectUrl,
-          description: `A new tech project has been scheduled for launch. Check it out!\n➡️ [${projectName}](${projectUrl})`,
+          description: `New project submitted: ${projectName}`,
           fields: [
             {
-              name: "Project",
-              value: `[${projectName}](${projectUrl})`,
+              name: "Project URL",
+              value: `[Visit Project](${projectUrl})`,
               inline: true,
             },
             {
@@ -195,10 +227,11 @@ export async function notifyDiscordLaunch(
               inline: true,
             },
             {
-              name: "Website",
+              name: "Website URL",
               value: `[Visit Website](${websiteUrl})`,
               inline: true,
             },
+            submittedByField,
           ],
           footer: {
             text: "Open Launch Launch Notification",
