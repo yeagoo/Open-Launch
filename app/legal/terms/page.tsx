@@ -25,11 +25,11 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">1. Introduction</h2>
               <p className="mb-3">
-                Welcome to Open Launch. These Terms of Service govern your use of our platform,
+                Welcome to Open-Launch. These Terms of Service govern your use of our platform,
                 which focuses on discovering and supporting projects.
               </p>
               <p className="mb-3">
-                By using Open Launch, you agree to these terms. If you don't agree, please don't use
+                By using Open-Launch, you agree to these terms. If you don't agree, please don't use
                 our services.
               </p>
             </section>
@@ -37,15 +37,15 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">2. Using Our Service</h2>
               <p className="mb-3">
-                <strong>Age Requirements:</strong> You must be at least 13 years old to use Open
-                Launch.
+                <strong>Age Requirements:</strong> You must be at least 13 years old to use
+                Open-Launch.
               </p>
               <p className="mb-3">
                 <strong>Account Responsibility:</strong> If you create an account, you're
                 responsible for maintaining its security and for all activities under your account.
               </p>
               <p className="mb-3">
-                <strong>Acceptable Use:</strong> When using Open Launch, you agree not to:
+                <strong>Acceptable Use:</strong> When using Open-Launch, you agree not to:
               </p>
               <ul className="mb-3 list-disc space-y-1 pl-6">
                 <li>Post content that's illegal, harmful, or violates others' rights</li>
@@ -60,7 +60,7 @@ export default function TermsOfServicePage() {
               <h2 className="mb-3 text-xl font-semibold">3. Content</h2>
               <p className="mb-3">
                 <strong>Your Content:</strong> When you submit projects, comments, or other content
-                on Open Launch, you retain ownership, but grant us permission to display and use
+                on Open-Launch, you retain ownership, but grant us permission to display and use
                 that content on our platform.
               </p>
               <p className="mb-3">
@@ -77,8 +77,8 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">4. Intellectual Property</h2>
               <p className="mb-3">
-                Open Launch is an open source project licensed under the MIT License. The source
-                code is available on{" "}
+                Open-Launch is an open source project licensed under the Open-Launch License. The
+                source code is available on{" "}
                 <a
                   href="https://github.com/drdruide/open-launch"
                   className="text-primary hover:underline"
@@ -91,7 +91,7 @@ export default function TermsOfServicePage() {
               </p>
               <p className="mb-3">
                 While the core platform is open source, certain features or services may be
-                proprietary. The MIT License allows you to:
+                proprietary. The Open-Launch License allows you to:
               </p>
               <ul className="mb-3 list-disc space-y-1 pl-6">
                 <li>Use, copy, and modify the software</li>
@@ -99,19 +99,22 @@ export default function TermsOfServicePage() {
                 <li>Sublicense the software</li>
               </ul>
               <p className="mb-3">
-                You must include the original copyright notice and license in any substantial
-                portions of the software.
+                <strong>Attribution Requirements:</strong> You must include the original copyright
+                notice and license in any substantial portions of the software. Additionally, if you
+                use this software in a web application or online service, you must display a visible
+                dofollow link to "https://open-launch.com" on your main page with the text "Powered
+                by Open-Launch" or "Built with Open-Launch".
               </p>
               <p className="mb-3">
-                User-submitted content remains the property of the respective users, who grant Open
-                Launch a license to display and use that content on our platform.
+                User-submitted content remains the property of the respective users, who grant
+                Open-Launch a license to display and use that content on our platform.
               </p>
             </section>
 
             <section>
               <h2 className="mb-3 text-xl font-semibold">5. Third-Party Content</h2>
               <p className="mb-3">
-                Open Launch may contain links to third-party websites or services, including
+                Open-Launch may contain links to third-party websites or services, including
                 projects. We're not responsible for the content, policies, or practices of these
                 third parties.
               </p>
@@ -123,7 +126,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">6. Termination</h2>
               <p className="mb-3">
-                We can suspend or terminate your access to Open Launch at any time for any reason,
+                We can suspend or terminate your access to Open-Launch at any time for any reason,
                 particularly if you violate these terms.
               </p>
               <p className="mb-3">
@@ -135,7 +138,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">7. Disclaimers</h2>
               <p className="mb-3">
-                Open Launch is provided "as is" without warranties of any kind. We don't guarantee
+                Open-Launch is provided "as is" without warranties of any kind. We don't guarantee
                 that the service will be uninterrupted, secure, or error-free.
               </p>
               <p className="mb-3">
@@ -147,7 +150,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">8. Limitation of Liability</h2>
               <p className="mb-3">
-                To the extent permitted by law, Open Launch and its team will not be liable for any
+                To the extent permitted by law, Open-Launch and its team will not be liable for any
                 indirect, incidental, special, or consequential damages resulting from your use of
                 or inability to use our service.
               </p>
@@ -160,7 +163,7 @@ export default function TermsOfServicePage() {
                 changes, but it's your responsibility to review these terms periodically.
               </p>
               <p className="mb-3">
-                Your continued use of Open Launch after changes means you accept the updated terms.
+                Your continued use of Open-Launch after changes means you accept the updated terms.
               </p>
             </section>
 

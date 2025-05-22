@@ -1,6 +1,6 @@
 # Open-Launch
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Open Launch](https://img.shields.io/badge/License-Open_Launch-yellow.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.1-black?logo=next.js)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue?logo=typescript)](https://www.typescriptlang.org)
@@ -149,7 +149,7 @@ Please read our [Contributing Guide](CONTRIBUTING.md) for more details.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Open-Launch License - see the [LICENSE](LICENSE) file for details. **Attribution with dofollow link required for all uses.**
 
 ## Acknowledgments
 
