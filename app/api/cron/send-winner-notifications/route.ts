@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         projectSlug: project.slug,
         projectRanking: project.dailyRanking,
         projectCreatorId: project.createdBy,
+        projectLaunchType: project.launchType,
       })
       .from(project)
       .where(
@@ -89,6 +90,7 @@ export async function GET(request: NextRequest) {
           projectName: winner.projectName,
           projectSlug: winner.projectSlug,
           ranking: winner.projectRanking,
+          launchType: winner.projectLaunchType,
         })
         emailsSentCount++
       } catch (error) {

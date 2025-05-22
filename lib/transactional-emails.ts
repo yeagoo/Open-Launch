@@ -25,37 +25,42 @@ export async function sendWinnerBadgeEmail({
   projectSlug,
   ranking,
   user,
+  launchType,
 }: {
   user: BasicUser
   ranking: number
   projectName: string
   projectSlug: string
+  launchType: string | null
 }) {
   const badgeName = getBadgeName(ranking)
   const effectiveUserName = user.name || "Winner"
   const effectiveUserEmail = user.email
+  const isPremium = launchType === "premium" || launchType === "premium_plus"
 
   const projectBadgesPageUrl = `${APP_URL}/projects/${projectSlug}/badges`
 
-  const subject = `${projectName} is an Open-Launch ${badgeName}!`
+  const subject = `🏆 ${projectName} is a Top ${ranking} Winner!`
+
+  // Message différent selon le type de lancement
+  const doFollowMessage = isPremium
+    ? `<p><strong>🎉 Dofollow Backlink:</strong> Congrats! You automatically earned a dofollow backlink as a premium winner.</p>`
+    : `<p><strong>🔗 Dofollow Backlink:</strong> Add your badge to your website and <a href="mailto:contact@open-launch.com?subject=Dofollow Request - ${projectName}&body=Hi, I placed the badge on my website. Here's the URL: [YOUR_WEBSITE_URL]">email us your site URL</a> to activate your dofollow link!</p>`
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="font-size: 22px; color: #1a1a1a;">Hi ${effectiveUserName},</h1>
-      <p>Your project, <strong>${projectName}</strong>, is an Open-Launch <strong>${badgeName}</strong> today!</p>
+      <h1 style="font-size: 24px; color: #1a1a1a;">Hi ${effectiveUserName} 👋</h1>
+      <p><strong>${projectName}</strong> is a <strong>${badgeName}</strong> on Open-Launch!</p>
 
-      <p style="margin-top: 25px;">Showcase your achievement! Visit your project's badge page to get your official ${badgeName} badge and the HTML snippet to display it:</p>
       <p style="text-align: center; margin: 25px 0;">
         <a href="${projectBadgesPageUrl}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
-          Get Your Badge
+          🏆 Get Your Badge
         </a>
       </p>
-      <p style="text-align: center; font-size: 12px; color: #777; margin-top: -10px;">(Please ensure you are logged in to access your badges.)</p>
-      <p>Displaying your badge helps highlight your success and provides a valuable link back to your project on our platform.</p>
-      <p>And don't forget you also earned a dofollow backlink! :)</p>
+      
+      ${doFollowMessage}
 
-      <p style="margin-top: 25px;">Best,</p>
-      <p>Eric<br>Founder of Open-Launch</p>
+      <p style="margin-top: 25px;">Congrats! 🎉<br>Eric</p>
     </div>
   `
 
