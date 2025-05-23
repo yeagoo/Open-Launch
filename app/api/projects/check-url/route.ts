@@ -18,11 +18,26 @@ export async function GET(request: Request) {
 
     // Vérifier si l'URL existe déjà
     const [existingProject] = await db
-      .select({ id: project.id })
+      .select({ id: project.id, launchStatus: project.launchStatus })
       .from(project)
       .where(eq(project.websiteUrl, normalizedUrl))
 
-    return NextResponse.json({ exists: !!existingProject })
+    // If no project found, the URL is available
+    if (!existingProject) {
+      return NextResponse.json({ exists: false })
+    }
+
+    // If a project exists but is in PAYMENT_PENDING or PAYMENT_FAILED,
+    // we consider the URL as available to allow re-submission
+    if (
+      existingProject.launchStatus === "payment_pending" ||
+      existingProject.launchStatus === "payment_failed"
+    ) {
+      return NextResponse.json({ exists: false })
+    }
+
+    // In all other cases, the URL is considered taken
+    return NextResponse.json({ exists: true })
   } catch (error) {
     console.error("Error checking URL:", error)
     return NextResponse.json({ error: "Failed to check URL" }, { status: 500 })

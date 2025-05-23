@@ -143,7 +143,9 @@ export async function checkUserLaunchLimit(
         eq(projectTable.createdBy, userId),
         gte(projectTable.scheduledLaunchDate, dateStart), // Utiliser dateStart UTC
         lt(projectTable.scheduledLaunchDate, nextDayStart), // Utiliser nextDayStart UTC
-        ne(projectTable.launchStatus, launchStatus.PAYMENT_FAILED), // ne compter que les lancements qui n'ont pas échoué
+        // Exclure les projets dont le paiement est en attente ou a échoué
+        ne(projectTable.launchStatus, launchStatus.PAYMENT_FAILED),
+        ne(projectTable.launchStatus, launchStatus.PAYMENT_PENDING),
       ),
     )
 
