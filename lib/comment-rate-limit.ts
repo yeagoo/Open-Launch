@@ -2,8 +2,9 @@ import { checkRateLimit } from "@/lib/rate-limit"
 
 // Adjust values according to your needs
 const COMMENT_LIMITS = {
-  ACTIONS_PER_WINDOW: 10, // Maximum 10 comments per window
-  TIME_WINDOW_MS: 5 * 60 * 1000, // 5 minute window
+  ACTIONS_PER_WINDOW: 5, // Maximum 5 comments per window
+
+  TIME_WINDOW_MS: 10 * 60 * 1000, // 10 minute window
 }
 
 // Separate limits for votes (likes/dislikes)
