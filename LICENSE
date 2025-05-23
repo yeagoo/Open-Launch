@@ -18,27 +18,13 @@ binary form, requires prominent attribution to Open Launch in the following mann
    - A visible dofollow link to "https://open-launch.com" must be displayed on ALL pages of your website (preferably in the footer)
    - You MUST use one of the official "Powered by Open-Launch" visual badges:
 
-     **Light Theme Badge:**
-     ![Powered by Open-Launch - Light](https://open-launch.com/images/badges/powered-by-light.svg)
+     Light Theme Badge:
+     https://open-launch.com/images/badges/powered-by-light.svg
 
-     **Dark Theme Badge:**
-     ![Powered by Open-Launch - Dark](https://open-launch.com/images/badges/powered-by-dark.svg)
+     Dark Theme Badge:
+     https://open-launch.com/images/badges/powered-by-dark.svg
 
-     **Implementation Example:**
-
-     ```html
-     <!-- Place this in your footer on ALL pages -->
-     <a href="https://open-launch.com" target="_blank" title="Powered by Open-Launch">
-       <img
-         src="https://open-launch.com/images/badges/powered-by-light.svg"
-         alt="Powered by Open-Launch"
-         width="150"
-         height="44"
-       />
-     </a>
-     ```
-
-   - For ready-to-use code and more implementation examples, visit: https://open-launch.com/legal/badges
+   - For implementation code and examples, visit: https://open-launch.com/legal/badges
    - Text-only attribution is NOT sufficient and will not fulfill the license requirements
    - The badge must be clearly visible to users and not hidden, obfuscated, or made smaller than 150x44 pixels
    - The link must be a dofollow link (do NOT add rel="nofollow" attribute)
