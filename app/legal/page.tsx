@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { RiFilePaper2Line, RiShieldUserLine } from "@remixicon/react"
+import { RiFilePaper2Line, RiMedalLine, RiShieldUserLine } from "@remixicon/react"
 
 export const metadata = {
   title: "Legal Information - Open-Launch",
@@ -19,7 +19,7 @@ export default function LegalPage() {
             legal documents to understand how we operate and protect your information.
           </p>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/legal/terms"
               className="hover:bg-secondary/10 flex flex-col items-center rounded-lg border p-6 text-center transition-colors dark:border-zinc-800"
@@ -39,6 +39,17 @@ export default function LegalPage() {
               <h2 className="mb-2 text-lg font-semibold">Privacy Policy</h2>
               <p className="text-muted-foreground text-sm">
                 How we collect, use, and protect your personal information.
+              </p>
+            </Link>
+
+            <Link
+              href="/legal/badges"
+              className="hover:bg-secondary/10 flex flex-col items-center rounded-lg border p-6 text-center transition-colors dark:border-zinc-800"
+            >
+              <RiMedalLine className="text-primary mb-4 h-12 w-12" />
+              <h2 className="mb-2 text-lg font-semibold">Attribution Badges</h2>
+              <p className="text-muted-foreground text-sm">
+                Official badges for Open-Launch License attribution requirements.
               </p>
             </Link>
           </div>

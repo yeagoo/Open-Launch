@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable react/no-unescaped-entities */
 import Link from "next/link"
 
@@ -102,8 +103,35 @@ export default function TermsOfServicePage() {
                 <strong>Attribution Requirements:</strong> You must include the original copyright
                 notice and license in any substantial portions of the software. Additionally, if you
                 use this software in a web application or online service, you must display a visible
-                dofollow link to "https://open-launch.com" on your main page with the text "Powered
-                by Open-Launch" or "Built with Open-Launch".
+                dofollow link to "https://open-launch.com" on ALL pages of your website (preferably
+                in the footer).
+              </p>
+              <p className="mb-3">
+                <strong>MANDATORY Visual Badge:</strong> You MUST use one of our official "Powered
+                by Open-Launch" visual badges. Text-only attribution is NOT sufficient:
+              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-4 p-6">
+                <img
+                  src="/images/badges/powered-by-light.svg"
+                  alt="Powered by Open-Launch - Light Theme"
+                  className="h-11 w-auto"
+                />
+                <img
+                  src="/images/badges/powered-by-dark.svg"
+                  alt="Powered by Open-Launch - Dark Theme"
+                  className="h-11 w-auto"
+                />
+              </div>
+              <p className="mb-3 text-sm text-yellow-700 dark:text-yellow-300">
+                <strong>⚠️ Important:</strong> The badge must be clearly visible (minimum 150x44
+                pixels), present on ALL pages, and not hidden or obfuscated.
+              </p>
+              <p className="mb-3">
+                <strong>📋 Get Implementation Code:</strong> Visit our{" "}
+                <Link href="/legal/badges" className="text-primary font-medium hover:underline">
+                  Attribution Badges page
+                </Link>{" "}
+                to copy the ready-to-use HTML/React code for these badges.
               </p>
               <p className="mb-3">
                 User-submitted content remains the property of the respective users, who grant
