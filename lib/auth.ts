@@ -56,6 +56,7 @@ export const auth = betterAuth({
         html,
       })
     },
+    expiresIn: 86400,
   },
   socialProviders: {
     google: {
