@@ -66,3 +66,8 @@ export const UPVOTE_LIMITS = {
 
 export const PREMIUM_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PAYMENT_LINK!
 export const PREMIUM_PLUS_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK!
+
+export const SPONSORSHIP_SLOTS = {
+  TOTAL: 3,
+  USED: 1,
+} as const

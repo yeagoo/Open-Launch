@@ -249,7 +249,9 @@ export default function PricingPage() {
       </div>
 
       <div className="mx-auto max-w-3xl">
-        <h2 className="mb-4 text-xl font-bold sm:text-2xl">Frequently Asked Questions</h2>
+        <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
+          Frequently Asked Questions
+        </h2>
         <Accordion type="single" collapsible className="w-full -space-y-px" defaultValue="1">
           {faqItems.map((item) => (
             <AccordionItem

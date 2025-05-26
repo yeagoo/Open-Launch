@@ -1,22 +1,19 @@
 import { headers } from "next/headers"
 import Link from "next/link"
 
-import { Megaphone } from "lucide-react"
-
 import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PremiumCard } from "@/components/home/premium-card"
 import { ProjectSection } from "@/components/home/project-section"
-import { SponsorCard } from "@/components/home/sponsor-card"
-import { WelcomeBanner } from "@/components/home/welcome-banner"
+import { SponsorCards } from "@/components/shared/sponsor-cards"
 import {
   getFeaturedPremiumProjects,
   getMonthBestProjects,
   getTodayProjects,
   getYesterdayProjects,
 } from "@/app/actions/home"
-import { getLast30DaysVisitors } from "@/app/actions/plausible"
+import { getLast30DaysPageviews, getLast30DaysVisitors } from "@/app/actions/plausible"
 import { getTopCategories } from "@/app/actions/projects"
 
 export default async function Home() {
@@ -28,16 +25,12 @@ export default async function Home() {
   const featuredPremiumProjects = await getFeaturedPremiumProjects()
 
   const last30DaysVisitors = await getLast30DaysVisitors()
+  const last30DaysPageviews = await getLast30DaysPageviews()
 
   // // Get session
   const session = await auth.api.getSession({
     headers: await headers(),
   })
-
-  // Stats rapides
-  const ongoingLaunches = todayProjects.filter(
-    (project) => project.launchStatus === "ongoing",
-  ).length
 
   return (
     <main className="bg-secondary/20 min-h-screen">
@@ -46,8 +39,6 @@ export default async function Home() {
           {/* Contenu principal */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
             <div className="space-y-4">
-              <WelcomeBanner />
-
               {/* Featured Premium Plus Projects */}
               {featuredPremiumProjects.length > 0 && (
                 <PremiumCard projects={featuredPremiumProjects} />
@@ -80,49 +71,36 @@ export default async function Home() {
 
           {/* Sidebar */}
           <div className="top-24">
-            {/* Quick Stats */}
-            <div className="space-y-3 py-5 pt-0">
-              <h3 className="flex items-center gap-2 font-semibold">Live Now</h3>
-              <Link
-                href="/trending"
-                className="bg-secondary/30 hover:bg-secondary/50 border-primary block rounded-md border-l-4 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-primary text-2xl font-bold">{ongoingLaunches}</div>
-                  <div className="text-sm font-medium">Active Launches</div>
-                </div>
-              </Link>
+            {/* Statistics */}
+            {(last30DaysVisitors !== null || last30DaysPageviews !== null) && (
+              <div className="space-y-3 pt-0 pb-4">
+                <h3 className="flex items-center gap-2 font-semibold">Statistics (Last 30 Days)</h3>
 
-              {/* Last 7 Days Visitors Stat */}
-              {last30DaysVisitors !== null && (
-                <div className="bg-secondary/30 hover:bg-secondary/50 block rounded-md border-l-4 border-green-500 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-green-600">{last30DaysVisitors}</div>
-                    <div className="text-sm font-medium">Visitors (Last 30 Days)</div>
-                  </div>
-                </div>
-              )}
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {last30DaysVisitors !== null && (
+                    <div className="hover:bg-muted/40 rounded-md border p-2 text-center transition-colors">
+                      <div className="text-xl font-bold">{last30DaysVisitors}</div>
+                      <div className="text-muted-foreground text-xs font-medium">Visitors</div>
+                    </div>
+                  )}
 
-            {/* Featured Sponsor */}
-            <div className="py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Featured Sponsor</h3>
-              <SponsorCard
-                name="ClawCloud Run"
-                description="In a Jiffy. Build, Deploy and Run."
-                url="https://run.claw.cloud?ref=open-launch"
-                imageUrl="https://yxucdfr9f5.ufs.sh/f/M3RHr0TmpHk58nC2t7bg1XPzV7Kxo25HAvNtwa6hLcRpjB0T"
-              />
-              <SponsorCard
-                name="Your Product Here?"
-                description="Become a sponsor!"
-                url="mailto:contact@open-launch.com?subject=Sponsoring%20Inquiry%20on%20Open-Launch"
-                icon={<Megaphone size={18} className="text-muted-foreground" />}
-              />
+                  {last30DaysPageviews !== null && (
+                    <div className="hover:bg-muted/40 rounded-md border p-2 text-center transition-colors">
+                      <div className="text-xl font-bold">{last30DaysPageviews}</div>
+                      <div className="text-muted-foreground text-xs font-medium">Page Views</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Sponsors */}
+            <div className="space-y-3 py-4">
+              <h3 className="flex items-center font-semibold">Sponsors</h3>
+              <SponsorCards />
             </div>
 
             {/* Categories */}
-            <div className="space-y-3 py-5">
+            <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-2 font-semibold">Top Categories</h3>
                 <Button variant="ghost" size="sm" className="text-sm" asChild>
@@ -160,7 +138,7 @@ export default async function Home() {
             )} */}
 
             {/* Quick Links */}
-            <div className="space-y-3 py-5">
+            <div className="space-y-3 py-4">
               <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
               <div className="space-y-2">
                 {session?.user && (

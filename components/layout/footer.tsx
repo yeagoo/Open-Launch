@@ -10,7 +10,10 @@ const discoverLinks = [
   { title: "Submit Project", href: "/projects/submit" },
 ]
 
-const resourcesLinks = [{ title: "Pricing", href: "/pricing" }]
+const resourcesLinks = [
+  { title: "Pricing", href: "/pricing" },
+  { title: "Sponsors", href: "/sponsors" },
+]
 
 const legalLinks = [
   { title: "Terms of Service", href: "/legal/terms" },

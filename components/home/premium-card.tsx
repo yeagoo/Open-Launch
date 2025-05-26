@@ -35,7 +35,7 @@ export function PremiumCard({ projects }: PremiumCardProps) {
 
   return (
     <section className="space-y-3 sm:space-y-4">
-      <div className="flex items-center justify-between px-3 sm:px-4">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold sm:text-2xl">Featured Premium Plus</h2>
       </div>
       <div className="bg-background grid grid-cols-3 gap-2 rounded-xl p-4">

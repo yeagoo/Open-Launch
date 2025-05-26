@@ -12,7 +12,11 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 
-export function NavMenu() {
+interface NavMenuProps {
+  showDashboard?: boolean
+}
+
+export function NavMenu({ showDashboard = true }: NavMenuProps) {
   return (
     <NavigationMenu className="hidden md:flex">
       <NavigationMenuList className="gap-1">
@@ -78,13 +82,18 @@ export function NavMenu() {
           </NavigationMenuContent>
         </NavigationMenuItem>
 
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link href="/dashboard" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
-              Dashboard
-            </Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
+        {showDashboard && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              <Link
+                href="/dashboard"
+                className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}
+              >
+                Dashboard
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
 
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
@@ -101,6 +110,14 @@ export function NavMenu() {
           <NavigationMenuLink asChild>
             <Link href="/pricing" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
               Pricing
+            </Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild>
+            <Link href="/sponsors" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
+              Sponsors
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>

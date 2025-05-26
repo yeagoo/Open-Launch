@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   RiDashboardLine,
   RiFlashlightLine,
+  RiHandCoinLine,
   RiHomeLine,
   RiLayoutGridLine,
   RiLoginBoxLine,
@@ -55,13 +56,13 @@ export default async function Nav() {
         <div className="flex items-center gap-8">
           <Link href="/" className="font-heading flex items-center">
             <span className="font-heading flex items-center text-lg font-bold">
-              <img src="/logo.svg" alt="logo" className="h-6 w-6 mr-1" />
+              <img src="/logo.svg" alt="logo" className="mr-1 h-6 w-6" />
               Open-Launch
             </span>
           </Link>
 
-          {/* Navigation principale - uniquement visible si connecté */}
-          {session && <NavMenu />}
+          {/* Navigation principale */}
+          <NavMenu showDashboard={!!session} />
         </div>
 
         {/* Version Desktop - Recherche et actions */}
@@ -169,6 +170,15 @@ export default async function Nav() {
                           >
                             <RiMoneyDollarCircleLine className="text-muted-foreground h-4 w-4" />
                             <span>Pricing</span>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
+                            href="/sponsors"
+                            className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
+                          >
+                            <RiHandCoinLine className="text-muted-foreground h-4 w-4" />
+                            <span>Sponsors</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>

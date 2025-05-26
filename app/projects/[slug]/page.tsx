@@ -30,6 +30,7 @@ import { EditButton } from "@/components/project/edit-button"
 import { ProjectComments } from "@/components/project/project-comments"
 import { ShareButton } from "@/components/project/share-button"
 import { UpvoteButton } from "@/components/project/upvote-button"
+import { SponsorCards } from "@/components/shared/sponsor-cards"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
 
 // Types
@@ -396,7 +397,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </div>
                 <div className="text-muted-foreground mt-1 text-xs">Added {timeAgo}</div>
               </div>
-
               <div className="space-y-3 border-t pt-4 dark:border-zinc-800">
                 <h3 className="font-semibold">Project details</h3>
                 {(projectData.githubUrl || projectData.twitterUrl) && (
@@ -479,10 +479,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   </div>
                 )}
               </div>
-
               <div className="space-y-2 border-t pt-4 dark:border-zinc-800">
                 <h3 className="font-semibold">Share</h3>
                 <ShareButton name={projectData.name} slug={projectData.slug} variant="fullWidth" />
+              </div>
+
+              {/* Sponsors Section */}
+              <div className="space-y-3 border-t pt-4 dark:border-zinc-800">
+                <h3 className="font-semibold">Sponsors</h3>
+                <SponsorCards />
               </div>
             </div>
           </div>
