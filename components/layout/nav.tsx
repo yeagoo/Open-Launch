@@ -39,16 +39,6 @@ export default async function Nav() {
   })
   const user = session?.user
 
-  // Pré-charger l'image si elle existe - Correction pour éviter l'erreur
-  try {
-    if (user && typeof user.image === "string" && user.image) {
-      await fetch(user.image)
-    }
-  } catch (error) {
-    console.error("Erreur lors du préchargement de l'image:", error)
-    // Continuer l'exécution même en cas d'erreur
-  }
-
   return (
     <nav className="bg-background/95 sticky top-0 z-50 border-b backdrop-blur-sm">
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
