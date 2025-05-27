@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { RiCheckboxCircleFill } from "@remixicon/react"
 
-import { LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
+import { DOMAIN_AUTHORITY, LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
 import {
   Accordion,
   AccordionContent,
@@ -120,8 +120,8 @@ export default function PricingPage() {
                         rel="noopener noreferrer"
                         className="text-primary hover:underline"
                       >
-                        (DR 18)
-                      </a>{" "}
+                        (DR {DOMAIN_AUTHORITY})
+                      </a>
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -214,7 +214,7 @@ export default function PricingPage() {
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
                         >
-                          DR 18
+                          DR {DOMAIN_AUTHORITY}
                         </a>{" "}
                         domain
                       </p>

@@ -38,13 +38,13 @@ export function PremiumCard({ projects }: PremiumCardProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold sm:text-2xl">Featured Premium Plus</h2>
       </div>
-      <div className="bg-background grid grid-cols-3 gap-2 rounded-xl p-4">
+      <div className="grid grid-cols-3 gap-2 rounded-xl p-4">
         {displayItems.map((item) =>
           item.launchStatus === "placeholder" ? (
             <div key={item.id} className="flex flex-col items-center">
               <Link
                 href="/pricing"
-                className="group hover:bg-muted/50 flex flex-col items-center gap-3 rounded-lg p-2 text-center transition-colors sm:items-center sm:text-left"
+                className="group flex flex-col items-center gap-3 rounded-lg p-2 text-center transition-colors sm:items-center sm:text-left"
               >
                 <div className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-lg bg-zinc-100 sm:h-14 sm:w-14 dark:bg-zinc-800">
                   <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 dark:border-zinc-700">
@@ -82,7 +82,7 @@ export function PremiumCard({ projects }: PremiumCardProps) {
                 </div>
               </div>
               <div className="min-w-0">
-                <h4 className="group-hover:text-primary line-clamp-2 text-xs font-medium transition-colors sm:text-base">
+                <h4 className="group-hover:text-primary line-clamp-2 text-center text-xs font-medium transition-colors sm:text-base">
                   {item.name}
                 </h4>
               </div>

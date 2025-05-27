@@ -1195,7 +1195,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                                 <div className="flex w-full items-center justify-between">
                                   <span>{format(dateObj, "EEE, MMM d")}</span>
                                   <span
-                                    className={`ml-2 text-xs ${isDisabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-foreground"}`}
+                                    className={`ml-2 text-xs ${isDisabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-foreground group-data-[highlighted]:text-foreground"}`}
                                   >
                                     {slotsText}
                                   </span>

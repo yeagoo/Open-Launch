@@ -71,3 +71,5 @@ export const SPONSORSHIP_SLOTS = {
   TOTAL: 3,
   USED: 1,
 } as const
+
+export const DOMAIN_AUTHORITY = 20
