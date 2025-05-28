@@ -745,7 +745,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                 Product Image <span>(Optional)</span>
               </Label>
               <p className="text-muted-foreground text-xs">
-                Add a product image. Recommended: 1:1 square image (e.g., 256x256px).
+                Add a product image. Recommended: 16:9 aspect ratio (e.g., 800x450px).
               </p>
               {formData.productImage ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
