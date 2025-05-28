@@ -38,12 +38,11 @@ export default async function Home() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
           {/* Contenu principal */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
-            <div className="space-y-4">
-              {/* Featured Premium Plus Projects */}
-              {featuredPremiumProjects.length > 0 && (
+            {featuredPremiumProjects.length > 0 && (
+              <div className="space-y-4">
                 <PremiumCard projects={featuredPremiumProjects} />
-              )}
-            </div>
+              </div>
+            )}
 
             <ProjectSection
               title="Top Projects Launching Today"
