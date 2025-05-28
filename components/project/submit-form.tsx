@@ -41,6 +41,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RichTextDisplay, RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -50,7 +51,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
 import {
   checkUserLaunchLimit,
@@ -72,6 +72,7 @@ interface ProjectFormData {
   twitterUrl?: string
   scheduledDate: string | null
   launchType: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES]
+  productImage: string | null
 }
 
 interface DateGroup {
@@ -99,13 +100,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     twitterUrl: "",
     scheduledDate: null,
     launchType: LAUNCH_TYPES.FREE,
+    productImage: null,
   })
 
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null)
-  const [uploadedCoverImageUrl, setUploadedCoverImageUrl] = useState<string | null>(null)
 
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
-  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [isUploadingProductImage, setIsUploadingProductImage] = useState(false)
 
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
@@ -422,14 +423,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         process.env.NODE_ENV === "development" && !uploadedLogoUrl
           ? "https://placehold.co/128x128/E2E8F0/718096?text=Logo"
           : uploadedLogoUrl!
-      const finalCoverImageUrl = uploadedCoverImageUrl
 
       const projectData = {
         name: formData.name,
         description: formData.description,
         websiteUrl: formData.websiteUrl,
         logoUrl: finalLogoUrl,
-        coverImageUrl: finalCoverImageUrl,
+        productImage: formData.productImage,
         categories: formData.categories,
         techStack: formData.techStack,
         platforms: formData.platforms,
@@ -658,14 +658,11 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <Label htmlFor="description">
                 Short Description <span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Describe your project in a sentence or two."
-                required
-                rows={3}
+              <RichTextEditor
+                content={formData.description}
+                onChange={(content) => setFormData((prev) => ({ ...prev, description: content }))}
+                placeholder="Describe your project"
+                className="max-h-[300px] overflow-y-auto"
               />
             </div>
             <div className="space-y-2">
@@ -744,28 +741,28 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="coverImageUrl">
-                Cover Image <span>(Optional)</span>
+              <Label htmlFor="productImage">
+                Product Image <span>(Optional)</span>
               </Label>
               <p className="text-muted-foreground text-xs">
-                Recommended: 6:1 wide image (e.g., 2400x400px).
+                Add a product image. Recommended: 1:1 square image (e.g., 256x256px).
               </p>
-              {uploadedCoverImageUrl ? (
+              {formData.productImage ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
                   <Image
-                    src={uploadedCoverImageUrl}
-                    alt="Cover image preview"
-                    width={240}
-                    height={135}
-                    className="rounded object-cover"
+                    src={formData.productImage}
+                    alt="Product image preview"
+                    width={256}
+                    height={256}
+                    className="rounded object-contain"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-foreground absolute top-1 right-1 h-6 w-6"
-                    onClick={() => setUploadedCoverImageUrl(null)}
-                    aria-label="Remove cover image"
+                    onClick={() => setFormData((prev) => ({ ...prev, productImage: null }))}
+                    aria-label="Remove product image"
                   >
                     <RiCloseCircleLine className="h-5 w-5" />
                   </Button>
@@ -773,36 +770,33 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               ) : (
                 <div className="mt-2 flex items-center gap-2">
                   <UploadButton
-                    endpoint="projectCoverImage"
+                    endpoint="projectProductImage"
                     onUploadBegin={() => {
-                      console.log("Upload Begin (Cover)")
-                      setIsUploadingCover(true)
+                      console.log("Upload Begin (Product Image)")
+                      setIsUploadingProductImage(true)
                       setError(null)
                     }}
                     onClientUploadComplete={(res) => {
-                      console.log("Upload Response (Cover):", res)
-                      setIsUploadingCover(false)
+                      console.log("Upload Response (Product Image):", res)
+                      setIsUploadingProductImage(false)
                       if (res && res.length > 0 && res[0].serverData?.fileUrl) {
-                        setUploadedCoverImageUrl(res[0].serverData.fileUrl)
-                        console.log("Cover URL set:", res[0].serverData.fileUrl)
+                        setFormData((prev) => ({
+                          ...prev,
+                          productImage: res[0].serverData.fileUrl,
+                        }))
+                        console.log("Product Image URL set:", res[0].serverData.fileUrl)
                       } else {
-                        console.error("Cover upload failed: No URL", res)
-                        setError("Cover image upload failed: No URL returned.")
+                        console.error("Product image upload failed: No URL", res)
+                        setError("Product image upload failed: No URL returned.")
                       }
                     }}
                     onUploadError={(error: Error) => {
-                      console.error("Upload Error (Cover):", error)
-                      setIsUploadingCover(false)
-                      if (error.message.includes("FileSizeMismatch")) {
-                        setError(
-                          "Cover image upload failed: The file is too large. Please ensure it's under 1MB.",
-                        )
-                      } else {
-                        setError(`Cover image upload failed: ${error.message}`)
-                      }
+                      console.error("Upload Error (Product Image):", error)
+                      setIsUploadingProductImage(false)
+                      setError(`Product image upload failed: ${error.message}`)
                     }}
                     appearance={{
-                      button: `ut-button flex items-center w-fit gap-2 border border-input bg-primary hover:bg-primary/90 hover:text-accent-foreground text-sm h-9 px-3 ${isUploadingCover ? "opacity-50 pointer-events-none" : ""}`,
+                      button: `ut-button flex items-center w-fit gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 ${isUploadingProductImage ? "opacity-50 pointer-events-none" : ""}`,
                       allowedContent: "hidden",
                     }}
                     content={{
@@ -811,14 +805,14 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                         if (ready)
                           return (
                             <>
-                              <RiImageAddLine className="h-4 w-4" /> Upload Cover Image
+                              <RiImageAddLine className="h-4 w-4" /> Add Product Image
                             </>
                           )
                         return "Getting ready..."
                       },
                     }}
                   />
-                  {isUploadingCover && (
+                  {isUploadingProductImage && (
                     <span className="text-muted-foreground text-xs">Uploading...</span>
                   )}
                 </div>
@@ -1261,8 +1255,12 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       </a>
                     </p>
                     <p>
-                      <strong>Description:</strong> {formData.description}
+                      <strong>Description:</strong>
                     </p>
+                    <RichTextDisplay
+                      content={formData.description}
+                      className="mt-1 max-h-[200px] overflow-y-auto rounded-md border p-2 text-sm"
+                    />
                     {uploadedLogoUrl && (
                       <p className="flex flex-col items-start gap-2">
                         <strong>Logo:</strong>
@@ -1275,14 +1273,14 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                         />
                       </p>
                     )}
-                    {uploadedCoverImageUrl && (
+                    {formData.productImage && (
                       <p className="flex flex-col items-start gap-2">
-                        <strong>Cover Image:</strong>
+                        <strong>Product Image:</strong>
                         <Image
-                          src={uploadedCoverImageUrl}
-                          alt="Uploaded cover image"
+                          src={formData.productImage}
+                          alt="Product image"
                           width={128}
-                          height={72}
+                          height={128}
                           className="rounded border object-cover"
                         />
                       </p>
@@ -1462,7 +1460,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
           type="button"
           variant="outline"
           onClick={prevStep}
-          disabled={currentStep === 1 || isPending || isUploadingLogo || isUploadingCover}
+          disabled={currentStep === 1 || isPending || isUploadingLogo || isUploadingProductImage}
         >
           <RiArrowLeftLine className="mr-2 h-4 w-4" />
           Previous
@@ -1475,7 +1473,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
             disabled={
               isPending ||
               isUploadingLogo ||
-              isUploadingCover ||
+              isUploadingProductImage ||
               (currentStep === 3 && isLoadingDateCheck)
             }
           >
@@ -1489,7 +1487,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
           <Button
             type="button"
             onClick={handleFinalSubmit}
-            disabled={isPending || isUploadingLogo || isUploadingCover}
+            disabled={isPending || isUploadingLogo || isUploadingProductImage}
           >
             {isPending ? (
               <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />

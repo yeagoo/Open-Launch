@@ -26,7 +26,7 @@ export default function ProjectNotFound() {
           {/* Action buttons */}
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild variant="outline" className="gap-2">
-              <Link href="/" className="text-primary hover:text-primary/80 underline">
+              <Link href="/" className="text-primary hover:text-primary/80 hover:text-white">
                 <RiArrowLeftLine className="h-4 w-4" />
                 Back to Home
               </Link>

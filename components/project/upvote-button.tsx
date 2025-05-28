@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useOptimistic, useState, useTransition } from "react"
+import React, { useEffect, useOptimistic, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import React from "react"
 
 import { RiThumbUpFill, RiThumbUpLine } from "@remixicon/react"
 import { toast } from "sonner"
@@ -51,7 +50,7 @@ export function UpvoteButton({
 
   const handleUpvote = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     if (!isAuthenticated) {
       router.push("/sign-in")
       return
@@ -111,10 +110,10 @@ export function UpvoteButton({
       onClick={handleUpvote}
       disabled={isPending}
       className={cn(
-        "bg-background inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800",
+        "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 transition-colors",
         optimisticState.upvoted
-          ? "border-primary text-primary hover:border-primary hover:bg-primary/5"
-          : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700",
+          ? "border-blue-500 bg-blue-500 text-white hover:border-blue-600 hover:bg-blue-600"
+          : "border-gray-200 bg-gray-100 text-gray-700 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400",
         !isAuthenticated && "cursor-not-allowed opacity-75",
         className,
       )}

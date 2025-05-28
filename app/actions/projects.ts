@@ -195,7 +195,7 @@ interface ProjectSubmissionData {
   description: string
   websiteUrl: string
   logoUrl: string
-  coverImageUrl: string | null
+  productImage: string | null
   categories: string[]
   techStack: string[]
   platforms: string[]
@@ -219,7 +219,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       description,
       websiteUrl,
       logoUrl,
-      coverImageUrl,
+      productImage,
       categories,
       techStack,
       platforms,
@@ -256,7 +256,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
         description,
         websiteUrl,
         logoUrl,
-        coverImageUrl: coverImageUrl ?? undefined,
+        productImage: productImage ?? undefined,
         techStack,
         platforms,
         pricing,

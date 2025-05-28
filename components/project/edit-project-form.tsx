@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { updateProject } from "@/app/actions/project-details"
 import { getAllCategories } from "@/app/actions/projects"
 
@@ -111,12 +111,11 @@ export function EditProjectForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">Description</label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="min-h-[150px]"
+        <RichTextEditor
+          className="max-h-[250px] overflow-y-auto"
+          content={description}
+          onChange={(content) => setDescription(content)}
           placeholder="Enter project description"
-          required
         />
       </div>
 

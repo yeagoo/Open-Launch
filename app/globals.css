@@ -8,6 +8,7 @@
 @source '../node_modules/@fuma-comment/react/dist/**/*.js';
 
 @plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 
 /* Styles spécifiques pour Fuma Comment */
 /* Fix pour les popups de menu qui apparaissent derrière le contenu */

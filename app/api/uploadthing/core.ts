@@ -25,10 +25,10 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId, fileUrl: file.ufsUrl }
     }),
 
-  projectCoverImage: f({ image: { maxFileSize: "1MB", maxFileCount: 1 } })
+  projectProductImage: f({ image: { maxFileSize: "1MB", maxFileCount: 1 } })
     .middleware(authenticateUser)
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log("Cover Image Upload complete for userId:", metadata.userId)
+      console.log("Product Image Upload complete for userId:", metadata.userId)
       console.log("file url", file.ufsUrl)
       return { uploadedBy: metadata.userId, fileUrl: file.ufsUrl }
     }),

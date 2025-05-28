@@ -15,6 +15,13 @@
       "when": 1747772116369,
       "tag": "0001_dizzy_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748442556368,
+      "tag": "0002_pale_metal_master",
+      "breakpoints": true
     }
   ]
 }
