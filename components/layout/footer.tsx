@@ -158,6 +158,39 @@ export default function FooterSection() {
             </div>
           </div>
         </div>
+        {/* Badges Section */}
+        <div className="border-border/40 mt-8 border-t">
+          <div className="mx-auto max-w-2xl pt-8">
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <a
+                href="https://twelve.tools"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+              >
+                <img
+                  src="https://twelve.tools/badge0-dark.svg"
+                  alt="Featured on Twelve Tools"
+                  width="200"
+                  height="54"
+                />
+              </a>
+              <a
+                href="https://twelve.tools"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+              >
+                <img
+                  src="https://twelve.tools/badge0-white.svg"
+                  alt="Featured on Twelve Tools"
+                  width="200"
+                  height="54"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   )
