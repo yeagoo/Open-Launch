@@ -245,6 +245,32 @@ export default function FooterSection() {
                   height="38"
                 />
               </a>
+              <a
+                href="https://startupfa.me/s/open-launch?utm_source=open-launch.com"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+              >
+                <img
+                  src="https://startupfa.me/badges/featured/dark.webp"
+                  alt="Featured on Startup Fame"
+                  width="140"
+                  height="38"
+                />
+              </a>
+              <a
+                href="https://startupfa.me/s/open-launch?utm_source=open-launch.com"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+              >
+                <img
+                  src="https://startupfa.me/badges/featured-badge.webp"
+                  alt="Featured on Startup Fame"
+                  width="140"
+                  height="38"
+                />
+              </a>
             </div>
           </div>
         </div>
