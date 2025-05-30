@@ -6,6 +6,11 @@ import Link from "next/link"
 import { RiCalendarLine, RiCheckLine, RiMessage2Line } from "@remixicon/react"
 import { formatDistance } from "date-fns"
 
+// Function to strip HTML tags from text
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim()
+}
+
 // Interface pour les props du composant
 interface DashboardProjectCardProps {
   name: string
@@ -65,7 +70,9 @@ export function DashboardProjectCard({
       />
       <div className="min-w-0 flex-grow">
         <h4 className="truncate text-sm font-medium sm:text-base">{name}</h4>
-        <p className="text-muted-foreground mb-1 truncate text-xs sm:text-sm">{description}</p>
+        <p className="text-muted-foreground mb-1 truncate text-xs sm:text-sm">
+          {stripHtml(description)}
+        </p>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
           {/* Display the main status/date badge */}
           {renderStatusBadge()}
