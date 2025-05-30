@@ -66,12 +66,12 @@ export default function FooterSection() {
               <img
                 src="/images/badges/top1-light.svg"
                 alt="Top 1 Product Badge (Light Theme)"
-                className="w-[150px]"
+                className="block w-[200px] dark:hidden"
               />
               <img
                 src="/images/badges/top1-dark.svg"
                 alt="Top 1 Product Badge (Dark Theme)"
-                className="w-[150px]"
+                className="hidden w-[200px] dark:block"
               />
             </div>
           </div>
@@ -161,6 +161,9 @@ export default function FooterSection() {
         {/* Badges Section */}
         <div className="border-border/40 mt-8 border-t">
           <div className="mx-auto max-w-2xl pt-8">
+            <h3 className="text-muted-foreground mb-6 text-center text-xs font-medium tracking-wider uppercase">
+              Earned Badges
+            </h3>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="https://twelve.tools"
@@ -171,8 +174,8 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-dark.svg"
                   alt="Featured on Twelve Tools"
-                  width="200"
-                  height="54"
+                  width="140"
+                  height="38"
                 />
               </a>
               <a
@@ -184,8 +187,34 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-white.svg"
                   alt="Featured on Twelve Tools"
-                  width="200"
-                  height="54"
+                  width="140"
+                  height="38"
+                />
+              </a>
+              <a
+                href="https://bestdirectories.org"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+              >
+                <img
+                  src="https://bestdirectories.org/feature-badge-dark.svg"
+                  alt="Featured on Best Directories"
+                  width="140"
+                  height="38"
+                />
+              </a>
+              <a
+                href="https://bestdirectories.org"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+              >
+                <img
+                  src="https://bestdirectories.org/feature-badge.svg"
+                  alt="Featured on Best Directories"
+                  width="140"
+                  height="38"
                 />
               </a>
             </div>
