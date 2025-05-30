@@ -6,8 +6,14 @@ import { useRouter } from "next/navigation"
 
 import { RiExternalLinkLine } from "@remixicon/react"
 
-import { ProjectCardButtons } from "./project-card-buttons"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
+
+import { ProjectCardButtons } from "./project-card-buttons"
+
+// Function to strip HTML tags from text
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim()
+}
 
 interface Category {
   id: string
@@ -105,7 +111,7 @@ export function ProjectCard({
             </div>
 
             <p className="text-muted-foreground mb-1 line-clamp-2 text-xs sm:line-clamp-1 sm:text-sm">
-              {description}
+              {stripHtml(description)}
             </p>
 
             {categories.length > 0 && (
