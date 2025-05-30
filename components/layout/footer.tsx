@@ -217,6 +217,34 @@ export default function FooterSection() {
                   height="38"
                 />
               </a>
+              <a
+                href="https://aiwith.me/tools/open-launch-com/?utm_source=badge-featured&utm_medium=badge&ref=embed"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+                title="Open Launch - Featured on AI With Me"
+              >
+                <img
+                  src="https://aiwith.me/ai_with_me_dark_badge.svg"
+                  alt="Open Launch - Featured on AI With Me"
+                  width="140"
+                  height="38"
+                />
+              </a>
+              <a
+                href="https://aiwith.me/tools/open-launch-com/?utm_source=badge-featured&utm_medium=badge&ref=embed"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+                title="Open Launch - Featured on AI With Me"
+              >
+                <img
+                  src="https://aiwith.me/ai_with_me_light_badge.svg"
+                  alt="Open Launch - Featured on AI With Me"
+                  width="140"
+                  height="38"
+                />
+              </a>
             </div>
           </div>
         </div>
