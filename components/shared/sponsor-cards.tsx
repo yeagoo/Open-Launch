@@ -9,6 +9,12 @@ export function SponsorCards() {
         url="https://run.claw.cloud?ref=open-launch"
         imageUrl="https://yxucdfr9f5.ufs.sh/f/M3RHr0TmpHk58nC2t7bg1XPzV7Kxo25HAvNtwa6hLcRpjB0T"
       />
+      <SponsorCard
+        name="LandingLab"
+        description="Unique landing pages for your projects."
+        url="https://landinglab.xyz?ref=open-launch"
+        imageUrl="/sponsors/landinglab.png"
+      />
     </>
   )
 }
