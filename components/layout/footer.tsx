@@ -271,6 +271,32 @@ export default function FooterSection() {
                   height="38"
                 />
               </a>
+              <a
+                href="https://www.producthunt.com/products/open-launch?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-open-launch"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=neutral&t=1748776168767"
+                  alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
+                  width="140"
+                  height="38"
+                />
+              </a>
+              <a
+                href="https://www.producthunt.com/products/open-launch?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-open-launch"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=light&t=1748776063921"
+                  alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
+                  width="140"
+                  height="38"
+                />
+              </a>
             </div>
           </div>
         </div>

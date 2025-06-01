@@ -2,6 +2,7 @@ import { headers } from "next/headers"
 import Link from "next/link"
 
 import { auth } from "@/lib/auth"
+import { DOMAIN_AUTHORITY } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PremiumCard } from "@/components/home/premium-card"
@@ -34,6 +35,15 @@ export default async function Home() {
 
   return (
     <main className="bg-secondary/20 min-h-screen">
+      {/* Banner */}
+      <div className="bg-muted/30 border-b">
+        <div className="container mx-auto max-w-6xl px-4 py-2 text-center">
+          <h1 className="text-foreground text-md font-heading mb-1 font-semibold sm:text-xl">
+            Submit, Earn a Badge & {DOMAIN_AUTHORITY}+ DR Backlink
+          </h1>
+        </div>
+      </div>
+
       <div className="container mx-auto max-w-6xl px-4 pt-8 pb-12">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
           {/* Contenu principal */}
