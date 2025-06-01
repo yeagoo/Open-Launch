@@ -38,7 +38,7 @@ export default async function Home() {
       {/* Banner */}
       <div className="bg-muted/30 border-b">
         <div className="container mx-auto max-w-6xl px-4 py-2 text-center">
-          <h1 className="text-foreground text-md font-heading mb-1 font-semibold sm:text-xl">
+          <h1 className="text-foreground text-md font-heading font-semibold sm:text-xl">
             Submit, Earn a Badge & {DOMAIN_AUTHORITY}+ DR Backlink
           </h1>
         </div>
