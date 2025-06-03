@@ -25,12 +25,12 @@ const faqItems = [
   {
     id: "2",
     title: "How many projects are launched each day?",
-    content: `We launch up to ${LAUNCH_LIMITS.FREE_DAILY_LIMIT} free projects, ${LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium projects, and ${LAUNCH_LIMITS.PREMIUM_PLUS_DAILY_LIMIT} premium plus projects daily.`,
+    content: `We launch up to ${LAUNCH_LIMITS.FREE_DAILY_LIMIT} free projects and ${LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium projects.`,
   },
   {
     id: "3",
     title: "How far in advance can I schedule my launch?",
-    content: `Free users can schedule up to ${LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days in advance, Premium users up to ${LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days, and Premium Plus users up to ${LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD} days.`,
+    content: `Free users can schedule up to ${LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days in advance and Premium users up to ${LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days.`,
   },
 ]
 
@@ -105,35 +105,48 @@ export default function PricingPage() {
                   Priority scheduling with faster launch dates.
                 </p>
 
-                <ul className="mb-5 space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
-                    <span className="font-semibold">Skip the Free Queue - Priority access</span>
+                <ul className="mb-5 space-y-1 text-sm">
+                  <li className="bg-primary/5 border-primary/10 rounded border p-2">
+                    <div className="flex items-start gap-2">
+                      <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                      <div>
+                        <p className="text-primary text-sm font-semibold">Skip the Free Queue</p>
+                        <p className="text-muted-foreground text-xs">Priority access</p>
+                      </div>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
-                    <span className="font-semibold">
-                      Guaranteed Dofollow Backlink{" "}
-                      <a
-                        href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        (DR {DOMAIN_AUTHORITY})
-                      </a>
-                    </span>
+                  <li className="bg-primary/5 border-primary/10 rounded border p-2">
+                    <div className="flex items-start gap-2">
+                      <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                      <div>
+                        <p className="text-primary text-sm font-semibold">
+                          Guaranteed Dofollow Backlink
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          Valuable SEO boost from our{" "}
+                          <a
+                            href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            DR {DOMAIN_AUTHORITY}
+                          </a>{" "}
+                          domain
+                        </p>
+                      </div>
+                    </div>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
-                    <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots daily</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
+                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
+                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <span>Earlier launch dates</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
+                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
+                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                    <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots daily</span>
+                  </li>
+                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
+                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <span>Featured on homepage</span>
                   </li>
                 </ul>
@@ -150,7 +163,7 @@ export default function PricingPage() {
       </div>
 
       {/* Second row: Premium Plus - Enterprise Style */}
-      <div className="mx-auto mb-12 max-w-3xl">
+      {/* <div className="mx-auto mb-12 max-w-3xl">
         <div className="rounded-lg border p-5">
           <div className="flex flex-col md:flex-row">
             <div className="mb-6 flex flex-col md:mb-0 md:w-2/5 md:border-r md:pr-6">
@@ -246,9 +259,9 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto mt-12 max-w-3xl">
         <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
           Frequently Asked Questions
         </h2>

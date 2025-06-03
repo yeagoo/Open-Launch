@@ -160,7 +160,7 @@ export default function FooterSection() {
         </div>
         {/* Badges Section */}
         <div className="border-border/40 mt-8 border-t">
-          <div className="mx-auto max-w-2xl pt-8">
+          <div className="mx-auto max-w-5xl pt-8">
             <h3 className="text-muted-foreground mb-6 text-center text-xs font-medium tracking-wider uppercase">
               Earned Badges
             </h3>

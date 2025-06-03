@@ -21,18 +21,17 @@ import {
   RiLoader4Line,
   RiRocketLine,
   RiStarLine,
-  RiVipCrownLine,
 } from "@remixicon/react"
 import { addDays, format, parseISO } from "date-fns"
 import { Tag, TagInput } from "emblor"
 
 import {
   DATE_FORMAT,
+  DOMAIN_AUTHORITY,
   LAUNCH_LIMITS,
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
   PREMIUM_PAYMENT_LINK,
-  PREMIUM_PLUS_PAYMENT_LINK,
 } from "@/lib/constants"
 import { UploadButton } from "@/lib/uploadthing"
 import { Badge } from "@/components/ui/badge"
@@ -149,16 +148,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       let startDate, endDate
       const today = new Date()
 
-      if (formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS) {
-        startDate = format(
-          addDays(today, LAUNCH_SETTINGS.PREMIUM_PLUS_MIN_DAYS_AHEAD),
-          DATE_FORMAT.API,
-        )
-        endDate = format(
-          addDays(today, LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD),
-          DATE_FORMAT.API,
-        )
-      } else if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
+      if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
         startDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD), DATE_FORMAT.API)
       } else {
@@ -490,10 +480,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       if (formData.launchType === LAUNCH_TYPES.FREE) {
         router.push(`/projects/${projectSlug}`)
       } else {
-        const paymentLink =
-          formData.launchType === LAUNCH_TYPES.PREMIUM
-            ? PREMIUM_PAYMENT_LINK
-            : PREMIUM_PLUS_PAYMENT_LINK
+        const paymentLink = PREMIUM_PAYMENT_LINK
 
         const paymentUrl = `${paymentLink}?client_reference_id=${projectId}`
 
@@ -997,7 +984,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
             <div>
               <h4 className="mb-4 text-sm font-medium">Launch Type</h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.FREE ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1" : "hover:border-foreground/20 hover:bg-muted/50"}`}
                   onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.FREE)}
@@ -1015,15 +1002,12 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     Free Launch
                   </h5>
                   <p className="mb-3 text-2xl font-bold">$0</p>
-                  <ul className="text-muted-foreground space-y-1.5 text-xs">
+                  <ul className="text-muted-foreground space-y-1 text-sm">
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
                       <span>{LAUNCH_LIMITS.FREE_DAILY_LIMIT} slots/day</span>
                     </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Standard visibility</span>
-                    </li>
+
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
                       <span>Up to {LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days scheduling</span>
@@ -1033,12 +1017,10 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       <span>Dofollow Backlink only if:</span>
                     </li>
                     <li className="flex items-start gap-1.5 pl-5">
-                      <span className="text-muted-foreground text-[11px]">
-                        1. Top 3 daily ranking
-                      </span>
+                      <span className="text-muted-foreground text-xs">1. Top 3 daily ranking</span>
                     </li>
                     <li className="flex items-start gap-1.5 pl-5">
-                      <span className="text-muted-foreground text-[11px]">
+                      <span className="text-muted-foreground text-xs">
                         2. Display our badge on your site
                       </span>
                     </li>
@@ -1062,18 +1044,20 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                     Premium Launch
                   </h5>
                   <p className="mb-3 text-2xl font-bold">${LAUNCH_SETTINGS.PREMIUM_PRICE}</p>
-                  <ul className="text-muted-foreground space-y-1.5 text-xs">
+                  <ul className="space-y-1 text-sm">
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Skip the Free Queue - Priority access</span>
+                      <span className="font-semibold">Skip the Free Queue</span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="font-semibold">
+                        Guaranteed Dofollow Backlink (DR {DOMAIN_AUTHORITY})
+                      </span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
                       <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots/day</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Guaranteed Dofollow Backlink</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
@@ -1082,7 +1066,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                   </ul>
                 </div>
 
-                <div
+                {/* <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${
                     formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS
                       ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1"
@@ -1129,7 +1113,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       </span>
                     </li>
                   </ul>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -1170,9 +1154,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                             } else if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
                               slotsAvailable = date.premiumSlots
                               isDisabled = date.premiumSlots <= 0
-                            } else if (formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS) {
-                              slotsAvailable = date.premiumPlusSlots
-                              isDisabled = date.premiumPlusSlots <= 0
                             }
 
                             if (date.totalSlots <= 0) isDisabled = true
@@ -1209,15 +1190,115 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                   )}
 
                   {formData.scheduledDate && !isLaunchDateOverLimit && (
-                    <div className="bg-primary/5 border-primary/10 mt-3 flex w-fit items-center gap-1.5 rounded-md border px-3 py-2 text-sm">
-                      <RiCalendarLine className="text-primary/80 h-4 w-4" />
-                      <span className="text-muted-foreground">Scheduled for </span>
-                      <span className="text-foreground font-medium">
-                        {format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)}
-                      </span>
-                      <span className="text-muted-foreground/70 ml-1 text-xs">
-                        • {LAUNCH_SETTINGS.LAUNCH_HOUR_UTC}:00 UTC
-                      </span>
+                    <div className="bg-primary/5 border-primary/10 mt-3 rounded-md border p-3 text-sm">
+                      <div
+                        className={`flex w-full items-center gap-1.5 ${
+                          formData.launchType === LAUNCH_TYPES.FREE &&
+                          (() => {
+                            const today = new Date()
+                            const selectedDate = parseISO(formData.scheduledDate)
+                            const daysUntilLaunch = Math.ceil(
+                              (selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+                            )
+                            return daysUntilLaunch > LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
+                          })()
+                            ? "mb-3"
+                            : ""
+                        }`}
+                      >
+                        <RiCalendarLine className="text-primary/80 h-4 w-4 flex-shrink-0" />
+                        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground">Scheduled for</span>
+                            <span className="text-foreground font-medium">
+                              {format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)}
+                            </span>
+                          </div>
+                          <span className="text-muted-foreground/70 text-xs">
+                            {LAUNCH_SETTINGS.LAUNCH_HOUR_UTC}:00 UTC
+                          </span>
+                        </div>
+                      </div>
+
+                      {formData.launchType === LAUNCH_TYPES.FREE &&
+                        (() => {
+                          const today = new Date()
+                          const selectedDate = parseISO(formData.scheduledDate)
+                          const daysUntilLaunch = Math.ceil(
+                            (selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+                          )
+                          const premiumEarliestDate = addDays(
+                            today,
+                            LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD,
+                          )
+                          const daysSaved = daysUntilLaunch - LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
+
+                          return (
+                            daysUntilLaunch > LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD && (
+                              <div className="border-primary/20 border-t pt-3">
+                                <div className="flex items-start gap-2">
+                                  <div className="flex-1 space-y-2">
+                                    <p className="text-primary text-sm font-medium">
+                                      Launch {daysSaved} day{daysSaved > 1 ? "s" : ""} earlier with
+                                      Premium!
+                                    </p>
+                                    <p className="text-muted-foreground text-xs">
+                                      Available from {format(premiumEarliestDate, "MMM d")} •
+                                      Guaranteed DR{DOMAIN_AUTHORITY} backlink • Skip the queue
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        // Switch to Premium and find earliest available date
+                                        setFormData((prev) => ({
+                                          ...prev,
+                                          launchType: LAUNCH_TYPES.PREMIUM,
+                                        }))
+
+                                        // Load premium dates and auto-select the earliest
+                                        try {
+                                          const startDate = format(
+                                            addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD),
+                                            DATE_FORMAT.API,
+                                          )
+                                          const endDate = format(
+                                            addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD),
+                                            DATE_FORMAT.API,
+                                          )
+                                          const availability = await getLaunchAvailabilityRange(
+                                            startDate,
+                                            endDate,
+                                            LAUNCH_TYPES.PREMIUM,
+                                          )
+
+                                          // Find first available premium date
+                                          const firstAvailableDate = availability.find(
+                                            (date) => date.premiumSlots > 0 && date.totalSlots > 0,
+                                          )
+                                          if (firstAvailableDate) {
+                                            setFormData((prev) => ({
+                                              ...prev,
+                                              scheduledDate: firstAvailableDate.date,
+                                            }))
+                                          }
+                                          setAvailableDates(availability)
+                                        } catch (err) {
+                                          console.error("Error loading premium dates:", err)
+                                          setFormData((prev) => ({ ...prev, scheduledDate: null }))
+                                          loadAvailableDates()
+                                        }
+                                      }}
+                                      className="bg-primary hover:bg-primary/90 text-primary-foreground inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
+                                    >
+                                      <RiStarLine className="h-3 w-3" />
+                                      Upgrade to Premium ${LAUNCH_SETTINGS.PREMIUM_PRICE}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          )
+                        })()}
                     </div>
                   )}
                 </div>
@@ -1380,22 +1461,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                           <span className="text-primary font-medium">
                             Premium Launch (${LAUNCH_SETTINGS.PREMIUM_PRICE})
                           </span>
-                        </>
-                      )}
-                      {formData.launchType === LAUNCH_TYPES.PREMIUM_PLUS && (
-                        <>
-                          <RiVipCrownLine className="text-primary h-4 w-4" />{" "}
-                          <div className="text-primary font-medium">
-                            <div>
-                              Premium Plus (${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}){" "}
-                              <span className="text-muted-foreground text-xs line-through">
-                                $25
-                              </span>
-                            </div>
-                            <span className="bg-primary/10 text-primary inline-block rounded-full px-2 py-0.5 text-xs">
-                              -50% for early users
-                            </span>
-                          </div>
                         </>
                       )}
                     </div>
