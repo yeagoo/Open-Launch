@@ -72,4 +72,4 @@ export const SPONSORSHIP_SLOTS = {
   USED: 2,
 } as const
 
-export const DOMAIN_AUTHORITY = 29
+export const DOMAIN_AUTHORITY = 32
