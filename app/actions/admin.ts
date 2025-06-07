@@ -27,7 +27,27 @@ export async function getAdminStatsAndUsers() {
   await checkAdminAccess()
 
   // Get all users, sorted by registration date descending
-  const users = await db.select().from(user).orderBy(desc(user.createdAt))
+  const usersData = await db.select().from(user).orderBy(desc(user.createdAt))
+
+  // Get project counts for each user
+  const projectCounts = await db
+    .select({
+      userId: project.createdBy,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(project)
+    .where(sql`${project.createdBy} IS NOT NULL`)
+    .groupBy(project.createdBy)
+
+  // Create a map for quick lookup
+  const projectCountMap = new Map(projectCounts.map((pc) => [pc.userId, pc.count]))
+
+  // Combine user data with project counts
+  const users = usersData.map((u) => ({
+    ...u,
+    hasLaunched: (projectCountMap.get(u.id) || 0) > 0,
+    projectCount: projectCountMap.get(u.id) || 0,
+  }))
 
   // Get today's date at midnight UTC
   const today = new Date()

@@ -174,8 +174,7 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-dark.svg"
                   alt="Featured on Twelve Tools"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -187,8 +186,7 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-white.svg"
                   alt="Featured on Twelve Tools"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -200,8 +198,7 @@ export default function FooterSection() {
                 <img
                   src="https://bestdirectories.org/feature-badge-dark.svg"
                   alt="Featured on Best Directories"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -213,8 +210,7 @@ export default function FooterSection() {
                 <img
                   src="https://bestdirectories.org/feature-badge.svg"
                   alt="Featured on Best Directories"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -227,8 +223,7 @@ export default function FooterSection() {
                 <img
                   src="https://aiwith.me/ai_with_me_dark_badge.svg"
                   alt="Open Launch - Featured on AI With Me"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -241,34 +236,20 @@ export default function FooterSection() {
                 <img
                   src="https://aiwith.me/ai_with_me_light_badge.svg"
                   alt="Open Launch - Featured on AI With Me"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
+
+              {/* Featured on Startup Fame */}
               <a
                 href="https://startupfa.me/s/open-launch?utm_source=open-launch.com"
                 target="_blank"
                 rel="noopener"
-                className="hidden dark:block"
               >
                 <img
                   src="https://startupfa.me/badges/featured/dark.webp"
                   alt="Featured on Startup Fame"
-                  width="140"
-                  height="38"
-                />
-              </a>
-              <a
-                href="https://startupfa.me/s/open-launch?utm_source=open-launch.com"
-                target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
-              >
-                <img
-                  src="https://startupfa.me/badges/featured-badge.webp"
-                  alt="Featured on Startup Fame"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -280,8 +261,7 @@ export default function FooterSection() {
                 <img
                   src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=neutral&t=1748776168767"
                   alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
               <a
@@ -293,8 +273,7 @@ export default function FooterSection() {
                 <img
                   src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=light&t=1748776063921"
                   alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
-                  width="140"
-                  height="38"
+                  className="h-8"
                 />
               </a>
             </div>

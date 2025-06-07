@@ -50,6 +50,8 @@ type User = {
   role?: string | undefined
   banned?: boolean | null
   createdAt?: string
+  hasLaunched?: boolean
+  projectCount?: number
 }
 
 export default function AdminDashboard() {
@@ -388,6 +390,9 @@ export default function AdminDashboard() {
                         Email
                       </th>
                       <th className="text-muted-foreground p-2 text-center text-xs font-medium">
+                        Launched
+                      </th>
+                      <th className="text-muted-foreground p-2 text-center text-xs font-medium">
                         Role
                       </th>
                       <th className="text-muted-foreground p-2 text-center text-xs font-medium">
@@ -408,6 +413,23 @@ export default function AdminDashboard() {
                           {user.email}
                         </td>
                         <td className="p-2 text-center">
+                          {user.hasLaunched ? (
+                            <Badge
+                              variant="outline"
+                              className="border-green-200 bg-green-50 text-xs text-green-600"
+                            >
+                              Yes ({user.projectCount || 0})
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="border-red-200 bg-red-50 text-xs text-red-600"
+                            >
+                              No
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-2 text-center">
                           <Badge
                             variant={user.role === "admin" ? "secondary" : "outline"}
                             className="text-xs"
@@ -421,10 +443,7 @@ export default function AdminDashboard() {
                               Banned
                             </Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="border-green-200 bg-green-50 text-xs text-green-600"
-                            >
+                            <Badge variant="outline" className="text-xs">
                               Active
                             </Badge>
                           )}
@@ -452,6 +471,21 @@ export default function AdminDashboard() {
                     <div className="truncate font-medium">{user.name || "—"}</div>
                     <div className="text-muted-foreground truncate text-xs">{user.email}</div>
                     <div className="mt-1 flex items-center gap-2">
+                      {user.hasLaunched ? (
+                        <Badge
+                          variant="outline"
+                          className="border-green-200 bg-green-50 text-xs text-green-600"
+                        >
+                          Launched ({user.projectCount || 0})
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="border-red-200 bg-red-50 text-xs text-red-600"
+                        >
+                          No Launch
+                        </Badge>
+                      )}
                       <Badge
                         variant={user.role === "admin" ? "secondary" : "outline"}
                         className="text-xs"
@@ -463,10 +497,7 @@ export default function AdminDashboard() {
                           Banned
                         </Badge>
                       ) : (
-                        <Badge
-                          variant="outline"
-                          className="border-green-200 bg-green-50 text-xs text-green-600"
-                        >
+                        <Badge variant="outline" className="text-xs">
                           Active
                         </Badge>
                       )}
