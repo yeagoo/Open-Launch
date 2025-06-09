@@ -1,7 +1,12 @@
 import type { NextConfig } from "next"
 
+import createMDX from "@next/mdx"
+
 const nextConfig: NextConfig = {
   /* config options here */
+
+  // Configuration pour MDX
+  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   images: {
     remotePatterns: [
       {
@@ -28,8 +33,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: process.env.NEXT_PUBLIC_UPLOADTHING_URL!,
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
 }
 
-export default nextConfig
+const withMDX = createMDX({})
+
+// Combine MDX and Next.js config
+export default withMDX(nextConfig)

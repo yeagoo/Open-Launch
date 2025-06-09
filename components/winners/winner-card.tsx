@@ -53,6 +53,11 @@ export function WinnerCard({
     }
   }
 
+  // Function to strip HTML tags from text
+  function stripHtml(html: string): string {
+    return html.replace(/<[^>]*>/g, "").trim()
+  }
+
   return (
     <div className="dark:bg-secondary/20 overflow-hidden rounded-lg border border-zinc-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:border-zinc-800/50">
       <div className="p-5">
@@ -73,7 +78,7 @@ export function WinnerCard({
             <div className="flex flex-col gap-1">
               <h3 className="truncate text-xl font-semibold">{name}</h3>
               <Badge variant="secondary">{getRankingText()}</Badge>
-              <p className="text-muted-foreground line-clamp-2 text-sm">{description}</p>
+              <p className="text-muted-foreground line-clamp-2 text-sm">{stripHtml(description)}</p>
             </div>
           </div>
         </div>

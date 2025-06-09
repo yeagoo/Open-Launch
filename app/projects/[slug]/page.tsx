@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
 import { EditButton } from "@/components/project/edit-button"
 import { ProjectComments } from "@/components/project/project-comments"
+import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
 import { ShareButton } from "@/components/project/share-button"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { SponsorCards } from "@/components/shared/sponsor-cards"
@@ -45,14 +46,19 @@ export async function generateMetadata(
     }
   }
 
+  // Function to strip HTML tags from text
+  function stripHtml(html: string): string {
+    return html.replace(/<[^>]*>/g, "").trim()
+  }
+
   const previousImages = (await parent).openGraph?.images || []
 
   return {
     title: `${projectData.name} | Open-Launch`,
-    description: projectData.description,
+    description: stripHtml(projectData.description),
     openGraph: {
       title: `${projectData.name} on Open-Launch`,
-      description: projectData.description,
+      description: stripHtml(projectData.description),
       images: [
         projectData.productImage || projectData.coverImageUrl || projectData.logoUrl,
         ...previousImages,
@@ -61,7 +67,7 @@ export async function generateMetadata(
     twitter: {
       card: "summary_large_image",
       title: `${projectData.name} on Open-Launch`,
-      description: projectData.description,
+      description: stripHtml(projectData.description),
       images: [projectData.productImage || projectData.logoUrl],
     },
   }
@@ -276,16 +282,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
               {/* Product Image / Banner */}
               {(projectData.productImage || projectData.coverImageUrl) && (
-                <div className="overflow-hidden rounded-xl">
-                  <Image
-                    src={(projectData.productImage || projectData.coverImageUrl)!}
-                    alt={`${projectData.name} - Product Image`}
-                    width={800}
-                    height={400}
-                    className="h-auto w-full object-cover"
-                    priority
-                  />
-                </div>
+                <ProjectImageWithLoader
+                  src={(projectData.productImage || projectData.coverImageUrl)!}
+                  alt={`${projectData.name} - Product Image`}
+                />
               )}
               {/* Description */}
               <div className="w-full">
