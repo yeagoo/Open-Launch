@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-import { RiCheckboxCircleFill } from "@remixicon/react"
+import { RiArticleLine, RiCheckboxCircleFill, RiInformationLine, RiLinkM } from "@remixicon/react"
 
 import { DOMAIN_AUTHORITY, LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
 import {
@@ -10,6 +10,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export const metadata = {
   title: "Pricing - Open-Launch",
@@ -25,7 +33,7 @@ const faqItems = [
   {
     id: "2",
     title: "How many projects are launched each day?",
-    content: `We launch up to ${LAUNCH_LIMITS.FREE_DAILY_LIMIT} free projects and ${LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium projects.`,
+    content: `We launch up to ${LAUNCH_LIMITS.FREE_DAILY_LIMIT} free projects and ${LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium projects daily.`,
   },
   {
     id: "3",
@@ -105,48 +113,35 @@ export default function PricingPage() {
                   Priority scheduling with faster launch dates.
                 </p>
 
-                <ul className="mb-5 space-y-1 text-sm">
-                  <li className="bg-primary/5 border-primary/10 rounded border p-2">
-                    <div className="flex items-start gap-2">
-                      <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
-                      <div>
-                        <p className="text-primary text-sm font-semibold">Skip the Free Queue</p>
-                        <p className="text-muted-foreground text-xs">Priority access</p>
-                      </div>
-                    </div>
+                <ul className="mb-5 space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
+                    <span className="font-semibold">Skip the Free Queue - Priority access</span>
                   </li>
-                  <li className="bg-primary/5 border-primary/10 rounded border p-2">
-                    <div className="flex items-start gap-2">
-                      <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
-                      <div>
-                        <p className="text-primary text-sm font-semibold">
-                          Guaranteed Dofollow Backlink
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          Valuable SEO boost from our{" "}
-                          <a
-                            href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            DR {DOMAIN_AUTHORITY}
-                          </a>{" "}
-                          domain
-                        </p>
-                      </div>
-                    </div>
+                  <li className="flex items-center gap-2">
+                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
+                    <span className="font-semibold">
+                      Guaranteed Dofollow Backlink{" "}
+                      <a
+                        href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        (DR {DOMAIN_AUTHORITY})
+                      </a>
+                    </span>
                   </li>
-                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
-                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
-                    <span>Earlier launch dates</span>
-                  </li>
-                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
-                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                  <li className="flex items-center gap-2">
+                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
                     <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots daily</span>
                   </li>
-                  <li className="border-primary/10 flex items-center gap-2 rounded border p-2">
-                    <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
+                  <li className="flex items-center gap-2">
+                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
+                    <span>Earlier launch dates</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <RiCheckboxCircleFill className="text-primary h-4 w-4" />
                     <span>Featured on homepage</span>
                   </li>
                 </ul>
@@ -162,70 +157,181 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* Second row: Premium Plus - Enterprise Style */}
-      {/* <div className="mx-auto mb-12 max-w-3xl">
-        <div className="rounded-lg border p-5">
+      {/* Second row: Article */}
+      <div className="mx-auto mb-4 max-w-3xl">
+        <div className="border-primary/20 bg-primary/5 rounded-lg border p-5">
           <div className="flex flex-col md:flex-row">
             <div className="mb-6 flex flex-col md:mb-0 md:w-2/5 md:border-r md:pr-6">
               <div className="flex-grow">
-                <h5 className="mb-1 text-lg font-semibold">Premium Plus</h5>
-
+                <h5 className="mb-1 text-lg font-semibold">SEO Growth Package</h5>
                 <div className="mb-4 flex flex-col gap-1">
                   <div className="flex items-baseline text-3xl font-bold">
-                    ${LAUNCH_SETTINGS.PREMIUM_PLUS_PRICE}
+                    ${LAUNCH_SETTINGS.ARTICLE_PRICE}
                     <span className="text-muted-foreground ml-2 text-base font-normal line-through">
-                      $25
+                      $199
                     </span>
                   </div>
 
                   <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs font-medium">
-                    -50% for early users
+                    -50% for the first 3 users
                   </span>
                 </div>
-
                 <p className="text-muted-foreground mb-6 text-xs">
-                  Ultimate visibility with special homepage spot
+                  Rank on Google with a dedicated SEO article
                 </p>
               </div>
 
               <div className="mt-auto">
-                <Button size="sm" className="w-full" variant="default" asChild>
-                  <Link href="/projects/submit">Get Premium Plus</Link>
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="w-full" variant="default">
+                      Get SEO Growth Package
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto sm:max-w-lg">
+                    <DialogHeader className="pb-6">
+                      <DialogTitle className="text-xl font-semibold">
+                        SEO Growth Package
+                      </DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        Complete SEO solution to rank on Google
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      {/* Price */}
+                      <div className="text-center">
+                        <div className="text-3xl font-bold">
+                          ${LAUNCH_SETTINGS.ARTICLE_PRICE}
+                          <span className="text-muted-foreground ml-2 text-lg font-normal line-through">
+                            $199
+                          </span>
+                        </div>
+
+                        <div className="bg-primary/10 text-primary mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium">
+                          Only 3 spots left at this price
+                        </div>
+                      </div>
+
+                      {/* What's included */}
+                      <div>
+                        <h3 className="mb-4 font-medium">What you get:</h3>
+                        <div className="space-y-3">
+                          <div className="flex gap-3">
+                            <div className="bg-primary/10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded">
+                              <RiArticleLine className="text-primary h-3 w-3" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium">SEO Article</div>
+                              <div className="text-muted-foreground text-xs">
+                                Custom &ldquo;[Product] review&rdquo; content
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="bg-primary/10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded">
+                              <RiLinkM className="text-primary h-3 w-3" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium">Premium Launch</div>
+                              <div className="text-muted-foreground text-xs">
+                                DR 32 dofollow backlink included
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Process */}
+                      <div>
+                        <h3 className="mb-4 font-medium">What happens next:</h3>
+                        <div className="space-y-3">
+                          <div className="flex gap-3">
+                            <div className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-medium text-white">
+                              1
+                            </div>
+                            <div className="text-sm">Pay & secure your slot</div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-medium text-white">
+                              2
+                            </div>
+                            <div className="text-sm">
+                              <div>We contact you in 24h</div>
+                              <div className="text-muted-foreground text-xs">
+                                Product access, keywords, details
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-medium text-white">
+                              3
+                            </div>
+                            <div className="text-sm">Premium launch next day</div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-medium text-white">
+                              4
+                            </div>
+                            <div className="text-sm">SEO article in 5-7 days</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Requirement */}
+                      <div className="bg-muted/30 rounded p-3">
+                        <div className="flex gap-2">
+                          <RiInformationLine className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
+                          <div className="text-sm">
+                            <span className="font-medium">Requirement:</span> Free product access
+                            for testing
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Button */}
+                      <Button className="h-11 w-full" asChild>
+                        <Link href={process.env.NEXT_PUBLIC_SEO_ARTICLE_LINK!} target="_blank">
+                          Get SEO Package - ${LAUNCH_SETTINGS.ARTICLE_PRICE}
+                        </Link>
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
             <div className="md:w-3/5 md:pl-6">
-              <h6 className="mb-3 text-sm font-semibold">Everything in Premium, plus:</h6>
+              <h6 className="mb-3 text-sm font-semibold">Complete SEO Package includes:</h6>
 
               <div className="space-y-1">
-                <div className="bg-primary/5 border-primary/10 rounded border p-2">
+                <div className="bg-primary/5 border-primary/20 rounded border p-2">
                   <div className="flex items-start gap-2">
                     <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <div>
-                      <p className="text-primary text-sm font-semibold">
-                        Premium Spotlight Placement
-                      </p>
+                      <p className="text-sm font-semibold">Dedicated SEO Article</p>
                       <p className="text-muted-foreground text-xs">
-                        Most visible position on our platform
+                        Custom article to rank for{" "}
+                        <span className="text-primary/90 font-semibold">
+                          &ldquo;[Your Product] review&rdquo;
+                        </span>{" "}
+                        keywords
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="bg-primary/5 border-primary/10 rounded border p-2">
+                <div className="bg-primary/5 border-primary/20 rounded border p-2">
                   <div className="flex items-start gap-2">
                     <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <div>
-                      <p className="text-primary text-sm font-semibold">
-                        Guaranteed Dofollow Backlink
-                      </p>
+                      <p className="text-sm font-semibold">Premium Launch</p>
                       <p className="text-muted-foreground text-xs">
-                        Valuable SEO boost from our{" "}
+                        Premium spot + dofollow backlink from our{" "}
                         <a
                           href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline"
+                          className="text-primary font-semibold hover:underline"
                         >
                           DR {DOMAIN_AUTHORITY}
                         </a>{" "}
@@ -234,24 +340,26 @@ export default function PricingPage() {
                     </div>
                   </div>
                 </div>
-                <div className="rounded border p-2">
+                <div className="bg-primary/5 border-primary/20 rounded border p-2">
                   <div className="flex items-start gap-2">
                     <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <div>
-                      <p className="text-sm font-medium">Exclusive Daily Spots</p>
+                      <p className="text-sm font-medium">Google Ranking Strategy</p>
                       <p className="text-muted-foreground text-xs">
-                        Only {LAUNCH_LIMITS.PREMIUM_PLUS_DAILY_LIMIT} projects per day
+                        Optimized content to capture search traffic
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded border p-2">
+                <div className="bg-primary/5 border-primary/20 rounded border p-2">
                   <div className="flex items-start gap-2">
                     <RiCheckboxCircleFill className="text-primary mt-0.5 h-4 w-4" />
                     <div>
-                      <p className="text-sm font-medium">Fastest Launch Dates</p>
-                      <p className="text-muted-foreground text-xs">Top priority for your project</p>
+                      <p className="text-sm font-medium">Long-term SEO Value</p>
+                      <p className="text-muted-foreground text-xs">
+                        Content that ranks and drives ongoing traffic
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -259,9 +367,9 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-      </div> */}
+      </div>
 
-      <div className="mx-auto mt-12 max-w-3xl">
+      <div className="mx-auto mb-12 max-w-3xl">
         <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
           Frequently Asked Questions
         </h2>

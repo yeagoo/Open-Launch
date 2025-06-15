@@ -17,7 +17,7 @@ export const PROJECT_LIMITS_VARIABLES = {
 
 export const LAUNCH_SETTINGS = {
   PREMIUM_PRICE: 9, // USD
-  PREMIUM_PLUS_PRICE: 12.5, // USD
+  ARTICLE_PRICE: 99, // USD
   MIN_DAYS_AHEAD: 1, // Minimum days ahead for scheduling (starting from tomorrow)
   MAX_DAYS_AHEAD: 90, // Maximum days ahead for scheduling (3 months)
   PREMIUM_MIN_DAYS_AHEAD: 1, // Premium users can schedule sooner
@@ -69,7 +69,7 @@ export const PREMIUM_PLUS_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PA
 
 export const SPONSORSHIP_SLOTS = {
   TOTAL: 3,
-  USED: 2,
+  USED: 0,
 } as const
 
 export const DOMAIN_AUTHORITY = 32

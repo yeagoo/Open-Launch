@@ -13,6 +13,7 @@ const discoverLinks = [
 const resourcesLinks = [
   { title: "Pricing", href: "/pricing" },
   { title: "Sponsors", href: "/sponsors" },
+  { title: "Blog", href: "/blog" },
 ]
 
 const legalLinks = [
