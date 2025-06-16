@@ -173,7 +173,7 @@ export default function PricingPage() {
                   </div>
 
                   <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs font-medium">
-                    -50% for the first 3 users
+                    Only 2 slots left at $99
                   </span>
                 </div>
                 <p className="text-muted-foreground mb-6 text-xs">
@@ -208,8 +208,8 @@ export default function PricingPage() {
                           </span>
                         </div>
 
-                        <div className="bg-primary/10 text-primary mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium">
-                          Only 3 spots left at this price
+                        <div className="mt-2 inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
+                          Only 2 slots left at this price
                         </div>
                       </div>
 
