@@ -19,7 +19,7 @@ export const LAUNCH_SETTINGS = {
   PREMIUM_PRICE: 9, // USD
   ARTICLE_PRICE: 99, // USD
   MIN_DAYS_AHEAD: 1, // Minimum days ahead for scheduling (starting from tomorrow)
-  MAX_DAYS_AHEAD: 90, // Maximum days ahead for scheduling (3 months)
+  MAX_DAYS_AHEAD: 180, // Maximum days ahead for scheduling (6 months)
   PREMIUM_MIN_DAYS_AHEAD: 1, // Premium users can schedule sooner
   PREMIUM_MAX_DAYS_AHEAD: 30, // Premium users have a shorter window
   PREMIUM_PLUS_MIN_DAYS_AHEAD: 1, // Premium Plus users can schedule even sooner
