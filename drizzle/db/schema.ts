@@ -229,3 +229,50 @@ export const waitlistSubmission = pgTable("waitlist_submission", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
 })
+
+export const seoArticle = pgTable(
+  "seo_article",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    content: text("content").notNull(), // Contenu MDX complet
+    image: text("image"), // URL de l'image principale
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    publishedAt: timestamp("published_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: index("seo_article_slug_idx").on(table.slug),
+    }
+  },
+)
+
+export const blogArticle = pgTable(
+  "blog_article",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    content: text("content").notNull(), // Contenu MDX complet
+    image: text("image"), // URL de l'image principale
+    tags: text("tags").array(), // Array des tags
+    author: text("author").notNull().default("Open Launch Team"),
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    publishedAt: timestamp("published_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: index("blog_article_slug_idx").on(table.slug),
+      publishedAtIdx: index("blog_article_published_at_idx").on(table.publishedAt),
+    }
+  },
+)

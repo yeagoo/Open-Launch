@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { db } from "@/drizzle/db"
-import { blogArticle } from "@/drizzle/db/schema"
+import { seoArticle } from "@/drizzle/db/schema"
 import {
   RiArticleLine,
   RiInformationLine,
@@ -37,12 +37,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
 
-  const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  const article = await db.select().from(seoArticle).where(eq(seoArticle.slug, slug)).limit(1)
 
   if (!article[0]) {
     return {
-      title: "Article not found | Open Launch",
-      description: "The article you're looking for doesn't exist or has been removed.",
+      title: "Review not found | Open Launch",
+      description: "The review you're looking for doesn't exist or has been removed.",
     }
   }
 
@@ -51,8 +51,8 @@ export async function generateMetadata({
   return {
     title: metaTitle || `${title} | Open Launch`,
     description: metaDescription || description,
-    keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
-    authors: [{ name: article[0].author || "Open Launch Team" }],
+    keywords: "review, product review, analysis, evaluation",
+    authors: [{ name: "Open Launch Team" }],
     category: "Technology",
     openGraph: {
       title: metaTitle || `${title} | Open Launch`,
@@ -70,7 +70,7 @@ export async function generateMetadata({
       site: "@openlaunch",
     },
     alternates: {
-      canonical: `/blog/${slug}`,
+      canonical: `/reviews/${slug}`,
     },
   }
 }
@@ -90,29 +90,29 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`
 }
 
-export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  const article = await db.select().from(seoArticle).where(eq(seoArticle.slug, slug)).limit(1)
 
   if (!article[0]) {
     notFound()
   }
 
-  const { title, description, content, publishedAt, tags } = article[0]
+  const { title, description, content, publishedAt } = article[0]
   const readingTime = calculateReadingTime(content)
 
   return (
     <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back Button */}
-        <div className="mb-8">
+        <div className="mb-4">
           <Link
-            href="/blog"
+            href="/reviews"
             className="text-muted-foreground hover:text-foreground inline-flex items-center transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Blog
+            Back to Reviews
           </Link>
         </div>
 
@@ -123,7 +123,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               {/* Article Header */}
               <header className="mb-8">
                 {/* Meta Information */}
-                <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
+                <div className="text-muted-foreground mb-4 flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     <time dateTime={publishedAt.toISOString()}>{formatDate(publishedAt)}</time>
@@ -140,20 +140,6 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                 {/* Description */}
                 <p className="text-muted-foreground mb-6 text-lg leading-relaxed">{description}</p>
 
-                {/* Tags */}
-                {tags && tags.length > 0 && (
-                  <div className="mb-6 flex flex-wrap gap-2">
-                    {tags.map((tag: string) => (
-                      <span
-                        key={tag}
-                        className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
                 {/* Hero Image */}
                 {article[0].image && (
                   <div className="bg-muted mb-8 aspect-[16/9] overflow-hidden rounded-lg">
@@ -167,7 +153,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               </header>
 
               {/* Article Content */}
-              <div className="prose prose-neutral dark:prose-invert [&_table]:border-border [&_thead]:bg-muted/30 [&_th]:border-border [&_th]:text-foreground [&_td]:border-border [&_tbody_tr:hover]:bg-muted/20 [&_img]:border-border max-w-none [&_img]:mx-auto [&_img]:rounded-lg [&_img]:border [&_img]:md:max-w-3xl [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-lg [&_table]:border [&_tbody_tr:last-child_td]:border-b-0 [&_td]:border-r [&_td]:border-b [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td]:text-sm [&_td:last-child]:border-r-0 [&_th]:border-r [&_th]:border-b [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:align-middle [&_th]:text-sm [&_th]:font-bold [&_th:last-child]:border-r-0">
+              <div className="prose prose-neutral dark:prose-invert [&_table]:border-border [&_thead]:bg-muted/30 [&_th]:border-border [&_th]:text-foreground [&_td]:border-border [&_tbody_tr:hover]:bg-muted/20 [&_img]:border-border max-w-none [&_img]:mx-auto [&_img]:rounded-lg [&_img]:border [&_img]:sm:max-w-xl [&_table]:my-8 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-hidden [&_table]:rounded-lg [&_table]:border [&_tbody_tr:last-child_td]:border-b-0 [&_td]:border-r [&_td]:border-b [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td]:text-sm [&_td:last-child]:border-r-0 [&_th]:border-r [&_th]:border-b [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:align-middle [&_th]:text-sm [&_th]:font-bold [&_th:last-child]:border-r-0">
                 <MDXRemote
                   source={content}
                   options={{
@@ -190,7 +176,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
               <div className="from-primary/5 to-primary/10 rounded-2xl bg-gradient-to-br p-4">
                 <div className="mb-4 text-center">
                   <h2 className="text-foreground text-base font-semibold">
-                    Want a review for your product?
+                    Want a review like this?
                   </h2>
                   <p className="text-muted-foreground text-xs">
                     Boost your product&apos;s visibility and credibility

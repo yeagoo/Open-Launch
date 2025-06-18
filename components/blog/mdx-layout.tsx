@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { ArrowLeft, Calendar, Clock } from "lucide-react"
 
 import { ArticleFooter } from "./article-footer"
-import TableOfContents from "./table-of-contents"
+import { TableOfContents } from "./table-of-contents"
 
 interface MdxLayoutProps {
   children: React.ReactNode

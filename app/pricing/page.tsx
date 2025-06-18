@@ -40,6 +40,16 @@ const faqItems = [
     title: "How far in advance can I schedule my launch?",
     content: `Free users can schedule up to ${LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days in advance and Premium users up to ${LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days.`,
   },
+  {
+    id: "4",
+    title: "What is the refund policy for the SEO Growth Package?",
+    content: `We do not offer refunds for the SEO Growth Package. Once purchased, the service is considered final and non-refundable. However, we do our best to ensure customer satisfaction and work closely with you throughout the process.`,
+  },
+  {
+    id: "5",
+    title: "How is the SEO Growth Package content created?",
+    content: `Our content creation process involves thorough product testing, note-taking, screenshots, and custom illustrations. While we use AI assistance to optimize our workflow after testing your product, all content is carefully reviewed, edited, and finalized by us, a human team, to ensure quality and accuracy.`,
+  },
 ]
 
 export default function PricingPage() {
@@ -158,7 +168,7 @@ export default function PricingPage() {
       </div>
 
       {/* Second row: Article */}
-      <div className="mx-auto mb-4 max-w-3xl">
+      <div className="mx-auto mb-12 max-w-3xl">
         <div className="border-primary/20 bg-primary/5 rounded-lg border p-5">
           <div className="flex flex-col md:flex-row">
             <div className="mb-6 flex flex-col md:mb-0 md:w-2/5 md:border-r md:pr-6">
