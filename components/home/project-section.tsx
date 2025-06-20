@@ -69,7 +69,7 @@ export function ProjectSection({
   return (
     <section className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
+        <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
         {moreHref && (
           <div className="hidden sm:block">
             <ViewAllButton />

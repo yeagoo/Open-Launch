@@ -40,7 +40,7 @@ export default async function Nav() {
   const user = session?.user
 
   return (
-    <nav className="bg-background/95 sticky top-0 z-50 border-b backdrop-blur-sm">
+    <nav className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm">
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-8">

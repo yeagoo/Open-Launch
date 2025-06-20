@@ -1,8 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link"
 
 import { RiArticleLine, RiCheckboxCircleFill, RiInformationLine, RiLinkM } from "@remixicon/react"
 
-import { DOMAIN_AUTHORITY, LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
+import { LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
 import {
   Accordion,
   AccordionContent,
@@ -54,8 +55,30 @@ const faqItems = [
 
 export default function PricingPage() {
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-12">
-      <div className="mb-8 text-center">
+    <div className="container mx-auto max-w-3xl px-4 py-8 md:py-12">
+      {/* Domain Rating Badge */}
+      <div className="mb-4 flex justify-center">
+        <a href="https://frogdr.com/open-launch.com?utm_source=open-launch.com" target="_blank">
+          {/* Light mode badge */}
+          <img
+            src="https://frogdr.com/open-launch.com/badge-white-sm.svg?round=1"
+            alt="Monitor your Domain Rating with FrogDR"
+            width="249"
+            height="36"
+            className="h-8 w-auto dark:hidden"
+          />
+          {/* Dark mode badge */}
+          <img
+            src="https://frogdr.com/open-launch.com/badge-dark-sm.svg?round=1"
+            alt="Monitor your Domain Rating with FrogDR"
+            width="249"
+            height="36"
+            className="hidden h-8 w-auto dark:block"
+          />
+        </a>
+      </div>
+
+      <div className="mb-4 text-center">
         <h1 className="mb-3 text-2xl font-bold sm:text-3xl">Choose Your Launch Plan</h1>
         <p className="text-muted-foreground mx-auto max-w-2xl text-sm">
           Get the visibility your project deserves with our flexible launch options. All launches
@@ -131,15 +154,7 @@ export default function PricingPage() {
                   <li className="flex items-center gap-2">
                     <RiCheckboxCircleFill className="text-primary h-4 w-4" />
                     <span className="font-semibold">
-                      Guaranteed Dofollow Backlink{" "}
-                      <a
-                        href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        (DR {DOMAIN_AUTHORITY})
-                      </a>
+                      Guaranteed High Authority Dofollow Backlink
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -245,7 +260,7 @@ export default function PricingPage() {
                             <div className="min-w-0">
                               <div className="text-sm font-medium">Premium Launch</div>
                               <div className="text-muted-foreground text-xs">
-                                DR 32 dofollow backlink included
+                                High Authority dofollow backlink included
                               </div>
                             </div>
                           </div>
@@ -336,16 +351,7 @@ export default function PricingPage() {
                     <div>
                       <p className="text-sm font-semibold">Premium Launch</p>
                       <p className="text-muted-foreground text-xs">
-                        Premium spot + dofollow backlink from our{" "}
-                        <a
-                          href="https://ahrefs.com/website-authority-checker?input=open-launch.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary font-semibold hover:underline"
-                        >
-                          DR {DOMAIN_AUTHORITY}
-                        </a>{" "}
-                        domain
+                        Premium spot + High Authority dofollow backlink
                       </p>
                     </div>
                   </div>

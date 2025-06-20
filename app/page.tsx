@@ -1,19 +1,13 @@
+/* eslint-disable @next/next/no-img-element */
 import { headers } from "next/headers"
 import Link from "next/link"
 
 import { auth } from "@/lib/auth"
-import { DOMAIN_AUTHORITY } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PremiumCard } from "@/components/home/premium-card"
 import { ProjectSection } from "@/components/home/project-section"
 import { SponsorCards } from "@/components/shared/sponsor-cards"
-import {
-  getFeaturedPremiumProjects,
-  getMonthBestProjects,
-  getTodayProjects,
-  getYesterdayProjects,
-} from "@/app/actions/home"
+import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getLast30DaysPageviews, getLast30DaysVisitors } from "@/app/actions/plausible"
 import { getTopCategories } from "@/app/actions/projects"
 
@@ -23,7 +17,6 @@ export default async function Home() {
   const yesterdayProjects = await getYesterdayProjects()
   const monthProjects = await getMonthBestProjects()
   const topCategories = await getTopCategories(5)
-  const featuredPremiumProjects = await getFeaturedPremiumProjects()
 
   const last30DaysVisitors = await getLast30DaysVisitors()
   const last30DaysPageviews = await getLast30DaysPageviews()
@@ -34,25 +27,100 @@ export default async function Home() {
   })
 
   return (
-    <main className="bg-secondary/20 min-h-screen">
-      {/* Banner */}
-      <div className="bg-muted/30 border-b">
-        <div className="container mx-auto max-w-6xl px-4 py-2 text-center">
-          <h1 className="text-foreground text-md font-heading font-semibold sm:text-xl">
-            Submit, Earn a Badge & {DOMAIN_AUTHORITY}+ DR Backlink
-          </h1>
-        </div>
-      </div>
-
-      <div className="container mx-auto max-w-6xl px-4 pt-8 pb-12">
+    <main className="bg-muted/30 min-h-screen">
+      <div className="container mx-auto max-w-6xl px-4 pt-6 pb-12 md:pt-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
           {/* Contenu principal */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
-            {featuredPremiumProjects.length > 0 && (
-              <div className="space-y-4">
-                <PremiumCard projects={featuredPremiumProjects} />
+            {/* Welcome */}
+            <div className="bg-secondary/70 hover:bg-secondary border-border/40 relative z-10 overflow-hidden rounded-lg border">
+              <div className="container mx-auto max-w-6xl px-4 py-3 md:py-4">
+                {/* Mobile Layout - Centered */}
+                <div className="flex flex-col items-center justify-center gap-3 md:hidden">
+                  <Link href="/pricing" className="flex cursor-pointer flex-col gap-2 text-center">
+                    <div>
+                      <h1 className="text-foreground text-base font-semibold">
+                        <span>Launch platform for your products</span>
+                      </h1>
+                      <p className="text-muted-foreground text-xs">
+                        <span>Submit, get a badge & backlink</span>
+                      </p>
+                    </div>
+                  </Link>
+                  <div>
+                    <a
+                      href="https://frogdr.com/open-launch.com?utm_source=open-launch.com"
+                      target="_blank"
+                    >
+                      {/* Light mode badge */}
+                      <img
+                        src="https://frogdr.com/open-launch.com/badge-white-sm.svg?round=1"
+                        alt="Monitor your Domain Rating with FrogDR"
+                        className="h-6 w-auto dark:hidden"
+                      />
+                      {/* Dark mode badge */}
+                      <img
+                        src="https://frogdr.com/open-launch.com/badge-dark-sm.svg?round=1"
+                        alt="Monitor your Domain Rating with FrogDR"
+                        className="hidden h-6 w-auto dark:block"
+                      />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Desktop Layout - Text left, Image right */}
+
+                <div className="hidden items-center justify-center gap-12 md:flex">
+                  {/* image 1 */}
+                  <div className="flex-shrink-0">
+                    <img
+                      src="/oppieG.png"
+                      alt="Open Launch Character"
+                      className="h-24 w-24 object-contain"
+                    />
+                  </div>
+                  {/* text */}
+                  <div className="flex flex-col items-center justify-center gap-4 text-center">
+                    <Link href="/pricing" className="cursor-pointer">
+                      <h1 className="text-foreground text-lg font-semibold">
+                        <span>Launch platform for your products</span>
+                      </h1>
+                      <p className="text-muted-foreground text-sm">
+                        <span>Submit, get a badge & backlink</span>
+                      </p>
+                    </Link>
+                    <div>
+                      <a
+                        href="https://frogdr.com/open-launch.com?utm_source=open-launch.com"
+                        target="_blank"
+                      >
+                        {/* Light mode badge */}
+                        <img
+                          src="https://frogdr.com/open-launch.com/badge-white-sm.svg?round=1"
+                          alt="Monitor your Domain Rating with FrogDR"
+                          className="h-7 w-auto dark:hidden"
+                        />
+                        {/* Dark mode badge */}
+                        <img
+                          src="https://frogdr.com/open-launch.com/badge-dark-sm.svg?round=1"
+                          alt="Monitor your Domain Rating with FrogDR"
+                          className="hidden h-7 w-auto dark:block"
+                        />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* image 2 */}
+                  <div className="flex-shrink-0">
+                    <img
+                      src="/oppieD.png"
+                      alt="Open Launch Character"
+                      className="h-24 w-24 object-contain"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
 
             <ProjectSection
               title="Top Projects Launching Today"

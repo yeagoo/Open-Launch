@@ -56,7 +56,7 @@ export default async function SponsorsPage() {
   ]
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-12">
+    <div className="container mx-auto max-w-3xl px-4 py-8 md:py-12">
       <div className="mb-8 text-center">
         <h1 className="mb-3 text-2xl font-bold sm:text-3xl">Become a Sponsor</h1>
         <p className="text-muted-foreground mx-auto max-w-xl text-sm">
