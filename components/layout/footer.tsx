@@ -277,6 +277,32 @@ export default function FooterSection() {
                   className="h-8"
                 />
               </a>
+
+              {/* Featured on MagicBox.tools */}
+              <a
+                href="https://magicbox.tools"
+                target="_blank"
+                rel="noopener"
+                className="hidden dark:block"
+              >
+                <img
+                  src="https://magicbox.tools/badge-dark.svg"
+                  alt="Featured on MagicBox.tools"
+                  className="h-8"
+                />
+              </a>
+              <a
+                href="https://magicbox.tools"
+                target="_blank"
+                rel="noopener"
+                className="block dark:hidden"
+              >
+                <img
+                  src="https://magicbox.tools/badge.svg"
+                  alt="Featured on MagicBox.tools"
+                  className="h-8"
+                />
+              </a>
             </div>
           </div>
         </div>
