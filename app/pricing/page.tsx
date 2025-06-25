@@ -196,10 +196,6 @@ export default function PricingPage() {
                       $199
                     </span>
                   </div>
-
-                  <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs font-medium">
-                    Only 2 slots left at $99
-                  </span>
                 </div>
                 <p className="text-muted-foreground mb-6 text-xs">
                   Rank on Google with a dedicated SEO article
@@ -231,10 +227,6 @@ export default function PricingPage() {
                           <span className="text-muted-foreground ml-2 text-lg font-normal line-through">
                             $199
                           </span>
-                        </div>
-
-                        <div className="mt-2 inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-                          Only 2 slots left at this price
                         </div>
                       </div>
 

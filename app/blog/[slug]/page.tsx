@@ -252,10 +252,6 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                             $199
                           </span>
                         </div>
-
-                        <div className="mt-2 inline-block rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
-                          Only 2 slots left at this price
-                        </div>
                       </div>
 
                       {/* What's included */}
