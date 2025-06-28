@@ -1,7 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link"
 
+import { db } from "@/drizzle/db"
+import { seoArticle } from "@/drizzle/db/schema"
 import { RiArticleLine, RiCheckboxCircleFill, RiInformationLine, RiLinkM } from "@remixicon/react"
+import { desc } from "drizzle-orm"
+import { Calendar, Clock } from "lucide-react"
 
 import { LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
 import {
@@ -11,6 +15,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 import {
   Dialog,
   DialogContent,
@@ -53,7 +64,32 @@ const faqItems = [
   },
 ]
 
-export default function PricingPage() {
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
+function calculateReadingTime(content: string): string {
+  const wordsPerMinute = 200
+  const words = content.split(/\s+/).length
+  const minutes = Math.ceil(words / wordsPerMinute)
+  return `${minutes} min read`
+}
+
+async function getLatestReviews() {
+  const reviews = await db.select().from(seoArticle).orderBy(desc(seoArticle.publishedAt)).limit(5)
+
+  return reviews.map((review) => ({
+    ...review,
+    readingTime: calculateReadingTime(review.content),
+  }))
+}
+
+export default async function PricingPage() {
+  const latestReviews = await getLatestReviews()
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8 md:py-12">
       {/* Domain Rating Badge */}
@@ -376,6 +412,97 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+
+      {/* Latest Reviews Section */}
+      {latestReviews.length > 0 && (
+        <div className="mx-auto mb-12 max-w-5xl">
+          <div className="mb-8 text-center">
+            <h2 className="mb-3 text-xl font-bold sm:text-2xl">Latest Reviews</h2>
+            <p className="text-muted-foreground text-sm">
+              See examples of the SEO articles we create for our clients
+            </p>
+          </div>
+
+          <div className="mx-auto max-w-4xl">
+            <Carousel className="w-full">
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {latestReviews.map((review) => (
+                  <CarouselItem key={review.slug} className="pl-2 md:basis-1/2 md:pl-4">
+                    <article className="group">
+                      <Link
+                        href={`/reviews/${review.slug}`}
+                        className="bg-card hover:border-muted-foreground/20 block overflow-hidden rounded-2xl border"
+                      >
+                        {/* Review Image */}
+                        <div className="bg-muted relative aspect-[16/9] overflow-hidden">
+                          {review.image ? (
+                            <img
+                              src={review.image}
+                              alt={review.title}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-103"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <div className="text-muted-foreground/30 text-4xl font-bold">
+                                {review.title.charAt(0).toUpperCase()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Review Content */}
+                        <div className="px-6 py-4">
+                          {/* Meta Information */}
+                          <div className="text-muted-foreground mb-3 flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <time dateTime={review.publishedAt.toISOString()}>
+                                {formatDate(review.publishedAt)}
+                              </time>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{review.readingTime}</span>
+                            </div>
+                          </div>
+
+                          {/* Review Badge */}
+                          <div className="mb-4">
+                            <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs">
+                              Product Review
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <h2 className="text-card-foreground group-hover:text-primary mb-2 line-clamp-3 text-xl font-bold transition-colors">
+                            {review.title}
+                          </h2>
+
+                          {/* Description */}
+                          <p className="text-muted-foreground line-clamp-3 text-sm">
+                            {review.description}
+                          </p>
+                        </div>
+                      </Link>
+                    </article>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/reviews"
+              className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+            >
+              View all reviews →
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto mb-12 max-w-3xl">
         <h2 className="mb-4 text-center text-xl font-bold sm:text-2xl">
