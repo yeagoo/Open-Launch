@@ -161,10 +161,33 @@ export default function FooterSection() {
         </div>
         {/* Badges Section */}
         <div className="border-border/40 mt-8 border-t">
-          <div className="mx-auto max-w-5xl pt-8">
-            <h3 className="text-muted-foreground mb-6 text-center text-xs font-medium tracking-wider uppercase">
+          <div className="mx-auto max-w-5xl pt-4">
+            <h3 className="text-muted-foreground mb-4 text-center text-xs font-medium tracking-wider uppercase">
               Earned Badges
             </h3>
+            {/* Featured on findly.tools */}
+            <div className="mb-4 flex flex-wrap items-center justify-center">
+              <a href="https://findly.tools/open-launch?utm_source=open-launch" target="_blank">
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  height="auto"
+                  className="block dark:hidden"
+                />
+              </a>
+
+              <a href="https://findly.tools/open-launch?utm_source=open-launch" target="_blank">
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  height="auto"
+                  className="hidden dark:block"
+                />
+              </a>
+            </div>
+            {/* Featured on Twelve Tools */}
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="https://twelve.tools"
