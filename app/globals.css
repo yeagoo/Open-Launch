@@ -1,9 +1,6 @@
 @import "tailwindcss";
 @import "@fuma-comment/react/preset.css";
 
-@import "uploadthing/tw/v4";
-@source "../node_modules/@uploadthing/react/dist"; /** <-- depends on your project structure */
-
 /* Path du package relatif au fichier CSS */
 @source '../node_modules/@fuma-comment/react/dist/**/*.js';
 
