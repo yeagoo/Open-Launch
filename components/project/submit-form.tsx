@@ -33,7 +33,7 @@ import {
   LAUNCH_TYPES,
   PREMIUM_PAYMENT_LINK,
 } from "@/lib/constants"
-import { UploadButton } from "@/lib/uploadthing"
+import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
