@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
       // 如果需要通过 Next.js Image 组件优化 R2 图片，请取消注释并填入您的 R2 公开域名
        {
          protocol: "https",
-         hostname: "statiscs.aat.ee", // 或您的自定义域名
+         hostname: "statics.aat.ee", // 或您的自定义域名
        },
       {
         protocol: "https",
