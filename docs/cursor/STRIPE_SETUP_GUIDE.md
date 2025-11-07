@@ -41,14 +41,14 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx  # 支付链接
 
    **测试环境密钥（用于开发）：**
    ```
-   Publishable key（可发布密钥）: pk_test_51xxxxx...
-   Secret key（密钥）:           sk_test_51xxxxx...
+   Publishable key（可发布密钥）: pk_test_xxxxxxxxxxxxxxxx
+   Secret key（密钥）:           sk_test_xxxxxxxxxxxxxxxx
    ```
 
    **生产环境密钥（用于上线）：**
    ```
-   Publishable key: pk_live_51xxxxx...
-   Secret key:      sk_live_51xxxxx...
+   Publishable key: pk_live_xxxxxxxxxxxxxxxx
+   Secret key:      sk_live_xxxxxxxxxxxxxxxx
    ```
 
 5. 点击 "Reveal test key" 或 "显示测试密钥" 查看完整密钥
@@ -57,12 +57,12 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx  # 支付链接
 
 ```env
 # 测试环境（开发用）
-STRIPE_SECRET_KEY=sk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY_HERE
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY_HERE
 
 # 生产环境（上线用）
-# STRIPE_SECRET_KEY=sk_live_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# STRIPE_SECRET_KEY=sk_live_YOUR_SECRET_KEY_HERE
+# NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PUBLISHABLE_KEY_HERE
 ```
 
 ⚠️ **重要提示**：
@@ -310,8 +310,8 @@ stripe trigger checkout.session.completed
 
 ```env
 # ✅ API 密钥（从 Developers > API keys 获取）
-STRIPE_SECRET_KEY=sk_test_51xxxxx...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51xxxxx...
+STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY_HERE
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY_HERE
 
 # ✅ Webhook 密钥（从本地 CLI 或 Webhook 端点获取）
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx...

@@ -4,8 +4,8 @@
 
 | 环境变量 | 获取位置 | 示例值 | 说明 |
 |---------|---------|--------|------|
-| `STRIPE_SECRET_KEY` | Dashboard > Developers > [API keys](https://dashboard.stripe.com/apikeys) | `sk_test_51xxx...` | 服务端密钥，**必须保密** |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Dashboard > Developers > [API keys](https://dashboard.stripe.com/apikeys) | `pk_test_51xxx...` | 公开密钥，可用于前端 |
+| `STRIPE_SECRET_KEY` | Dashboard > Developers > [API keys](https://dashboard.stripe.com/apikeys) | `sk_test_xxxxxxxx` | 服务端密钥，**必须保密** |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Dashboard > Developers > [API keys](https://dashboard.stripe.com/apikeys) | `pk_test_xxxxxxxx` | 公开密钥，可用于前端 |
 | `STRIPE_WEBHOOK_SECRET` | 本地: Stripe CLI<br>生产: Dashboard > [Webhooks](https://dashboard.stripe.com/webhooks) | `whsec_xxx...` | Webhook 签名验证密钥 |
 | `NEXT_PUBLIC_PREMIUM_PAYMENT_LINK` | Dashboard > [Payment Links](https://dashboard.stripe.com/payment-links) | `https://buy.stripe.com/xxx` | 支付链接 URL |
 
@@ -22,8 +22,8 @@ https://dashboard.stripe.com/apikeys
 # 2. 点击 "Reveal test key" 查看密钥
 
 # 3. 复制到 .env
-STRIPE_SECRET_KEY=sk_test_51xxxxx...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51xxxxx...
+STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 ```
 
 ### 步骤 2️⃣: 配置 Webhook（本地开发 - 3 分钟）
