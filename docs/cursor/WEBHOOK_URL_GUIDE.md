@@ -96,8 +96,8 @@ whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```env
 # Stripe 配置
-STRIPE_SECRET_KEY=sk_test_51xxxxxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51xxxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 
 # 从 stripe listen 命令获取
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxx
@@ -121,8 +121,8 @@ stripe listen --forward-to localhost:3000/api/auth/stripe/webhook
 
 ```env
 # Stripe 配置
-STRIPE_SECRET_KEY=sk_live_51xxxxxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_51xxxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_live_YOUR_KEY_HERE
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_KEY_HERE
 
 # 从 Stripe Dashboard Webhook 端点获取
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxx
