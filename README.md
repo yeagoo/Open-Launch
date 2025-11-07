@@ -24,6 +24,7 @@
 
 - [Features](#features)
 - [Quick Start](#quick-start)
+- [Documentation](#-documentation)
 - [Tech Stack](#tech-stack)
 - [Deployment](#deployment)
 - [Project Stats](#project-stats)
@@ -112,6 +113,19 @@ bun run dev
 
 Visit `http://localhost:3000` to see your app running.
 
+## 📚 Documentation
+
+完整的配置和部署文档位于 [`docs/cursor/`](./docs/cursor/) 目录：
+
+- **📖 [配置文档总索引](./docs/cursor/CONFIGURATION_INDEX.md)** - 从这里开始
+- **🚀 [快速开始指南](./docs/cursor/README.md)** - 新手指南
+- **⚙️ [环境变量配置](./docs/cursor/ENV_SETUP_GUIDE.md)** - 详细的环境变量设置
+- **🚢 [Zeabur 部署指南](./docs/cursor/ZEABUR_DEPLOYMENT_GUIDE.md)** - 一键部署到 Zeabur
+- **🛠️ [管理员设置](./docs/cursor/ADMIN_SETUP_GUIDE.md)** - 设置管理员账号
+- **🔧 [故障排查](./docs/cursor/DEPLOYMENT_TROUBLESHOOTING.md)** - 常见问题解决
+
+所有文档均为中文，包含详细的步骤说明和预计配置时间。
+
 ## Tech Stack
 
 ### Frontend
@@ -132,7 +146,7 @@ Visit `http://localhost:3000` to see your app running.
 | [PostgreSQL](https://www.postgresql.org)                              | Database             |
 | [Redis](https://redis.io)                                             | Caching and sessions |
 | [Stripe](https://stripe.com)                                          | Payment processing   |
-| [UploadThing](https://uploadthing.com)                                | File uploads         |
+| [Cloudflare R2](https://www.cloudflare.com/products/r2/)              | File storage         |
 | [Resend](https://resend.com)                                          | Transactional emails |
 
 ### Security
