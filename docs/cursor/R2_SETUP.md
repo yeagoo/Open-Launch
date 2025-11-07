@@ -82,5 +82,20 @@ A: Cloudflare R2 提供慷慨的免费层：
 - 1000 万次免费读操作/月
 - 零出口费用
 
+**Q: 需要配置 next.config.ts 吗？**
+A: 如果您想通过 Next.js Image 组件优化 R2 图片，需要在 `next.config.ts` 中添加您的 R2 公开域名：
+
+```typescript
+images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "your-bucket.r2.dev", // 或您的自定义域名
+    },
+    // ... 其他域名
+  ],
+}
+```
+
 详细信息请查看 `MIGRATION_R2.md`。
 
