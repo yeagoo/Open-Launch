@@ -10,7 +10,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
-import { getLast30DaysPageviews, getLast30DaysVisitors } from "@/app/actions/plausible"
 
 export const metadata = {
   title: "Sponsors - Open-Launch",
@@ -19,10 +18,6 @@ export const metadata = {
 
 export default async function SponsorsPage() {
   const remainingSlots = SPONSORSHIP_SLOTS.TOTAL - SPONSORSHIP_SLOTS.USED
-  const [visitors, pageviews] = await Promise.all([
-    getLast30DaysVisitors(),
-    getLast30DaysPageviews(),
-  ])
 
   const generalSponsorshipBenefits = [
     "Featured on our homepage sidebar.",
@@ -84,15 +79,7 @@ export default async function SponsorsPage() {
               <div className="flex items-start gap-3">
                 <RiCheckboxCircleFill className="text-primary mt-1 h-5 w-5 flex-shrink-0" />
                 <span>
-                  <strong>{visitors?.toLocaleString() || "N/A"}</strong> Unique Visitors{" "}
-                  <span className="text-muted-foreground text-xs">(last 30 days)</span>
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <RiCheckboxCircleFill className="text-primary mt-1 h-5 w-5 flex-shrink-0" />
-                <span>
-                  <strong>{pageviews?.toLocaleString() || "N/A"}</strong> Page Views{" "}
-                  <span className="text-muted-foreground text-xs">(last 30 days)</span>
+                  Reach a dedicated audience of <strong>developers and tech enthusiasts</strong>
                 </span>
               </div>
             </div>

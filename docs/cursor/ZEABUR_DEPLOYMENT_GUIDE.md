@@ -42,7 +42,7 @@ error: relation "project" does not exist
 - [ ] Stripe 支付
 - [ ] Cloudflare Turnstile
 - [ ] Discord Webhook
-- [ ] Plausible Analytics
+- [ ] Google Analytics
 
 ---
 
@@ -184,13 +184,13 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxxxx/xxxxx
 DISCORD_LAUNCH_WEBHOOK_URL=https://discord.com/api/webhooks/xxxxx/xxxxx
 ```
 
-#### Plausible Analytics (可选)
+#### Google Analytics (可选)
 
 ```env
-PLAUSIBLE_API_KEY=your_plausible_api_key
-PLAUSIBLE_SITE_ID=yourdomain.com
-PLAUSIBLE_URL=https://plausible.io
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
+
+获取方式：访问 https://analytics.google.com/ 创建媒体资源，获取测量 ID
 
 ### 步骤 6: 运行数据库迁移 ⭐ 最关键
 

@@ -30,8 +30,6 @@
 | - `STRIPE_QUICK_REFERENCE.md` | Stripe 快速参考 | - |
 | - `STRIPE_WEBHOOK_CONFIG.md` | Webhook 详细配置 | - |
 | - `WEBHOOK_URL_GUIDE.md` | Webhook URL 快速指南 | - |
-| **PLAUSIBLE_SETUP_GUIDE.md** | Plausible 分析配置 | 15 分钟 |
-| - `PLAUSIBLE_QUICK_REFERENCE.md` | Plausible 快速参考 | - |
 
 ### 部署指南
 

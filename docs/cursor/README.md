@@ -42,8 +42,6 @@
 |-----|------|---------|
 | [`SERVICES_SETUP_GUIDE.md`](./SERVICES_SETUP_GUIDE.md) | Turnstile、Discord、Resend 配置 | 30 分钟 |
 | [`SERVICES_QUICK_REFERENCE.md`](./SERVICES_QUICK_REFERENCE.md) | 服务配置快速参考 | 5 分钟 |
-| [`PLAUSIBLE_SETUP_GUIDE.md`](./PLAUSIBLE_SETUP_GUIDE.md) | Plausible Analytics 配置 | 15 分钟 |
-| [`PLAUSIBLE_QUICK_REFERENCE.md`](./PLAUSIBLE_QUICK_REFERENCE.md) | Plausible 快速参考 | 5 分钟 |
 
 ### 部署指南
 
@@ -80,7 +78,7 @@
 - **添加 OAuth 登录** → [`OAUTH_SETUP_GUIDE.md`](./OAUTH_SETUP_GUIDE.md)
 - **添加支付功能** → [`STRIPE_SETUP_GUIDE.md`](./STRIPE_SETUP_GUIDE.md)
 - **配置其他服务** → [`SERVICES_SETUP_GUIDE.md`](./SERVICES_SETUP_GUIDE.md)
-- **添加分析统计** → [`PLAUSIBLE_SETUP_GUIDE.md`](./PLAUSIBLE_SETUP_GUIDE.md)
+- **添加分析统计** → 已集成 Google Analytics (G-RR1YB886D7)，在 `app/layout.tsx` 中配置
 
 ### 遇到问题
 
@@ -117,7 +115,7 @@
 ### 可选配置（第三优先级）
 9. 💰 Stripe 支付
 10. 💬 Discord 通知
-11. 📊 Plausible 分析
+11. 📊 Google Analytics (已集成)
 
 ---
 
