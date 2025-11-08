@@ -127,13 +127,6 @@ export default function TermsOfServicePage() {
                 pixels), present on ALL pages, and not hidden or obfuscated.
               </p>
               <p className="mb-3">
-                <strong>📋 Get Implementation Code:</strong> Visit our{" "}
-                <Link href="/legal/badges" className="text-primary font-medium hover:underline">
-                  Attribution Badges page
-                </Link>{" "}
-                to copy the ready-to-use HTML/React code for these badges.
-              </p>
-              <p className="mb-3">
                 User-submitted content remains the property of the respective users, who grant
                 aat.ee a license to display and use that content on our platform.
               </p>
