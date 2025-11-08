@@ -33,22 +33,22 @@ div[role="dialog"],
   --card-foreground: hsl(0 0% 3.9%);
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(0 0% 3.9%);
-  --primary: rgb(37, 99, 235);
+  --primary: hsl(142, 76%, 36%);
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(0 0% 96.1%);
   --secondary-foreground: hsl(0 0% 9%);
   --muted: hsl(0 0% 96.1%);
   --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(217, 91%, 60%);
+  --accent: hsl(142, 71%, 45%);
   --accent-foreground: hsl(0 0% 100%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 89.8%);
   --input: hsl(0 0% 89.8%);
-  --ring: hsl(217, 91%, 60%);
-  --chart-1: hsl(217, 91%, 60%);
-  --chart-2: hsl(217, 70%, 50%);
-  --chart-3: hsl(217, 50%, 40%);
+  --ring: hsl(142, 71%, 45%);
+  --chart-1: hsl(142, 71%, 45%);
+  --chart-2: hsl(142, 60%, 40%);
+  --chart-3: hsl(142, 50%, 35%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
   --radius: 0.6rem;
@@ -56,12 +56,12 @@ div[role="dialog"],
   --foreground: hsl(0 0% 3.9%);
   --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(217, 91%, 60%);
+  --sidebar-primary: hsl(142, 71%, 45%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(217, 70%, 97%);
-  --sidebar-accent-foreground: hsl(217, 91%, 60%);
-  --sidebar-border: hsl(217, 10%, 91%);
-  --sidebar-ring: hsl(217, 91%, 60%);
+  --sidebar-accent: hsl(142, 60%, 97%);
+  --sidebar-accent-foreground: hsl(142, 71%, 45%);
+  --sidebar-border: hsl(142, 10%, 91%);
+  --sidebar-ring: hsl(142, 71%, 45%);
 }
 
 .dark {
@@ -71,32 +71,32 @@ div[role="dialog"],
   --card-foreground: hsl(0 0% 98%);
   --popover: hsl(0 0% 10%);
   --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(217, 91%, 60%);
+  --primary: hsl(142, 71%, 45%);
   --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(0 0% 14.9%);
   --secondary-foreground: hsl(0 0% 98%);
   --muted: hsl(0 0% 14.9%);
   --muted-foreground: hsl(0 0% 63.9%);
-  --accent: hsl(217, 70%, 45%);
+  --accent: hsl(142, 60%, 40%);
   --accent-foreground: hsl(0 0% 98%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 14.9%);
   --input: hsl(0 0% 14.9%);
-  --ring: hsl(217, 91%, 60%);
-  --chart-1: hsl(217, 91%, 60%);
-  --chart-2: hsl(217, 70%, 45%);
-  --chart-3: hsl(217, 50%, 40%);
+  --ring: hsl(142, 71%, 45%);
+  --chart-1: hsl(142, 71%, 45%);
+  --chart-2: hsl(142, 60%, 40%);
+  --chart-3: hsl(142, 50%, 35%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
   --sidebar: hsl(0 0% 10%);
   --sidebar-foreground: hsl(0 0% 95.9%);
-  --sidebar-primary: hsl(217, 91%, 60%);
+  --sidebar-primary: hsl(142, 71%, 45%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
   --sidebar-accent: hsl(0 0% 15.9%);
   --sidebar-accent-foreground: hsl(0 0% 95.9%);
   --sidebar-border: hsl(0 0% 15.9%);
-  --sidebar-ring: hsl(217, 91%, 60%);
+  --sidebar-ring: hsl(142, 71%, 45%);
 }
 
 @theme inline {
@@ -169,7 +169,7 @@ div[role="dialog"],
   }
 }
 
-/* Styles personnalisés pour Open Launch */
+/* Styles personnalisés pour aat.ee */
 .yt-card {
   @apply bg-card border-border overflow-hidden rounded-lg border transition-all duration-200 hover:shadow-md;
 }
