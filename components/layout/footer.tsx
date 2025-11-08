@@ -19,7 +19,6 @@ const resourcesLinks = [
 const legalLinks = [
   { title: "Terms of Service", href: "/legal/terms" },
   { title: "Privacy Policy", href: "/legal/privacy" },
-  { title: "Attribution Badges", href: "/legal/badges" },
 ]
 
 // Liens pour la nouvelle colonne "Connect"
