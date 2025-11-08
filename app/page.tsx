@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { ProjectSection } from "@/components/home/project-section"
 import { SponsorCards } from "@/components/shared/sponsor-cards"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
-import { getLast30DaysPageviews, getLast30DaysVisitors } from "@/app/actions/plausible"
 import { getTopCategories } from "@/app/actions/projects"
 
 export default async function Home() {
@@ -17,9 +16,6 @@ export default async function Home() {
   const yesterdayProjects = await getYesterdayProjects()
   const monthProjects = await getMonthBestProjects()
   const topCategories = await getTopCategories(5)
-
-  const last30DaysVisitors = await getLast30DaysVisitors()
-  const last30DaysPageviews = await getLast30DaysPageviews()
 
   // // Get session
   const session = await auth.api.getSession({
@@ -148,28 +144,6 @@ export default async function Home() {
 
           {/* Sidebar */}
           <div className="top-24">
-            {/* Statistics */}
-            {(last30DaysVisitors !== null || last30DaysPageviews !== null) && (
-              <div className="space-y-3 pt-0 pb-4">
-                <h3 className="flex items-center gap-2 font-semibold">Statistics (Last 30 Days)</h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {last30DaysVisitors !== null && (
-                    <div className="hover:bg-muted/40 rounded-md border p-2 text-center transition-colors">
-                      <div className="text-xl font-bold">{last30DaysVisitors}</div>
-                      <div className="text-muted-foreground text-xs font-medium">Visitors</div>
-                    </div>
-                  )}
-
-                  {last30DaysPageviews !== null && (
-                    <div className="hover:bg-muted/40 rounded-md border p-2 text-center transition-colors">
-                      <div className="text-xl font-bold">{last30DaysPageviews}</div>
-                      <div className="text-muted-foreground text-xs font-medium">Page Views</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
             {/* Sponsors */}
             <div className="space-y-3 py-4">
               <h3 className="flex items-center font-semibold">Sponsors</h3>

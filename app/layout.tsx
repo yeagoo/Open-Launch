@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Outfit as FontHeading, Inter as FontSans } from "next/font/google"
+import Script from "next/script"
 
-import PlausibleProvider from "next-plausible"
 import { Toaster } from "sonner"
 
 import Footer from "@/components/layout/footer"
@@ -56,19 +56,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RR1YB886D7"
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <PlausibleProvider
-          domain="open-launch.com"
-          customDomain="https://plausible.dailypings.com"
-          selfHosted={true}
-          trackOutboundLinks={true}
-          scriptProps={{
-            src: "https://plausible.dailypings.com/js/script.js",
-          }}
-          enabled={process.env.NODE_ENV === "production"}
-        />
+        {/* Google Analytics */}
+        {process.env.NODE_ENV === "production" && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body
         className={`font-sans antialiased ${fontSans.variable} ${fontHeading.variable} sm:overflow-y-scroll`}
