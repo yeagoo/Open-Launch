@@ -22,13 +22,28 @@ const fontHeading = FontHeading({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
-  title: "aat.ee - Discover the Best Tech Products",
+  title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
   description:
-    "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
+    "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
+  keywords: [
+    "aat.ee",
+    "product discovery",
+    "startup directory",
+    "AI tools",
+    "SaaS launches",
+    "product hunt alternative",
+    "startup community",
+    "new product launch",
+    "tech startups",
+    "indie makers",
+    "AI software",
+    "app discovery",
+    "early adopters platform",
+  ],
   openGraph: {
-    title: "aat.ee - Discover the Best Tech Products",
+    title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
     description:
-      "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
+      "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
     url: process.env.NEXT_PUBLIC_URL,
     siteName: "aat.ee",
     images: [
@@ -36,7 +51,7 @@ export const metadata: Metadata = {
         url: "og.png",
         width: 1200,
         height: 630,
-        alt: "aat.ee - Discover the Best Tech Products",
+        alt: "aat.ee – Discover New Startups, AI Tools & Product Launches",
       },
     ],
     locale: "en_US",
@@ -44,9 +59,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "aat.ee - Discover the Best Tech Products",
+    title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
     description:
-      "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
+      "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
     images: ["og.png"],
   },
 }
