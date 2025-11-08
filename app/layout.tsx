@@ -22,21 +22,21 @@ const fontHeading = FontHeading({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
-  title: "Open Launch - Discover the Best Tech Products",
+  title: "aat.ee - Discover the Best Tech Products",
   description:
-    "Open Launch is a platform to discover and upvote the best tech products. Find top products launching daily.",
+    "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
   openGraph: {
-    title: "Open Launch - Discover the Best Tech Products",
+    title: "aat.ee - Discover the Best Tech Products",
     description:
-      "Open Launch is a platform to discover and upvote the best tech products. Find top products launching daily.",
+      "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
     url: process.env.NEXT_PUBLIC_URL,
-    siteName: "Open Launch",
+    siteName: "aat.ee",
     images: [
       {
         url: "og.png",
         width: 1200,
         height: 630,
-        alt: "Open Launch - Discover the Best Tech Products",
+        alt: "aat.ee - Discover the Best Tech Products",
       },
     ],
     locale: "en_US",
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Open Launch - Discover the Best Tech Products",
+    title: "aat.ee - Discover the Best Tech Products",
     description:
-      "Open Launch is a platform to discover and upvote the best tech products. Find top products launching daily.",
+      "aat.ee is a platform to discover and upvote the best tech products. Find top products launching daily.",
     images: ["og.png"],
   },
 }

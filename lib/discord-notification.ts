@@ -89,7 +89,7 @@ export async function sendDiscordCommentNotification(
       embeds: [
         {
           title: "New Comment",
-          color: 0x00ff00, // Green for Open Launch
+          color: 0x00ff00, // Green for aat.ee
           description: truncatedText,
           url: projectUrl,
           fields: [
@@ -105,7 +105,7 @@ export async function sendDiscordCommentNotification(
             },
           ],
           footer: {
-            text: "Open Launch Comment Notification",
+            text: "aat.ee Comment Notification",
           },
           timestamp: new Date().toISOString(),
         },
@@ -139,7 +139,7 @@ export async function sendDiscordCommentNotification(
  * @param launchDate Date of the launch
  * @param launchType Type of launch (free, premium, premium plus)
  * @param websiteUrl URL of the project website
- * @param projectUrl URL of the project page on Open-Launch
+ * @param projectUrl URL of the project page on aat.ee
  * @param userId ID of the user who submitted the launch notification
  */
 export async function notifyDiscordLaunch(
@@ -234,7 +234,7 @@ export async function notifyDiscordLaunch(
             submittedByField,
           ],
           footer: {
-            text: "Open Launch Launch Notification",
+            text: "aat.ee Launch Notification",
           },
           timestamp: new Date().toISOString(),
         },

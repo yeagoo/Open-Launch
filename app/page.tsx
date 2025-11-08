@@ -71,7 +71,7 @@ export default async function Home() {
                   <div className="flex-shrink-0">
                     <img
                       src="/oppieG.png"
-                      alt="Open Launch Character"
+                      alt="aat.ee Character"
                       className="h-24 w-24 object-contain"
                     />
                   </div>
@@ -110,7 +110,7 @@ export default async function Home() {
                   <div className="flex-shrink-0">
                     <img
                       src="/oppieD.png"
-                      alt="Open Launch Character"
+                      alt="aat.ee Character"
                       className="h-24 w-24 object-contain"
                     />
                   </div>

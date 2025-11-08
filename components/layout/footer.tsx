@@ -46,11 +46,11 @@ export default function FooterSection() {
             <Link href="/" className="font-heading mb-3 flex items-center">
               <span className="font-heading flex items-center text-lg font-bold">
                 <img src="/logo.svg" alt="logo" className="mr-1 h-6 w-6" />
-                Open-Launch
+                aat.ee
               </span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              © {new Date().getFullYear()} Open-Launch. All rights reserved.
+              © {new Date().getFullYear()} aat.ee. All rights reserved.
             </p>
             <p className="text-muted-foreground mb-4 text-sm">
               Open source project by{" "}
@@ -242,11 +242,11 @@ export default function FooterSection() {
                 target="_blank"
                 rel="noopener"
                 className="hidden dark:block"
-                title="Open Launch - Featured on AI With Me"
+                title="aat.ee - Featured on AI With Me"
               >
                 <img
                   src="https://aiwith.me/ai_with_me_dark_badge.svg"
-                  alt="Open Launch - Featured on AI With Me"
+                  alt="aat.ee - Featured on AI With Me"
                   className="h-8"
                 />
               </a>
@@ -255,11 +255,11 @@ export default function FooterSection() {
                 target="_blank"
                 rel="noopener"
                 className="block dark:hidden"
-                title="Open Launch - Featured on AI With Me"
+                title="aat.ee - Featured on AI With Me"
               >
                 <img
                   src="https://aiwith.me/ai_with_me_light_badge.svg"
-                  alt="Open Launch - Featured on AI With Me"
+                  alt="aat.ee - Featured on AI With Me"
                   className="h-8"
                 />
               </a>
@@ -284,7 +284,7 @@ export default function FooterSection() {
               >
                 <img
                   src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=neutral&t=1748776168767"
-                  alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
+                  alt="aat.ee - The first complete open source alternative to Product Hunt. | Product Hunt"
                   className="h-8"
                 />
               </a>
@@ -296,7 +296,7 @@ export default function FooterSection() {
               >
                 <img
                   src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=light&t=1748776063921"
-                  alt="Open Launch - The first complete open source alternative to Product Hunt. | Product Hunt"
+                  alt="aat.ee - The first complete open source alternative to Product Hunt. | Product Hunt"
                   className="h-8"
                 />
               </a>

@@ -41,7 +41,7 @@ export async function generateMetadata({
 
   if (!article[0]) {
     return {
-      title: "Article not found | Open Launch",
+      title: "Article not found | aat.ee",
       description: "The article you're looking for doesn't exist or has been removed.",
     }
   }
@@ -49,22 +49,22 @@ export async function generateMetadata({
   const { title, description, metaTitle, metaDescription } = article[0]
 
   return {
-    title: metaTitle || `${title} | Open Launch`,
+    title: metaTitle || `${title} | aat.ee`,
     description: metaDescription || description,
     keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
-    authors: [{ name: article[0].author || "Open Launch Team" }],
+    authors: [{ name: article[0].author || "aat.ee Team" }],
     category: "Technology",
     openGraph: {
-      title: metaTitle || `${title} | Open Launch`,
+      title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
       type: "article",
       publishedTime: article[0].publishedAt.toISOString(),
-      siteName: "Open Launch",
+      siteName: "aat.ee",
       locale: "en_US",
     },
     twitter: {
       card: "summary_large_image",
-      title: metaTitle || `${title} | Open Launch`,
+      title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
       creator: "@openlaunch",
       site: "@openlaunch",

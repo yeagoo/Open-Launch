@@ -15,18 +15,18 @@ interface BadgesDisplayProps {
 }
 
 export function BadgesDisplay({ dailyRanking, slug }: BadgesDisplayProps) {
-  const lightBadgeCode = `<a href=\"https://open-launch.com/projects/${slug}\" target=\"_blank\" title=\"Open-Launch Top ${dailyRanking} Daily Winner\">
+  const lightBadgeCode = `<a href=\"https://open-launch.com/projects/${slug}\" target=\"_blank\" title=\"aat.ee Top ${dailyRanking} Daily Winner\">
   <img 
     src=\"https://open-launch.com/images/badges/top${dailyRanking}-light.svg\" 
-    alt=\"Open-Launch Top ${dailyRanking} Daily Winner\" 
+    alt=\"aat.ee Top ${dailyRanking} Daily Winner\" 
     style=\"width: 195px; height: auto;\" 
   />
 </a>`
 
-  const darkBadgeCode = `<a href=\"https://open-launch.com/projects/${slug}\" target=\"_blank\" title=\"Open-Launch Top ${dailyRanking} Daily Winner\">
+  const darkBadgeCode = `<a href=\"https://open-launch.com/projects/${slug}\" target=\"_blank\" title=\"aat.ee Top ${dailyRanking} Daily Winner\">
   <img 
     src=\"https://open-launch.com/images/badges/top${dailyRanking}-dark.svg\" 
-    alt=\"Open-Launch Top ${dailyRanking} Daily Winner\" 
+    alt=\"aat.ee Top ${dailyRanking} Daily Winner\" 
     style=\"width: 195px; height: auto;\" 
   />
 </a>`
@@ -48,7 +48,7 @@ export function BadgesDisplay({ dailyRanking, slug }: BadgesDisplayProps) {
         <div className="flex w-full justify-center">
           <img
             src={`/images/badges/top${dailyRanking}-light.svg`}
-            alt={`Open-Launch Top ${dailyRanking} Daily Winner`}
+            alt={`aat.ee Top ${dailyRanking} Daily Winner`}
             className="h-auto w-[195px]"
           />
         </div>
@@ -73,7 +73,7 @@ export function BadgesDisplay({ dailyRanking, slug }: BadgesDisplayProps) {
         <div className="flex w-full justify-center">
           <img
             src={`/images/badges/top${dailyRanking}-dark.svg`}
-            alt={`Open-Launch Top ${dailyRanking} Daily Winner`}
+            alt={`aat.ee Top ${dailyRanking} Daily Winner`}
             className="h-auto w-[195px]"
           />
         </div>

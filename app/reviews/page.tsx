@@ -7,22 +7,22 @@ import { seoArticle } from "@/drizzle/db/schema"
 import { Calendar, Clock } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Product Reviews | Open Launch - In-Depth Product Analysis",
+  title: "Product Reviews | aat.ee - In-Depth Product Analysis",
   description:
     "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
   keywords: "product reviews, analysis, evaluation, tools, platforms, technology",
-  authors: [{ name: "Open Launch Team" }],
+  authors: [{ name: "aat.ee Team" }],
   openGraph: {
-    title: "Product Reviews | Open Launch - In-Depth Product Analysis",
+    title: "Product Reviews | aat.ee - In-Depth Product Analysis",
     description:
       "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
     type: "website",
     url: "/reviews",
-    siteName: "Open Launch",
+    siteName: "aat.ee",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Product Reviews | Open Launch - In-Depth Product Analysis",
+    title: "Product Reviews | aat.ee - In-Depth Product Analysis",
     description:
       "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
   },
