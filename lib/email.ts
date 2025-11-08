@@ -17,17 +17,22 @@ interface EmailPayload {
 export async function sendEmail(payload: EmailPayload) {
   const { to, subject, html } = payload
 
+  // 使用环境变量配置发件人，如果未设置则使用默认值
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+
   try {
     const data = await resend.emails.send({
-      from: "aat.ee <noreply@aat.ee>",
+      from: fromEmail,
       to,
       subject,
       html,
     })
 
+    console.log("Email sent successfully:", { to, subject, messageId: data?.id })
     return { success: true, data }
   } catch (error) {
     console.error("Failed to send email:", error)
-    throw new Error("Failed to send email")
+    console.error("Email details:", { from: fromEmail, to, subject })
+    throw error
   }
 }
