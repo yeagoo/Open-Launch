@@ -55,6 +55,7 @@
 | 文档 | 说明 |
 |-----|------|
 | **NEXT_CONFIG_FIX.md** | next.config.ts 构建错误修复 |
+| **RESEND_TROUBLESHOOTING.md** | Resend 邮件发送故障排查 |
 
 ---
 
@@ -89,6 +90,7 @@
 1. 阅读 `SERVICES_SETUP_GUIDE.md` 的 Resend 部分
 2. 验证域名
 3. 创建 API 密钥
+4. **遇到问题？** 查看 `RESEND_TROUBLESHOOTING.md`
 
 ### 我想添加 Bot 防护
 
@@ -104,9 +106,11 @@
 
 ### 我想添加访问统计
 
-1. 阅读 `PLAUSIBLE_SETUP_GUIDE.md`
-2. 注册 Plausible 或自托管
-3. 配置 API 密钥和 Site ID
+网站已集成 **Google Analytics (GA4)**，无需额外配置。
+
+1. GA Measurement ID 已在 `app/layout.tsx` 中配置
+2. 默认 ID: `G-RR1YB886D7`
+3. 要更换：修改 `NEXT_PUBLIC_GA_MEASUREMENT_ID` 环境变量
 
 ### 我想设置管理员
 
