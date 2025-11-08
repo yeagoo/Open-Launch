@@ -72,7 +72,9 @@ export const auth = betterAuth({
     process.env.NODE_ENV !== "development"
       ? "https://www.open-launch.com"
       : "http://localhost:3000",
-  ],
+    "https://www.aat.ee", // 添加您的域名（HTTPS）
+    "http://www.aat.ee",  // 添加您的域名（HTTP）
+  ].filter(Boolean),
   plugins: [
     stripe({
       stripeClient,
