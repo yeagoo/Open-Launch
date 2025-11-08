@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog"
 
 export const metadata = {
-  title: "Pricing - Open-Launch",
+  title: "Pricing - aat.ee",
   description: "Choose the perfect plan for your project launch",
 }
 

@@ -54,10 +54,10 @@ export async function generateMetadata(
   const previousImages = (await parent).openGraph?.images || []
 
   return {
-    title: `${projectData.name} | Open-Launch`,
+    title: `${projectData.name} | aat.ee`,
     description: stripHtml(projectData.description),
     openGraph: {
-      title: `${projectData.name} on Open-Launch`,
+      title: `${projectData.name} on aat.ee`,
       description: stripHtml(projectData.description),
       images: [
         projectData.productImage || projectData.coverImageUrl || projectData.logoUrl,
@@ -66,7 +66,7 @@ export async function generateMetadata(
     },
     twitter: {
       card: "summary_large_image",
-      title: `${projectData.name} on Open-Launch`,
+      title: `${projectData.name} on aat.ee`,
       description: stripHtml(projectData.description),
       images: [projectData.productImage || projectData.logoUrl],
     },
@@ -338,12 +338,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     <div className="flex">
                       <img
                         src={`/images/badges/top${projectData.dailyRanking}-light.svg`}
-                        alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                        alt={`aat.ee Top ${projectData.dailyRanking} Daily Winner`}
                         className="h-12 w-auto dark:hidden"
                       />
                       <img
                         src={`/images/badges/top${projectData.dailyRanking}-dark.svg`}
-                        alt={`Open-Launch Top ${projectData.dailyRanking} Daily Winner`}
+                        alt={`aat.ee Top ${projectData.dailyRanking} Daily Winner`}
                         className="hidden h-12 w-auto dark:block"
                       />
                     </div>

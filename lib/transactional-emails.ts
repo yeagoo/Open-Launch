@@ -50,7 +50,7 @@ export async function sendWinnerBadgeEmail({
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h1 style="font-size: 24px; color: #1a1a1a;">Hi ${effectiveUserName} 👋</h1>
-      <p><strong>${projectName}</strong> is a <strong>${badgeName}</strong> on Open-Launch!</p>
+      <p><strong>${projectName}</strong> is a <strong>${badgeName}</strong> on aat.ee!</p>
 
       <p style="text-align: center; margin: 25px 0;">
         <a href="${projectBadgesPageUrl}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
@@ -83,17 +83,17 @@ export async function sendLaunchReminderEmail({
   const effectiveUserName = user.name || "Creator"
   const effectiveUserEmail = user.email
 
-  const subject = `🚀 ${projectName} is Live on Open-Launch!`
+  const subject = `🚀 ${projectName} is Live on aat.ee!`
   const projectUrl = `${APP_URL}/projects/${projectSlug}`
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <h1 style="font-size: 22px; color: #1a1a1a;">Hi ${effectiveUserName},</h1>
-      <p>Just a quick heads-up: your project, <strong>${projectName}</strong>, is launching today on Open-Launch!</p>
+      <p>Just a quick heads-up: your project, <strong>${projectName}</strong>, is launching today on aat.ee!</p>
       <p>We hope you had a great launch day!</p>
       <p>You can view your project live here: <a href="${projectUrl}">${projectUrl}</a></p> 
       <p style="margin-top: 25px;">Best of luck!</p>
-      <p>The Open-Launch Team</p>
+      <p>The aat.ee Team</p>
     </div>
   `
 

@@ -3,8 +3,8 @@
 import Link from "next/link"
 
 export const metadata = {
-  title: "Terms of Service - Open-Launch",
-  description: "Terms of Service for Open-Launch platform",
+  title: "Terms of Service - aat.ee",
+  description: "Terms of Service for aat.ee platform",
 }
 
 export default function TermsOfServicePage() {
@@ -26,11 +26,11 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">1. Introduction</h2>
               <p className="mb-3">
-                Welcome to Open-Launch. These Terms of Service govern your use of our platform,
+                Welcome to aat.ee. These Terms of Service govern your use of our platform,
                 which focuses on discovering and supporting projects.
               </p>
               <p className="mb-3">
-                By using Open-Launch, you agree to these terms. If you don't agree, please don't use
+                By using aat.ee, you agree to these terms. If you don't agree, please don't use
                 our services.
               </p>
             </section>
@@ -39,14 +39,14 @@ export default function TermsOfServicePage() {
               <h2 className="mb-3 text-xl font-semibold">2. Using Our Service</h2>
               <p className="mb-3">
                 <strong>Age Requirements:</strong> You must be at least 13 years old to use
-                Open-Launch.
+                aat.ee.
               </p>
               <p className="mb-3">
                 <strong>Account Responsibility:</strong> If you create an account, you're
                 responsible for maintaining its security and for all activities under your account.
               </p>
               <p className="mb-3">
-                <strong>Acceptable Use:</strong> When using Open-Launch, you agree not to:
+                <strong>Acceptable Use:</strong> When using aat.ee, you agree not to:
               </p>
               <ul className="mb-3 list-disc space-y-1 pl-6">
                 <li>Post content that's illegal, harmful, or violates others' rights</li>
@@ -61,7 +61,7 @@ export default function TermsOfServicePage() {
               <h2 className="mb-3 text-xl font-semibold">3. Content</h2>
               <p className="mb-3">
                 <strong>Your Content:</strong> When you submit projects, comments, or other content
-                on Open-Launch, you retain ownership, but grant us permission to display and use
+                on aat.ee, you retain ownership, but grant us permission to display and use
                 that content on our platform.
               </p>
               <p className="mb-3">
@@ -78,7 +78,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">4. Intellectual Property</h2>
               <p className="mb-3">
-                Open-Launch is an open source project licensed under the Open-Launch License. The
+                aat.ee is an open source project licensed under the aat.ee License. The
                 source code is available on{" "}
                 <a
                   href="https://github.com/drdruide/open-launch"
@@ -92,7 +92,7 @@ export default function TermsOfServicePage() {
               </p>
               <p className="mb-3">
                 While the core platform is open source, certain features or services may be
-                proprietary. The Open-Launch License allows you to:
+                proprietary. The aat.ee License allows you to:
               </p>
               <ul className="mb-3 list-disc space-y-1 pl-6">
                 <li>Use, copy, and modify the software</li>
@@ -108,17 +108,17 @@ export default function TermsOfServicePage() {
               </p>
               <p className="mb-3">
                 <strong>MANDATORY Visual Badge:</strong> You MUST use one of our official "Powered
-                by Open-Launch" visual badges. Text-only attribution is NOT sufficient:
+                by aat.ee" visual badges. Text-only attribution is NOT sufficient:
               </p>
               <div className="mt-2 flex flex-wrap items-center justify-center gap-4 p-6">
                 <img
                   src="/images/badges/powered-by-light.svg"
-                  alt="Powered by Open-Launch - Light Theme"
+                  alt="Powered by aat.ee - Light Theme"
                   className="h-11 w-auto"
                 />
                 <img
                   src="/images/badges/powered-by-dark.svg"
-                  alt="Powered by Open-Launch - Dark Theme"
+                  alt="Powered by aat.ee - Dark Theme"
                   className="h-11 w-auto"
                 />
               </div>
@@ -135,14 +135,14 @@ export default function TermsOfServicePage() {
               </p>
               <p className="mb-3">
                 User-submitted content remains the property of the respective users, who grant
-                Open-Launch a license to display and use that content on our platform.
+                aat.ee a license to display and use that content on our platform.
               </p>
             </section>
 
             <section>
               <h2 className="mb-3 text-xl font-semibold">5. Third-Party Content</h2>
               <p className="mb-3">
-                Open-Launch may contain links to third-party websites or services, including
+                aat.ee may contain links to third-party websites or services, including
                 projects. We're not responsible for the content, policies, or practices of these
                 third parties.
               </p>
@@ -154,7 +154,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">6. Termination</h2>
               <p className="mb-3">
-                We can suspend or terminate your access to Open-Launch at any time for any reason,
+                We can suspend or terminate your access to aat.ee at any time for any reason,
                 particularly if you violate these terms.
               </p>
               <p className="mb-3">
@@ -166,7 +166,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">7. Disclaimers</h2>
               <p className="mb-3">
-                Open-Launch is provided "as is" without warranties of any kind. We don't guarantee
+                aat.ee is provided "as is" without warranties of any kind. We don't guarantee
                 that the service will be uninterrupted, secure, or error-free.
               </p>
               <p className="mb-3">
@@ -178,7 +178,7 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">8. Limitation of Liability</h2>
               <p className="mb-3">
-                To the extent permitted by law, Open-Launch and its team will not be liable for any
+                To the extent permitted by law, aat.ee and its team will not be liable for any
                 indirect, incidental, special, or consequential damages resulting from your use of
                 or inability to use our service.
               </p>
@@ -191,7 +191,7 @@ export default function TermsOfServicePage() {
                 changes, but it's your responsibility to review these terms periodically.
               </p>
               <p className="mb-3">
-                Your continued use of Open-Launch after changes means you accept the updated terms.
+                Your continued use of aat.ee after changes means you accept the updated terms.
               </p>
             </section>
 

@@ -45,7 +45,7 @@ export function ShareButton({ name, slug, variant = "default", className }: Shar
 
   const shareOnSocial = (platform: string) => {
     const url = shareUrl
-    const title = `Check out ${name} on Open-Launch`
+    const title = `Check out ${name} on aat.ee`
 
     let socialShareUrl = ""
     switch (platform) {

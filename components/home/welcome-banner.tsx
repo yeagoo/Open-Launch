@@ -14,7 +14,7 @@ export function WelcomeBanner() {
       <div className="flex items-start justify-between md:items-center">
         <div className="flex items-start gap-4 md:items-center">
           <div>
-            <h2 className="text-foreground mb-1 text-lg font-semibold">Welcome to Open-Launch!</h2>
+            <h2 className="text-foreground mb-1 text-lg font-semibold">Welcome to aat.ee!</h2>
             <p className="text-muted-foreground mb-3 max-w-xl text-sm">
               Discover and support the best new tech products. Explore daily launches and upvote
               your favorite projects.

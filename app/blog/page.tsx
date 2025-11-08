@@ -8,30 +8,30 @@ import { desc } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Blog | Open Launch - Insights & Resources",
+  title: "Blog | aat.ee - Insights & Resources",
   description:
     "Discover insights, tutorials, and resources to help you build and launch successful products.",
   keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
-  authors: [{ name: "Open Launch Team" }],
+  authors: [{ name: "aat.ee Team" }],
   openGraph: {
-    title: "Blog | Open Launch - Insights & Resources",
+    title: "Blog | aat.ee - Insights & Resources",
     description:
       "Discover insights, tutorials, and resources to help you build and launch successful products.",
     type: "website",
     url: "/blog",
-    siteName: "Open Launch",
+    siteName: "aat.ee",
     images: [
       {
         url: "/og-blog.png",
         width: 1200,
         height: 630,
-        alt: "Open Launch Blog",
+        alt: "aat.ee Blog",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Blog | Open Launch - Insights & Resources",
+    title: "Blog | aat.ee - Insights & Resources",
     description:
       "Discover insights, tutorials, and resources to help you build and launch successful products.",
     images: ["/og-blog.png"],
