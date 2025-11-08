@@ -70,7 +70,7 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     process.env.NODE_ENV !== "development"
-      ? "https://www.open-launch.com"
+      ? "https://www.aat.ee"
       : "http://localhost:3000",
     "https://www.aat.ee", // 添加您的域名（HTTPS）
     "http://www.aat.ee",  // 添加您的域名（HTTP）
