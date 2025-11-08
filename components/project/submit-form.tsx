@@ -705,8 +705,8 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       setError(`Logo upload failed: ${error.message}`)
                     }}
                     appearance={{
-                      button: `ut-button border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 inline-flex items-center justify-center gap-2 ${isUploadingLogo ? "opacity-50 pointer-events-none" : ""}`,
-                      allowedContent: "hidden",
+                      button: `ut-button border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 inline-flex items-center justify-center gap-2 rounded-md ${isUploadingLogo ? "opacity-50 pointer-events-none" : ""}`,
+                      allowedContent: "",
                     }}
                     content={{
                       button({ ready, isUploading }) {
@@ -783,8 +783,8 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       setError(`Product image upload failed: ${error.message}`)
                     }}
                     appearance={{
-                      button: `ut-button flex items-center w-fit gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 ${isUploadingProductImage ? "opacity-50 pointer-events-none" : ""}`,
-                      allowedContent: "hidden",
+                      button: `ut-button flex items-center w-fit gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 rounded-md ${isUploadingProductImage ? "opacity-50 pointer-events-none" : ""}`,
+                      allowedContent: "",
                     }}
                     content={{
                       button({ ready, isUploading }) {
