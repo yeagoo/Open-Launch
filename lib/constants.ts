@@ -5,7 +5,9 @@ export const LAUNCH_LIMITS = {
   TOTAL_DAILY_LIMIT: 20,
 } as const
 
-export const USER_DAILY_LAUNCH_LIMIT = 1
+// 用户每日发布限制
+export const USER_DAILY_LAUNCH_LIMIT = 2 // 普通用户每天 2 个
+export const PREMIUM_USER_DAILY_LAUNCH_LIMIT = 10 // Premium 用户每天 10 个
 
 export const PROJECT_LIMITS_VARIABLES = {
   TODAY_LIMIT: 20, // par defaut
@@ -16,7 +18,7 @@ export const PROJECT_LIMITS_VARIABLES = {
 } as const
 
 export const LAUNCH_SETTINGS = {
-  PREMIUM_PRICE: 9, // USD
+  PREMIUM_PRICE: 4.99, // USD
   ARTICLE_PRICE: 149, // USD
   MIN_DAYS_AHEAD: 1, // Minimum days ahead for scheduling (starting from tomorrow)
   MAX_DAYS_AHEAD: 180, // Maximum days ahead for scheduling (6 months)

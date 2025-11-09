@@ -10,6 +10,7 @@ import {
   launchType,
   LaunchType,
   project as projectTable,
+  user,
 } from "@/drizzle/db/schema"
 import { addDays, format, isBefore, parse } from "date-fns"
 import { and, count as drizzleCount, eq, gte, lt, ne, sql } from "drizzle-orm"
@@ -19,6 +20,7 @@ import {
   LAUNCH_LIMITS,
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
+  PREMIUM_USER_DAILY_LAUNCH_LIMIT,
   USER_DAILY_LAUNCH_LIMIT,
 } from "@/lib/constants"
 
@@ -130,6 +132,17 @@ export async function checkUserLaunchLimit(
   userId: string,
   launchDate: string,
 ): Promise<{ allowed: boolean; count: number; limit: number }> {
+  // Vérifier si l'utilisateur est Premium
+  const userData = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: {
+      isPremium: true,
+    },
+  })
+
+  // Déterminer la limite en fonction du statut Premium
+  const limit = userData?.isPremium ? PREMIUM_USER_DAILY_LAUNCH_LIMIT : USER_DAILY_LAUNCH_LIMIT
+
   const [year, month, day] = launchDate.split("-").map(Number)
   const dateStart = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
   const nextDayStart = new Date(dateStart)
@@ -150,7 +163,6 @@ export async function checkUserLaunchLimit(
     )
 
   const currentCount = userLaunchCountResult[0]?.value || 0
-  const limit = USER_DAILY_LAUNCH_LIMIT
   const allowed = currentCount < limit
 
   return { allowed, count: currentCount, limit }
