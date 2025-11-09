@@ -6,7 +6,6 @@ import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProjectSection } from "@/components/home/project-section"
-import { SponsorCards } from "@/components/shared/sponsor-cards"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
@@ -144,10 +143,13 @@ export default async function Home() {
 
           {/* Sidebar */}
           <div className="top-24">
-            {/* Sponsors */}
-            <div className="space-y-3 py-4">
-              <h3 className="flex items-center font-semibold">Sponsors</h3>
-              <SponsorCards />
+            {/* Build for Joy */}
+            <div className="py-4">
+              <img 
+                src="/images/img1.png" 
+                alt="build for joy" 
+                className="w-full rounded-lg"
+              />
             </div>
 
             {/* Categories */}
