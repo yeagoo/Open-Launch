@@ -56,6 +56,7 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at").notNull(),
   stripeCustomerId: text("stripe_customer_id"),
   role: text("role"),
+  isPremium: boolean("is_premium").default(false),
   banned: boolean("banned"),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),

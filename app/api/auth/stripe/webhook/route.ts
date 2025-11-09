@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
+import { launchQuota, launchStatus, launchType, project, user } from "@/drizzle/db/schema"
 import { eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
@@ -70,6 +70,31 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           })
           .where(eq(project.id, projectId))
+
+        // 如果是 Premium 或 Premium Plus 发布，将用户设置为 Premium
+        if (
+          projectData.launchType === launchType.PREMIUM ||
+          projectData.launchType === launchType.PREMIUM_PLUS
+        ) {
+          const projectInfo = await db.query.project.findFirst({
+            where: eq(project.id, projectId),
+            columns: {
+              createdBy: true,
+            },
+          })
+
+          if (projectInfo?.createdBy) {
+            await db
+              .update(user)
+              .set({
+                isPremium: true,
+                updatedAt: new Date(),
+              })
+              .where(eq(user.id, projectInfo.createdBy))
+
+            console.log(`User ${projectInfo.createdBy} upgraded to Premium`)
+          }
+        }
 
         // Mettre à jour le quota pour cette date
         const launchDate = projectData.scheduledLaunchDate
