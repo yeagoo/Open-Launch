@@ -84,7 +84,7 @@ export function UploadButton({
       <label className={appearance?.button || "cursor-pointer"}>
         <input
           type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif"
           onChange={handleFileChange}
           disabled={isUploading}
           className="hidden"
