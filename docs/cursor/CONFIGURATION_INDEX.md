@@ -43,6 +43,7 @@
 | 文档 | 说明 | 预计时间 |
 |-----|------|---------|
 | **ADMIN_SETUP_GUIDE.md** | 管理员账号设置指南 | 5 分钟 |
+| **CRON_SETUP_GUIDE.md** | Cron 定时任务实现指南 | 20 分钟 |
 
 ### 迁移指南
 
@@ -118,6 +119,13 @@
 2. 注册一个账号
 3. 修改数据库设置 role = 'admin'
 4. 访问 `/admin` 管理后台
+
+### 我想配置定时任务
+
+1. 阅读 `CRON_SETUP_GUIDE.md`
+2. 设置 `CRON_API_KEY` 环境变量
+3. 选择调度服务（Zeabur/GitHub Actions/Vercel）
+4. 配置 Cron Job
 
 ---
 
