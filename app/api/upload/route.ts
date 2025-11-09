@@ -8,7 +8,14 @@ import { uploadFileToR2 } from "@/lib/r2-client"
 const MAX_FILE_SIZE = 1024 * 1024
 
 // 允许的文件类型
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]
 
 // 验证用户身份
 async function authenticateUser() {
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
     // 验证文件类型
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "不支持的文件类型，仅支持图片格式（JPEG, PNG, WEBP, GIF）" },
+        { error: "不支持的文件类型，仅支持图片格式（JPEG, PNG, WEBP, GIF, AVIF）" },
         { status: 400 },
       )
     }
