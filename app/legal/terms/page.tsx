@@ -76,64 +76,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">4. Intellectual Property</h2>
-              <p className="mb-3">
-                aat.ee is an open source project licensed under the aat.ee License. The
-                source code is available on{" "}
-                <a
-                  href="https://github.com/drdruide/open-launch"
-                  className="text-primary hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  GitHub
-                </a>
-                .
-              </p>
-              <p className="mb-3">
-                While the core platform is open source, certain features or services may be
-                proprietary. The aat.ee License allows you to:
-              </p>
-              <ul className="mb-3 list-disc space-y-1 pl-6">
-                <li>Use, copy, and modify the software</li>
-                <li>Distribute the software</li>
-                <li>Sublicense the software</li>
-              </ul>
-              <p className="mb-3">
-                <strong>Attribution Requirements:</strong> You must include the original copyright
-                notice and license in any substantial portions of the software. Additionally, if you
-                use this software in a web application or online service, you must display a visible
-                dofollow link to "https://open-launch.com" on ALL pages of your website (preferably
-                in the footer).
-              </p>
-              <p className="mb-3">
-                <strong>MANDATORY Visual Badge:</strong> You MUST use one of our official "Powered
-                by aat.ee" visual badges. Text-only attribution is NOT sufficient:
-              </p>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-4 p-6">
-                <img
-                  src="/images/badges/powered-by-light.svg"
-                  alt="Powered by aat.ee - Light Theme"
-                  className="h-11 w-auto"
-                />
-                <img
-                  src="/images/badges/powered-by-dark.svg"
-                  alt="Powered by aat.ee - Dark Theme"
-                  className="h-11 w-auto"
-                />
-              </div>
-              <p className="mb-3 text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>⚠️ Important:</strong> The badge must be clearly visible (minimum 150x44
-                pixels), present on ALL pages, and not hidden or obfuscated.
-              </p>
-              <p className="mb-3">
-                User-submitted content remains the property of the respective users, who grant
-                aat.ee a license to display and use that content on our platform.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="mb-3 text-xl font-semibold">5. Third-Party Content</h2>
+              <h2 className="mb-3 text-xl font-semibold">4. Third-Party Content</h2>
               <p className="mb-3">
                 aat.ee may contain links to third-party websites or services, including
                 projects. We're not responsible for the content, policies, or practices of these
@@ -145,7 +88,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">6. Termination</h2>
+              <h2 className="mb-3 text-xl font-semibold">5. Termination</h2>
               <p className="mb-3">
                 We can suspend or terminate your access to aat.ee at any time for any reason,
                 particularly if you violate these terms.
@@ -157,7 +100,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">7. Disclaimers</h2>
+              <h2 className="mb-3 text-xl font-semibold">6. Disclaimers</h2>
               <p className="mb-3">
                 aat.ee is provided "as is" without warranties of any kind. We don't guarantee
                 that the service will be uninterrupted, secure, or error-free.
@@ -169,7 +112,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">8. Limitation of Liability</h2>
+              <h2 className="mb-3 text-xl font-semibold">7. Limitation of Liability</h2>
               <p className="mb-3">
                 To the extent permitted by law, aat.ee and its team will not be liable for any
                 indirect, incidental, special, or consequential damages resulting from your use of
@@ -178,7 +121,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">9. Changes to These Terms</h2>
+              <h2 className="mb-3 text-xl font-semibold">8. Changes to These Terms</h2>
               <p className="mb-3">
                 We may update these terms from time to time. We'll notify you of significant
                 changes, but it's your responsibility to review these terms periodically.
@@ -189,7 +132,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-xl font-semibold">10. Contact Us</h2>
+              <h2 className="mb-3 text-xl font-semibold">9. Contact Us</h2>
               <p className="mb-3">If you have questions about these terms, please contact us at:</p>
               <p className="mb-3">
                 <a
