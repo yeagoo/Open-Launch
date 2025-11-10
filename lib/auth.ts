@@ -39,6 +39,27 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
+      // 详细调试日志
+      console.log("=".repeat(60))
+      console.log("📧 [RESEND DEBUG] Email verification triggered")
+      console.log("=".repeat(60))
+      console.log("User Email:", user.email)
+      console.log("User Name:", user.name)
+      console.log("Verification URL:", url)
+      console.log("")
+      console.log("Environment Variables Check:")
+      console.log(
+        "  RESEND_API_KEY:",
+        process.env.RESEND_API_KEY
+          ? `✅ Set (${process.env.RESEND_API_KEY.substring(0, 10)}...)`
+          : "❌ NOT SET",
+      )
+      console.log(
+        "  RESEND_FROM_EMAIL:",
+        process.env.RESEND_FROM_EMAIL || "⚠️ Not set (will use default)",
+      )
+      console.log("=".repeat(60))
+
       const html = `
         <p>Hello ${user.name},</p>
         <p>Click the link below to verify your email address:</p>
@@ -51,11 +72,22 @@ export const auth = betterAuth({
         <p>If you didn't create an account, please ignore this email.</p>
       `
 
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your email address",
-        html,
-      })
+      try {
+        console.log("📤 Sending email...")
+        const result = await sendEmail({
+          to: user.email,
+          subject: "Verify your email address",
+          html,
+        })
+        console.log("✅ Email sent successfully!")
+        console.log("Result:", JSON.stringify(result, null, 2))
+        console.log("=".repeat(60))
+      } catch (error) {
+        console.error("❌ Email sending FAILED!")
+        console.error("Error:", error)
+        console.log("=".repeat(60))
+        throw error
+      }
     },
     expiresIn: 86400,
   },
@@ -70,11 +102,9 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: [
-    process.env.NODE_ENV !== "development"
-      ? "https://www.aat.ee"
-      : "http://localhost:3000",
+    process.env.NODE_ENV !== "development" ? "https://www.aat.ee" : "http://localhost:3000",
     "https://www.aat.ee", // 添加您的域名（HTTPS）
-    "http://www.aat.ee",  // 添加您的域名（HTTP）
+    "http://www.aat.ee", // 添加您的域名（HTTP）
   ].filter(Boolean),
   plugins: [
     stripe({
