@@ -30,43 +30,17 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      // 详细调试日志
-      console.log("=".repeat(60))
-      console.log("📧 [RESEND DEBUG] Email verification triggered")
-      console.log("=".repeat(60))
-      console.log("User Email:", user.email)
-      console.log("User Name:", user.name)
-      console.log("Verification URL:", url)
-      console.log("")
-      console.log("Environment Variables Check:")
-      console.log(
-        "  RESEND_API_KEY:",
-        process.env.RESEND_API_KEY
-          ? `✅ Set (${process.env.RESEND_API_KEY.substring(0, 10)}...)`
-          : "❌ NOT SET",
-      )
-      console.log(
-        "  RESEND_FROM_EMAIL:",
-        process.env.RESEND_FROM_EMAIL || "⚠️ Not set (will use default)",
-      )
-      console.log("=".repeat(60))
-
       const html = getVerificationEmailTemplate(user.name, url)
 
       try {
-        console.log("📤 Sending email...")
-        const result = await sendEmail({
+        await sendEmail({
           to: user.email,
           subject: "Verify Your Email - aat.ee",
           html,
         })
-        console.log("✅ Email sent successfully!")
-        console.log("Result:", JSON.stringify(result, null, 2))
-        console.log("=".repeat(60))
+        console.log(`✅ Verification email sent to ${user.email}`)
       } catch (error) {
-        console.error("❌ Email sending FAILED!")
-        console.error("Error:", error)
-        console.log("=".repeat(60))
+        console.error(`❌ Failed to send verification email to ${user.email}:`, error)
         throw error
       }
     },
