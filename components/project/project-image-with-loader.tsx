@@ -19,6 +19,7 @@ export function ProjectImageWithLoader({ src, alt }: ProjectImageWithLoaderProps
         alt={alt}
         width={800}
         height={400}
+        quality={95}
         className="h-auto w-full object-cover"
         priority
         onLoad={() => setIsLoading(false)}
