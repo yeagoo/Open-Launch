@@ -118,7 +118,7 @@ export default async function SponsorsPage() {
             </div>
             <div className="mt-auto pt-3">
               <Button variant="outline" size="lg" className="w-full" asChild>
-                <Link href="mailto:contact@open-launch.com?subject=Weekly%20Sponsorship%20Inquiry">
+                <Link href="mailto:contact@aat.ee?subject=Weekly%20Sponsorship%20Inquiry">
                   Sponsor for a Week
                 </Link>
               </Button>
@@ -166,7 +166,7 @@ export default async function SponsorsPage() {
             </div>
             <div className="mt-auto pt-3">
               <Button size="lg" className="w-full" asChild>
-                <Link href="mailto:contact@open-launch.com?subject=Monthly%20Sponsorship%20Inquiry">
+                <Link href="mailto:contact@aat.ee?subject=Monthly%20Sponsorship%20Inquiry">
                   Sponsor for a Month
                 </Link>
               </Button>

@@ -5,7 +5,7 @@ interface BasicUser {
   name: string | null
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://open-launch.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://aat.ee"
 
 function getBadgeName(ranking: number): string {
   switch (ranking) {
@@ -45,7 +45,7 @@ export async function sendWinnerBadgeEmail({
   // Message différent selon le type de lancement
   const doFollowMessage = isPremium
     ? `<p><strong>🎉 Dofollow Backlink:</strong> Congrats! You automatically earned a dofollow backlink as a premium winner.</p>`
-    : `<p><strong>🔗 Dofollow Backlink:</strong> Add your badge to your website and <a href="mailto:contact@open-launch.com?subject=Dofollow Request - ${projectName}&body=Hi, I placed the badge on my website. Here's the URL: [YOUR_WEBSITE_URL]">email us your site URL</a> to activate your dofollow link!</p>`
+    : `<p><strong>🔗 Dofollow Backlink:</strong> Add your badge to your website and <a href="mailto:contact@aat.ee?subject=Dofollow Request - ${projectName}&body=Hi, I placed the badge on my website. Here's the URL: [YOUR_WEBSITE_URL]">email us your site URL</a> to activate your dofollow link!</p>`
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
