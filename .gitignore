@@ -46,3 +46,5 @@ next-env.d.ts
 # blog
 blog-article.ts
 seo-article.ts
+# Email template previews
+email-previews/

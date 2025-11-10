@@ -6,6 +6,7 @@ import { admin, captcha, oneTap } from "better-auth/plugins"
 import Stripe from "stripe"
 
 import { sendEmail } from "@/lib/email"
+import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -18,21 +19,11 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
-      const html = `
-        <p>Hello ${user.name},</p>
-        <p>Click the link below to reset your password:</p>
-        <a href="${url}" style="padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px;">
-          Reset Password
-        </a>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${url}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `
+      const html = getPasswordResetTemplate(user.name, url)
 
       await sendEmail({
         to: user.email,
-        subject: "Reset your password",
+        subject: "重置你的密码 - aat.ee",
         html,
       })
     },
@@ -60,23 +51,13 @@ export const auth = betterAuth({
       )
       console.log("=".repeat(60))
 
-      const html = `
-        <p>Hello ${user.name},</p>
-        <p>Click the link below to verify your email address:</p>
-        <a href="${url}" style="padding: 10px 20px; background-color: #000; color: #fff; text-decoration: none; border-radius: 5px;">
-          Verify Email
-        </a>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p>${url}</p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you didn't create an account, please ignore this email.</p>
-      `
+      const html = getVerificationEmailTemplate(user.name, url)
 
       try {
         console.log("📤 Sending email...")
         const result = await sendEmail({
           to: user.email,
-          subject: "Verify your email address",
+          subject: "验证你的邮箱地址 - aat.ee",
           html,
         })
         console.log("✅ Email sent successfully!")
