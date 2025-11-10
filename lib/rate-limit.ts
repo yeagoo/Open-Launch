@@ -1,7 +1,30 @@
 import Redis from "ioredis"
 
-// Créer un client Redis
-const redis = new Redis(process.env.REDIS_URL || "")
+// Lazy initialization: only create Redis client when actually needed
+let redis: Redis | null = null
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    // Only create Redis connection at runtime, not during build
+    redis = new Redis(process.env.REDIS_URL || "", {
+      lazyConnect: true,
+      retryStrategy: (times) => {
+        // Stop retrying after 3 attempts
+        if (times > 3) {
+          return null
+        }
+        return Math.min(times * 100, 3000)
+      },
+      maxRetriesPerRequest: 3,
+    })
+
+    // Handle connection errors gracefully
+    redis.on("error", (error) => {
+      console.error("Redis connection error:", error.message)
+    })
+  }
+  return redis
+}
 
 export async function checkRateLimit(
   identifier: string,
@@ -17,15 +40,22 @@ export async function checkRateLimit(
   const windowStart = now - window
 
   try {
+    const client = getRedisClient()
+
+    // Ensure connection is established
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+
     // Nettoyer les anciennes requêtes
-    await redis.zremrangebyscore(key, 0, windowStart)
+    await client.zremrangebyscore(key, 0, windowStart)
 
     // Obtenir le nombre de requêtes dans la fenêtre actuelle
-    const requestCount = await redis.zcard(key)
+    const requestCount = await client.zcard(key)
 
     if (requestCount >= limit) {
       // Obtenir la requête la plus ancienne avec son score
-      const oldestRequest = await redis.zrange(key, 0, 0, "WITHSCORES")
+      const oldestRequest = await client.zrange(key, 0, 0, "WITHSCORES")
       const reset = oldestRequest.length ? parseInt(oldestRequest[1]) + window : now + window
 
       return {
@@ -36,10 +66,10 @@ export async function checkRateLimit(
     }
 
     // Ajouter la nouvelle requête
-    await redis.zadd(key, now, now.toString())
+    await client.zadd(key, now, now.toString())
 
     // Définir l'expiration de la clé
-    await redis.expire(key, Math.ceil(window / 1000))
+    await client.expire(key, Math.ceil(window / 1000))
 
     return {
       success: true,
