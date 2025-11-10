@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -185,6 +186,12 @@ export async function GET(request: NextRequest) {
       `- Top ${rankGroups.length > 0 ? Math.min(3, totalRanked) : 0} calculated from ${justLaunchedProjectIds.length} projects launched yesterday`,
     )
     console.log(`- ${abandonedPayments.length} abandoned payments deleted for projects`)
+
+    // 如果有项目状态变化，重新生成 sitemap
+    if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
+      revalidatePath("/sitemap.xml")
+      console.log("✅ Sitemap regenerated due to project status changes")
+    }
 
     return NextResponse.json({
       message: "Launch statuses updated successfully.",

@@ -71,6 +71,10 @@ export async function POST(request: Request) {
           })
           .where(eq(project.id, projectId))
 
+        // 重新生成 sitemap（项目即将上架）
+        revalidatePath("/sitemap.xml")
+        console.log("✅ Sitemap regenerated after premium project payment")
+
         // 如果是 Premium 或 Premium Plus 发布，将用户设置为 Premium
         if (
           projectData.launchType === launchType.PREMIUM ||
