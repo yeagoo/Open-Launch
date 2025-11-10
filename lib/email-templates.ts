@@ -1,18 +1,18 @@
 /**
- * 邮件模板库
- * 包含所有类型的邮件模板
+ * Email Templates Library
+ * Contains all types of email templates
  */
 
-const PRIMARY_COLOR = "#16a34a" // 绿色主题
-const LOGO_URL = "https://www.aat.ee/logo.png" // 你的 Logo URL
+const PRIMARY_COLOR = "#16a34a" // Brand green color
+const LOGO_URL = "https://www.aat.ee/logo.png" // Your Logo URL
 
 /**
- * 基础邮件布局
+ * Base email layout
  */
 function getEmailLayout(content: string): string {
   return `
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,7 +49,7 @@ function getEmailLayout(content: string): string {
           <tr>
             <td style="padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb; background-color: #f9fafb; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
               <p style="margin: 0 0 10px; font-size: 14px; color: #6b7280; line-height: 1.5;">
-                这是一封来自 <a href="https://www.aat.ee" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-weight: 500;">aat.ee</a> 的自动邮件
+                This is an automated email from <a href="https://www.aat.ee" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-weight: 500;">aat.ee</a>
               </p>
               <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                 © ${new Date().getFullYear()} aat.ee. All rights reserved.
@@ -71,7 +71,7 @@ function getEmailLayout(content: string): string {
 }
 
 /**
- * 按钮样式组件
+ * Button component
  */
 function getButton(url: string, text: string): string {
   return `
@@ -88,7 +88,7 @@ function getButton(url: string, text: string): string {
 }
 
 /**
- * 信息框组件
+ * Info box component
  */
 function getInfoBox(content: string, type: "info" | "warning" = "info"): string {
   const bgColor = type === "warning" ? "#fef3c7" : "#dbeafe"
@@ -105,7 +105,7 @@ function getInfoBox(content: string, type: "info" | "warning" = "info"): string 
 }
 
 /**
- * 邮箱验证模板
+ * Email verification template
  */
 export function getVerificationEmailTemplate(userName: string, verificationUrl: string): string {
   const content = `
@@ -116,21 +116,21 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
     </div>
 
     <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #111827; text-align: center; line-height: 1.3;">
-      验证你的邮箱地址
+      Verify Your Email Address
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      你好 <strong style="color: #111827;">${userName}</strong>，
+      Hello <strong style="color: #111827;">${userName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
-      感谢注册 aat.ee！请点击下方按钮验证你的邮箱地址，完成账号注册。
+      Thanks for signing up for aat.ee! Please click the button below to verify your email address and complete your registration.
     </p>
 
-    ${getButton(verificationUrl, "验证邮箱")}
+    ${getButton(verificationUrl, "Verify Email")}
 
     <p style="margin: 30px 0 0; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.6;">
-      或者复制以下链接到浏览器中打开：
+      Or copy and paste this URL into your browser:
     </p>
     <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 8px; word-break: break-all;">
       <a href="${verificationUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
@@ -138,11 +138,11 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
       </a>
     </div>
 
-    ${getInfoBox("⏰ 此验证链接将在 24 小时后过期。", "warning")}
+    ${getInfoBox("⏰ This verification link will expire in 24 hours.", "warning")}
 
     <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center;">
       <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-        如果你没有注册 aat.ee 账号，请忽略此邮件。
+        If you didn't create an account with aat.ee, please ignore this email.
       </p>
     </div>
   `
@@ -151,7 +151,7 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
 }
 
 /**
- * 密码重置模板
+ * Password reset template
  */
 export function getPasswordResetTemplate(userName: string, resetUrl: string): string {
   const content = `
@@ -162,21 +162,21 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
     </div>
 
     <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #111827; text-align: center; line-height: 1.3;">
-      重置你的密码
+      Reset Your Password
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      你好 <strong style="color: #111827;">${userName}</strong>，
+      Hello <strong style="color: #111827;">${userName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
-      我们收到了重置你账号密码的请求。点击下方按钮设置新密码。
+      We received a request to reset your password. Click the button below to set a new password.
     </p>
 
-    ${getButton(resetUrl, "重置密码")}
+    ${getButton(resetUrl, "Reset Password")}
 
     <p style="margin: 30px 0 0; font-size: 14px; color: #6b7280; text-align: center; line-height: 1.6;">
-      或者复制以下链接到浏览器中打开：
+      Or copy and paste this URL into your browser:
     </p>
     <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 8px; word-break: break-all;">
       <a href="${resetUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
@@ -184,15 +184,15 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
       </a>
     </div>
 
-    ${getInfoBox("⏰ 此重置链接将在 1 小时后过期。", "warning")}
-    ${getInfoBox("🔒 如果你没有请求重置密码，请忽略此邮件。你的账号仍然安全。", "info")}
+    ${getInfoBox("⏰ This reset link will expire in 1 hour.", "warning")}
+    ${getInfoBox("🔒 If you didn't request a password reset, please ignore this email. Your account is still secure.", "info")}
 
     <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center;">
       <p style="margin: 0 0 8px; font-size: 14px; color: #111827; font-weight: 600;">
-        保护你的账号安全
+        Keep Your Account Secure
       </p>
       <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-        请勿与任何人分享你的密码或重置链接。aat.ee 团队永远不会主动询问你的密码。
+        Never share your password or reset link with anyone. The aat.ee team will never ask for your password.
       </p>
     </div>
   `
@@ -201,7 +201,7 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
 }
 
 /**
- * 欢迎邮件模板（可选）
+ * Welcome email template (optional)
  */
 export function getWelcomeEmailTemplate(userName: string): string {
   const content = `
@@ -212,49 +212,49 @@ export function getWelcomeEmailTemplate(userName: string): string {
     </div>
 
     <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: #111827; text-align: center; line-height: 1.3;">
-      欢迎加入 aat.ee！
+      Welcome to aat.ee!
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      你好 <strong style="color: #111827;">${userName}</strong>，
+      Hello <strong style="color: #111827;">${userName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
-      你的邮箱已成功验证！现在你可以开始探索 aat.ee，发现最新的创业项目、AI 工具和产品发布。
+      Your email has been successfully verified! Now you can start exploring aat.ee to discover the latest startup projects, AI tools, and product launches.
     </p>
 
-    ${getButton("https://www.aat.ee", "开始探索")}
+    ${getButton("https://www.aat.ee", "Start Exploring")}
 
     <div style="margin-top: 40px;">
       <h2 style="margin: 0 0 20px; font-size: 20px; font-weight: 600; color: #111827; text-align: center;">
-        快速开始
+        Quick Start Guide
       </h2>
       
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
           <td style="padding: 16px; background-color: #f9fafb; border-radius: 8px; margin-bottom: 12px;">
             <div style="font-size: 24px; margin-bottom: 8px;">🚀</div>
-            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">发布你的项目</h3>
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">Launch Your Project</h3>
             <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-              向全球开发者和早期用户展示你的产品
+              Showcase your product to developers and early adopters worldwide
             </p>
           </td>
         </tr>
         <tr>
           <td style="padding: 16px; background-color: #f9fafb; border-radius: 8px; margin-bottom: 12px;">
             <div style="font-size: 24px; margin-bottom: 8px;">⬆️</div>
-            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">为项目投票</h3>
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">Upvote Projects</h3>
             <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-              支持你喜欢的产品，帮助它们获得更多曝光
+              Support products you love and help them gain more visibility
             </p>
           </td>
         </tr>
         <tr>
           <td style="padding: 16px; background-color: #f9fafb; border-radius: 8px;">
             <div style="font-size: 24px; margin-bottom: 8px;">💬</div>
-            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">参与讨论</h3>
+            <h3 style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #111827;">Join Discussions</h3>
             <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-              与创作者和社区成员交流，分享你的想法
+              Connect with creators and community members, share your ideas
             </p>
           </td>
         </tr>
@@ -263,10 +263,10 @@ export function getWelcomeEmailTemplate(userName: string): string {
 
     <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center;">
       <p style="margin: 0 0 8px; font-size: 14px; color: #111827; font-weight: 600;">
-        需要帮助？
+        Need Help?
       </p>
       <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
-        访问我们的 <a href="https://www.aat.ee" style="color: ${PRIMARY_COLOR}; text-decoration: none;">帮助中心</a> 或直接回复此邮件
+        Visit our <a href="https://www.aat.ee" style="color: ${PRIMARY_COLOR}; text-decoration: none;">Help Center</a> or reply to this email
       </p>
     </div>
   `

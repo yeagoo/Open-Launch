@@ -23,7 +23,7 @@ export const auth = betterAuth({
 
       await sendEmail({
         to: user.email,
-        subject: "重置你的密码 - aat.ee",
+        subject: "Reset Your Password - aat.ee",
         html,
       })
     },
@@ -57,7 +57,7 @@ export const auth = betterAuth({
         console.log("📤 Sending email...")
         const result = await sendEmail({
           to: user.email,
-          subject: "验证你的邮箱地址 - aat.ee",
+          subject: "Verify Your Email - aat.ee",
           html,
         })
         console.log("✅ Email sent successfully!")
