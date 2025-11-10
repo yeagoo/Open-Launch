@@ -29,6 +29,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { TableOfContents } from "@/components/blog/table-of-contents"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
+import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/structured-data"
 
 export async function generateMetadata({
   params,
@@ -47,6 +49,7 @@ export async function generateMetadata({
   }
 
   const { title, description, metaTitle, metaDescription } = article[0]
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
 
   return {
     title: metaTitle || `${title} | aat.ee`,
@@ -59,18 +62,23 @@ export async function generateMetadata({
       description: metaDescription || description,
       type: "article",
       publishedTime: article[0].publishedAt.toISOString(),
+      modifiedTime: article[0].updatedAt.toISOString(),
+      authors: [article[0].author || "aat.ee Team"],
       siteName: "aat.ee",
       locale: "en_US",
+      url: `${baseUrl}/blog/${slug}`,
+      ...(article[0].image && { images: [article[0].image] }),
     },
     twitter: {
       card: "summary_large_image",
       title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
-      creator: "@openlaunch",
-      site: "@openlaunch",
+      creator: "@aat_ee",
+      site: "@aat_ee",
+      ...(article[0].image && { images: [article[0].image] }),
     },
     alternates: {
-      canonical: `/blog/${slug}`,
+      canonical: `${baseUrl}/blog/${slug}`,
     },
   }
 }
@@ -99,12 +107,37 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
     notFound()
   }
 
-  const { title, description, content, publishedAt, tags } = article[0]
+  const { title, description, content, publishedAt, updatedAt, tags } = article[0]
   const readingTime = calculateReadingTime(content)
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Structured Data - Article Schema */}
+      <ArticleSchema
+        headline={title}
+        description={description}
+        image={article[0].image}
+        datePublished={publishedAt}
+        dateModified={updatedAt}
+        author={article[0].author || "aat.ee Team"}
+        slug={slug}
+      />
+
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: "Blog", url: `${process.env.NEXT_PUBLIC_URL}/blog` },
+          { name: title },
+        ]}
+      />
+
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-4">
+          <Breadcrumb items={[{ name: "Blog", href: "/blog" }, { name: title }]} />
+        </div>
+
         {/* Back Button */}
         <div className="mb-8">
           <Link

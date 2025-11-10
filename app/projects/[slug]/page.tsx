@@ -18,11 +18,13 @@ import { auth } from "@/lib/auth"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { EditButton } from "@/components/project/edit-button"
 import { ProjectComments } from "@/components/project/project-comments"
 import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
 import { ShareButton } from "@/components/project/share-button"
 import { UpvoteButton } from "@/components/project/upvote-button"
+import { BreadcrumbSchema, ProductSchema } from "@/components/seo/structured-data"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
 
 // Types
@@ -51,20 +53,35 @@ export async function generateMetadata(
   }
 
   const previousImages = (await parent).openGraph?.images || []
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
 
   return {
     title: `${projectData.name} | aat.ee`,
     description: stripHtml(projectData.description),
+    alternates: {
+      canonical: `${baseUrl}/projects/${slug}`,
+    },
     openGraph: {
       title: `${projectData.name} on aat.ee`,
       description: stripHtml(projectData.description),
+      url: `${baseUrl}/projects/${slug}`,
+      siteName: "aat.ee",
+      type: "website",
       images: [
         projectData.productImage || projectData.coverImageUrl || projectData.logoUrl,
         ...previousImages,
       ],
+      ...(projectData.scheduledLaunchDate && {
+        publishedTime: projectData.scheduledLaunchDate.toISOString(),
+      }),
+      ...(projectData.updatedAt && {
+        modifiedTime: projectData.updatedAt.toISOString(),
+      }),
     },
     twitter: {
       card: "summary_large_image",
+      site: "@aat_ee",
+      creator: "@aat_ee",
       title: `${projectData.name} on aat.ee`,
       description: stripHtml(projectData.description),
       images: [projectData.productImage || projectData.logoUrl],
@@ -102,9 +119,42 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     dailyRanking: projectData.dailyRanking,
   })
 
+  // Function to strip HTML for Schema
+  function stripHtml(html: string): string {
+    return html.replace(/<[^>]*>/g, "").trim()
+  }
+
   return (
     <div className="bg-background min-h-screen">
+      {/* Structured Data - Product Schema */}
+      <ProductSchema
+        name={projectData.name}
+        description={stripHtml(projectData.description)}
+        websiteUrl={projectData.websiteUrl}
+        imageUrl={projectData.productImage || projectData.logoUrl}
+        platforms={projectData.platforms || []}
+        pricing={projectData.pricing}
+        upvoteCount={projectData.upvoteCount}
+        scheduledLaunchDate={projectData.scheduledLaunchDate}
+      />
+
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: "Projects", url: `${process.env.NEXT_PUBLIC_URL}/projects` },
+          { name: projectData.name },
+        ]}
+      />
+
       <div className="mx-auto max-w-6xl px-6">
+        {/* Breadcrumb Navigation */}
+        <div className="pt-6">
+          <Breadcrumb
+            items={[{ name: "Projects", href: "/projects" }, { name: projectData.name }]}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Main Content - 2 colonnes */}
           <div className="lg:col-span-2">
