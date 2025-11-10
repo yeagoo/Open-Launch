@@ -1,8 +1,8 @@
 /**
- * 邮件模板预览脚本
- * 生成 HTML 文件以便在浏览器中预览邮件模板
+ * Email Template Preview Script
+ * Generate HTML files for previewing email templates in browser
  *
- * 使用方法:
+ * Usage:
  *   bun tsx scripts/preview-email-templates.ts
  */
 
@@ -15,35 +15,35 @@ import {
   getWelcomeEmailTemplate,
 } from "@/lib/email-templates"
 
-console.log("📧 生成邮件模板预览...\n")
+console.log("📧 Generating email template previews...\n")
 
-// 测试数据
+// Test data
 const testData = {
-  userName: "张三",
+  userName: "John Doe",
   verificationUrl: "https://www.aat.ee/api/auth/verify-email?token=abc123xyz789",
   resetUrl: "https://www.aat.ee/api/auth/reset-password?token=xyz789abc123",
 }
 
-// 生成预览文件
+// Generate preview files
 const templates = [
   {
     name: "verification",
-    title: "邮箱验证邮件",
+    title: "Email Verification",
     html: getVerificationEmailTemplate(testData.userName, testData.verificationUrl),
   },
   {
     name: "password-reset",
-    title: "密码重置邮件",
+    title: "Password Reset",
     html: getPasswordResetTemplate(testData.userName, testData.resetUrl),
   },
   {
     name: "welcome",
-    title: "欢迎邮件",
+    title: "Welcome Email",
     html: getWelcomeEmailTemplate(testData.userName),
   },
 ]
 
-// 创建预览目录
+// Create preview directory
 const previewDir = join(process.cwd(), "email-previews")
 try {
   const fs = require("node:fs")
@@ -51,19 +51,19 @@ try {
     fs.mkdirSync(previewDir, { recursive: true })
   }
 } catch (error) {
-  // 目录可能已存在，忽略错误
+  // Directory might already exist, ignore error
 }
 
-// 生成每个模板的预览文件
+// Generate preview file for each template
 templates.forEach((template) => {
   const filePath = join(previewDir, `${template.name}.html`)
   writeFileSync(filePath, template.html, "utf-8")
   console.log(`✅ ${template.title}`)
-  console.log(`   文件: ${filePath}`)
+  console.log(`   File: ${filePath}`)
   console.log("")
 })
 
-// 生成索引页面
+// Generate index page
 const indexHtml = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -142,7 +142,7 @@ const indexHtml = `
 </head>
 <body>
   <div class="container">
-    <h1>📧 aat.ee 邮件模板预览</h1>
+    <h1>📧 aat.ee Email Templates Preview</h1>
     <div class="grid">
       ${templates
         .map(
@@ -156,14 +156,14 @@ const indexHtml = `
                 : "🎉"
           }</div>
           <div class="card-title">${template.title}</div>
-          <div class="card-desc">点击预览</div>
+          <div class="card-desc">Click to preview</div>
         </a>
       `,
         )
         .join("")}
     </div>
     <div class="footer">
-      <p>所有模板支持深色模式和移动端自适应</p>
+      <p>All templates support dark mode and responsive design</p>
       <p style="margin-top: 8px;">© ${new Date().getFullYear()} aat.ee</p>
     </div>
   </div>
@@ -175,15 +175,15 @@ const indexPath = join(previewDir, "index.html")
 writeFileSync(indexPath, indexHtml, "utf-8")
 
 console.log("=".repeat(60))
-console.log("✨ 所有模板预览已生成！")
+console.log("✨ All template previews generated!")
 console.log("=".repeat(60))
 console.log("")
-console.log("📂 预览目录:", previewDir)
+console.log("📂 Preview directory:", previewDir)
 console.log("")
-console.log("🌐 在浏览器中打开以下文件预览:")
+console.log("🌐 Open this file in your browser to preview:")
 console.log(`   file://${indexPath}`)
 console.log("")
-console.log("或者运行以下命令:")
+console.log("Or run one of these commands:")
 console.log(`   open ${indexPath}  # macOS`)
 console.log(`   xdg-open ${indexPath}  # Linux`)
 console.log(`   start ${indexPath}  # Windows`)
