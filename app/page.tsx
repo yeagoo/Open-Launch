@@ -42,25 +42,6 @@ export default async function Home() {
                       </p>
                     </div>
                   </Link>
-                  <div>
-                    <a
-                      href="https://frogdr.com/open-launch.com?utm_source=open-launch.com"
-                      target="_blank"
-                    >
-                      {/* Light mode badge */}
-                      <img
-                        src="https://frogdr.com/open-launch.com/badge-white-sm.svg?round=1"
-                        alt="Monitor your Domain Rating with FrogDR"
-                        className="h-6 w-auto dark:hidden"
-                      />
-                      {/* Dark mode badge */}
-                      <img
-                        src="https://frogdr.com/open-launch.com/badge-dark-sm.svg?round=1"
-                        alt="Monitor your Domain Rating with FrogDR"
-                        className="hidden h-6 w-auto dark:block"
-                      />
-                    </a>
-                  </div>
                 </div>
 
                 {/* Desktop Layout - Text left, Image right */}
@@ -84,25 +65,6 @@ export default async function Home() {
                         <span>Submit, get a badge & backlink</span>
                       </p>
                     </Link>
-                    <div>
-                      <a
-                        href="https://frogdr.com/open-launch.com?utm_source=open-launch.com"
-                        target="_blank"
-                      >
-                        {/* Light mode badge */}
-                        <img
-                          src="https://frogdr.com/open-launch.com/badge-white-sm.svg?round=1"
-                          alt="Monitor your Domain Rating with FrogDR"
-                          className="h-7 w-auto dark:hidden"
-                        />
-                        {/* Dark mode badge */}
-                        <img
-                          src="https://frogdr.com/open-launch.com/badge-dark-sm.svg?round=1"
-                          alt="Monitor your Domain Rating with FrogDR"
-                          className="hidden h-7 w-auto dark:block"
-                        />
-                      </a>
-                    </div>
                   </div>
 
                   {/* image 2 */}
@@ -145,11 +107,7 @@ export default async function Home() {
           <div className="top-24">
             {/* Build for Joy */}
             <div className="py-4">
-              <img 
-                src="/images/img1.png" 
-                alt="build for joy" 
-                className="w-full rounded-lg"
-              />
+              <img src="/images/img1.png" alt="build for joy" className="w-full rounded-lg" />
             </div>
 
             {/* Categories */}
