@@ -121,6 +121,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       alt={`${projectData.name} Logo`}
                       width={64}
                       height={64}
+                      quality={95}
                       className="h-full w-full object-cover"
                       priority
                     />
@@ -191,6 +192,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       alt={`${projectData.name} Logo`}
                       width={64}
                       height={64}
+                      quality={95}
                       className="h-full w-full object-cover"
                       priority
                     />

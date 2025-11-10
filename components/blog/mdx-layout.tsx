@@ -84,6 +84,7 @@ export default function MdxLayout({ children, frontmatter }: MdxLayoutProps) {
                   src={frontmatter.image}
                   alt={frontmatter.title || "Image de l'article"}
                   fill
+                  quality={95}
                   className="object-cover"
                   priority
                 />

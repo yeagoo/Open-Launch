@@ -74,6 +74,7 @@ export function ProjectCard({
                 src={logoUrl}
                 alt={`${name} logo`}
                 fill
+                quality={95}
                 className="object-contain"
                 sizes="(max-width: 640px) 48px, 56px"
               />
