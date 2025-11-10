@@ -6,6 +6,10 @@ import { eq, or } from "drizzle-orm"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
 
+// 标记为动态生成，不在构建时预渲染
+export const dynamic = "force-dynamic"
+export const revalidate = 3600 // 重新验证间隔：1小时
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 获取所有已上架的项目（ONGOING 或 LAUNCHED）
   const projects = await db
