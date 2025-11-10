@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProjectSection } from "@/components/home/project-section"
+import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
@@ -21,8 +22,24 @@ export default async function Home() {
     headers: await headers(),
   })
 
+  // Prepare data for ItemList Schema (today's projects)
+  const itemListData = todayProjects.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    logoUrl: p.logoUrl,
+  }))
+
   return (
     <main className="bg-muted/30 min-h-screen">
+      {/* Structured Data - ItemList Schema */}
+      {itemListData.length > 0 && (
+        <ItemListSchema
+          name="Today's Launched Products on aat.ee"
+          description="Discover the latest product launches today on aat.ee - startups, AI tools, and SaaS products"
+          items={itemListData}
+          listType="project"
+        />
+      )}
       <div className="container mx-auto max-w-6xl px-4 pt-6 pb-12 md:pt-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
           {/* Contenu principal */}

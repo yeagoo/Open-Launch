@@ -13,13 +13,17 @@ export const metadata: Metadata = {
     "Discover insights, tutorials, and resources to help you build and launch successful products.",
   keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
   authors: [{ name: "aat.ee Team" }],
+  alternates: {
+    canonical: "/blog",
+  },
   openGraph: {
     title: "Blog | aat.ee - Insights & Resources",
     description:
       "Discover insights, tutorials, and resources to help you build and launch successful products.",
     type: "website",
-    url: "/blog",
+    url: `${process.env.NEXT_PUBLIC_URL}/blog`,
     siteName: "aat.ee",
+    locale: "en_US",
     images: [
       {
         url: "/og-blog.png",
@@ -31,6 +35,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@aat_ee",
+    creator: "@aat_ee",
     title: "Blog | aat.ee - Insights & Resources",
     description:
       "Discover insights, tutorials, and resources to help you build and launch successful products.",

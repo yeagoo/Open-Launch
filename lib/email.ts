@@ -1,7 +1,18 @@
 import { Resend } from "resend"
 
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization to avoid build-time errors
+let resend: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error("Missing RESEND_API_KEY environment variable")
+    }
+    resend = new Resend(apiKey)
+  }
+  return resend
+}
 
 interface EmailPayload {
   to: string
@@ -21,7 +32,8 @@ export async function sendEmail(payload: EmailPayload) {
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
 
   try {
-    const data = await resend.emails.send({
+    const client = getResendClient()
+    const data = await client.emails.send({
       from: fromEmail,
       to,
       subject,

@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 
 import Footer from "@/components/layout/footer"
 import Nav from "@/components/layout/nav"
+import { OrganizationSchema } from "@/components/seo/structured-data"
 import { ThemeProvider } from "@/components/theme/theme-provider"
 
 import "./globals.css"
@@ -40,6 +41,9 @@ export const metadata: Metadata = {
     "app discovery",
     "early adopters platform",
   ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
     description:
@@ -59,6 +63,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@aat_ee",
+    creator: "@aat_ee",
     title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
     description:
       "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
@@ -93,6 +99,17 @@ export default function RootLayout({
             </Script>
           </>
         )}
+
+        {/* RSS Feed */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="aat.ee RSS Feed"
+          href={`${process.env.NEXT_PUBLIC_URL}/feed.xml`}
+        />
+
+        {/* Structured Data - Organization Schema */}
+        <OrganizationSchema />
       </head>
       <body
         className={`font-sans antialiased ${fontSans.variable} ${fontHeading.variable} sm:overflow-y-scroll`}

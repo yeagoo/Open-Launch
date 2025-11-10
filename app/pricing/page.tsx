@@ -34,6 +34,23 @@ import {
 export const metadata = {
   title: "Pricing - aat.ee",
   description: "Choose the perfect plan for your project launch",
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "Pricing - aat.ee",
+    description: "Choose the perfect plan for your project launch",
+    url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
+    siteName: "aat.ee",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@aat_ee",
+    creator: "@aat_ee",
+    title: "Pricing - aat.ee",
+    description: "Choose the perfect plan for your project launch",
+  },
 }
 
 const faqItems = [
