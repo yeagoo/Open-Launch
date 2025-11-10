@@ -1,6 +1,8 @@
 import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
+import sharp from "sharp"
+
 import { auth } from "@/lib/auth"
 import { uploadFileToR2 } from "@/lib/r2-client"
 
@@ -67,10 +69,33 @@ export async function POST(request: NextRequest) {
 
     // 转换文件为 Buffer
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const inputBuffer = Buffer.from(arrayBuffer)
+
+    let finalBuffer: Buffer
+    let finalFileName: string
+    let finalContentType: string
+
+    // GIF 保持原格式（可能包含动画），其他格式转换为 AVIF
+    if (file.type === "image/gif") {
+      finalBuffer = inputBuffer
+      finalFileName = file.name
+      finalContentType = file.type
+    } else {
+      // 使用 sharp 转换为 AVIF 格式（高质量，更小体积）
+      finalBuffer = await sharp(inputBuffer)
+        .avif({
+          quality: 90, // 高质量 AVIF（接近无损）
+          effort: 6, // 更好的压缩（0-9，数值越高压缩越好但速度越慢）
+        })
+        .toBuffer()
+
+      // 修改文件名为 .avif 扩展名
+      finalFileName = file.name.replace(/\.[^.]+$/, ".avif")
+      finalContentType = "image/avif"
+    }
 
     // 上传到 R2
-    const fileUrl = await uploadFileToR2(buffer, file.name, file.type, folder)
+    const fileUrl = await uploadFileToR2(finalBuffer, finalFileName, finalContentType, folder)
 
     return NextResponse.json({
       success: true,
