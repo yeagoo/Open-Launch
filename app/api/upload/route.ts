@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { uploadFileToR2 } from "@/lib/r2-client"
 
-// 文件大小限制（1MB）
-const MAX_FILE_SIZE = 1024 * 1024
+// 文件大小限制（10MB）- 提高限制以保证图片质量
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 // 允许的文件类型
 const ALLOWED_TYPES = [
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // 验证文件大小
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "文件大小超过 1MB 限制" }, { status: 400 })
+      return NextResponse.json({ error: "文件大小超过 10MB 限制" }, { status: 400 })
     }
 
     // 转换文件为 Buffer
@@ -85,4 +85,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

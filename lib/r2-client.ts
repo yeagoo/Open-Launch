@@ -45,6 +45,8 @@ export async function getUploadUrl(
     Bucket: bucketName,
     Key: key,
     ContentType: fileType,
+    // 添加缓存控制头
+    CacheControl: "public, max-age=31536000, immutable",
   })
 
   // 生成预签名 URL（有效期 10 分钟）
@@ -83,6 +85,12 @@ export async function uploadFileToR2(
     Key: key,
     Body: file,
     ContentType: fileType,
+    // 添加缓存控制头，优化图片加载
+    CacheControl: "public, max-age=31536000, immutable",
+    // 确保内容以最佳质量存储
+    Metadata: {
+      uploadedAt: new Date().toISOString(),
+    },
   })
 
   await client.send(command)
@@ -95,4 +103,3 @@ export async function uploadFileToR2(
 
   return `${publicDomain}/${key}`
 }
-
