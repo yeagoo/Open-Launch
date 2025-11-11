@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import Link from "next/link"
+"use client"
 
-import { RiGithubFill, RiTwitterXFill } from "@remixicon/react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 // Link groups for a columnar layout
 const discoverLinks = [
@@ -21,26 +22,14 @@ const legalLinks = [
   { title: "Privacy Policy", href: "/legal/privacy" },
 ]
 
-// Liens pour la nouvelle colonne "Connect"
-const connectLinkItems = [
-  {
-    href: "https://github.com/drdruide/open-launch",
-    icon: RiGithubFill,
-    label: "GitHub",
-  },
-  {
-    href: "https://twitter.com/Ericbn09",
-    icon: RiTwitterXFill,
-    label: "Twitter / X",
-  },
-]
-
 export default function FooterSection() {
+  const pathname = usePathname()
+  const isHomePage = pathname === "/"
   return (
     <footer className="bg-background border-t pt-6 pb-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-12 md:gap-x-8">
-          {/* Left Section: Brand, Copyright, Author, Badges - Align left on mobile */}
+          {/* Left Section: Brand, Copyright, Badges */}
           <div className="flex flex-col items-start text-left md:col-span-4 lg:col-span-4">
             <Link href="/" className="font-heading mb-3 flex items-center">
               <span className="font-heading flex items-center text-lg font-bold">
@@ -48,36 +37,88 @@ export default function FooterSection() {
                 aat.ee
               </span>
             </Link>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground mb-4 text-sm">
               © {new Date().getFullYear()} aat.ee. All rights reserved.
             </p>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Open source project by{" "}
-              <Link
-                href="https://x.com/Ericbn09"
+
+            {/* Badges Section */}
+            <div className="flex flex-col gap-3">
+              {/* OPEN-LAUNCH Badge */}
+              <a
+                href="https://open-launch.com/projects/aat-ee"
                 target="_blank"
-                rel="noopener"
-                className="hover:text-primary underline"
+                title="Powered by Open-Launch"
+                rel="noopener noreferrer"
               >
-                Eric
-              </Link>
-            </p>
-            <div className="flex items-center justify-start space-x-3">
-              <img
-                src="/images/badges/top1-light.svg"
-                alt="Top 1 Product Badge (Light Theme)"
-                className="block w-[200px] dark:hidden"
-              />
-              <img
-                src="/images/badges/top1-dark.svg"
-                alt="Top 1 Product Badge (Dark Theme)"
-                className="hidden w-[200px] dark:block"
-              />
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-light.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Findly.tools Badge */}
+              <a
+                href="https://findly.tools/aat-ee?utm_source=aat-ee"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Homepage-only Badges */}
+              {isHomePage && (
+                <>
+                  {/* Dofollow.tools Badge */}
+                  <a href="https://dofollow.tools" target="_blank" rel="noopener noreferrer">
+                    <img
+                      src="https://dofollow.tools/badge/badge_transparent.svg"
+                      alt="Featured on Dofollow.Tools"
+                      width="200"
+                      height="54"
+                    />
+                  </a>
+
+                  {/* Startup Fame Badge */}
+                  <a
+                    href="https://startupfa.me/s/aat.ee?utm_source=www.aat.ee"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src="https://startupfa.me/badges/featured-badge.webp"
+                      alt="aat.ee - Featured on Startup Fame"
+                      width="171"
+                      height="54"
+                    />
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Right Section: Columnar Navigation Links - 2 colonnes sur mobile, 4 sur md */}
-          <div className="grid grid-cols-2 gap-8 md:col-span-8 md:grid-cols-4">
+          {/* Right Section: Columnar Navigation Links */}
+          <div className="grid grid-cols-2 gap-8 md:col-span-8 md:grid-cols-3">
             {/* Discover Column */}
             <div className="text-left">
               <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
@@ -134,200 +175,145 @@ export default function FooterSection() {
                 ))}
               </ul>
             </div>
-
-            {/* Connect Column */}
-            <div className="text-left">
-              <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                Connect
-              </h3>
-              <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
-                {connectLinkItems.map((item) => (
-                  <li key={item.label}>
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 text-sm transition-colors duration-150"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
-        {/* Badges Section */}
-        <div className="border-border/40 mt-8 border-t">
-          <div className="mx-auto max-w-5xl pt-4">
-            <h3 className="text-muted-foreground mb-4 text-center text-xs font-medium tracking-wider uppercase">
-              Earned Badges
+
+        {/* Homepage-only Friends Links */}
+        {isHomePage && (
+          <div className="border-border/40 mt-8 border-t pt-6">
+            <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
+              Friends
             </h3>
-            {/* Featured on findly.tools */}
-            <div className="mb-4 flex flex-wrap items-center justify-center">
-              <a href="https://findly.tools/open-launch?utm_source=open-launch" target="_blank">
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  height="auto"
-                  className="block dark:hidden"
-                />
+            <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              <a
+                href="https://debian.club/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Debian.Club
               </a>
-
-              <a href="https://findly.tools/open-launch?utm_source=open-launch" target="_blank">
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  height="auto"
-                  className="hidden dark:block"
-                />
+              <span>|</span>
+              <a
+                href="https://hestiacp.cn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                hestiacp.cn
+              </a>
+              <span>|</span>
+              <a
+                href="https://portcyou.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                PortCyou
+              </a>
+              <span>|</span>
+              <a
+                href="https://cloud.fan/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                CloudFan
+              </a>
+              <span>|</span>
+              <a
+                href="https://mulerun.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                MuleRun
+              </a>
+              <span>|</span>
+              <a
+                href="https://www.almalinux.com.cn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                AlmaLinuxCN
               </a>
             </div>
-            {/* Featured on Twelve Tools */}
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <a
-                href="https://twelve.tools"
+                href="https://p.cafe/"
                 target="_blank"
-                rel="noopener"
-                className="hidden dark:block"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://twelve.tools/badge0-dark.svg"
-                  alt="Featured on Twelve Tools"
-                  className="h-8"
-                />
+                P.Cafe
               </a>
+              <span>|</span>
               <a
-                href="https://twelve.tools"
+                href="https://www.rank.fan/"
                 target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://twelve.tools/badge0-white.svg"
-                  alt="Featured on Twelve Tools"
-                  className="h-8"
-                />
+                RankFan
               </a>
+              <span>|</span>
               <a
-                href="https://bestdirectories.org"
+                href="https://run.claw.cloud/"
                 target="_blank"
-                rel="noopener"
-                className="hidden dark:block"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://bestdirectories.org/feature-badge-dark.svg"
-                  alt="Featured on Best Directories"
-                  className="h-8"
-                />
+                ClawCloud Run
               </a>
+              <span>|</span>
               <a
-                href="https://bestdirectories.org"
+                href="https://www.apponarm.com/"
                 target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://bestdirectories.org/feature-badge.svg"
-                  alt="Featured on Best Directories"
-                  className="h-8"
-                />
+                APP on ARM
               </a>
+              <span>|</span>
               <a
-                href="https://aiwith.me/tools/open-launch-com/?utm_source=badge-featured&utm_medium=badge&ref=embed"
+                href="https://freehost.work/"
                 target="_blank"
-                rel="noopener"
-                className="hidden dark:block"
-                title="aat.ee - Featured on AI With Me"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://aiwith.me/ai_with_me_dark_badge.svg"
-                  alt="aat.ee - Featured on AI With Me"
-                  className="h-8"
-                />
+                FreeHost
               </a>
+              <span>|</span>
               <a
-                href="https://aiwith.me/tools/open-launch-com/?utm_source=badge-featured&utm_medium=badge&ref=embed"
+                href="https://mf8.biz/"
                 target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
-                title="aat.ee - Featured on AI With Me"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://aiwith.me/ai_with_me_light_badge.svg"
-                  alt="aat.ee - Featured on AI With Me"
-                  className="h-8"
-                />
+                MF8
               </a>
-
-              {/* Featured on Startup Fame */}
+              <span>|</span>
               <a
-                href="https://startupfa.me/s/open-launch?utm_source=open-launch.com"
+                href="https://aat.ee/"
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://startupfa.me/badges/featured/dark.webp"
-                  alt="Featured on Startup Fame"
-                  className="h-8"
-                />
+                AAT.ee
               </a>
+              <span>|</span>
               <a
-                href="https://www.producthunt.com/products/open-launch?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-open-launch"
+                href="https://ii.pe/"
                 target="_blank"
-                rel="noopener"
-                className="hidden dark:block"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
               >
-                <img
-                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=neutral&t=1748776168767"
-                  alt="aat.ee - The first complete open source alternative to Product Hunt. | Product Hunt"
-                  className="h-8"
-                />
-              </a>
-              <a
-                href="https://www.producthunt.com/products/open-launch?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-open-launch"
-                target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
-              >
-                <img
-                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972224&theme=light&t=1748776063921"
-                  alt="aat.ee - The first complete open source alternative to Product Hunt. | Product Hunt"
-                  className="h-8"
-                />
-              </a>
-
-              {/* Featured on MagicBox.tools */}
-              <a
-                href="https://magicbox.tools"
-                target="_blank"
-                rel="noopener"
-                className="hidden dark:block"
-              >
-                <img
-                  src="https://magicbox.tools/badge-dark.svg"
-                  alt="Featured on MagicBox.tools"
-                  className="h-8"
-                />
-              </a>
-              <a
-                href="https://magicbox.tools"
-                target="_blank"
-                rel="noopener"
-                className="block dark:hidden"
-              >
-                <img
-                  src="https://magicbox.tools/badge.svg"
-                  alt="Featured on MagicBox.tools"
-                  className="h-8"
-                />
+                II.Pe
               </a>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </footer>
   )
