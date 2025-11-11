@@ -29,7 +29,7 @@ export default function FooterSection() {
     <footer className="bg-background border-t pt-6 pb-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-12 md:gap-x-8">
-          {/* Left Section: Brand, Copyright, Badges */}
+          {/* Left Section: Brand, Copyright */}
           <div className="flex flex-col items-start text-left md:col-span-4 lg:col-span-4">
             <Link href="/" className="font-heading mb-3 flex items-center">
               <span className="font-heading flex items-center text-lg font-bold">
@@ -37,84 +37,9 @@ export default function FooterSection() {
                 aat.ee
               </span>
             </Link>
-            <p className="text-muted-foreground mb-4 text-sm">
+            <p className="text-muted-foreground text-sm">
               © {new Date().getFullYear()} aat.ee. All rights reserved.
             </p>
-
-            {/* Badges Section */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* OPEN-LAUNCH Badge */}
-              <a
-                href="https://open-launch.com/projects/aat-ee"
-                target="_blank"
-                title="Powered by Open-Launch"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-light.svg"
-                  alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
-                  alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
-                  className="hidden dark:block"
-                />
-              </a>
-
-              {/* Findly.tools Badge */}
-              <a
-                href="https://findly.tools/aat-ee?utm_source=aat-ee"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  className="hidden dark:block"
-                />
-              </a>
-
-              {/* Homepage-only Badges */}
-              {isHomePage && (
-                <>
-                  {/* Dofollow.tools Badge */}
-                  <a href="https://dofollow.tools" target="_blank" rel="noopener noreferrer">
-                    <img
-                      src="https://dofollow.tools/badge/badge_transparent.svg"
-                      alt="Featured on Dofollow.Tools"
-                      width="200"
-                      height="54"
-                    />
-                  </a>
-
-                  {/* Startup Fame Badge */}
-                  <a
-                    href="https://startupfa.me/s/aat.ee?utm_source=www.aat.ee"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src="https://startupfa.me/badges/featured-badge.webp"
-                      alt="aat.ee - Featured on Startup Fame"
-                      width="171"
-                      height="54"
-                    />
-                  </a>
-                </>
-              )}
-            </div>
           </div>
 
           {/* Right Section: Columnar Navigation Links */}
@@ -178,13 +103,14 @@ export default function FooterSection() {
           </div>
         </div>
 
-        {/* Homepage-only Friends Links */}
+        {/* Friends Links and Badges Section */}
         {isHomePage && (
           <div className="border-border/40 mt-8 border-t pt-6">
+            {/* Friends Links */}
             <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
               Friends
             </h3>
-            <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <a
                 href="https://debian.club/"
                 target="_blank"
@@ -309,6 +235,126 @@ export default function FooterSection() {
                 className="hover:text-primary transition-colors"
               >
                 II.Pe
+              </a>
+            </div>
+
+            {/* Badges Section */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* OPEN-LAUNCH Badge */}
+              <a
+                href="https://open-launch.com/projects/aat-ee"
+                target="_blank"
+                title="Powered by Open-Launch"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-light.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Findly.tools Badge */}
+              <a
+                href="https://findly.tools/aat-ee?utm_source=aat-ee"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Dofollow.tools Badge */}
+              <a href="https://dofollow.tools" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://dofollow.tools/badge/badge_transparent.svg"
+                  alt="Featured on Dofollow.Tools"
+                  width="200"
+                  height="54"
+                />
+              </a>
+
+              {/* Startup Fame Badge */}
+              <a
+                href="https://startupfa.me/s/aat.ee?utm_source=www.aat.ee"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://startupfa.me/badges/featured-badge.webp"
+                  alt="aat.ee - Featured on Startup Fame"
+                  width="171"
+                  height="54"
+                />
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Badges Section for Non-Homepage */}
+        {!isHomePage && (
+          <div className="border-border/40 mt-8 border-t pt-6">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* OPEN-LAUNCH Badge */}
+              <a
+                href="https://open-launch.com/projects/aat-ee"
+                target="_blank"
+                title="Powered by Open-Launch"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-light.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
+                  alt="Powered by Open-Launch"
+                  width="150"
+                  height="44"
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Findly.tools Badge */}
+              <a
+                href="https://findly.tools/aat-ee?utm_source=aat-ee"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
+                  alt="Featured on findly.tools"
+                  width="150"
+                  className="hidden dark:block"
+                />
               </a>
             </div>
           </div>
