@@ -164,6 +164,15 @@ export default async function Nav() {
                         </SheetClose>
                         <SheetClose asChild>
                           <Link
+                            href="/badge"
+                            className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
+                          >
+                            <RiFlashlightLine className="text-muted-foreground h-4 w-4" />
+                            <span>Fast Track 🚀</span>
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <Link
                             href="/sponsors"
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >

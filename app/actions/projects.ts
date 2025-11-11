@@ -202,6 +202,7 @@ interface ProjectSubmissionData {
   pricing: string
   githubUrl?: string | null
   twitterUrl?: string | null
+  hasBadgeVerified?: boolean
 }
 
 // Version correcte de submitProject
@@ -226,6 +227,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       pricing,
       githubUrl,
       twitterUrl,
+      hasBadgeVerified,
     } = projectData
 
     // Validation
@@ -262,6 +264,8 @@ export async function submitProject(projectData: ProjectSubmissionData) {
         pricing,
         githubUrl: githubUrl ?? undefined,
         twitterUrl: twitterUrl ?? undefined,
+        hasBadgeVerified: hasBadgeVerified ?? false,
+        badgeVerifiedAt: hasBadgeVerified ? new Date() : undefined,
         createdBy: session.user.id,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -116,6 +116,14 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
 
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
+            <Link href="/badge" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
+              Fast Track 🚀
+            </Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild>
             <Link href="/sponsors" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
               Sponsors
             </Link>

@@ -82,13 +82,17 @@ export async function getLaunchAvailabilityRange(
   startDate: string,
   endDate: string,
   launchTypeValue: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES] = LAUNCH_TYPES.FREE,
+  hasBadgeVerified: boolean = false,
 ): Promise<LaunchAvailability[]> {
   // Déterminer la date minimale de planification en fonction du type de lancement
   const today = new Date()
   let minDaysAhead = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
   let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
-  if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
+  // Badge verified users get priority: can launch tomorrow (1 day ahead)
+  if (hasBadgeVerified && launchTypeValue === LAUNCH_TYPES.FREE) {
+    minDaysAhead = 1
+  } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
     minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
     maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
   } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS) {

@@ -136,9 +136,18 @@ export default async function PricingPage() {
                   <RiCheckboxCircleFill className="text-muted-foreground h-4 w-4" />
                   <span>{LAUNCH_LIMITS.FREE_DAILY_LIMIT} slots available daily</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <RiCheckboxCircleFill className="text-muted-foreground h-4 w-4" />
-                  <span>Standard launch queue</span>
+                <li className="flex items-start gap-2">
+                  <RiCheckboxCircleFill className="text-muted-foreground mt-1 h-4 w-4" />
+                  <div>
+                    <span>Standard launch queue</span>
+                    <div className="text-muted-foreground mt-1 text-xs">
+                      💡 Add our{" "}
+                      <Link href="/badge" className="text-primary underline hover:no-underline">
+                        badge
+                      </Link>{" "}
+                      to launch within 24 hours!
+                    </div>
+                  </div>
                 </li>
                 <li className="flex items-center gap-2">
                   <RiCheckboxCircleFill className="text-muted-foreground h-4 w-4" />
