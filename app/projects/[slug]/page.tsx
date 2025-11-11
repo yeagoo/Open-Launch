@@ -513,11 +513,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </div>
               )}
 
-              {/* Tech Stack */}
+              {/* Product Keywords */}
               {projectData.techStack && projectData.techStack.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                    Tech Stack
+                    Product Keywords
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {projectData.techStack.slice(0, 6).map((tech) => (
