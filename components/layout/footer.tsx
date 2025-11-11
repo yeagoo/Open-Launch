@@ -332,6 +332,29 @@ export default function FooterSection() {
         {!isHomePage && (
           <div className="border-border/40 mt-8 border-t pt-6">
             <div className="flex flex-wrap items-center gap-3">
+              {/* aat.ee Badge */}
+              <a
+                href="https://www.aat.ee/?ref=badge"
+                target="_blank"
+                title="Featured on aat.ee"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/images/badges/featured-badge-light.svg"
+                  alt="Featured on aat.ee"
+                  width="200"
+                  height="54"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="/images/badges/featured-badge-dark.svg"
+                  alt="Featured on aat.ee"
+                  width="200"
+                  height="54"
+                  className="hidden dark:block"
+                />
+              </a>
+
               {/* OPEN-LAUNCH Badge */}
               <a
                 href="https://open-launch.com/projects/aat-ee"
