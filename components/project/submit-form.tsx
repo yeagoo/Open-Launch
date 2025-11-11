@@ -322,7 +322,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       }
 
       if (formData.techStack.length > 5) {
-        setError("You can add a maximum of 5 technologies.")
+        setError("You can add a maximum of 5 keywords.")
         return
       }
     }
@@ -391,7 +391,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     setLaunchDateLimitError(null)
 
     if (formData.techStack.length === 0) {
-      setError("Please enter at least one technology in the Tech Stack.")
+      setError("Please enter at least one keyword in Product Keywords.")
       setIsPending(false)
       return
     }
@@ -403,7 +403,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     }
 
     if (formData.techStack.length > 5) {
-      setError("You can add a maximum of 5 technologies.")
+      setError("You can add a maximum of 5 keywords.")
       setIsPending(false)
       return
     }
@@ -852,9 +852,9 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
             <div>
               <Label htmlFor={tagInputId}>
-                Tech Stack <span className="text-red-500">*</span>
+                Product Keywords <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
-                  ({formData.techStack.length}/5 technologies)
+                  ({formData.techStack.length}/5 keywords)
                 </span>
               </Label>
               <TagInput
@@ -862,12 +862,12 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                 tags={techStackTags}
                 setTags={(newTags) => {
                   if (newTags.length > 5) {
-                    setError("You can add a maximum of 5 technologies.")
+                    setError("You can add a maximum of 5 keywords.")
                     return
                   }
                   setTechStackTags(newTags)
                 }}
-                placeholder="Type a technology and press Enter..."
+                placeholder="Type a keyword and press Enter..."
                 styleClasses={{
                   inlineTagsContainer:
                     "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
@@ -882,7 +882,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                 setActiveTagIndex={setActiveTechTagIndex}
               />
               <p className="text-muted-foreground mt-1 text-xs">
-                Enter up to 5 technologies used, press Enter or comma to add a tag.
+                Enter up to 5 keywords, press Enter or comma to add a tag.
               </p>
             </div>
 
@@ -1383,7 +1383,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       </div>
                     </div>
                     <div>
-                      <strong>Tech Stack:</strong>
+                      <strong>Product Keywords:</strong>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {formData.techStack.map((tech) => (
                           <Badge key={tech} variant="outline">

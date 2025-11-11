@@ -159,7 +159,7 @@ export default function ProjectLoading() {
                 </div>
               </div>
 
-              {/* Tech Stack */}
+              {/* Product Keywords */}
               <div className="space-y-3">
                 <div className="bg-muted h-4 w-20 animate-pulse rounded-md"></div>
                 <div className="flex flex-wrap gap-2">
