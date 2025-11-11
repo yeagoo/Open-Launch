@@ -34,14 +34,24 @@ export const metadata: Metadata = {
   },
 }
 
-const badgeCode = `<a href="https://www.aat.ee/?ref=badge" target="_blank" rel="noopener" title="Featured on aat.ee">
+const badgeCodeLight = `<a href="https://www.aat.ee/?ref=badge" target="_blank" rel="noopener" title="Featured on aat.ee">
   <img 
-    src="https://www.aat.ee/images/badges/featured-badge.svg" 
+    src="https://www.aat.ee/images/badges/featured-badge-light.svg" 
     alt="Featured on aat.ee" 
     width="200"
     height="54"
+    class="block dark:hidden"
+  />
+  <img 
+    src="https://www.aat.ee/images/badges/featured-badge-dark.svg" 
+    alt="Featured on aat.ee" 
+    width="200"
+    height="54"
+    class="hidden dark:block"
   />
 </a>`
+
+const badgeCode = badgeCodeLight // For backwards compatibility
 
 export default function BadgePage() {
   const benefits = [
@@ -164,10 +174,18 @@ export default function BadgePage() {
                 title="Featured on aat.ee"
               >
                 <Image
-                  src="/images/badges/featured-badge.svg"
+                  src="/images/badges/featured-badge-light.svg"
                   alt="Featured on aat.ee"
                   width={200}
                   height={54}
+                  className="block dark:hidden"
+                />
+                <Image
+                  src="/images/badges/featured-badge-dark.svg"
+                  alt="Featured on aat.ee"
+                  width={200}
+                  height={54}
+                  className="hidden dark:block"
                 />
               </a>
             </div>
