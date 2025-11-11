@@ -72,6 +72,7 @@ interface ProjectFormData {
   scheduledDate: string | null
   launchType: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES]
   productImage: string | null
+  hasBadgeVerified: boolean
 }
 
 interface DateGroup {
@@ -100,6 +101,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     scheduledDate: null,
     launchType: LAUNCH_TYPES.FREE,
     productImage: null,
+    hasBadgeVerified: false,
   })
 
   const [uploadedLogoUrl, setUploadedLogoUrl] = useState<string | null>(null)
@@ -118,6 +120,9 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
   const [launchDateLimitError, setLaunchDateLimitError] = useState<string | null>(null)
   const [isLoadingDateCheck, setIsLoadingDateCheck] = useState(false)
 
+  const [isVerifyingBadge, setIsVerifyingBadge] = useState(false)
+  const [badgeVerificationMessage, setBadgeVerificationMessage] = useState<string | null>(null)
+
   const tagInputId = useId()
 
   const [techStackTags, setTechStackTags] = useState<Tag[]>([])
@@ -129,6 +134,53 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       ...prev,
       [name]: value,
     }))
+    // Reset badge verification when website URL changes
+    if (name === "websiteUrl") {
+      setFormData((prev) => ({ ...prev, hasBadgeVerified: false }))
+      setBadgeVerificationMessage(null)
+    }
+  }
+
+  const handleVerifyBadge = async () => {
+    if (!formData.websiteUrl) {
+      setBadgeVerificationMessage("Please enter your website URL first.")
+      return
+    }
+
+    setIsVerifyingBadge(true)
+    setBadgeVerificationMessage(null)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/projects/verify-badge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ websiteUrl: formData.websiteUrl }),
+      })
+
+      const result = await response.json()
+
+      if (result.verified) {
+        setFormData((prev) => ({ ...prev, hasBadgeVerified: true }))
+        setBadgeVerificationMessage(
+          "✓ Badge verified! You'll get priority launch access (next day launch).",
+        )
+      } else {
+        setFormData((prev) => ({ ...prev, hasBadgeVerified: false }))
+        setBadgeVerificationMessage(
+          result.message || "Badge not found. Please add the badge to your website and try again.",
+        )
+      }
+    } catch (error) {
+      console.error("Badge verification error:", error)
+      setBadgeVerificationMessage(
+        "Failed to verify badge. Please try again or contact support if the issue persists.",
+      )
+    } finally {
+      setIsVerifyingBadge(false)
+    }
   }
 
   const checkWebsiteUrl = async (url: string) => {
@@ -142,6 +194,42 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     }
   }
 
+  const verifyBadge = async () => {
+    if (!formData.websiteUrl) {
+      setBadgeVerificationMessage("Please enter your website URL first")
+      return
+    }
+
+    setIsVerifyingBadge(true)
+    setBadgeVerificationMessage(null)
+
+    try {
+      const response = await fetch("/api/projects/verify-badge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteUrl: formData.websiteUrl }),
+      })
+
+      const data = await response.json()
+
+      if (data.verified) {
+        setFormData((prev) => ({ ...prev, hasBadgeVerified: true }))
+        setBadgeVerificationMessage(data.message)
+        // Reload available dates with new permissions
+        if (formData.launchType) {
+          await loadAvailableDates()
+        }
+      } else {
+        setBadgeVerificationMessage(data.message || "Badge not found on your website")
+      }
+    } catch (error) {
+      console.error("Error verifying badge:", error)
+      setBadgeVerificationMessage("Failed to verify badge. Please try again.")
+    } finally {
+      setIsVerifyingBadge(false)
+    }
+  }
+
   const loadAvailableDates = useCallback(async () => {
     setIsLoadingDates(true)
     try {
@@ -152,11 +240,18 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         startDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD), DATE_FORMAT.API)
       } else {
-        startDate = format(addDays(today, LAUNCH_SETTINGS.MIN_DAYS_AHEAD), DATE_FORMAT.API)
+        // 如果用户验证了 badge，允许从明天开始
+        const minDaysAhead = formData.hasBadgeVerified ? 1 : LAUNCH_SETTINGS.MIN_DAYS_AHEAD
+        startDate = format(addDays(today, minDaysAhead), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
       }
 
-      const availability = await getLaunchAvailabilityRange(startDate, endDate, formData.launchType)
+      const availability = await getLaunchAvailabilityRange(
+        startDate,
+        endDate,
+        formData.launchType,
+        formData.hasBadgeVerified,
+      )
       setAvailableDates(availability)
     } catch (err) {
       console.error("Error loading dates:", err)
@@ -164,7 +259,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     } finally {
       setIsLoadingDates(false)
     }
-  }, [formData.launchType])
+  }, [formData.launchType, formData.hasBadgeVerified])
 
   useEffect(() => {
     fetchCategories()
@@ -426,6 +521,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         pricing: formData.pricing,
         githubUrl: formData.githubUrl || null,
         twitterUrl: formData.twitterUrl || null,
+        hasBadgeVerified: formData.hasBadgeVerified,
       }
 
       const submissionResult = await submitProject(projectData)
@@ -631,15 +727,67 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <Label htmlFor="websiteUrl">
                 Website URL <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="websiteUrl"
-                name="websiteUrl"
-                type="url"
-                value={formData.websiteUrl}
-                onChange={handleInputChange}
-                placeholder="https://myawesomeproject.com"
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="websiteUrl"
+                  name="websiteUrl"
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://myawesomeproject.com"
+                  required
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant={formData.hasBadgeVerified ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleVerifyBadge}
+                  disabled={!formData.websiteUrl || isVerifyingBadge}
+                  className="whitespace-nowrap"
+                >
+                  {isVerifyingBadge ? (
+                    <>
+                      <RiLoader4Line className="mr-1 h-4 w-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : formData.hasBadgeVerified ? (
+                    <>
+                      <RiCheckLine className="mr-1 h-4 w-4" />
+                      Verified
+                    </>
+                  ) : (
+                    "Verify Badge"
+                  )}
+                </Button>
+              </div>
+              {badgeVerificationMessage && (
+                <div
+                  className={`mt-2 flex items-start gap-2 rounded-md border p-3 text-sm ${
+                    formData.hasBadgeVerified
+                      ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
+                      : "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
+                  }`}
+                >
+                  <RiInformationLine className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <div>
+                    <p>{badgeVerificationMessage}</p>
+                    {!formData.hasBadgeVerified && (
+                      <p className="mt-1 text-xs">
+                        Want priority launch?{" "}
+                        <a
+                          href="/badge"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Learn how to add our badge →
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="description">
@@ -981,6 +1129,74 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                 </p>
               </div>
             </div>
+
+            {/* Badge Verification Card - Only for Free Launch */}
+            {formData.launchType === LAUNCH_TYPES.FREE && !formData.hasBadgeVerified && (
+              <div className="bg-primary/5 border-primary/20 rounded-lg border p-4">
+                <div className="mb-3 flex items-start gap-2">
+                  <RiStarLine className="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold">🚀 Want to Launch Tomorrow?</h4>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      Skip the queue! Add our badge to your website and launch the next day instead
+                      of waiting weeks or months.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open("/badge", "_blank")}
+                  >
+                    <RiInformationLine className="mr-1.5 h-4 w-4" />
+                    Get Badge Code
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={verifyBadge}
+                    disabled={isVerifyingBadge || !formData.websiteUrl}
+                  >
+                    {isVerifyingBadge ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <RiCheckboxCircleFill className="mr-1.5 h-4 w-4" />
+                        Verify Badge
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {badgeVerificationMessage && (
+                  <p
+                    className={`mt-3 text-sm ${formData.hasBadgeVerified ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"}`}
+                  >
+                    {badgeVerificationMessage}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Badge Verified Success Message */}
+            {formData.launchType === LAUNCH_TYPES.FREE && formData.hasBadgeVerified && (
+              <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
+                <RiCheckboxCircleFill className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                <div>
+                  <h4 className="font-semibold text-green-900 dark:text-green-100">
+                    ✅ Badge Verified!
+                  </h4>
+                  <p className="mt-1 text-sm text-green-700 dark:text-green-300">
+                    Your badge is verified! You can now schedule your launch for tomorrow.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <h4 className="mb-4 text-sm font-medium">Launch Type</h4>

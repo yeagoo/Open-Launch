@@ -124,6 +124,8 @@ export const project = pgTable(
     launchType: text("launch_type").default(launchType.FREE),
     featuredOnHomepage: boolean("featured_on_homepage").default(false),
     dailyRanking: integer("daily_ranking"),
+    hasBadgeVerified: boolean("has_badge_verified").default(false),
+    badgeVerifiedAt: timestamp("badge_verified_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     createdBy: text("created_by").references(() => user.id, {
