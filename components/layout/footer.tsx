@@ -336,26 +336,6 @@ export default function FooterSection() {
                   className="hidden dark:block"
                 />
               </a>
-
-              {/* Findly.tools Badge */}
-              <a
-                href="https://findly.tools/aat-ee?utm_source=aat-ee"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
-                  alt="Featured on findly.tools"
-                  width="150"
-                  className="hidden dark:block"
-                />
-              </a>
             </div>
           </div>
         )}
