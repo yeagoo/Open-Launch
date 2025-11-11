@@ -306,6 +306,24 @@ export default function FooterSection() {
                   height="54"
                 />
               </a>
+
+              {/* Twelve Tools Badge */}
+              <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://twelve.tools/badge0-white.svg"
+                  alt="Featured on Twelve Tools"
+                  width="200"
+                  height="54"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://twelve.tools/badge0-dark.svg"
+                  alt="Featured on Twelve Tools"
+                  width="200"
+                  height="54"
+                  className="hidden dark:block"
+                />
+              </a>
             </div>
           </div>
         )}
