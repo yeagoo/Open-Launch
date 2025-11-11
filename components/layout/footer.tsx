@@ -42,7 +42,7 @@ export default function FooterSection() {
             </p>
 
             {/* Badges Section */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {/* OPEN-LAUNCH Badge */}
               <a
                 href="https://open-launch.com/projects/aat-ee"
@@ -238,8 +238,7 @@ export default function FooterSection() {
               >
                 AlmaLinuxCN
               </a>
-            </div>
-            <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              <span>|</span>
               <a
                 href="https://p.cafe/"
                 target="_blank"
