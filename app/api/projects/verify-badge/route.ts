@@ -68,35 +68,15 @@ export async function POST(request: NextRequest) {
 
       const html = await response.text()
 
-      // Check for badge patterns - must have both domain AND badge image
-      const requiredPatterns = {
-        // Must have aat.ee domain link
-        hasDomain: /www\.aat\.ee/i.test(html) || /aat\.ee\/\?ref=badge/i.test(html),
-        // Must have badge image (either light, dark, or old version)
-        hasBadgeImage:
-          /aat\.ee\/images\/badges\/featured-badge-light\.svg/i.test(html) ||
-          /aat\.ee\/images\/badges\/featured-badge-dark\.svg/i.test(html) ||
-          /aat\.ee\/images\/badges\/featured-badge\.svg/i.test(html),
-      }
+      // Check for aat.ee domain link only (no badge image check)
+      const hasDomain = /www\.aat\.ee/i.test(html) || /aat\.ee\/\?ref=badge/i.test(html)
 
-      // Both domain and badge image must be present
-      const isVerified = requiredPatterns.hasDomain && requiredPatterns.hasBadgeImage
-
-      if (!isVerified) {
-        let message = "Badge not found on the website. "
-        if (!requiredPatterns.hasDomain) {
-          message += "Please add the aat.ee link. "
-        }
-        if (!requiredPatterns.hasBadgeImage) {
-          message +=
-            "Please add the badge image (featured-badge-light.svg or featured-badge-dark.svg). "
-        }
-        message += "Please add the complete badge code and try again."
-
+      if (!hasDomain) {
         return NextResponse.json(
           {
             verified: false,
-            message,
+            message:
+              "aat.ee link not found on your website. Please add a link to www.aat.ee on your website and try again.",
           },
           { status: 200 },
         )
