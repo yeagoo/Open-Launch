@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { launchQuota, launchStatus, launchType, project, user } from "@/drizzle/db/schema"
+import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
 import { eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
@@ -65,8 +65,8 @@ export async function POST(request: Request) {
           .update(project)
           .set({
             launchStatus: launchStatus.SCHEDULED,
-            // Pour Premium Plus, activer la mise en avant sur la page d'accueil
-            featuredOnHomepage: projectData.launchType === launchType.PREMIUM_PLUS,
+            // Premium Launch 不自动 featured，需要用户主动选择
+            featuredOnHomepage: false,
             updatedAt: new Date(),
           })
           .where(eq(project.id, projectId))
@@ -74,31 +74,6 @@ export async function POST(request: Request) {
         // 重新生成 sitemap（项目即将上架）
         revalidatePath("/sitemap.xml")
         console.log("✅ Sitemap regenerated after premium project payment")
-
-        // 如果是 Premium 或 Premium Plus 发布，将用户设置为 Premium
-        if (
-          projectData.launchType === launchType.PREMIUM ||
-          projectData.launchType === launchType.PREMIUM_PLUS
-        ) {
-          const projectInfo = await db.query.project.findFirst({
-            where: eq(project.id, projectId),
-            columns: {
-              createdBy: true,
-            },
-          })
-
-          if (projectInfo?.createdBy) {
-            await db
-              .update(user)
-              .set({
-                isPremium: true,
-                updatedAt: new Date(),
-              })
-              .where(eq(user.id, projectInfo.createdBy))
-
-            console.log(`User ${projectInfo.createdBy} upgraded to Premium`)
-          }
-        }
 
         // Mettre à jour le quota pour cette date
         const launchDate = projectData.scheduledLaunchDate
@@ -114,8 +89,8 @@ export async function POST(request: Request) {
             id: crypto.randomUUID(),
             date: launchDate,
             freeCount: 0,
+            badgeCount: 0,
             premiumCount: projectData.launchType === launchType.PREMIUM ? 1 : 0,
-            premiumPlusCount: projectData.launchType === launchType.PREMIUM_PLUS ? 1 : 0,
             createdAt: new Date(),
             updatedAt: new Date(),
           })
@@ -128,10 +103,6 @@ export async function POST(request: Request) {
                 projectData.launchType === launchType.PREMIUM
                   ? sql`${launchQuota.premiumCount} + 1`
                   : launchQuota.premiumCount,
-              premiumPlusCount:
-                projectData.launchType === launchType.PREMIUM_PLUS
-                  ? sql`${launchQuota.premiumPlusCount} + 1`
-                  : launchQuota.premiumPlusCount,
               updatedAt: new Date(),
             })
             .where(eq(launchQuota.id, quotaResult[0].id))
