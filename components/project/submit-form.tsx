@@ -141,48 +141,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     }
   }
 
-  const handleVerifyBadge = async () => {
-    if (!formData.websiteUrl) {
-      setBadgeVerificationMessage("Please enter your website URL first.")
-      return
-    }
-
-    setIsVerifyingBadge(true)
-    setBadgeVerificationMessage(null)
-    setError(null)
-
-    try {
-      const response = await fetch("/api/projects/verify-badge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ websiteUrl: formData.websiteUrl }),
-      })
-
-      const result = await response.json()
-
-      if (result.verified) {
-        setFormData((prev) => ({ ...prev, hasBadgeVerified: true }))
-        setBadgeVerificationMessage(
-          "✓ Badge verified! You'll get priority launch access (next day launch).",
-        )
-      } else {
-        setFormData((prev) => ({ ...prev, hasBadgeVerified: false }))
-        setBadgeVerificationMessage(
-          result.message || "Badge not found. Please add the badge to your website and try again.",
-        )
-      }
-    } catch (error) {
-      console.error("Badge verification error:", error)
-      setBadgeVerificationMessage(
-        "Failed to verify badge. Please try again or contact support if the issue persists.",
-      )
-    } finally {
-      setIsVerifyingBadge(false)
-    }
-  }
-
   const checkWebsiteUrl = async (url: string) => {
     try {
       const response = await fetch(`/api/projects/check-url?url=${encodeURIComponent(url)}`)
@@ -725,67 +683,15 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <Label htmlFor="websiteUrl">
                 Website URL <span className="text-red-500">*</span>
               </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="websiteUrl"
-                  name="websiteUrl"
-                  type="url"
-                  value={formData.websiteUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://myawesomeproject.com"
-                  required
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant={formData.hasBadgeVerified ? "default" : "outline"}
-                  size="sm"
-                  onClick={handleVerifyBadge}
-                  disabled={!formData.websiteUrl || isVerifyingBadge}
-                  className="whitespace-nowrap"
-                >
-                  {isVerifyingBadge ? (
-                    <>
-                      <RiLoader4Line className="mr-1 h-4 w-4 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : formData.hasBadgeVerified ? (
-                    <>
-                      <RiCheckLine className="mr-1 h-4 w-4" />
-                      Verified
-                    </>
-                  ) : (
-                    "Verify Badge"
-                  )}
-                </Button>
-              </div>
-              {badgeVerificationMessage && (
-                <div
-                  className={`mt-2 flex items-start gap-2 rounded-md border p-3 text-sm ${
-                    formData.hasBadgeVerified
-                      ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200"
-                      : "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
-                  }`}
-                >
-                  <RiInformationLine className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p>{badgeVerificationMessage}</p>
-                    {!formData.hasBadgeVerified && (
-                      <p className="mt-1 text-xs">
-                        Want priority launch?{" "}
-                        <a
-                          href="/badge"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline hover:no-underline"
-                        >
-                          Learn how to add our badge →
-                        </a>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+              <Input
+                id="websiteUrl"
+                name="websiteUrl"
+                type="url"
+                value={formData.websiteUrl}
+                onChange={handleInputChange}
+                placeholder="https://myawesomeproject.com"
+                required
+              />
             </div>
             <div>
               <Label htmlFor="description">
