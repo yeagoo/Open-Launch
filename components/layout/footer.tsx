@@ -342,6 +342,22 @@ export default function FooterSection() {
                   className="hidden dark:block"
                 />
               </a>
+
+              {/* ToolFame Badge */}
+              <a href="https://toolfame.com/item/aatee" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://toolfame.com/badge-light.svg"
+                  alt="Featured on toolfame.com"
+                  height="30"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://toolfame.com/badge-dark.svg"
+                  alt="Featured on toolfame.com"
+                  height="30"
+                  className="hidden dark:block"
+                />
+              </a>
             </div>
           </div>
         )}
