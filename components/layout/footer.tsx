@@ -240,6 +240,27 @@ export default function FooterSection() {
 
             {/* Badges Section */}
             <div className="flex flex-wrap items-center gap-3">
+              {/* aat.ee Badge - Featured on aat.ee */}
+              <a
+                href="https://www.aat.ee/?ref=badge"
+                target="_blank"
+                title="Featured on aat.ee"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="/images/badges/featured-badge-light.svg"
+                  alt="Featured on aat.ee"
+                  height="30"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="/images/badges/featured-badge-dark.svg"
+                  alt="Featured on aat.ee"
+                  height="30"
+                  className="hidden dark:block"
+                />
+              </a>
+
               {/* OPEN-LAUNCH Badge */}
               <a
                 href="https://open-launch.com/projects/aat-ee"
@@ -250,15 +271,13 @@ export default function FooterSection() {
                 <img
                   src="https://open-launch.com/images/badges/powered-by-light.svg"
                   alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
+                  height="30"
                   className="block dark:hidden"
                 />
                 <img
                   src="https://open-launch.com/images/badges/powered-by-dark.svg"
                   alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
+                  height="30"
                   className="hidden dark:block"
                 />
               </a>
@@ -272,13 +291,13 @@ export default function FooterSection() {
                 <img
                   src="https://findly.tools/badges/findly-tools-badge-light.svg"
                   alt="Featured on findly.tools"
-                  width="150"
+                  height="30"
                   className="block dark:hidden"
                 />
                 <img
                   src="https://findly.tools/badges/findly-tools-badge-dark.svg"
                   alt="Featured on findly.tools"
-                  width="150"
+                  height="30"
                   className="hidden dark:block"
                 />
               </a>
@@ -288,22 +307,7 @@ export default function FooterSection() {
                 <img
                   src="https://dofollow.tools/badge/badge_transparent.svg"
                   alt="Featured on Dofollow.Tools"
-                  width="200"
-                  height="54"
-                />
-              </a>
-
-              {/* Startup Fame Badge */}
-              <a
-                href="https://startupfa.me/s/aat.ee?utm_source=www.aat.ee"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://startupfa.me/badges/featured-badge.webp"
-                  alt="aat.ee - Featured on Startup Fame"
-                  width="171"
-                  height="54"
+                  height="30"
                 />
               </a>
 
@@ -312,15 +316,13 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-white.svg"
                   alt="Featured on Twelve Tools"
-                  width="200"
-                  height="54"
+                  height="30"
                   className="block dark:hidden"
                 />
                 <img
                   src="https://twelve.tools/badge0-dark.svg"
                   alt="Featured on Twelve Tools"
-                  width="200"
-                  height="54"
+                  height="30"
                   className="hidden dark:block"
                 />
               </a>
@@ -342,15 +344,13 @@ export default function FooterSection() {
                 <img
                   src="/images/badges/featured-badge-light.svg"
                   alt="Featured on aat.ee"
-                  width="200"
-                  height="54"
+                  height="30"
                   className="block dark:hidden"
                 />
                 <img
                   src="/images/badges/featured-badge-dark.svg"
                   alt="Featured on aat.ee"
-                  width="200"
-                  height="54"
+                  height="30"
                   className="hidden dark:block"
                 />
               </a>
@@ -365,15 +365,13 @@ export default function FooterSection() {
                 <img
                   src="https://open-launch.com/images/badges/powered-by-light.svg"
                   alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
+                  height="30"
                   className="block dark:hidden"
                 />
                 <img
                   src="https://open-launch.com/images/badges/powered-by-dark.svg"
                   alt="Powered by Open-Launch"
-                  width="150"
-                  height="44"
+                  height="30"
                   className="hidden dark:block"
                 />
               </a>
