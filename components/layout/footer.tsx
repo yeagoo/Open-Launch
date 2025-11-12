@@ -326,6 +326,22 @@ export default function FooterSection() {
                   className="hidden dark:block"
                 />
               </a>
+
+              {/* Turbo0 Badge */}
+              <a href="https://turbo0.com/item/aatee" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://img.turbo0.com/badge-listed-light.svg"
+                  alt="Listed on Turbo0"
+                  height="30"
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://img.turbo0.com/badge-listed-dark.svg"
+                  alt="Listed on Turbo0"
+                  height="30"
+                  className="hidden dark:block"
+                />
+              </a>
             </div>
           </div>
         )}
