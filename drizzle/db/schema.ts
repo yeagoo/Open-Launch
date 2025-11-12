@@ -56,7 +56,6 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at").notNull(),
   stripeCustomerId: text("stripe_customer_id"),
   role: text("role"),
-  isPremium: boolean("is_premium").default(false),
   banned: boolean("banned"),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
@@ -218,8 +217,8 @@ export const launchQuota = pgTable("launch_quota", {
   id: text("id").primaryKey(),
   date: timestamp("date").notNull().unique(),
   freeCount: integer("free_count").notNull().default(0),
+  badgeCount: integer("badge_count").notNull().default(0),
   premiumCount: integer("premium_count").notNull().default(0),
-  premiumPlusCount: integer("premium_plus_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
@@ -276,6 +275,50 @@ export const blogArticle = pgTable(
     return {
       slugIdx: index("blog_article_slug_idx").on(table.slug),
       publishedAtIdx: index("blog_article_published_at_idx").on(table.publishedAt),
+    }
+  },
+)
+
+// Promo Code tables
+export const promoCode = pgTable(
+  "promo_code",
+  {
+    id: text("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    discountAmount: text("discount_amount").notNull().default("2.99"),
+    usageLimit: integer("usage_limit"), // NULL means unlimited
+    usedCount: integer("used_count").notNull().default(0),
+    expiresAt: timestamp("expires_at").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      codeIdx: index("promo_code_code_idx").on(table.code),
+      expiresAtIdx: index("promo_code_expires_at_idx").on(table.expiresAt),
+    }
+  },
+)
+
+export const promoCodeUsage = pgTable(
+  "promo_code_usage",
+  {
+    id: text("id").primaryKey(),
+    promoCodeId: text("promo_code_id")
+      .notNull()
+      .references(() => promoCode.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
+    usedAt: timestamp("used_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      userIdIdx: index("promo_code_usage_user_id_idx").on(table.userId),
+      promoCodeIdIdx: index("promo_code_usage_promo_code_id_idx").on(table.promoCodeId),
     }
   },
 )

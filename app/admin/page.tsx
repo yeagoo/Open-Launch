@@ -200,10 +200,21 @@ export default function AdminDashboard() {
     <div className="mx-auto max-w-5xl space-y-4 px-2 pt-6 pb-12 sm:px-4">
       <div className="mb-3 flex items-center justify-between sm:mb-4">
         <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-        <Button size="sm" variant="outline" onClick={fetchData} className="h-8 gap-2">
-          <RefreshCw className="h-4 w-4" />
-          <span className="hidden sm:inline">Refresh</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/admin/promo-codes")}
+            className="h-8 gap-2"
+          >
+            <Tag className="h-4 w-4" />
+            <span className="hidden sm:inline">Promo Codes</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={fetchData} className="h-8 gap-2">
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Grid */}

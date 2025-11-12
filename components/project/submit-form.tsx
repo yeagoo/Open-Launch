@@ -239,19 +239,17 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
         startDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD), DATE_FORMAT.API)
+      } else if (formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE) {
+        // Badge Fast Track users can launch tomorrow
+        startDate = format(addDays(today, 1), DATE_FORMAT.API)
+        endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
       } else {
-        // 如果用户验证了 badge，允许从明天开始
-        const minDaysAhead = formData.hasBadgeVerified ? 1 : LAUNCH_SETTINGS.MIN_DAYS_AHEAD
-        startDate = format(addDays(today, minDaysAhead), DATE_FORMAT.API)
+        // Regular free launch
+        startDate = format(addDays(today, LAUNCH_SETTINGS.MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
       }
 
-      const availability = await getLaunchAvailabilityRange(
-        startDate,
-        endDate,
-        formData.launchType,
-        formData.hasBadgeVerified,
-      )
+      const availability = await getLaunchAvailabilityRange(startDate, endDate, formData.launchType)
       setAvailableDates(availability)
     } catch (err) {
       console.error("Error loading dates:", err)
@@ -1183,20 +1181,88 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               </div>
             )}
 
-            {/* Badge Verified Success Message */}
-            {formData.launchType === LAUNCH_TYPES.FREE && formData.hasBadgeVerified && (
-              <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
-                <RiCheckboxCircleFill className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
-                <div>
-                  <h4 className="font-semibold text-green-900 dark:text-green-100">
-                    ✅ Badge Verified!
-                  </h4>
-                  <p className="mt-1 text-sm text-green-700 dark:text-green-300">
-                    Your badge is verified! You can now schedule your launch for tomorrow.
-                  </p>
+            {/* Badge Verified Success Message & Quota Selection */}
+            {(formData.launchType === LAUNCH_TYPES.FREE ||
+              formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE) &&
+              formData.hasBadgeVerified && (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
+                    <RiCheckboxCircleFill className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    <div>
+                      <h4 className="font-semibold text-green-900 dark:text-green-100">
+                        ✅ Badge Verified!
+                      </h4>
+                      <p className="mt-1 text-sm text-green-700 dark:text-green-300">
+                        You now have access to the Badge Fast Track! Choose your launch quota below.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Quota Selection */}
+                  <div>
+                    <h4 className="mb-3 text-sm font-medium">Select Launch Quota</h4>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div
+                        className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                          formData.launchType === LAUNCH_TYPES.FREE
+                            ? "border-primary bg-primary/5 ring-primary ring-1"
+                            : "hover:border-foreground/30 hover:bg-muted/50"
+                        }`}
+                        onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.FREE)}
+                      >
+                        <h5 className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                          <RiRocketLine className="h-4 w-4" />
+                          Free Quota
+                        </h5>
+                        <ul className="text-muted-foreground space-y-0.5 text-xs">
+                          <li>• {LAUNCH_LIMITS.FREE_DAILY_LIMIT} slots/day</li>
+                          <li>• Standard queue</li>
+                          <li>• Dofollow if Top 3 or badge</li>
+                        </ul>
+                      </div>
+
+                      <div
+                        className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                          formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE
+                            ? "border-primary bg-primary/5 ring-primary ring-1"
+                            : "hover:border-foreground/30 hover:bg-muted/50"
+                        }`}
+                        onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.FREE_WITH_BADGE)}
+                      >
+                        <div className="mb-1 flex items-center justify-between">
+                          <h5 className="flex items-center gap-1.5 text-sm font-medium">
+                            <RiStarLine className="h-4 w-4 text-amber-500" />
+                            Badge Fast Track
+                          </h5>
+                          <Badge variant="secondary" className="text-[10px]">
+                            🚀 Fast
+                          </Badge>
+                        </div>
+                        <ul className="text-muted-foreground space-y-0.5 text-xs">
+                          <li>• {LAUNCH_LIMITS.BADGE_DAILY_LIMIT} slots/day</li>
+                          <li className="font-medium text-green-600 dark:text-green-400">
+                            • Launch tomorrow!
+                          </li>
+                          <li>• Guaranteed dofollow link</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Badge Warning - Only shown when Badge Fast Track is selected */}
+                  {formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/50 dark:bg-amber-950/30">
+                      <RiInformation2Line className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                      <div>
+                        <p className="text-xs text-amber-800 dark:text-amber-200">
+                          <strong>Important:</strong> aat.ee will automatically check for the badge
+                          on your website monthly. Projects without the badge will be removed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
             <div>
               <h4 className="mb-4 text-sm font-medium">Launch Type</h4>

@@ -10,7 +10,6 @@ import {
   launchType,
   LaunchType,
   project as projectTable,
-  user,
 } from "@/drizzle/db/schema"
 import { addDays, format, isBefore, parse } from "date-fns"
 import { and, count as drizzleCount, eq, gte, lt, ne, sql } from "drizzle-orm"
@@ -20,15 +19,14 @@ import {
   LAUNCH_LIMITS,
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
-  PREMIUM_USER_DAILY_LAUNCH_LIMIT,
   USER_DAILY_LAUNCH_LIMIT,
 } from "@/lib/constants"
 
 export interface LaunchAvailability {
   date: string
-  freeSlots: number
-  premiumSlots: number
-  premiumPlusSlots: number
+  freeSlots: number // 基础免费配额
+  badgeSlots: number // Badge 验证用户配额
+  premiumSlots: number // Premium Launch 配额（保留但不再区分）
   totalSlots: number
 }
 
@@ -42,8 +40,8 @@ export async function getLaunchAvailability(date: string): Promise<LaunchAvailab
   const scheduledLaunches = await db
     .select({
       freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})`,
+      badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')`,
       premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})`,
-      premiumPlusCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM_PLUS})`,
       totalCount: sql<number>`count(*)`,
     })
     .from(projectTable)
@@ -58,21 +56,24 @@ export async function getLaunchAvailability(date: string): Promise<LaunchAvailab
 
   // Calculer les places disponibles
   const freeCount = scheduledLaunches[0]?.freeCount || 0
+  const badgeCount = scheduledLaunches[0]?.badgeCount || 0
   const premiumCount = scheduledLaunches[0]?.premiumCount || 0
-  const premiumPlusCount = scheduledLaunches[0]?.premiumPlusCount || 0
   const totalCount = scheduledLaunches[0]?.totalCount || 0
 
   const freeSlots = Math.max(0, LAUNCH_LIMITS.FREE_DAILY_LIMIT - freeCount)
-  const premiumSlots = Math.max(0, LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT - premiumCount)
-  const premiumPlusSlots = Math.max(0, LAUNCH_LIMITS.PREMIUM_PLUS_DAILY_LIMIT - premiumPlusCount)
+  const badgeSlots = Math.max(0, LAUNCH_LIMITS.BADGE_DAILY_LIMIT - badgeCount)
+  const premiumSlots = Math.max(
+    0,
+    LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT - (premiumCount + freeCount + badgeCount),
+  )
   const totalSlots = Math.max(0, LAUNCH_LIMITS.TOTAL_DAILY_LIMIT - totalCount)
 
   // Retourner la disponibilité
   return {
     date: formattedDate,
     freeSlots,
+    badgeSlots,
     premiumSlots,
-    premiumPlusSlots,
     totalSlots,
   }
 }
@@ -82,22 +83,18 @@ export async function getLaunchAvailabilityRange(
   startDate: string,
   endDate: string,
   launchTypeValue: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES] = LAUNCH_TYPES.FREE,
-  hasBadgeVerified: boolean = false,
 ): Promise<LaunchAvailability[]> {
   // Déterminer la date minimale de planification en fonction du type de lancement
   const today = new Date()
   let minDaysAhead = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
   let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
-  // Badge verified users get priority: can launch tomorrow (1 day ahead)
-  if (hasBadgeVerified && launchTypeValue === LAUNCH_TYPES.FREE) {
+  // Badge verified users using Badge quota get priority: can launch tomorrow
+  if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
     minDaysAhead = 1
   } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
     minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
     maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
-  } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS) {
-    minDaysAhead = LAUNCH_SETTINGS.PREMIUM_PLUS_MIN_DAYS_AHEAD
-    maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD
   }
 
   // Calculer la date minimale (au moins le lendemain)
@@ -136,16 +133,8 @@ export async function checkUserLaunchLimit(
   userId: string,
   launchDate: string,
 ): Promise<{ allowed: boolean; count: number; limit: number }> {
-  // Vérifier si l'utilisateur est Premium
-  const userData = await db.query.user.findFirst({
-    where: eq(user.id, userId),
-    columns: {
-      isPremium: true,
-    },
-  })
-
-  // Déterminer la limite en fonction du statut Premium
-  const limit = userData?.isPremium ? PREMIUM_USER_DAILY_LAUNCH_LIMIT : USER_DAILY_LAUNCH_LIMIT
+  // 所有用户统一限制
+  const limit = USER_DAILY_LAUNCH_LIMIT
 
   const [year, month, day] = launchDate.split("-").map(Number)
   const dateStart = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
@@ -215,9 +204,6 @@ export async function scheduleLaunch(
     if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
       minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
       maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
-    } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS) {
-      minDaysAhead = LAUNCH_SETTINGS.PREMIUM_PLUS_MIN_DAYS_AHEAD
-      maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_PLUS_MAX_DAYS_AHEAD
     }
 
     // Calculer la date minimale à minuit
@@ -258,8 +244,6 @@ export async function scheduleLaunch(
       hasAvailability = availability.freeSlots > 0
     } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
       hasAvailability = availability.premiumSlots > 0
-    } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS) {
-      hasAvailability = availability.premiumPlusSlots > 0
     }
 
     if (!hasAvailability) {
@@ -281,7 +265,7 @@ export async function scheduleLaunch(
     let initialStatus: LaunchStatus = launchStatus.SCHEDULED
 
     // Pour les lancements premium, définir le statut à PAYMENT_PENDING
-    if (launchTypeValue === LAUNCH_TYPES.PREMIUM || launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS) {
+    if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
       initialStatus = launchStatus.PAYMENT_PENDING
     }
 
@@ -292,7 +276,7 @@ export async function scheduleLaunch(
         scheduledLaunchDate: launchDate, // Utiliser la date UTC correcte
         launchType: launchTypeValue as LaunchType,
         launchStatus: initialStatus, // Définir le statut initial en fonction du type de lancement
-        featuredOnHomepage: launchTypeValue === LAUNCH_TYPES.PREMIUM_PLUS,
+        featuredOnHomepage: false, // Premium Launch 不再自动 Featured
         updatedAt: new Date(),
       })
       .where(eq(projectTable.id, projectId))
@@ -318,8 +302,8 @@ export async function scheduleLaunch(
           id: crypto.randomUUID(),
           date: launchDate, // Utiliser la date avec l'heure correcte
           freeCount: 1,
+          badgeCount: 0,
           premiumCount: 0,
-          premiumPlusCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
         })

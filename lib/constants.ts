@@ -1,13 +1,13 @@
 export const LAUNCH_LIMITS = {
-  FREE_DAILY_LIMIT: 5,
-  PREMIUM_DAILY_LIMIT: 10,
-  PREMIUM_PLUS_DAILY_LIMIT: 0, // add this back in later
-  TOTAL_DAILY_LIMIT: 20,
+  FREE_DAILY_LIMIT: 5, // 基础免费配额
+  BADGE_DAILY_LIMIT: 5, // Badge 验证用户额外配额
+  PREMIUM_DAILY_LIMIT: 10, // 保留但不再使用
+  PREMIUM_PLUS_DAILY_LIMIT: 0, // 保留但不再使用
+  TOTAL_DAILY_LIMIT: 10, // 总配额：5 基础 + 5 Badge
 } as const
 
-// 用户每日发布限制
-export const USER_DAILY_LAUNCH_LIMIT = 2 // 普通用户每天 2 个
-export const PREMIUM_USER_DAILY_LAUNCH_LIMIT = 10 // Premium 用户每天 10 个
+// 用户每日发布限制（不再区分 Premium）
+export const USER_DAILY_LAUNCH_LIMIT = 5 // 所有用户每天最多 5 个项目
 
 export const PROJECT_LIMITS_VARIABLES = {
   TODAY_LIMIT: 20, // par defaut
@@ -18,22 +18,27 @@ export const PROJECT_LIMITS_VARIABLES = {
 } as const
 
 export const LAUNCH_SETTINGS = {
-  PREMIUM_PRICE: 4.99, // USD
-  ARTICLE_PRICE: 149, // USD
+  PREMIUM_PRICE: 2.99, // USD - Premium Launch 价格
+  ARTICLE_PRICE: 50, // USD - SEO Growth Package 价格
   MIN_DAYS_AHEAD: 1, // Minimum days ahead for scheduling (starting from tomorrow)
   MAX_DAYS_AHEAD: 180, // Maximum days ahead for scheduling (6 months)
-  PREMIUM_MIN_DAYS_AHEAD: 1, // Premium users can schedule sooner
-  PREMIUM_MAX_DAYS_AHEAD: 30, // Premium users have a shorter window
-  PREMIUM_PLUS_MIN_DAYS_AHEAD: 1, // Premium Plus users can schedule even sooner
-  PREMIUM_PLUS_MAX_DAYS_AHEAD: 14, // Premium Plus users have the shortest window
+  PREMIUM_MIN_DAYS_AHEAD: 1, // Premium Launch 最早发布时间
+  PREMIUM_MAX_DAYS_AHEAD: 30, // Premium Launch 最晚发布时间
   DAYS_PER_PAGE: 7, // Nombre de jours à afficher par page
   LAUNCH_HOUR_UTC: 8, // All launches happen at 8 AM UTC
 } as const
 
 export const LAUNCH_TYPES = {
   FREE: "free",
-  PREMIUM: "premium",
-  PREMIUM_PLUS: "premium_plus",
+  FREE_WITH_BADGE: "free_with_badge", // 使用 Badge 配额的免费发布
+  PREMIUM: "premium", // Premium Launch（加速发布）
+} as const
+
+// 优惠码配置
+export const PROMO_CODE_SETTINGS = {
+  MAX_USES_PER_USER: 10, // 每个用户最多使用 10 次优惠码
+  VALIDITY_DAYS: 30, // 优惠码有效期 30 天
+  DISCOUNT_AMOUNT: 2.99, // 优惠金额（抵扣 Premium Launch 费用）
 } as const
 
 export const DATE_FORMAT = {
