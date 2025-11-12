@@ -250,13 +250,13 @@ export default function FooterSection() {
                 <img
                   src="/images/badges/featured-badge-light.svg"
                   alt="Featured on aat.ee"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="/images/badges/featured-badge-dark.svg"
                   alt="Featured on aat.ee"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -271,13 +271,13 @@ export default function FooterSection() {
                 <img
                   src="https://open-launch.com/images/badges/powered-by-light.svg"
                   alt="Powered by Open-Launch"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://open-launch.com/images/badges/powered-by-dark.svg"
                   alt="Powered by Open-Launch"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -291,13 +291,13 @@ export default function FooterSection() {
                 <img
                   src="https://findly.tools/badges/findly-tools-badge-light.svg"
                   alt="Featured on findly.tools"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://findly.tools/badges/findly-tools-badge-dark.svg"
                   alt="Featured on findly.tools"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -307,7 +307,7 @@ export default function FooterSection() {
                 <img
                   src="https://dofollow.tools/badge/badge_transparent.svg"
                   alt="Featured on Dofollow.Tools"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                 />
               </a>
 
@@ -316,13 +316,13 @@ export default function FooterSection() {
                 <img
                   src="https://twelve.tools/badge0-white.svg"
                   alt="Featured on Twelve Tools"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://twelve.tools/badge0-dark.svg"
                   alt="Featured on Twelve Tools"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -332,13 +332,13 @@ export default function FooterSection() {
                 <img
                   src="https://img.turbo0.com/badge-listed-light.svg"
                   alt="Listed on Turbo0"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://img.turbo0.com/badge-listed-dark.svg"
                   alt="Listed on Turbo0"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -348,13 +348,13 @@ export default function FooterSection() {
                 <img
                   src="https://toolfame.com/badge-light.svg"
                   alt="Featured on toolfame.com"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://toolfame.com/badge-dark.svg"
                   alt="Featured on toolfame.com"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -376,13 +376,13 @@ export default function FooterSection() {
                 <img
                   src="/images/badges/featured-badge-light.svg"
                   alt="Featured on aat.ee"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="/images/badges/featured-badge-dark.svg"
                   alt="Featured on aat.ee"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
@@ -397,13 +397,13 @@ export default function FooterSection() {
                 <img
                   src="https://open-launch.com/images/badges/powered-by-light.svg"
                   alt="Powered by Open-Launch"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
                   src="https://open-launch.com/images/badges/powered-by-dark.svg"
                   alt="Powered by Open-Launch"
-                  height="30"
+                  style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
               </a>
