@@ -166,28 +166,45 @@ export default function BadgePage() {
           {/* Preview */}
           <div className="mb-6">
             <h3 className="text-muted-foreground mb-3 text-sm font-medium uppercase">Preview</h3>
-            <div className="bg-muted flex items-center justify-center rounded-lg p-8">
-              <a
-                href="https://www.aat.ee/?ref=badge"
-                target="_blank"
-                rel="noopener"
-                title="Featured on aat.ee"
-              >
-                <Image
-                  src="/images/badges/featured-badge-light.svg"
-                  alt="Featured on aat.ee"
-                  width={200}
-                  height={54}
-                  className="block dark:hidden"
-                />
-                <Image
-                  src="/images/badges/featured-badge-dark.svg"
-                  alt="Featured on aat.ee"
-                  width={200}
-                  height={54}
-                  className="hidden dark:block"
-                />
-              </a>
+
+            {/* Light Mode Badge */}
+            <div className="mb-3">
+              <p className="text-muted-foreground mb-2 text-xs font-medium">Light Mode</p>
+              <div className="flex items-center justify-center rounded-lg border bg-white p-8">
+                <a
+                  href="https://www.aat.ee/?ref=badge"
+                  target="_blank"
+                  rel="noopener"
+                  title="Featured on aat.ee"
+                >
+                  <Image
+                    src="/images/badges/featured-badge-light.svg"
+                    alt="Featured on aat.ee - Light"
+                    width={200}
+                    height={54}
+                  />
+                </a>
+              </div>
+            </div>
+
+            {/* Dark Mode Badge */}
+            <div>
+              <p className="text-muted-foreground mb-2 text-xs font-medium">Dark Mode</p>
+              <div className="flex items-center justify-center rounded-lg border bg-slate-900 p-8">
+                <a
+                  href="https://www.aat.ee/?ref=badge"
+                  target="_blank"
+                  rel="noopener"
+                  title="Featured on aat.ee"
+                >
+                  <Image
+                    src="/images/badges/featured-badge-dark.svg"
+                    alt="Featured on aat.ee - Dark"
+                    width={200}
+                    height={54}
+                  />
+                </a>
+              </div>
             </div>
           </div>
 
