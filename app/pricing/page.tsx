@@ -7,7 +7,7 @@ import { RiArticleLine, RiCheckboxCircleFill, RiInformationLine, RiLinkM } from 
 import { desc } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
 
-import { LAUNCH_LIMITS, LAUNCH_SETTINGS } from "@/lib/constants"
+import { LAUNCH_LIMITS, LAUNCH_SETTINGS, SEO_ARTICLE_PAYMENT_LINK } from "@/lib/constants"
 import {
   Accordion,
   AccordionContent,
@@ -348,7 +348,7 @@ export default async function PricingPage() {
 
                       {/* Button */}
                       <Button className="h-11 w-full" asChild>
-                        <Link href={process.env.NEXT_PUBLIC_SEO_ARTICLE_LINK!} target="_blank">
+                        <Link href={SEO_ARTICLE_PAYMENT_LINK} target="_blank">
                           Get SEO Package - ${LAUNCH_SETTINGS.ARTICLE_PRICE}
                         </Link>
                       </Button>

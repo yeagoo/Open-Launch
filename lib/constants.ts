@@ -71,8 +71,10 @@ export const UPVOTE_LIMITS = {
   DEBOUNCE_TIME_MS: 500, // Temps de debounce côté client (500ms)
 } as const
 
+// Premium Launch 支付链接 ($2.99/次)
 export const PREMIUM_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PAYMENT_LINK!
-export const PREMIUM_PLUS_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK!
+// SEO Growth Package 支付链接 ($50)
+export const SEO_ARTICLE_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK!
 
 export const SPONSORSHIP_SLOTS = {
   TOTAL: 3,
