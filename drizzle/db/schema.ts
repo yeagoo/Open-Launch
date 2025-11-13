@@ -59,6 +59,7 @@ export const user = pgTable("user", {
   banned: boolean("banned"),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  isBot: boolean("is_bot").default(false),
 })
 
 export const session = pgTable("session", {
@@ -319,6 +320,27 @@ export const promoCodeUsage = pgTable(
     return {
       userIdIdx: index("promo_code_usage_user_id_idx").on(table.userId),
       promoCodeIdIdx: index("promo_code_usage_promo_code_id_idx").on(table.promoCodeId),
+    }
+  },
+)
+
+// ProductHunt import tracking table
+export const productHuntImport = pgTable(
+  "product_hunt_import",
+  {
+    id: text("id").primaryKey(),
+    productHuntId: text("product_hunt_id").notNull().unique(),
+    productHuntUrl: text("product_hunt_url").notNull(),
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
+    votesCount: integer("votes_count"),
+    rank: integer("rank"), // 当日排名 1-5
+    importedAt: timestamp("imported_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      productHuntIdIdx: index("product_hunt_import_ph_id_idx").on(table.productHuntId),
+      projectIdIdx: index("product_hunt_import_project_id_idx").on(table.projectId),
     }
   },
 )
