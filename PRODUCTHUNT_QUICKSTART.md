@@ -14,24 +14,32 @@
 
 ---
 
-### 步骤 2: 配置环境变量 (1 分钟)
+### 步骤 2: 配置环境变量 (2 分钟)
 
 **Zeabur Dashboard** → Variables → 添加:
 
 ```bash
 PRODUCTHUNT_API_KEY=your_producthunt_api_key_here
 CRON_SECRET=$(openssl rand -base64 32)
+
+# R2 配置（必需，用于存储 logo）
+R2_ACCOUNT_ID=your_r2_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=your_bucket_name
+R2_PUBLIC_DOMAIN=https://your-r2-domain.com
 ```
+
+**⚠️ 重要**: R2 配置是必需的，否则 logo 上传将失败
 
 ---
 
 ### 步骤 3: 数据库迁移 (1 分钟)
 
-```bash
-# SSH 连接到服务器
-ssh your-server
+**方法 A: 本地执行（推荐）**
 
-# 执行迁移
+```bash
+# 使用 Zeabur 提供的 DATABASE_URL
 psql $DATABASE_URL < drizzle/migrations/add_bot_and_producthunt.sql
 
 # 验证 bot 用户
@@ -39,20 +47,37 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM \"user\" WHERE is_bot = true;"
 # 预期结果: 5
 ```
 
----
-
-### 步骤 4: 配置 Cron Job (1 分钟)
+**方法 B: 使用 Drizzle Kit**
 
 ```bash
-# 自动安装（推荐）
-cd /home/ivmm/Open-Launch
-bash scripts/setup-cron.sh
-
-# 输入信息:
-# - CRON_SECRET: [从环境变量复制]
-# - API_URL: https://aat.ee
-# - 时间: 0 1 * * * (每天 UTC 01:00)
+npm run db:push
+# 或手动运行种子脚本
+npx tsx scripts/seed-bot-users.ts
 ```
+
+---
+
+### 步骤 4: 配置外部 Cron 服务 (2 分钟)
+
+**使用 cron-job.org（推荐）**:
+
+```bash
+1. 访问: https://cron-job.org/
+2. 注册账号（免费）
+3. 创建 Cron Job:
+   - URL: https://aat.ee/api/cron/import-producthunt
+   - Schedule: 每天 01:00 UTC
+   - Header: Authorization: Bearer YOUR_CRON_SECRET
+4. 保存并点击 "Run now" 测试
+```
+
+**为什么使用外部 Cron?**
+
+- ✅ Zeabur 运行在容器中，无法配置系统 Cron
+- ✅ 外部 Cron 服务更适合容器化部署
+- ✅ cron-job.org 完全免费且可靠
+
+详细配置请查看: **PRODUCTHUNT_CRON_ZEABUR.md**
 
 ---
 

@@ -61,7 +61,8 @@
 - ✅ PostgreSQL 数据库
 - ✅ Node.js 18+
 - ✅ ProductHunt API Key
-- ✅ Linux 服务器（支持 Cron）
+- ✅ Cloudflare R2 存储配置（用于存储 logo）
+- ✅ 定时任务服务（Linux Cron 或外部 Cron 服务）
 
 ---
 
@@ -180,6 +181,13 @@ PRODUCTHUNT_API_KEY=your_producthunt_api_key_here
 
 # Cron Secret（生成随机密钥）
 CRON_SECRET=your_super_secret_cron_key_here
+
+# Cloudflare R2 配置（用于存储 logo）
+R2_ACCOUNT_ID=your_r2_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=your_bucket_name
+R2_PUBLIC_DOMAIN=https://your-r2-domain.com
 ```
 
 **生成 CRON_SECRET**:
@@ -233,29 +241,55 @@ curl -X GET \
 
 ---
 
-### 步骤 5: 配置 Linux Cron Job
+### 步骤 5: 配置定时任务
 
-#### 自动安装（推荐）
+#### ⚠️ 重要说明
 
-```bash
-# 1. 进入项目目录
-cd /home/ivmm/Open-Launch
+**如果您使用 Zeabur、Vercel、Railway 等容器化部署平台**，请参考 **[PRODUCTHUNT_CRON_ZEABUR.md](./PRODUCTHUNT_CRON_ZEABUR.md)** 使用外部 Cron 服务（推荐 cron-job.org）。
 
-# 2. 设置执行权限
-chmod +x scripts/setup-cron.sh
-
-# 3. 运行安装脚本
-bash scripts/setup-cron.sh
-
-# 按提示输入:
-# - CRON_SECRET: 你的 Cron 密钥
-# - API_URL: https://aat.ee
-# - Cron 时间: 0 1 * * * (每天 01:00 UTC)
-```
+容器化环境**无法直接配置系统 Cron**，需要使用外部服务触发 API。
 
 ---
 
-#### 手动配置
+#### 方案 A: 外部 Cron 服务（推荐，适用于 Zeabur/容器环境）
+
+**推荐使用 cron-job.org（完全免费）**:
+
+1. **注册账号**
+
+   ```
+   https://cron-job.org/
+   ```
+
+2. **创建 Cron Job**
+
+   - **URL**: `https://aat.ee/api/cron/import-producthunt`
+   - **Schedule**: 每天 01:00 UTC
+   - **Request method**: GET
+   - **Headers**:
+     ```
+     Authorization: Bearer YOUR_CRON_SECRET
+     ```
+
+3. **测试执行**
+   点击 "Run now" 验证配置
+
+**详细配置请参考**: [PRODUCTHUNT_CRON_ZEABUR.md](./PRODUCTHUNT_CRON_ZEABUR.md)
+
+---
+
+#### 方案 B: Linux 系统 Cron（仅适用于 VPS/独立服务器）
+
+⚠️ **注意**: 仅当您在独立服务器或 VPS 上部署时使用此方案。
+
+**自动安装**:
+
+```bash
+cd /home/ivmm/Open-Launch
+bash scripts/setup-cron.sh
+```
+
+**手动配置**:
 
 ```bash
 # 1. 设置脚本执行权限
@@ -267,13 +301,10 @@ CRON_SECRET=your_cron_secret_here
 API_URL=https://aat.ee
 EOF
 
-# 3. 保护环境变量文件
-chmod 600 /home/ivmm/Open-Launch/.env.cron
-
-# 4. 编辑 crontab
+# 3. 编辑 crontab
 crontab -e
 
-# 5. 添加以下行（每天 UTC 01:00 执行）
+# 4. 添加定时任务
 0 1 * * * source /home/ivmm/Open-Launch/.env.cron && /home/ivmm/Open-Launch/scripts/cron-import-producthunt.sh >> /home/ivmm/Open-Launch/logs/cron.log 2>&1
 ```
 
