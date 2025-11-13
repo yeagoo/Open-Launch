@@ -92,7 +92,7 @@ git push origin main
 # 4. 配置 cron-job.org
 访问: https://cron-job.org/
 创建 Cron Job:
-  - URL: https://aat.ee/api/cron/import-producthunt
+  - URL: https://www.aat.ee/api/cron/import-producthunt
   - Schedule: 每天 01:00 UTC
   - Header: Authorization: Bearer <CRON_SECRET>
 ```

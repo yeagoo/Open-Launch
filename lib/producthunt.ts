@@ -149,3 +149,46 @@ export function cleanDescription(description: string): string {
 export function extractTags(topics: ProductHuntTopic[]): string[] {
   return topics.slice(0, 5).map((topic) => topic.name) // 最多取 5 个标签
 }
+
+/**
+ * 获取真实网站地址
+ * ProductHunt API 返回的 website 字段是重定向链接，需要跟随重定向获取真实 URL
+ * @param websiteUrl ProductHunt 返回的 website URL
+ * @param fallbackUrl 失败时的回退 URL（通常是 ProductHunt 页面）
+ */
+export async function getRealWebsiteUrl(websiteUrl: string, fallbackUrl: string): Promise<string> {
+  // 如果不是 ProductHunt 重定向链接，直接返回
+  if (!websiteUrl.includes("producthunt.com/r/")) {
+    return websiteUrl
+  }
+
+  try {
+    console.log(`🔗 Following redirect: ${websiteUrl}`)
+
+    // 使用 HEAD 请求跟随重定向
+    const response = await fetch(websiteUrl, {
+      method: "HEAD",
+      redirect: "manual", // 不自动跟随重定向
+      headers: {
+        "User-Agent": "aat.ee/1.0",
+      },
+      signal: AbortSignal.timeout(5000), // 5 秒超时
+    })
+
+    // 检查是否有重定向
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location")
+      if (location) {
+        console.log(`✅ Real website: ${location}`)
+        return location
+      }
+    }
+
+    // 如果没有重定向，返回原始 URL
+    return websiteUrl
+  } catch (error) {
+    console.error(`⚠️  Failed to get real website URL:`, error)
+    // 失败时使用 fallback URL（ProductHunt 页面）
+    return fallbackUrl
+  }
+}

@@ -65,7 +65,7 @@ npx tsx scripts/seed-bot-users.ts
 1. 访问: https://cron-job.org/
 2. 注册账号（免费）
 3. 创建 Cron Job:
-   - URL: https://aat.ee/api/cron/import-producthunt
+   - URL: https://www.aat.ee/api/cron/import-producthunt
    - Schedule: 每天 01:00 UTC
    - Header: Authorization: Bearer YOUR_CRON_SECRET
 4. 保存并点击 "Run now" 测试
@@ -87,7 +87,7 @@ npx tsx scripts/seed-bot-users.ts
 # 手动测试
 curl -X GET \
   -H "Authorization: Bearer YOUR_CRON_SECRET" \
-  https://aat.ee/api/cron/import-producthunt
+  https://www.aat.ee/api/cron/import-producthunt
 
 # 预期响应
 {

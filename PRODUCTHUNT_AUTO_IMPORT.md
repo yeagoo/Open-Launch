@@ -218,7 +218,7 @@ CRON_SECRET=your_cron_secret
 # 手动触发导入（测试）
 curl -X GET \
   -H "Authorization: Bearer YOUR_CRON_SECRET" \
-  https://aat.ee/api/cron/import-producthunt
+  https://www.aat.ee/api/cron/import-producthunt
 
 # 预期响应
 {
@@ -263,7 +263,7 @@ curl -X GET \
 
 2. **创建 Cron Job**
 
-   - **URL**: `https://aat.ee/api/cron/import-producthunt`
+   - **URL**: `https://www.aat.ee/api/cron/import-producthunt`
    - **Schedule**: 每天 01:00 UTC
    - **Request method**: GET
    - **Headers**:

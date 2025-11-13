@@ -9,6 +9,7 @@ import {
   cleanDescription,
   extractTags,
   generateSlug,
+  getRealWebsiteUrl,
   getTop5Posts,
   type ProductHuntPost,
 } from "@/lib/producthunt"
@@ -115,6 +116,11 @@ export async function GET(request: Request) {
         const tags = extractTags(post.topics)
         const description = cleanDescription(post.description)
 
+        // 获取真实网站地址（跟随 ProductHunt 重定向）
+        console.log(`🌐 Getting real website URL for "${post.name}"...`)
+        const realWebsiteUrl = await getRealWebsiteUrl(post.website, post.url)
+        console.log(`✅ Website URL: ${realWebsiteUrl}`)
+
         // 下载并上传 logo 到 R2
         let logoUrl = "https://aat.ee/images/default-logo.png"
         let productImageUrl: string | null = null
@@ -147,7 +153,7 @@ export async function GET(request: Request) {
           name: post.name,
           slug,
           description,
-          websiteUrl: post.website || post.url,
+          websiteUrl: realWebsiteUrl,
           logoUrl,
           coverImageUrl: null,
           productImage: productImageUrl,
