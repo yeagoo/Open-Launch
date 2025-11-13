@@ -32,7 +32,7 @@
 
    - 点击 "Create cronjob"
    - **Title**: ProductHunt Auto Import
-   - **URL**: `https://aat.ee/api/cron/import-producthunt`
+   - **URL**: `https://www.aat.ee/api/cron/import-producthunt`
    - **Schedule**:
      - 选择 "Every day"
      - 时间: `01:00` UTC (北京时间 09:00)
@@ -75,7 +75,7 @@
 
    - 点击 "Add Cron Job"
    - **Cron Job Name**: ProductHunt Import
-   - **URL**: `https://aat.ee/api/cron/import-producthunt`
+   - **URL**: `https://www.aat.ee/api/cron/import-producthunt`
    - **Cron Expression**: `0 1 * * *` (每天 01:00 UTC)
    - **HTTP Headers**:
      ```
@@ -121,7 +121,7 @@ jobs:
           response=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
-            https://aat.ee/api/cron/import-producthunt)
+            https://www.aat.ee/api/cron/import-producthunt)
 
           http_code=$(echo "$response" | tail -n 1)
           body=$(echo "$response" | head -n -1)
@@ -164,7 +164,7 @@ services:
   app:
     cron:
       - schedule: "0 1 * * *"
-        command: "curl -H 'Authorization: Bearer $CRON_SECRET' https://aat.ee/api/cron/import-producthunt"
+        command: "curl -H 'Authorization: Bearer $CRON_SECRET' https://www.aat.ee/api/cron/import-producthunt"
 ```
 
 ---
@@ -223,7 +223,7 @@ git push origin main
 1. 访问 https://cron-job.org/
 2. 创建账号并登录
 3. 创建 Cron Job：
-   - URL: `https://aat.ee/api/cron/import-producthunt`
+   - URL: `https://www.aat.ee/api/cron/import-producthunt`
    - Schedule: 每天 01:00 UTC
    - Header: `Authorization: Bearer YOUR_CRON_SECRET`
 
@@ -234,7 +234,7 @@ git push origin main
 ```bash
 curl -X GET \
   -H "Authorization: Bearer YOUR_CRON_SECRET" \
-  https://aat.ee/api/cron/import-producthunt
+  https://www.aat.ee/api/cron/import-producthunt
 ```
 
 **预期响应**:
@@ -372,7 +372,7 @@ PRODUCTHUNT_API_KEY=<你的 ProductHunt Token>
 git push origin main
 
 # 4. 注册 cron-job.org 并创建任务
-URL: https://aat.ee/api/cron/import-producthunt
+URL: https://www.aat.ee/api/cron/import-producthunt
 Schedule: 0 1 * * * (每天 01:00 UTC)
 Header: Authorization: Bearer <CRON_SECRET>
 
