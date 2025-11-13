@@ -4,6 +4,7 @@ import { db } from "@/drizzle/db"
 import { productHuntImport, project, user } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
+import { downloadAndUploadImage } from "@/lib/image-upload"
 import {
   cleanDescription,
   extractTags,
@@ -114,6 +115,31 @@ export async function GET(request: Request) {
         const tags = extractTags(post.topics)
         const description = cleanDescription(post.description)
 
+        // 下载并上传 logo 到 R2
+        let logoUrl = "https://aat.ee/images/default-logo.png"
+        let productImageUrl: string | null = null
+
+        if (post.thumbnail?.url) {
+          console.log(`📸 Processing logo for "${post.name}"...`)
+
+          // 上传 logo
+          const logoResult = await downloadAndUploadImage(
+            post.thumbnail.url,
+            "logos",
+            post.thumbnail.url, // 失败时回退到原始 URL
+          )
+
+          if (logoResult.success && logoResult.url) {
+            logoUrl = logoResult.url
+            productImageUrl = logoResult.url
+            console.log(`✅ Logo uploaded: ${logoUrl}`)
+          } else {
+            console.log(`⚠️  Logo upload failed, using fallback: ${logoResult.error}`)
+            logoUrl = post.thumbnail.url // 使用原始 URL 作为回退
+            productImageUrl = post.thumbnail.url
+          }
+        }
+
         // 创建项目
         await db.insert(project).values({
           id: projectId,
@@ -122,9 +148,9 @@ export async function GET(request: Request) {
           slug,
           description,
           websiteUrl: post.website || post.url,
-          logoUrl: post.thumbnail?.url || "https://aat.ee/images/default-logo.png",
+          logoUrl,
           coverImageUrl: null,
-          productImage: post.thumbnail?.url || null,
+          productImage: productImageUrl,
           githubUrl: null,
           twitterUrl: null,
           techStack: tags,
