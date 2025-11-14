@@ -303,7 +303,11 @@ export default function FooterSection() {
               </a>
 
               {/* Dofollow.tools Badge */}
-              <a href="https://dofollow.tools" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://dofollow.tools/product/aatee"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <img
                   src="https://dofollow.tools/badge/badge_transparent.svg"
                   alt="Featured on Dofollow.Tools"

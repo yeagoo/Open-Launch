@@ -137,10 +137,30 @@ export function generateSlug(name: string): string {
 
 /**
  * 清理和格式化描述
+ * 移除图片标签、HTML 标签等，只保留纯文本内容
  */
 export function cleanDescription(description: string): string {
-  // 移除过多的换行符
-  return description.replace(/\n{3,}/g, "\n\n").trim()
+  let cleaned = description
+
+  // 1. 移除 Markdown 图片语法: ![alt](url)
+  cleaned = cleaned.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "")
+
+  // 2. 移除 HTML 图片标签: <img ... />
+  cleaned = cleaned.replace(/<img[^>]*>/gi, "")
+
+  // 3. 移除其他 HTML 标签，保留文本内容
+  cleaned = cleaned.replace(/<[^>]+>/g, "")
+
+  // 4. 移除过多的空白字符
+  cleaned = cleaned.replace(/\s{2,}/g, " ")
+
+  // 5. 移除过多的换行符
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n")
+
+  // 6. 移除首尾空白
+  cleaned = cleaned.trim()
+
+  return cleaned
 }
 
 /**
