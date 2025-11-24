@@ -18,6 +18,7 @@ export interface ProductHuntPost {
   thumbnail?: {
     url: string
   }
+  screenshotUrl?: string // 新增：产品截图
   topics: ProductHuntTopic[]
 }
 
@@ -34,6 +35,10 @@ interface ProductHuntResponse {
           votesCount: number
           website: string
           thumbnail?: { url: string }
+          media: Array<{
+            url: string
+            type: string
+          }>
           topics: {
             edges: Array<{
               node: { name: string }
@@ -96,6 +101,10 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
             thumbnail {
               url
             }
+            media {
+              url
+              type
+            }
             topics {
               edges {
                 node {
@@ -140,6 +149,7 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
       votesCount: edge.node.votesCount,
       website: edge.node.website,
       thumbnail: edge.node.thumbnail,
+      screenshotUrl: edge.node.media.find((m) => m.type === "image")?.url, // 提取第一张图片
       topics: edge.node.topics.edges.map((topicEdge) => ({
         name: topicEdge.node.name,
       })),
