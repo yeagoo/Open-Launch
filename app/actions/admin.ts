@@ -5,7 +5,7 @@ import { headers } from "next/headers"
 import { db } from "@/drizzle/db"
 import { category, project, user } from "@/drizzle/db/schema"
 import { addDays, format } from "date-fns"
-import { and, desc, eq, gte, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
@@ -189,5 +189,61 @@ export async function addCategory(name: string) {
       return { success: false, error: "This category already exists" }
     }
     return { success: false, error: "An error occurred while adding the category" }
+  }
+}
+
+// Get scheduled projects grouped by launch date
+export async function getScheduledProjects(daysAhead: number = 7) {
+  await checkAdminAccess()
+
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+
+  const endDate = addDays(today, daysAhead)
+  endDate.setUTCHours(23, 59, 59, 999)
+
+  // Get all scheduled projects within the date range
+  const scheduledProjects = await db
+    .select({
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      launchType: project.launchType,
+      scheduledLaunchDate: project.scheduledLaunchDate,
+      hasBadgeVerified: project.hasBadgeVerified,
+      createdAt: project.createdAt,
+      createdBy: project.createdBy,
+      userName: user.name,
+      userEmail: user.email,
+    })
+    .from(project)
+    .leftJoin(user, eq(project.createdBy, user.id))
+    .where(
+      and(
+        eq(project.launchStatus, "scheduled"),
+        gte(project.scheduledLaunchDate, today),
+        lte(project.scheduledLaunchDate, endDate),
+      ),
+    )
+    .orderBy(asc(project.scheduledLaunchDate), desc(project.createdAt))
+
+  // Group by date
+  const grouped = scheduledProjects.reduce(
+    (acc, proj) => {
+      if (!proj.scheduledLaunchDate) return acc
+      const dateKey = format(proj.scheduledLaunchDate, "yyyy-MM-dd")
+      if (!acc[dateKey]) {
+        acc[dateKey] = []
+      }
+      acc[dateKey].push(proj)
+      return acc
+    },
+    {} as Record<string, typeof scheduledProjects>,
+  )
+
+  return {
+    projects: scheduledProjects,
+    groupedByDate: grouped,
+    total: scheduledProjects.length,
   }
 }

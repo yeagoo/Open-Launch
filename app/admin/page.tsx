@@ -41,6 +41,7 @@ import {
   getAdminStatsAndUsers,
   getCategories,
   getFreeLaunchAvailability,
+  getScheduledProjects,
 } from "@/app/actions/admin"
 
 type User = {
@@ -92,6 +93,22 @@ export default function AdminDashboard() {
   const [newCategory, setNewCategory] = useState("")
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [scheduledProjects, setScheduledProjects] = useState<
+    Record<
+      string,
+      Array<{
+        id: string
+        name: string
+        slug: string
+        launchType: string | null
+        scheduledLaunchDate: Date | null
+        hasBadgeVerified: boolean | null
+        userName: string | null
+        userEmail: string | null
+      }>
+    >
+  >({})
+  const [totalScheduled, setTotalScheduled] = useState(0)
   const router = useRouter()
   useIsMobile()
 
@@ -99,9 +116,10 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [{ users, stats }, freeLaunchData] = await Promise.all([
+      const [{ users, stats }, freeLaunchData, scheduledData] = await Promise.all([
         getAdminStatsAndUsers(),
         getFreeLaunchAvailability(),
+        getScheduledProjects(7),
       ])
       const mappedUsers = users.map((u) => ({
         ...u,
@@ -112,6 +130,8 @@ export default function AdminDashboard() {
       setFilteredUsers(mappedUsers)
       setStats(stats)
       setFreeLaunchAvailability(freeLaunchData.firstAvailableDate)
+      setScheduledProjects(scheduledData.groupedByDate)
+      setTotalScheduled(scheduledData.total)
     } catch {
       setUsers([])
       setFilteredUsers([])
@@ -126,6 +146,8 @@ export default function AdminDashboard() {
         newPremiumPlusLaunchesToday: 0,
       })
       setFreeLaunchAvailability(null)
+      setScheduledProjects({})
+      setTotalScheduled(0)
     }
     setLoading(false)
   }
@@ -268,6 +290,76 @@ export default function AdminDashboard() {
               </span>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Scheduled Projects */}
+      <div className="bg-card overflow-hidden rounded-lg border">
+        <div className="flex items-center justify-between border-b p-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="text-muted-foreground h-4 w-4" />
+            <h2 className="text-sm font-medium">Scheduled Projects (Next 7 Days)</h2>
+            <span className="text-muted-foreground text-xs">({totalScheduled})</span>
+          </div>
+        </div>
+        <div className="divide-y">
+          {Object.keys(scheduledProjects).length === 0 ? (
+            <div className="text-muted-foreground p-4 text-center text-sm">
+              No projects scheduled in the next 7 days
+            </div>
+          ) : (
+            Object.entries(scheduledProjects)
+              .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+              .map(([date, projects]) => (
+                <div key={date} className="p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="font-medium">
+                      {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {projects.length} project{projects.length > 1 ? "s" : ""}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1.5">
+                    {projects.map((proj) => (
+                      <div
+                        key={proj.id}
+                        className="hover:bg-muted/50 flex items-center justify-between rounded-md border p-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`/projects/${proj.slug}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary truncate font-medium transition-colors"
+                            >
+                              {proj.name}
+                            </a>
+                            {proj.launchType === "premium" && (
+                              <Badge variant="default" className="text-xs">
+                                Premium
+                              </Badge>
+                            )}
+                            {proj.hasBadgeVerified && (
+                              <Badge
+                                variant="outline"
+                                className="border-green-200 bg-green-50 text-xs text-green-600"
+                              >
+                                Badge ✓
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-muted-foreground mt-0.5 text-xs">
+                            by {proj.userName || proj.userEmail || "Unknown"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+          )}
         </div>
       </div>
 
