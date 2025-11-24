@@ -55,9 +55,35 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
     throw new Error("PRODUCTHUNT_API_KEY is not configured")
   }
 
+  // 获取 ProductHunt 的"今日"（基于太平洋时间 PST/PDT，UTC-8/-7）
+  // ProductHunt 的一天从太平洋时间 00:00 开始
+  const now = new Date()
+
+  // 转换为太平洋时间（简化处理：UTC-8）
+  const pacificOffset = -8 * 60 // PST offset in minutes
+  const pacificNow = new Date(now.getTime() + pacificOffset * 60 * 1000)
+
+  // 太平洋时间的今日开始和结束
+  const todayStart = new Date(pacificNow)
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayEnd = new Date(pacificNow)
+  todayEnd.setUTCHours(23, 59, 59, 999)
+
+  const postedAfter = todayStart.toISOString()
+  const postedBefore = todayEnd.toISOString()
+
+  console.log(`📅 Fetching ProductHunt posts (Pacific Time)`)
+  console.log(`   From: ${postedAfter}`)
+  console.log(`   To:   ${postedBefore}`)
+
   const query = `
     query {
-      posts(order: VOTES, first: 5) {
+      posts(
+        order: VOTES
+        first: 5
+        postedAfter: "${postedAfter}"
+        postedBefore: "${postedBefore}"
+      ) {
         edges {
           node {
             id
