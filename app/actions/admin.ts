@@ -247,3 +247,16 @@ export async function getScheduledProjects(daysAhead: number = 7) {
     total: scheduledProjects.length,
   }
 }
+
+// Delete a project
+export async function deleteProject(projectId: string) {
+  await checkAdminAccess()
+
+  try {
+    await db.delete(project).where(eq(project.id, projectId))
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting project:", error)
+    return { success: false, error: "Failed to delete project" }
+  }
+}

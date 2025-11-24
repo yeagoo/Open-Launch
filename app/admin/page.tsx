@@ -38,6 +38,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import {
   addCategory,
+  deleteProject,
   getAdminStatsAndUsers,
   getCategories,
   getFreeLaunchAvailability,
@@ -111,6 +112,41 @@ export default function AdminDashboard() {
   const [totalScheduled, setTotalScheduled] = useState(0)
   const router = useRouter()
   useIsMobile()
+
+  // Delete project handler
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+      return
+    }
+
+    // Optimistic update
+    const previousProjects = { ...scheduledProjects }
+    setScheduledProjects((prev) => {
+      const newProjects = { ...prev }
+      for (const date in newProjects) {
+        newProjects[date] = newProjects[date].filter((p) => p.id !== projectId)
+        if (newProjects[date].length === 0) {
+          delete newProjects[date]
+        }
+      }
+      return newProjects
+    })
+
+    try {
+      const result = await deleteProject(projectId)
+      if (result.success) {
+        toast.success("Project deleted successfully")
+        fetchData() // Refresh to get accurate count and data
+      } else {
+        // Revert on failure
+        setScheduledProjects(previousProjects)
+        toast.error(result.error || "Failed to delete project")
+      }
+    } catch {
+      setScheduledProjects(previousProjects)
+      toast.error("An error occurred while deleting the project")
+    }
+  }
 
   // Fetch users, stats and free launch availability
   const fetchData = async () => {
@@ -354,6 +390,15 @@ export default function AdminDashboard() {
                             by {proj.userName || proj.userEmail || "Unknown"}
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                          onClick={() => handleDeleteProject(proj.id)}
+                          title="Delete Project"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
