@@ -125,6 +125,7 @@ export async function GET(request: Request) {
         let logoUrl = "https://aat.ee/images/default-logo.png"
         let productImageUrl: string | null = null
 
+        // 1. 处理 Logo
         if (post.thumbnail?.url) {
           console.log(`📸 Processing logo for "${post.name}"...`)
 
@@ -137,12 +138,33 @@ export async function GET(request: Request) {
 
           if (logoResult.success && logoResult.url) {
             logoUrl = logoResult.url
+            // 默认将 productImageUrl 设置为 logo，作为回退
             productImageUrl = logoResult.url
             console.log(`✅ Logo uploaded: ${logoUrl}`)
           } else {
             console.log(`⚠️  Logo upload failed, using fallback: ${logoResult.error}`)
             logoUrl = post.thumbnail.url // 使用原始 URL 作为回退
             productImageUrl = post.thumbnail.url
+          }
+        }
+
+        // 2. 处理产品截图 (如果有，覆盖 productImageUrl)
+        if (post.screenshotUrl) {
+          console.log(`📸 Processing screenshot for "${post.name}"...`)
+
+          const screenshotResult = await downloadAndUploadImage(
+            post.screenshotUrl,
+            "products",
+            post.screenshotUrl,
+          )
+
+          if (screenshotResult.success && screenshotResult.url) {
+            productImageUrl = screenshotResult.url
+            console.log(`✅ Screenshot uploaded: ${productImageUrl}`)
+          } else {
+            console.log(`⚠️  Screenshot upload failed: ${screenshotResult.error}`)
+            // 如果上传失败，优先使用原始截图 URL，而不是回退到 Logo
+            productImageUrl = post.screenshotUrl
           }
         }
 
