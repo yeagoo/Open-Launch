@@ -207,15 +207,44 @@ export function extractTags(topics: ProductHuntTopic[]): string[] {
 }
 
 /**
+ * 清理 URL 中的跟踪参数
+ */
+function cleanTrackingParams(url: string): string {
+  try {
+    const urlObj = new URL(url)
+
+    // 要移除的参数列表
+    const paramsToRemove = [
+      "ref",
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_term",
+      "utm_content",
+      "fbclid",
+      "gclid",
+    ]
+
+    paramsToRemove.forEach((param) => {
+      urlObj.searchParams.delete(param)
+    })
+
+    return urlObj.toString()
+  } catch {
+    return url
+  }
+}
+
+/**
  * 获取真实网站地址
  * ProductHunt API 返回的 website 字段是重定向链接，需要跟随重定向获取真实 URL
  * @param websiteUrl ProductHunt 返回的 website URL
  * @param fallbackUrl 失败时的回退 URL（通常是 ProductHunt 页面）
  */
 export async function getRealWebsiteUrl(websiteUrl: string, fallbackUrl: string): Promise<string> {
-  // 如果不是 ProductHunt 重定向链接，直接返回
+  // 如果不是 ProductHunt 重定向链接，直接返回（但也清理参数）
   if (!websiteUrl.includes("producthunt.com/r/")) {
-    return websiteUrl
+    return cleanTrackingParams(websiteUrl)
   }
 
   try {
@@ -235,13 +264,14 @@ export async function getRealWebsiteUrl(websiteUrl: string, fallbackUrl: string)
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location")
       if (location) {
-        console.log(`✅ Real website: ${location}`)
-        return location
+        const cleanedUrl = cleanTrackingParams(location)
+        console.log(`✅ Real website: ${cleanedUrl}`)
+        return cleanedUrl
       }
     }
 
     // 如果没有重定向，返回原始 URL
-    return websiteUrl
+    return cleanTrackingParams(websiteUrl)
   } catch (error) {
     console.error(`⚠️  Failed to get real website URL:`, error)
     // 失败时使用 fallback URL（ProductHunt 页面）
