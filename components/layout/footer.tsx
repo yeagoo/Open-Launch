@@ -347,17 +347,17 @@ export default function FooterSection() {
                 />
               </a>
 
-              {/* ToolFame Badge */}
-              <a href="https://toolfame.com/item/aatee" target="_blank" rel="noopener noreferrer">
+              {/* Hi Cyou Badge */}
+              <a href="https://hicyou.com" target="_blank" rel="dofollow">
                 <img
-                  src="https://toolfame.com/badge-light.svg"
-                  alt="Featured on toolfame.com"
+                  src="https://hicyou.com/badge/featured-light.svg"
+                  alt="Featured on Hi Cyou"
                   style={{ height: "30px", width: "auto" }}
                   className="block dark:hidden"
                 />
                 <img
-                  src="https://toolfame.com/badge-dark.svg"
-                  alt="Featured on toolfame.com"
+                  src="https://hicyou.com/badge/featured-dark.svg"
+                  alt="Featured on Hi Cyou"
                   style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
@@ -407,6 +407,22 @@ export default function FooterSection() {
                 <img
                   src="https://open-launch.com/images/badges/powered-by-dark.svg"
                   alt="Powered by Open-Launch"
+                  style={{ height: "30px", width: "auto" }}
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* Hi Cyou Badge */}
+              <a href="https://hicyou.com" target="_blank" rel="dofollow">
+                <img
+                  src="https://hicyou.com/badge/featured-light.svg"
+                  alt="Featured on Hi Cyou"
+                  style={{ height: "30px", width: "auto" }}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://hicyou.com/badge/featured-dark.svg"
+                  alt="Featured on Hi Cyou"
                   style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />
