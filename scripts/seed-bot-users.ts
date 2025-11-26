@@ -6,7 +6,7 @@
 import { db } from "@/drizzle/db"
 import { user } from "@/drizzle/db/schema"
 
-// 生成80个机器人用户
+// 生成80个机器人用户 - 使用真实的国际化姓名
 const FIRST_NAMES = [
   "Alex",
   "Blake",
@@ -90,33 +90,29 @@ const FIRST_NAMES = [
   "Knox",
 ]
 
+// 姓氏库（80个） - 包含欧美、拉美和亚洲姓氏
 const LAST_NAMES = [
-  "Chen",
+  // 欧美姓氏 (30个)
   "Smith",
-  "Kumar",
-  "Lee",
-  "Garcia",
-  "Wang",
-  "Rodriguez",
-  "Kim",
-  "Patel",
-  "Brown",
   "Johnson",
+  "Williams",
+  "Brown",
+  "Jones",
+  "Garcia",
   "Miller",
   "Davis",
-  "Wilson",
+  "Rodriguez",
+  "Martinez",
   "Anderson",
   "Taylor",
-  "Martinez",
   "Thomas",
   "Moore",
   "Jackson",
+  "Martin",
+  "Lee",
+  "Thompson",
   "White",
   "Harris",
-  "Martin",
-  "Thompson",
-  "Martinez",
-  "Robinson",
   "Clark",
   "Lewis",
   "Walker",
@@ -125,52 +121,60 @@ const LAST_NAMES = [
   "Young",
   "King",
   "Wright",
-  "Lopez",
-  "Hill",
   "Scott",
   "Green",
-  "Adams",
-  "Baker",
-  "Nelson",
-  "Carter",
-  "Mitchell",
+  // 亚洲姓氏 (30个)
+  "Chen",
+  "Wang",
+  "Li",
+  "Zhang",
+  "Liu",
+  "Yang",
+  "Huang",
+  "Wu",
+  "Zhou",
+  "Xu",
+  "Sun",
+  "Ma",
+  "Zhu",
+  "Hu",
+  "Guo",
+  "He",
+  "Kim",
+  "Park",
+  "Choi",
+  "Jung",
+  "Kang",
+  "Cho",
+  "Yoon",
+  "Jang",
+  "Tanaka",
+  "Suzuki",
+  "Takahashi",
+  "Watanabe",
+  "Ito",
+  "Yamamoto",
+  // 拉美姓氏 (20个)
+  "Gonzalez",
+  "Hernandez",
+  "Lopez",
   "Perez",
-  "Roberts",
-  "Turner",
-  "Phillips",
-  "Campbell",
-  "Parker",
-  "Evans",
-  "Edwards",
-  "Collins",
-  "Stewart",
   "Sanchez",
-  "Morris",
-  "Rogers",
-  "Reed",
-  "Cook",
-  "Morgan",
-  "Bell",
-  "Murphy",
-  "Bailey",
-  "Rivera",
-  "Cooper",
-  "Richardson",
-  "Cox",
-  "Howard",
-  "Ward",
-  "Torres",
-  "Peterson",
-  "Gray",
   "Ramirez",
-  "James",
-  "Watson",
-  "Brooks",
-  "Kelly",
-  "Sanders",
-  "Price",
-  "Bennett",
-  "Wood",
+  "Torres",
+  "Flores",
+  "Rivera",
+  "Gomez",
+  "Diaz",
+  "Cruz",
+  "Morales",
+  "Reyes",
+  "Gutierrez",
+  "Ortiz",
+  "Alvarez",
+  "Castillo",
+  "Ruiz",
+  "Mendoza",
 ]
 
 const ROLES = [
@@ -184,12 +188,18 @@ const ROLES = [
   "Creator",
 ]
 
-// 生成80个bot用户
+// 生成80个bot用户 - 使用质数偏移确保姓名组合多样化
 const BOT_USERS = Array.from({ length: 80 }, (_, i) => {
   const num = i + 1
-  const firstName = FIRST_NAMES[i % FIRST_NAMES.length]
-  const lastName = LAST_NAMES[Math.floor(i / FIRST_NAMES.length) % LAST_NAMES.length]
-  const role = ROLES[i % ROLES.length]
+
+  // 使用质数偏移避免重复模式
+  const firstNameIndex = i % FIRST_NAMES.length
+  const lastNameIndex = (i * 7 + 13) % LAST_NAMES.length // 7和13是质数
+  const roleIndex = i % ROLES.length
+
+  const firstName = FIRST_NAMES[firstNameIndex]
+  const lastName = LAST_NAMES[lastNameIndex]
+  const role = ROLES[roleIndex]
 
   return {
     id: `bot-user-${num}`,
