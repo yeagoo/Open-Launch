@@ -41,9 +41,29 @@ DEEPSEEK_MODEL=deepseek-chat
 
 ### 2. 生成机器人用户
 
+#### 初次生成
+
 运行种子脚本生成80个机器人用户：
 
 ```bash
+npx tsx scripts/seed-bot-users.ts
+```
+
+机器人用户将使用多样化的国际化姓名，包括：
+
+- 欧美姓氏（Smith, Johnson, Williams, Brown等）
+- 亚洲姓氏（Chen, Wang, Kim, Park, Tanaka等）
+- 拉美姓氏（Gonzalez, Hernandez, Lopez等）
+
+#### 删除并重新生成（如需要）
+
+如果需要删除现有机器人用户并重新生成：
+
+```bash
+# 1. 删除所有机器人用户
+npx tsx scripts/delete-bot-users.ts
+
+# 2. 重新生成
 npx tsx scripts/seed-bot-users.ts
 ```
 
