@@ -124,7 +124,7 @@ export async function GET(request: Request) {
         const existingComment = await db
           .select()
           .from(fumaComments)
-          .where(and(eq(fumaComments.page, proj.slug), eq(fumaComments.author, bot.id)))
+          .where(and(eq(fumaComments.page, proj.id), eq(fumaComments.author, bot.id)))
           .limit(1)
 
         if (existingComment.length > 0) {
@@ -146,7 +146,7 @@ export async function GET(request: Request) {
         const commentContent = formatCommentContent(commentText)
 
         await db.insert(fumaComments).values({
-          page: proj.slug,
+          page: proj.id,
           author: bot.id,
           content: commentContent,
           thread: null,
