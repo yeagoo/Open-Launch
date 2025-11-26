@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
         .select({
           email: user.email,
           name: user.name,
+          isBot: user.isBot,
         })
         .from(user)
         .where(eq(user.id, proj.projectCreatorId))
@@ -74,6 +75,12 @@ export async function GET(request: NextRequest) {
           `User not found or email missing for creator ID ${proj.projectCreatorId} of project ${proj.projectName}.`,
         )
         emailsFailedCount++
+        continue
+      }
+
+      // Skip bot users - they don't need email notifications
+      if (projectCreator.isBot) {
+        console.log(`Skipping bot user ${projectCreator.email} for project ${proj.projectName}.`)
         continue
       }
 
