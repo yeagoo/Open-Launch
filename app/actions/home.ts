@@ -141,7 +141,7 @@ export async function getYesterdayProjects(
       and(
         eq(projectTable.launchStatus, launchStatus.LAUNCHED),
         sql`${projectTable.scheduledLaunchDate} >= ${yesterdayStart.toISOString()}`,
-        sql`${projectTable.scheduledLaunchDate} < ${yesterdayEnd.toISOString()}`,
+        sql`${projectTable.scheduledLaunchDate} <= ${yesterdayEnd.toISOString()}`,
       ),
     )
     .groupBy(projectTable.id)
