@@ -118,6 +118,10 @@ export async function getYesterdayProjects(
   const yesterdayEnd = new Date(yesterdayStart)
   yesterdayEnd.setDate(yesterdayEnd.getDate() + 1)
 
+  // Extend window start to midnight to include projects launched at 00:00
+  const queryStart = new Date(yesterdayStart)
+  queryStart.setUTCHours(0, 0, 0, 0)
+
   const yesterdayProjectsBase = await db
     .select({
       id: projectTable.id,
@@ -128,11 +132,11 @@ export async function getYesterdayProjects(
       websiteUrl: projectTable.websiteUrl,
       launchStatus: projectTable.launchStatus,
       launchType: projectTable.launchType,
+      dailyRanking: projectTable.dailyRanking,
       scheduledLaunchDate: projectTable.scheduledLaunchDate,
       createdAt: projectTable.createdAt,
       upvoteCount: sql<number>`cast(count(distinct ${upvote.id}) as int)`.mapWith(Number),
       commentCount: sql<number>`cast(count(distinct ${fumaComments.id}) as int)`.mapWith(Number),
-      dailyRanking: projectTable.dailyRanking,
     })
     .from(projectTable)
     .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
@@ -140,8 +144,8 @@ export async function getYesterdayProjects(
     .where(
       and(
         eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-        sql`${projectTable.scheduledLaunchDate} >= ${yesterdayStart.toISOString()}`,
-        sql`${projectTable.scheduledLaunchDate} <= ${yesterdayEnd.toISOString()}`,
+        sql`${projectTable.scheduledLaunchDate} >= ${queryStart.toISOString()}`,
+        sql`${projectTable.scheduledLaunchDate} < ${yesterdayEnd.toISOString()}`,
       ),
     )
     .groupBy(projectTable.id)
