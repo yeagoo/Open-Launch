@@ -282,26 +282,6 @@ export default function FooterSection() {
                 />
               </a>
 
-              {/* Findly.tools Badge */}
-              <a
-                href="https://findly.tools/aat-ee?utm_source=aat-ee"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-light.svg"
-                  alt="Featured on findly.tools"
-                  style={{ height: "30px", width: "auto" }}
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://findly.tools/badges/findly-tools-badge-dark.svg"
-                  alt="Featured on findly.tools"
-                  style={{ height: "30px", width: "auto" }}
-                  className="hidden dark:block"
-                />
-              </a>
-
               {/* Dofollow.tools Badge */}
               <a
                 href="https://dofollow.tools/product/aatee"
