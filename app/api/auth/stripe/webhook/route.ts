@@ -6,6 +6,8 @@ import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/sch
 import { eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
+import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
+
 // Initialiser le client Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -61,6 +63,8 @@ export async function POST(request: Request) {
         const [projectData] = await db
           .select({
             id: project.id,
+            name: project.name,
+            websiteUrl: project.websiteUrl,
             launchType: project.launchType,
             scheduledLaunchDate: project.scheduledLaunchDate,
           })
@@ -140,6 +144,24 @@ export async function POST(request: Request) {
           console.log(`✅ Revalidated path for project: ${projectId}`)
         } catch (revalidateError) {
           console.error("⚠️ Error revalidating path:", revalidateError)
+        }
+
+        // Send admin notification
+        try {
+          const userEmail = session.customer_details?.email || "unknown@example.com"
+          const amount = (session.amount_total || 0) / 100
+          const currency = session.currency || "usd"
+
+          await sendAdminPaymentNotification({
+            userEmail,
+            amount,
+            currency,
+            projectName: projectData.name || "Unknown Project",
+            websiteUrl: projectData.websiteUrl || "https://aat.ee",
+          })
+          console.log("✅ Admin payment notification sent")
+        } catch (emailError) {
+          console.error("⚠️ Failed to send admin notification:", emailError)
         }
 
         console.log("✅ Webhook processed successfully for project:", projectId)

@@ -24,9 +24,41 @@ Stripe Webhook 端点 `https://aat.ee/api/auth/stripe/webhook` 无法正常工�
      - ✅ `checkout.session.expired`
 
 3. **复制 Signing Secret**：
+
    - 点击端点详情
    - 找到 "Signing secret" 部分
    - 复制完整的密钥（格式：`whsec_...`）
+
+   - 复制完整的密钥（格式：`whsec_...`）
+
+---
+
+### 步骤 1.5: 配置支付链接重定向 (修复跳转问题)
+
+**这是解决"支付后未跳转"问题的关键步骤。**
+
+1. **进入 Stripe Payment Links**：
+
+   - 访问: `https://dashboard.stripe.com/payment-links`
+
+2. **编辑你的支付链接**：
+
+   - 找到用于 Premium Launch 的支付链接
+   - 点击 **Edit** (编辑)
+
+3. **配置 Confirmation Page**：
+
+   - 找到 **"After payment"** (支付后) 部分
+   - 选择 **"Don't show confirmation page"** (不显示确认页)
+   - 勾选 **"Redirect customers to your website"** (重定向客户到你的网站)
+   - 输入以下 URL：
+     ```
+     https://aat.ee/payment/success?session_id={CHECKOUT_SESSION_ID}
+     ```
+     _(注意：必须包含 `?session_id={CHECKOUT_SESSION_ID}`，这是验证支付的关键)_
+
+4. **保存更改**：
+   - 点击右上角的 **Update link**
 
 ---
 
@@ -233,6 +265,7 @@ zeabur logs --follow
 - [ ] 已在 Zeabur 配置 `STRIPE_SECRET_KEY` (Live)
 - [ ] 已在 Zeabur 配置两个支付链接
 - [ ] 已部署新代码
+- [ ] **已在 Stripe Payment Link 配置重定向 URL**
 - [ ] 在 Stripe Dashboard 测试 Webhook 成功
 - [ ] 完成一次真实支付测试
 - [ ] Webhook 健康状态显示正常
