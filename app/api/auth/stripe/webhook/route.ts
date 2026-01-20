@@ -66,6 +66,7 @@ export async function POST(request: Request) {
             name: project.name,
             websiteUrl: project.websiteUrl,
             launchType: project.launchType,
+            launchStatus: project.launchStatus,
             scheduledLaunchDate: project.scheduledLaunchDate,
           })
           .from(project)
@@ -89,6 +90,16 @@ export async function POST(request: Request) {
         }
 
         console.log("✅ Project found, scheduled date:", projectData.scheduledLaunchDate)
+
+        // Check if project is already processed (idempotency)
+        if (
+          projectData.launchType === launchType.PREMIUM &&
+          projectData.launchStatus !== launchStatus.PAYMENT_PENDING &&
+          projectData.launchStatus !== launchStatus.PAYMENT_FAILED
+        ) {
+          console.log("ℹ️ Project already processed or scheduled, skipping webhook processing")
+          return NextResponse.json({ received: true, note: "Already processed" }, { status: 200 })
+        }
 
         // Update the project status to 'scheduled'
         await db

@@ -1,8 +1,9 @@
+import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { project } from "@/drizzle/db/schema"
-import { eq } from "drizzle-orm"
+import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
+import { eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
 // Initialiser le client Stripe
@@ -40,6 +41,8 @@ export async function GET(request: Request) {
           id: project.id,
           slug: project.slug,
           launchStatus: project.launchStatus,
+          launchType: project.launchType,
+          scheduledLaunchDate: project.scheduledLaunchDate,
         })
         .from(project)
         .where(eq(project.id, projectId))
@@ -48,11 +51,73 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })
       }
 
+      // FAST PATH: Update status if still pending (prevents race condition with webhook)
+      // This ensures the user sees the project immediately after redirect
+      if (
+        projectData.launchType === launchType.PREMIUM &&
+        projectData.launchStatus === launchStatus.PAYMENT_PENDING &&
+        projectData.scheduledLaunchDate
+      ) {
+        console.log("⚡ Fast Path: Updating payment status in verify endpoint for", projectId)
+
+        // Update project status to 'scheduled'
+        await db
+          .update(project)
+          .set({
+            launchStatus: launchStatus.SCHEDULED,
+            featuredOnHomepage: false,
+            updatedAt: new Date(),
+          })
+          .where(eq(project.id, projectId))
+
+        // Update Launch Quota (same logic as webhook)
+        const launchDate = projectData.scheduledLaunchDate
+        const quotaResult = await db
+          .select()
+          .from(launchQuota)
+          .where(eq(launchQuota.date, launchDate))
+          .limit(1)
+
+        if (quotaResult.length === 0) {
+          // Create new quota
+          await db.insert(launchQuota).values({
+            id: crypto.randomUUID(),
+            date: launchDate,
+            freeCount: 0,
+            badgeCount: 0,
+            premiumCount: 1, // Premium count = 1
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+        } else {
+          // Update existing quota
+          await db
+            .update(launchQuota)
+            .set({
+              premiumCount: sql`${launchQuota.premiumCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(launchQuota.id, quotaResult[0].id))
+        }
+
+        // Revalidate paths
+        revalidatePath("/projects")
+        revalidatePath("/sitemap.xml")
+        try {
+          revalidatePath(`/projects/${projectData.slug}`)
+        } catch (e) {
+          console.error("Error revalidating slug path", e)
+        }
+      }
+
       return NextResponse.json({
         status: "complete",
         projectId: projectData.id,
         projectSlug: projectData.slug,
-        launchStatus: projectData.launchStatus,
+        launchStatus:
+          projectData.launchStatus === launchStatus.PAYMENT_PENDING
+            ? launchStatus.SCHEDULED
+            : projectData.launchStatus,
       })
     } else if (session.payment_status === "unpaid") {
       return NextResponse.json({ status: "pending" })
