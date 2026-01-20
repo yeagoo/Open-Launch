@@ -125,6 +125,7 @@ export function GlowEffect({
           backfaceVisibility: "hidden",
         } as React.CSSProperties
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       animate={animations[mode] as any}
       className={cn(
         "pointer-events-none absolute inset-0 h-full w-full",
