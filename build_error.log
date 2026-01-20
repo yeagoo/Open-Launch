@@ -1,0 +1,23 @@
+$ next build
+   ▲ Next.js 15.5.9
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 5.4s
+   Linting and checking validity of types ...
+Failed to compile.
+
+Type error: Type 'typeof import("/home/ivmm/Open-Launch/app/api/comments/[[...comment]]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/comments/[[...comment]]">'.
+  Types of property 'GET' are incompatible.
+    Type 'RouteHandler' is not assignable to type '(request: NextRequest, context: { params: Promise<{ comment?: string[] | undefined; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters 'context' and 'context' are incompatible.
+        Type '{ params: Promise<{ comment?: string[] | undefined; }>; }' is not assignable to type '{ params: Promise<{ comment: string[]; }>; }'.
+          Types of property 'params' are incompatible.
+            Type 'Promise<{ comment?: string[] | undefined; }>' is not assignable to type 'Promise<{ comment: string[]; }>'.
+              Type '{ comment?: string[] | undefined; }' is not assignable to type '{ comment: string[]; }'.
+                Types of property 'comment' are incompatible.
+                  Type 'string[] | undefined' is not assignable to type 'string[]'.
+                    Type 'undefined' is not assignable to type 'string[]'.
+
+Next.js build worker exited with code: 1 and signal: null
+error: script "build" exited with code 1
