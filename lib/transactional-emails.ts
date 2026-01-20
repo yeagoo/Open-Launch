@@ -103,3 +103,57 @@ export async function sendLaunchReminderEmail({
     html: htmlBody,
   })
 }
+
+export async function sendAdminPaymentNotification({
+  userEmail,
+  amount,
+  currency,
+  projectName,
+  websiteUrl,
+}: {
+  userEmail: string
+  amount: number
+  currency: string
+  projectName: string
+  websiteUrl: string
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL || "cjwbbs@gmail.com"
+  const subject = `💰 New Payment: ${amount} ${currency.toUpperCase()} - ${projectName}`
+
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="font-size: 22px; color: #1a1a1a;">New Payment Received! 💰</h1>
+      
+      <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 18px; font-weight: bold;">
+          Amount: ${amount} ${currency.toUpperCase()}
+        </p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Project:</strong></td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;">${projectName}</td>
+        </tr>
+         <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Website:</strong></td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><a href="${websiteUrl}">${websiteUrl}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>User Email:</strong></td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #eee;">${userEmail}</td>
+        </tr>
+      </table>
+
+      <p style="margin-top: 25px; color: #666; font-size: 12px;">
+        This is an automated notification from your Open Launch system.
+      </p>
+    </div>
+  `
+
+  return sendEmail({
+    to: adminEmail,
+    subject,
+    html: htmlBody,
+  })
+}
