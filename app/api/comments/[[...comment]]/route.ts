@@ -165,4 +165,11 @@ export async function PATCH(req: NextRequest, context: any) {
 }
 
 // Export other methods without modification
-export const { GET, DELETE } = commentHandler
+// Export other methods with wrappers to fix type compatibility issues in Next.js 15
+export async function GET(req: NextRequest, context: any) {
+  return commentHandler.GET(req, context)
+}
+
+export async function DELETE(req: NextRequest, context: any) {
+  return commentHandler.DELETE(req, context)
+}
