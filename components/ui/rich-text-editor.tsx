@@ -90,7 +90,8 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => (editor.chain().focus() as any).toggleHeading({ level: 1 }).run()}
           className={cn("h-8 px-2", editor.isActive("heading", { level: 1 }) && "bg-muted")}
         >
           <RiH1 className="h-4 w-4" />
@@ -100,7 +101,8 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => (editor.chain().focus() as any).toggleHeading({ level: 2 }).run()}
           className={cn("h-8 px-2", editor.isActive("heading", { level: 2 }) && "bg-muted")}
         >
           <RiH2 className="h-4 w-4" />
@@ -134,7 +136,8 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => (editor.chain().focus() as any).toggleBulletList().run()}
           className={cn("h-8 px-2", editor.isActive("bulletList") && "bg-muted")}
         >
           <RiListUnordered className="h-4 w-4" />
@@ -144,7 +147,8 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => (editor.chain().focus() as any).toggleOrderedList().run()}
           className={cn("h-8 px-2", editor.isActive("orderedList") && "bg-muted")}
         >
           <RiListOrdered className="h-4 w-4" />
@@ -154,7 +158,8 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => (editor.chain().focus() as any).toggleBlockquote().run()}
           className={cn("h-8 px-2", editor.isActive("blockquote") && "bg-muted")}
         >
           <RiDoubleQuotesL className="h-4 w-4" />
