@@ -17,15 +17,13 @@ const sponsors: Sponsor[] = [
     name: "ii.Pe",
     description: "A zero-upload, browser-based file conversion tool.",
     url: "https://ii.pe",
-    logoUrl:
-      "https://www.aat.ee/_next/image?url=https%3A%2F%2Fstatics.aat.ee%2Flogos%2F1768923821937-3jd6itzhhxa.avif&w=128&q=95",
+    logoUrl: "https://statics.aat.ee/logos/1768923821937-3jd6itzhhxa.avif",
   },
   {
     name: "ScreenHello",
     description: "Beautiful Screenshots in Seconds | Online Mockup Generator",
     url: "https://screenhello.com",
-    logoUrl:
-      "https://www.aat.ee/_next/image?url=https%3A%2F%2Fstatics.aat.ee%2Flogos%2F1768924192870-5aa3cxgphay.avif&w=128&q=75",
+    logoUrl: "https://statics.aat.ee/logos/1768924192870-5aa3cxgphay.avif",
   },
 ]
 
