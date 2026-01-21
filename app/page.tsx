@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProjectSection } from "@/components/home/project-section"
+import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
@@ -122,6 +123,9 @@ export default async function Home() {
 
           {/* Sidebar */}
           <div className="top-24">
+            {/* Sponsors */}
+            <SidebarSponsors />
+
             {/* Build for Joy */}
             <div className="py-4">
               <img src="/images/img1.png" alt="build for joy" className="w-full rounded-lg" />

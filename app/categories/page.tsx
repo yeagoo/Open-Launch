@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MobileCategorySelector } from "@/components/categories/mobile-category-selector"
 import { ProjectCard } from "@/components/home/project-card"
+import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import {
   getAllCategories,
   getCategoryById,
@@ -270,6 +271,9 @@ export default async function CategoriesPage({
           </div>
 
           <div className="top-24 hidden lg:block">
+            {/* Sponsors */}
+            <SidebarSponsors />
+
             <div className="space-y-3 py-5 pt-0">
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-2 font-semibold">Browse Categories</h3>

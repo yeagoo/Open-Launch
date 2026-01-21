@@ -126,7 +126,7 @@ export default function FooterSection() {
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"
               >
-                hestiacp.cn
+                HestiaCP CN
               </a>
               <span>|</span>
               <a
@@ -145,15 +145,6 @@ export default function FooterSection() {
                 className="hover:text-primary transition-colors"
               >
                 CloudFan
-              </a>
-              <span>|</span>
-              <a
-                href="https://mulerun.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                MuleRun
               </a>
               <span>|</span>
               <a
@@ -202,12 +193,12 @@ export default function FooterSection() {
               </a>
               <span>|</span>
               <a
-                href="https://freehost.work/"
+                href="https://www.screenhello.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"
               >
-                FreeHost
+                ScreenHello
               </a>
               <span>|</span>
               <a
