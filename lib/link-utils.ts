@@ -11,25 +11,41 @@ interface ProjectLinkInfo {
   hasBadgeVerified?: boolean
 }
 
-export function getProjectWebsiteRelAttribute(projectInfo: ProjectLinkInfo): string {
+interface LinkOptions {
+  /** 是否在详情页，只有详情页才可能给 dofollow */
+  isDetailPage?: boolean
+}
+
+export function getProjectWebsiteRelAttribute(
+  projectInfo: ProjectLinkInfo,
+  options: LinkOptions = {},
+): string {
   let rel = "noopener"
+
+  const { isDetailPage = false } = options
+
+  // 首页/列表页链接一律不给 dofollow
+  if (!isDetailPage) {
+    return rel + " nofollow"
+  }
+
+  // 以下逻辑仅适用于详情页
 
   // Premium Launch 都是 dofollow
   const isPremiumLaunch = projectInfo.launchType === LAUNCH_TYPES.PREMIUM
 
-  // Top 3 daily ranking 是 dofollow
-  const isTop3Daily =
+  // 仅第一名才给 dofollow（原来是 top3）
+  const isTop1Daily =
     projectInfo.launchStatus === launchStatusEnum.LAUNCHED &&
     projectInfo.dailyRanking !== null &&
     typeof projectInfo.dailyRanking === "number" &&
-    projectInfo.dailyRanking >= 1 &&
-    projectInfo.dailyRanking <= 3
+    projectInfo.dailyRanking === 1
 
-  // Badge 验证用户也是 dofollow（非 Top 3 的免费发布需要 badge 才能 dofollow）
+  // Badge 验证用户也是 dofollow
   const hasBadgeVerified = projectInfo.hasBadgeVerified === true
 
   // 判断是否 dofollow
-  if (isPremiumLaunch || isTop3Daily || hasBadgeVerified) {
+  if (isPremiumLaunch || isTop1Daily || hasBadgeVerified) {
     // dofollow - 不添加 nofollow
   } else {
     rel += " nofollow"
