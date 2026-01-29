@@ -113,11 +113,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const isOwner = session?.user?.id === projectData.createdBy
 
-  const websiteRelAttribute = getProjectWebsiteRelAttribute({
-    launchStatus: projectData.launchStatus,
-    launchType: projectData.launchType,
-    dailyRanking: projectData.dailyRanking,
-  })
+  const websiteRelAttribute = getProjectWebsiteRelAttribute(
+    {
+      launchStatus: projectData.launchStatus,
+      launchType: projectData.launchType,
+      dailyRanking: projectData.dailyRanking,
+      hasBadgeVerified: projectData.hasBadgeVerified ?? false,
+    },
+    { isDetailPage: true },
+  )
 
   // Function to strip HTML for Schema
   function stripHtml(html: string): string {

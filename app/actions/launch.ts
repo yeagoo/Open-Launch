@@ -86,7 +86,7 @@ export async function getLaunchAvailabilityRange(
 ): Promise<LaunchAvailability[]> {
   // Déterminer la date minimale de planification en fonction du type de lancement
   const today = new Date()
-  let minDaysAhead = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
+  let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
   let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
   // Badge verified users using Badge quota get priority: can launch tomorrow
@@ -198,7 +198,7 @@ export async function scheduleLaunch(
     const today = new Date()
     today.setHours(0, 0, 0, 0) // Réinitialiser l'heure à minuit
 
-    let minDaysAhead = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
+    let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
     let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
     if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
