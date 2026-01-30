@@ -260,3 +260,44 @@ export async function deleteProject(projectId: string) {
     return { success: false, error: "Failed to delete project" }
   }
 }
+
+// Get all paid projects (premium and premium_plus)
+export async function getPaidProjects() {
+  await checkAdminAccess()
+
+  const paidProjects = await db
+    .select({
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      websiteUrl: project.websiteUrl,
+      logoUrl: project.logoUrl,
+      launchType: project.launchType,
+      launchStatus: project.launchStatus,
+      scheduledLaunchDate: project.scheduledLaunchDate,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+    })
+    .from(project)
+    .leftJoin(user, eq(project.createdBy, user.id))
+    .where(sql`${project.launchType} IN ('premium', 'premium_plus')`)
+    .orderBy(desc(project.updatedAt))
+
+  // Get statistics
+  const stats = {
+    total: paidProjects.length,
+    premium: paidProjects.filter((p) => p.launchType === "premium").length,
+    premiumPlus: paidProjects.filter((p) => p.launchType === "premium_plus").length,
+    scheduled: paidProjects.filter((p) => p.launchStatus === "scheduled").length,
+    launched: paidProjects.filter((p) => p.launchStatus === "launched").length,
+    ongoing: paidProjects.filter((p) => p.launchStatus === "ongoing").length,
+  }
+
+  return {
+    projects: paidProjects,
+    stats,
+  }
+}
