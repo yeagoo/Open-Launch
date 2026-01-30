@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns"
 import {
   Ban,
   Calendar,
+  CreditCard,
   Filter,
   Folder,
   MoreHorizontal,
@@ -259,6 +260,15 @@ export default function AdminDashboard() {
       <div className="mb-3 flex items-center justify-between sm:mb-4">
         <h1 className="text-xl font-semibold">Admin Dashboard</h1>
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/admin/paid-projects")}
+            className="h-8 gap-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Paid Projects</span>
+          </Button>
           <Button
             size="sm"
             variant="outline"

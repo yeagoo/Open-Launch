@@ -158,8 +158,8 @@ export default async function PricingPage() {
                   <div>
                     <span>Dofollow Backlink only if:</span>
                     <div className="text-muted-foreground mt-1.5 space-y-1 text-xs">
-                      <div>1. Top 3 daily ranking</div>
-                      <div>2. Display our badge on your site</div>
+                      <div>1. Top 1 daily ranking</div>
+                      <div>2. or Display our badge on your site</div>
                     </div>
                   </div>
                 </li>
