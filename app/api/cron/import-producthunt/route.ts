@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { productHuntImport, project, user } from "@/drizzle/db/schema"
-import { eq } from "drizzle-orm"
+import {
+  productHuntImport,
+  project,
+  projectToTag,
+  tagModerationStatus,
+  tag as tagTable,
+  user,
+} from "@/drizzle/db/schema"
+import { count, eq } from "drizzle-orm"
 
 import { downloadAndUploadImage } from "@/lib/image-upload"
 import {
@@ -192,6 +199,54 @@ export async function GET(request: Request) {
           hasBadgeVerified: false,
           badgeVerifiedAt: null,
         })
+
+        // 写入 tag 系统
+        if (tags.length > 0) {
+          const normalizedTags = tags
+            .map((raw) => {
+              const trimmed = raw.trim()
+              const slug = trimmed
+                .toLowerCase()
+                .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+              return { id: slug, name: trimmed, slug }
+            })
+            .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
+
+          if (normalizedTags.length > 0) {
+            await db.transaction(async (tx) => {
+              for (const t of normalizedTags) {
+                await tx
+                  .insert(tagTable)
+                  .values({
+                    id: t.id,
+                    name: t.name,
+                    slug: t.slug,
+                    moderationStatus: tagModerationStatus.PENDING,
+                    projectCount: 0,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  })
+                  .onConflictDoNothing({ target: tagTable.id })
+              }
+
+              await tx
+                .insert(projectToTag)
+                .values(normalizedTags.map((t) => ({ projectId, tagId: t.id })))
+
+              for (const t of normalizedTags) {
+                const countResult = await tx
+                  .select({ count: count() })
+                  .from(projectToTag)
+                  .where(eq(projectToTag.tagId, t.id))
+                await tx
+                  .update(tagTable)
+                  .set({ projectCount: countResult[0]?.count || 0, updatedAt: new Date() })
+                  .where(eq(tagTable.id, t.id))
+              }
+            })
+          }
+        }
 
         // 记录导入
         await db.insert(productHuntImport).values({

@@ -380,7 +380,7 @@ Available pricing types: free, freemium, paid
 Return a JSON object:
 {
   "name": "Product/brand name (not the full page title)",
-  "description": "A concise 1-3 sentence description of what the product does and who it's for. Plain text only, no HTML or markdown. Under 200 characters.",
+  "description": "A rich HTML description of the product. 3-5 sentences. Use <strong> for key features, <blockquote> for a compelling quote or tagline, and optionally a simple <table> to compare plans or features. NO hyperlinks (<a> tags). 300-500 characters of visible text.",
   "logoUrl": "The og:image URL, or apple-touch-icon URL, or highest-resolution favicon URL found in the page content. Full absolute URL. null if not found.",
   "tags": ["tag1", "tag2", ...],
   "categoryNames": ["Category Name 1", "Category Name 2"],
@@ -390,7 +390,7 @@ Return a JSON object:
 
 Rules:
 - For name: use the product/brand name, not the full HTML title tag
-- For description: focus on what the product does, plain text only
+- For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for 300-500 characters of visible text.
 - For logoUrl: look for og:image, apple-touch-icon, or favicon references. Return the full absolute URL. Prefer og:image, then apple-touch-icon, then favicon.
 - For tags: suggest 3-8 lowercase kebab-case tags relevant to the product (e.g. "ai", "developer-tools", "open-source")
 - For categoryNames: ONLY use names from the provided list above, pick 1-3
@@ -406,7 +406,7 @@ ${truncateContent(crawledMarkdown, 6000)}`
   try {
     const raw = await callDeepSeek(systemPrompt, userPrompt, {
       temperature: 0.2,
-      maxTokens: 800,
+      maxTokens: 1500,
     })
 
     const parsed = JSON.parse(extractJson(raw))

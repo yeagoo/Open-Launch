@@ -292,8 +292,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       setFormData((prev) => ({
         ...prev,
         name: prev.name || data.name || prev.name,
-        description:
-          prev.description || (data.description ? `<p>${data.description}</p>` : prev.description),
+        description: prev.description || data.description || prev.description,
         categories: prev.categories.length > 0 ? prev.categories : data.categories || [],
         pricing: prev.pricing || data.pricing || prev.pricing,
         platforms: prev.platforms.length > 0 ? prev.platforms : data.platforms || [],
@@ -435,8 +434,8 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         return
       }
 
-      if (formData.techStack.length > 5) {
-        setError("You can add a maximum of 5 keywords.")
+      if (formData.techStack.length > 10) {
+        setError("You can add a maximum of 10 tags.")
         return
       }
     }
@@ -783,7 +782,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
             </div>
             <div>
               <Label htmlFor="description">
-                Short Description <span className="text-red-500">*</span>
+                Description <span className="text-red-500">*</span>
               </Label>
               <RichTextEditor
                 content={formData.description}
