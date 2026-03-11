@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
+import { launchQuota, launchStatus, project } from "@/drizzle/db/schema"
 import { and, eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
