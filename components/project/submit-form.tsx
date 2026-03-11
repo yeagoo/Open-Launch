@@ -65,7 +65,7 @@ interface ProjectFormData {
   description: string
   categories: string[]
   techStack: string[]
-  tags: string[]
+
   platforms: string[]
   pricing: string
   githubUrl?: string
@@ -95,7 +95,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     description: "",
     categories: [],
     techStack: [],
-    tags: [],
     platforms: [],
     pricing: "",
     githubUrl: "",
@@ -129,10 +128,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
   const [techStackTags, setTechStackTags] = useState<Tag[]>([])
   const [activeTechTagIndex, setActiveTechTagIndex] = useState<number | null>(null)
-
-  const [projectTags, setProjectTags] = useState<Tag[]>([])
-  const [activeProjectTagIndex, setActiveProjectTagIndex] = useState<number | null>(null)
-  const projectTagInputId = useId()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -249,23 +244,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       setFormData((prev) => ({ ...prev, techStack: techStringArray }))
     }
   }, [techStackTags])
-
-  useEffect(() => {
-    const tagsFromFormData = formData.tags.map((t, index) => ({
-      id: `${index}-${t}`,
-      text: t,
-    }))
-    if (JSON.stringify(tagsFromFormData) !== JSON.stringify(projectTags)) {
-      setProjectTags(tagsFromFormData)
-    }
-  }, [formData.tags])
-
-  useEffect(() => {
-    const tagStringArray = projectTags.map((tag) => tag.text)
-    if (JSON.stringify(tagStringArray) !== JSON.stringify(formData.tags)) {
-      setFormData((prev) => ({ ...prev, tags: tagStringArray }))
-    }
-  }, [projectTags])
 
   async function fetchCategories() {
     setIsLoadingCategories(true)
@@ -465,7 +443,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     setLaunchDateLimitError(null)
 
     if (formData.techStack.length === 0) {
-      setError("Please enter at least one keyword in Product Keywords.")
+      setError("Please enter at least one tag in Product Tags.")
       setIsPending(false)
       return
     }
@@ -476,8 +454,8 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       return
     }
 
-    if (formData.techStack.length > 5) {
-      setError("You can add a maximum of 5 keywords.")
+    if (formData.techStack.length > 10) {
+      setError("You can add a maximum of 10 tags.")
       setIsPending(false)
       return
     }
@@ -501,7 +479,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         githubUrl: formData.githubUrl || null,
         twitterUrl: formData.twitterUrl || null,
         hasBadgeVerified: formData.hasBadgeVerified,
-        tags: formData.tags.length > 0 ? formData.tags : undefined,
+        tags: formData.techStack,
       }
 
       const submissionResult = await submitProject(projectData)
@@ -928,22 +906,22 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
             <div>
               <Label htmlFor={tagInputId}>
-                Product Keywords <span className="text-red-500">*</span>
+                Product Tags <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
-                  ({formData.techStack.length}/5 keywords)
+                  ({formData.techStack.length}/10 tags)
                 </span>
               </Label>
               <TagInput
                 id={tagInputId}
                 tags={techStackTags}
                 setTags={(newTags) => {
-                  if (newTags.length > 5) {
-                    setError("You can add a maximum of 5 keywords.")
+                  if (newTags.length > 10) {
+                    setError("You can add a maximum of 10 tags.")
                     return
                   }
                   setTechStackTags(newTags)
                 }}
-                placeholder="Type a keyword and press Enter..."
+                placeholder="e.g. ai, saas, open-source, developer-tools..."
                 styleClasses={{
                   inlineTagsContainer:
                     "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
@@ -956,42 +934,6 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                 }}
                 activeTagIndex={activeTechTagIndex}
                 setActiveTagIndex={setActiveTechTagIndex}
-              />
-              <p className="text-muted-foreground mt-1 text-xs">
-                Enter up to 5 keywords, press Enter or comma to add a tag.
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor={projectTagInputId}>
-                Project Tags
-                <span className="text-muted-foreground ml-2 text-xs">
-                  ({formData.tags.length}/10 tags)
-                </span>
-              </Label>
-              <TagInput
-                id={projectTagInputId}
-                tags={projectTags}
-                setTags={(newTags) => {
-                  if (newTags.length > 10) {
-                    setError("You can add a maximum of 10 tags.")
-                    return
-                  }
-                  setProjectTags(newTags)
-                }}
-                placeholder="e.g. ai, saas, open-source..."
-                styleClasses={{
-                  inlineTagsContainer:
-                    "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
-                  input: "w-full min-w-[80px] shadow-none px-2 h-7",
-                  tag: {
-                    body: "h-7 relative bg-background border border-input hover:bg-background rounded-md font-medium text-xs ps-2 pe-7",
-                    closeButton:
-                      "absolute -inset-y-px -end-px p-0 rounded-e-md flex size-7 transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] text-muted-foreground/80 hover:text-foreground",
-                  },
-                }}
-                activeTagIndex={activeProjectTagIndex}
-                setActiveTagIndex={setActiveProjectTagIndex}
               />
               <p className="text-muted-foreground mt-1 text-xs">
                 Add up to 10 tags to help users discover your project. Press Enter or comma to add.
@@ -1631,7 +1573,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                       </div>
                     </div>
                     <div>
-                      <strong>Product Keywords:</strong>
+                      <strong>Product Tags:</strong>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {formData.techStack.map((tech) => (
                           <Badge key={tech} variant="outline">

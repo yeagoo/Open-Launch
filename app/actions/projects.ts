@@ -284,10 +284,69 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       )
     }
 
-    // Ajouter les tags
+    // Ajouter les tags (inline to avoid nested server action session issues)
     if (tags && tags.length > 0) {
-      const { upsertTagsForProject } = await import("@/app/actions/tags")
-      await upsertTagsForProject(newProject.id, tags)
+      const {
+        projectToTag,
+        tag: tagTable,
+        tagModerationStatus,
+      } = await import("@/drizzle/db/schema")
+
+      const normalizeTag = (raw: string) => {
+        const trimmed = raw.trim()
+        const slug = trimmed
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+        return { id: slug, name: trimmed, slug }
+      }
+
+      const normalizedTags = tags
+        .slice(0, 10)
+        .map(normalizeTag)
+        .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
+
+      if (normalizedTags.length > 0) {
+        // Upsert tags
+        for (const t of normalizedTags) {
+          await db
+            .insert(tagTable)
+            .values({
+              id: t.id,
+              name: t.name,
+              slug: t.slug,
+              moderationStatus: tagModerationStatus.PENDING,
+              projectCount: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoNothing({ target: tagTable.id })
+        }
+
+        // Insert associations
+        await db.insert(projectToTag).values(
+          normalizedTags.map((t) => ({
+            projectId: newProject.id,
+            tagId: t.id,
+          })),
+        )
+
+        // Update project counts
+        for (const t of normalizedTags) {
+          const countResult = await db
+            .select({ count: count() })
+            .from(projectToTag)
+            .where(eq(projectToTag.tagId, t.id))
+
+          await db
+            .update(tagTable)
+            .set({
+              projectCount: countResult[0]?.count || 0,
+              updatedAt: new Date(),
+            })
+            .where(eq(tagTable.id, t.id))
+        }
+      }
     }
 
     return { success: true, projectId: newProject.id, slug: newProject.slug }
