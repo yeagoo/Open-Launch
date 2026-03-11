@@ -3,8 +3,8 @@ import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { category, project } from "@/drizzle/db/schema"
-import { ilike, sql } from "drizzle-orm"
+import { category, project, tag, tagModerationStatus } from "@/drizzle/db/schema"
+import { and, eq, ilike, sql } from "drizzle-orm"
 
 import { API_RATE_LIMITS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
@@ -16,7 +16,7 @@ export interface SearchResult {
   slug: string | null
   description: string | null
   logoUrl: string | null
-  type: "project" | "category"
+  type: "project" | "category" | "tag"
 }
 
 // Fonction de recherche avec mise en cache
@@ -41,7 +41,12 @@ const getSearchResults = unstable_cache(
           type: sql<"project">`'project'`.as("type"),
         })
         .from(project)
-        .where(ilike(project.name, `%${query}%`))
+        .where(
+          and(
+            ilike(project.name, `%${query}%`),
+            sql`${project.launchStatus} IN ('ongoing', 'launched')`,
+          ),
+        )
         .limit(limit)
 
       // Rechercher dans les catégories
@@ -77,8 +82,37 @@ const getSearchResults = unstable_cache(
         type: "category" as const,
       }))
 
+      // Rechercher dans les tags
+      const tags = await db
+        .select({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+        })
+        .from(tag)
+        .where(
+          and(
+            ilike(tag.name, `%${query}%`),
+            eq(tag.moderationStatus, tagModerationStatus.APPROVED),
+          ),
+        )
+        .limit(5)
+
+      const formattedTags: SearchResult[] = tags.map((t) => ({
+        id: t.id,
+        name: `#${t.name}`,
+        slug: t.slug,
+        description: null,
+        logoUrl: null,
+        type: "tag" as const,
+      }))
+
       // Combiner et limiter les résultats
-      const combinedResults = [...formattedProjects, ...formattedCategories].slice(0, limit)
+      const combinedResults = [
+        ...formattedProjects,
+        ...formattedCategories,
+        ...formattedTags,
+      ].slice(0, limit)
 
       console.log(`[Search API] Found ${combinedResults.length} results`)
       return combinedResults
@@ -126,7 +160,7 @@ export async function GET(request: NextRequest) {
     // Récupérer les paramètres de recherche
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get("q") || ""
-    const limit = parseInt(searchParams.get("limit") || "10", 10)
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10", 10) || 10))
 
     // Obtenir les résultats de recherche
     const results = await getSearchResults(query, limit)

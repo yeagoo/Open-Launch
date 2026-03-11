@@ -278,6 +278,15 @@ export default function AdminDashboard() {
             <Tag className="h-4 w-4" />
             <span className="hidden sm:inline">Promo Codes</span>
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/admin/tags")}
+            className="h-8 gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Flagged Tags</span>
+          </Button>
           <Button size="sm" variant="outline" onClick={fetchData} className="h-8 gap-2">
             <RefreshCw className="h-4 w-4" />
             <span className="hidden sm:inline">Refresh</span>

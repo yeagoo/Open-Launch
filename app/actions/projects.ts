@@ -203,6 +203,7 @@ interface ProjectSubmissionData {
   githubUrl?: string | null
   twitterUrl?: string | null
   hasBadgeVerified?: boolean
+  tags?: string[]
 }
 
 // Version correcte de submitProject
@@ -228,6 +229,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       githubUrl,
       twitterUrl,
       hasBadgeVerified,
+      tags,
     } = projectData
 
     // Validation
@@ -280,6 +282,12 @@ export async function submitProject(projectData: ProjectSubmissionData) {
           categoryId,
         })),
       )
+    }
+
+    // Ajouter les tags
+    if (tags && tags.length > 0) {
+      const { upsertTagsForProject } = await import("@/app/actions/tags")
+      await upsertTagsForProject(newProject.id, tags)
     }
 
     return { success: true, projectId: newProject.id, slug: newProject.slug }
