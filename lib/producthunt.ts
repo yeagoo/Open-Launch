@@ -172,8 +172,10 @@ export function generateSlug(name: string): string {
 }
 
 /**
- * 清理和格式化描述
- * 移除图片标签、HTML 标签等，只保留纯文本内容
+ * 清理描述并转换为 HTML 格式（用于 RichTextEditor）
+ * - 移除图片、去除 HTML 标签
+ * - 将段落换行转换为 <p> 标签
+ * - 将 **bold** Markdown 转换为 <strong>
  */
 export function cleanDescription(description: string): string {
   let cleaned = description
@@ -181,29 +183,36 @@ export function cleanDescription(description: string): string {
   // 1. 移除 Markdown 图片语法: ![alt](url)
   cleaned = cleaned.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "")
 
-  // 2. 移除 HTML 图片标签: <img ... />
+  // 2. 移除 HTML 图片标签
   cleaned = cleaned.replace(/<img[^>]*>/gi, "")
 
-  // 3. 移除其他 HTML 标签，保留文本内容
+  // 3. 移除所有 HTML 标签，保留文本内容
   cleaned = cleaned.replace(/<[^>]+>/g, "")
 
-  // 4. 移除过多的空白字符
-  cleaned = cleaned.replace(/\s{2,}/g, " ")
+  // 4. 转换 **bold** → <strong>bold</strong>
+  cleaned = cleaned.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
 
-  // 5. 移除过多的换行符
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n")
+  // 5. 按段落分割，包裹 <p> 标签
+  const paragraphs = cleaned
+    .split(/\n{2,}/)
+    .map((p) =>
+      p
+        .replace(/\n/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim(),
+    )
+    .filter((p) => p.length > 0)
 
-  // 6. 移除首尾空白
-  cleaned = cleaned.trim()
+  if (paragraphs.length === 0) return ""
 
-  return cleaned
+  return paragraphs.map((p) => `<p>${p}</p>`).join("")
 }
 
 /**
  * 提取标签（从 topics 转换为 tags 数组）
  */
 export function extractTags(topics: ProductHuntTopic[]): string[] {
-  return topics.slice(0, 5).map((topic) => topic.name) // 最多取 5 个标签
+  return topics.slice(0, 10).map((topic) => topic.name) // 最多取 10 个标签
 }
 
 /**
