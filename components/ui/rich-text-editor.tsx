@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+
 import {
   RiBold,
   RiDoubleQuotesL,
@@ -50,6 +52,8 @@ export function RichTextEditor({
   placeholder = "Start writing...",
   className,
 }: RichTextEditorProps) {
+  const isExternalUpdate = useRef(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -63,7 +67,9 @@ export function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      if (!isExternalUpdate.current) {
+        onChange(editor.getHTML())
+      }
     },
     editorProps: {
       attributes: {
@@ -72,6 +78,15 @@ export function RichTextEditor({
       },
     },
   })
+
+  // Sync external content changes (e.g. auto-fill) into the editor
+  useEffect(() => {
+    if (editor && content && editor.getHTML() !== content) {
+      isExternalUpdate.current = true
+      editor.commands.setContent(content)
+      isExternalUpdate.current = false
+    }
+  }, [content, editor])
 
   if (!editor) {
     return null
