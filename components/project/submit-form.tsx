@@ -593,7 +593,10 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         }
       }
 
-      if (formData.launchType === LAUNCH_TYPES.FREE) {
+      if (
+        formData.launchType === LAUNCH_TYPES.FREE ||
+        formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE
+      ) {
         router.push(`/projects/${projectSlug}`)
       } else {
         const paymentLink = PREMIUM_PAYMENT_LINK
@@ -1424,6 +1427,9 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                             if (formData.launchType === LAUNCH_TYPES.FREE) {
                               slotsAvailable = date.freeSlots
                               isDisabled = date.freeSlots <= 0
+                            } else if (formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE) {
+                              slotsAvailable = date.badgeSlots
+                              isDisabled = date.badgeSlots <= 0
                             } else if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
                               slotsAvailable = date.premiumSlots
                               isDisabled = date.premiumSlots <= 0
@@ -1431,7 +1437,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
                             if (date.totalSlots <= 0) isDisabled = true
 
-                            const slotsText = `${slotsAvailable} ${formData.launchType === LAUNCH_TYPES.FREE ? "free" : formData.launchType === LAUNCH_TYPES.PREMIUM ? "premium" : "premium+"} slot(s)`
+                            const slotsText = `${slotsAvailable} ${formData.launchType === LAUNCH_TYPES.FREE ? "free" : formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE ? "badge" : formData.launchType === LAUNCH_TYPES.PREMIUM ? "premium" : "premium+"} slot(s)`
 
                             return (
                               <SelectItem

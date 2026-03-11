@@ -1,25 +1,26 @@
+import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
-import { db } from "@/drizzle/db"
-import { project } from "@/drizzle/db/schema"
-import { eq } from "drizzle-orm"
-
+import { auth } from "@/lib/auth"
 import { checkRateLimit } from "@/lib/rate-limit"
 
 /**
- * Verify if a website contains the aat.ee badge
- * This endpoint checks if the provided URL contains the badge code
+ * Verify if a website contains the aat.ee badge link.
+ * Returns { verified: true/false } — does NOT modify any project record.
+ * The caller (submit form) stores the verification result in local state
+ * and passes hasBadgeVerified when creating the project.
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { websiteUrl, projectId } = body
+    // Auth check — only logged-in users can verify badges
+    const session = await auth.api.getSession({ headers: await headers() })
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
 
-    // Rate limiting - use IP address for rate limiting
-    const ip =
-      request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
+    // Rate limiting per user
     const rateLimitResult = await checkRateLimit(
-      `badge-verify:${ip}`,
+      `badge-verify:${session.user.id}`,
       10, // 10 requests
       60 * 1000, // per minute
     )
@@ -31,11 +32,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const body = await request.json()
+    const { websiteUrl } = body
+
     if (!websiteUrl) {
       return NextResponse.json({ error: "Website URL is required" }, { status: 400 })
     }
 
-    // Validate URL format
+    // Validate URL format and protocol (prevent SSRF)
     let url: URL
     try {
       url = new URL(websiteUrl)
@@ -43,9 +47,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
     }
 
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return NextResponse.json({ error: "Only HTTP/HTTPS URLs are supported" }, { status: 400 })
+    }
+
     // Fetch the website content with timeout
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
 
     try {
       const response = await fetch(url.toString(), {
@@ -53,7 +61,6 @@ export async function POST(request: NextRequest) {
         headers: {
           "User-Agent": "aat.ee Badge Verifier/1.0",
         },
-        // Follow redirects
         redirect: "follow",
       })
 
@@ -68,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       const html = await response.text()
 
-      // Check for aat.ee domain link only (no badge image check)
+      // Check for aat.ee domain link
       const hasDomain = /www\.aat\.ee/i.test(html) || /aat\.ee\/\?ref=badge/i.test(html)
 
       if (!hasDomain) {
@@ -82,18 +89,6 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // If projectId is provided, update the project record
-      if (projectId) {
-        await db
-          .update(project)
-          .set({
-            hasBadgeVerified: true,
-            badgeVerifiedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(project.id, projectId))
-      }
-
       return NextResponse.json({
         verified: true,
         message: "Badge verified successfully! You can now schedule your launch for tomorrow.",
@@ -104,9 +99,7 @@ export async function POST(request: NextRequest) {
       if (error instanceof Error && error.name === "AbortError") {
         return NextResponse.json(
           { error: "Request timeout. Website took too long to respond." },
-          {
-            status: 408,
-          },
+          { status: 408 },
         )
       }
 

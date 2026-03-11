@@ -201,7 +201,9 @@ export async function scheduleLaunch(
     let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
     let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
-    if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
+    if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
+      minDaysAhead = 1 // Badge users can launch next day
+    } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
       minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
       maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
     }
@@ -242,6 +244,8 @@ export async function scheduleLaunch(
 
     if (launchTypeValue === LAUNCH_TYPES.FREE) {
       hasAvailability = availability.freeSlots > 0
+    } else if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
+      hasAvailability = availability.badgeSlots > 0
     } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
       hasAvailability = availability.premiumSlots > 0
     }
@@ -286,33 +290,34 @@ export async function scheduleLaunch(
       throw new Error("Failed to update project schedule")
     }
 
-    // Ne mettre à jour les quotas que pour les lancements gratuits
-    // Pour les lancements premium, les quotas seront mis à jour après le paiement
-    if (launchTypeValue === LAUNCH_TYPES.FREE) {
-      // Mettre à jour ou créer le quota pour cette date
+    // Update quotas for free and badge launches immediately
+    // For premium launches, quotas are updated after payment confirmation
+    if (launchTypeValue === LAUNCH_TYPES.FREE || launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
       const quotaResult = await db
         .select()
         .from(launchQuota)
         .where(eq(launchQuota.date, launchDate))
         .limit(1)
 
+      const isBadge = launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE
+
       if (quotaResult.length === 0) {
-        // Créer un nouveau quota
         await db.insert(launchQuota).values({
           id: crypto.randomUUID(),
-          date: launchDate, // Utiliser la date avec l'heure correcte
-          freeCount: 1,
-          badgeCount: 0,
+          date: launchDate,
+          freeCount: isBadge ? 0 : 1,
+          badgeCount: isBadge ? 1 : 0,
           premiumCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
       } else {
-        // Mettre à jour le quota existant
         await db
           .update(launchQuota)
           .set({
-            freeCount: sql`${launchQuota.freeCount} + 1`,
+            ...(isBadge
+              ? { badgeCount: sql`${launchQuota.badgeCount} + 1` }
+              : { freeCount: sql`${launchQuota.freeCount} + 1` }),
             updatedAt: new Date(),
           })
           .where(eq(launchQuota.id, quotaResult[0].id))

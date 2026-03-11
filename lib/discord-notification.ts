@@ -165,13 +165,13 @@ export async function notifyDiscordLaunch(
       .join(" ")
 
     // Determine color based on launch type, en utilisant les valeurs de l'enum
-    let color = 0x00ff00 // Vert par défaut pour Free (LaunchTypeEnum.FREE)
-    if (launchType === LaunchTypeEnum.PREMIUM) {
-      // comparaison directe avec la valeur de l'enum
-      color = 0xff9900 // Orange pour premium
+    let color = 0x00ff00 // Green for Free
+    if (launchType === LaunchTypeEnum.FREE_WITH_BADGE) {
+      color = 0x3b82f6 // Blue for Badge Fast Track
+    } else if (launchType === LaunchTypeEnum.PREMIUM) {
+      color = 0xff9900 // Orange for Premium
     } else if (launchType === LaunchTypeEnum.PREMIUM_PLUS) {
-      // comparaison directe
-      color = 0xff0000 // Rouge pour premium plus
+      color = 0xff0000 // Red for Premium Plus
     }
 
     // Récupérer les informations de l'utilisateur si userId est fourni
