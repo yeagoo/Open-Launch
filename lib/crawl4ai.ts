@@ -74,9 +74,15 @@ export async function crawlUrl(url: string, options?: CrawlOptions): Promise<Cra
       // Synchronous response — some Crawl4AI versions return result directly
       const result = submitData.results?.[0] || submitData
       if (result.markdown || result.extracted_content) {
+        // Crawl4AI v0.5+ returns markdown as an object { raw_markdown, fit_markdown, ... }
+        const md = result.markdown
+        const markdownStr =
+          typeof md === "string"
+            ? md
+            : md?.raw_markdown || md?.fit_markdown || result.extracted_content || ""
         return {
           url,
-          markdown: result.markdown || result.extracted_content || "",
+          markdown: markdownStr,
           title: result.metadata?.title,
           crawledAt: new Date(),
         }
@@ -101,9 +107,14 @@ export async function crawlUrl(url: string, options?: CrawlOptions): Promise<Cra
 
       if (statusData.status === "completed") {
         const result = statusData.results?.[0] || statusData.result || statusData
+        const md = result.markdown
+        const markdownStr =
+          typeof md === "string"
+            ? md
+            : md?.raw_markdown || md?.fit_markdown || result.extracted_content || ""
         return {
           url,
-          markdown: result.markdown || result.extracted_content || "",
+          markdown: markdownStr,
           title: result.metadata?.title,
           crawledAt: new Date(),
         }
