@@ -351,3 +351,85 @@ ${altList}`
     rawMarkdown: parsed.rawMarkdown,
   }
 }
+
+// ─── Project Auto-Fill Extraction ───────────────────────────────────────────
+
+export interface ProjectAutoFillResult {
+  name: string | null
+  description: string | null
+  logoUrl: string | null
+  tags: string[]
+  categoryNames: string[]
+  pricing: "free" | "freemium" | "paid" | null
+  platforms: string[]
+}
+
+export async function extractProjectInfo(
+  crawledMarkdown: string,
+  crawledTitle: string | undefined,
+  availableCategories: string[],
+): Promise<ProjectAutoFillResult> {
+  const systemPrompt = `You are a product analyst. Given the crawled content of a website, extract structured information about the product/project.
+
+Available categories to choose from (pick 1-3 that best match):
+${availableCategories.join(", ")}
+
+Available platforms: web, mobile, desktop, api, other
+Available pricing types: free, freemium, paid
+
+Return a JSON object:
+{
+  "name": "Product/brand name (not the full page title)",
+  "description": "A concise 1-3 sentence description of what the product does and who it's for. Plain text only, no HTML or markdown. Under 200 characters.",
+  "logoUrl": "The og:image URL, or apple-touch-icon URL, or highest-resolution favicon URL found in the page content. Full absolute URL. null if not found.",
+  "tags": ["tag1", "tag2", ...],
+  "categoryNames": ["Category Name 1", "Category Name 2"],
+  "pricing": "free" | "freemium" | "paid" | null,
+  "platforms": ["web", ...]
+}
+
+Rules:
+- For name: use the product/brand name, not the full HTML title tag
+- For description: focus on what the product does, plain text only
+- For logoUrl: look for og:image, apple-touch-icon, or favicon references. Return the full absolute URL. Prefer og:image, then apple-touch-icon, then favicon.
+- For tags: suggest 3-8 lowercase kebab-case tags relevant to the product (e.g. "ai", "developer-tools", "open-source")
+- For categoryNames: ONLY use names from the provided list above, pick 1-3
+- For pricing: infer from pricing page mentions, "free", "plans", "$" symbols. null if uncertain.
+- For platforms: infer from mentions of mobile apps, desktop downloads, API docs, browser usage, etc.
+
+Return ONLY the JSON object, no other text.`
+
+  const userPrompt = `Website title: ${crawledTitle || "Unknown"}
+Website content:
+${truncateContent(crawledMarkdown, 6000)}`
+
+  try {
+    const raw = await callDeepSeek(systemPrompt, userPrompt, {
+      temperature: 0.2,
+      maxTokens: 800,
+    })
+
+    const parsed = JSON.parse(extractJson(raw))
+
+    return {
+      name: parsed.name || null,
+      description: parsed.description || null,
+      logoUrl: parsed.logoUrl || null,
+      tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 10) : [],
+      categoryNames: Array.isArray(parsed.categoryNames) ? parsed.categoryNames.slice(0, 3) : [],
+      pricing: ["free", "freemium", "paid"].includes(parsed.pricing) ? parsed.pricing : null,
+      platforms: Array.isArray(parsed.platforms) ? parsed.platforms : [],
+    }
+  } catch (error) {
+    console.error("Project info extraction error:", error)
+    return {
+      name: crawledTitle || null,
+      description: null,
+      logoUrl: null,
+      tags: [],
+      categoryNames: [],
+      pricing: null,
+      platforms: [],
+    }
+  }
+}
