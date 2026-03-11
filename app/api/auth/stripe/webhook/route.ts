@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
-import { eq, sql } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
 import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
@@ -91,70 +91,60 @@ export async function POST(request: Request) {
 
         console.log("✅ Project found, scheduled date:", projectData.scheduledLaunchDate)
 
-        // Check if project is already processed (idempotency)
-        if (
-          projectData.launchType === launchType.PREMIUM &&
-          projectData.launchStatus !== launchStatus.PAYMENT_PENDING &&
-          projectData.launchStatus !== launchStatus.PAYMENT_FAILED
-        ) {
-          console.log("ℹ️ Project already processed or scheduled, skipping webhook processing")
-          return NextResponse.json({ received: true, note: "Already processed" }, { status: 200 })
-        }
-
-        // Update the project status to 'scheduled'
-        await db
+        // Atomic conditional update: only transition PAYMENT_PENDING → SCHEDULED
+        // The WHERE clause ensures only the first writer (verify or webhook) succeeds
+        const updateResult = await db
           .update(project)
           .set({
             launchStatus: launchStatus.SCHEDULED,
-            // Premium Launch 不自动 featured，需要用户主动选择
             featuredOnHomepage: false,
             updatedAt: new Date(),
           })
-          .where(eq(project.id, projectId))
+          .where(
+            and(eq(project.id, projectId), eq(project.launchStatus, launchStatus.PAYMENT_PENDING)),
+          )
 
-        // 重新生成 sitemap（项目即将上架）
-        revalidatePath("/sitemap.xml")
-        console.log("✅ Sitemap regenerated after premium project payment")
-
-        // Mettre à jour le quota pour cette date
-        const launchDate = projectData.scheduledLaunchDate
-        const quotaResult = await db
-          .select()
-          .from(launchQuota)
-          .where(eq(launchQuota.date, launchDate))
-          .limit(1)
-
-        if (quotaResult.length === 0) {
-          // Créer un nouveau quota
-          await db.insert(launchQuota).values({
-            id: crypto.randomUUID(),
-            date: launchDate,
-            freeCount: 0,
-            badgeCount: 0,
-            premiumCount: projectData.launchType === launchType.PREMIUM ? 1 : 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
+        // Only update quota if THIS request actually performed the transition
+        if (!updateResult.rowCount || updateResult.rowCount === 0) {
+          console.log("ℹ️ Project already processed by verify endpoint, skipping quota update")
         } else {
-          // Mettre à jour le quota existant
-          await db
-            .update(launchQuota)
-            .set({
-              premiumCount:
-                projectData.launchType === launchType.PREMIUM
-                  ? sql`${launchQuota.premiumCount} + 1`
-                  : launchQuota.premiumCount,
+          console.log("✅ Webhook: Payment confirmed for project:", projectId)
+
+          revalidatePath("/sitemap.xml")
+
+          const launchDate = projectData.scheduledLaunchDate
+          const quotaResult = await db
+            .select()
+            .from(launchQuota)
+            .where(eq(launchQuota.date, launchDate))
+            .limit(1)
+
+          if (quotaResult.length === 0) {
+            await db.insert(launchQuota).values({
+              id: crypto.randomUUID(),
+              date: launchDate,
+              freeCount: 0,
+              badgeCount: 0,
+              premiumCount: 1,
+              createdAt: new Date(),
               updatedAt: new Date(),
             })
-            .where(eq(launchQuota.id, quotaResult[0].id))
-        }
+          } else {
+            await db
+              .update(launchQuota)
+              .set({
+                premiumCount: sql`${launchQuota.premiumCount} + 1`,
+                updatedAt: new Date(),
+              })
+              .where(eq(launchQuota.id, quotaResult[0].id))
+          }
 
-        // Revalidate the project page path using the project ID
-        try {
-          revalidatePath(`/projects`) // Revalidation plus large pour l'instant
-          console.log(`✅ Revalidated path for project: ${projectId}`)
-        } catch (revalidateError) {
-          console.error("⚠️ Error revalidating path:", revalidateError)
+          try {
+            revalidatePath(`/projects`)
+            console.log(`✅ Revalidated path for project: ${projectId}`)
+          } catch (revalidateError) {
+            console.error("⚠️ Error revalidating path:", revalidateError)
+          }
         }
 
         // Send admin notification

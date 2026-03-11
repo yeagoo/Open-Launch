@@ -25,6 +25,7 @@ export type LaunchStatus = (typeof launchStatus)[keyof typeof launchStatus]
 // Launch type enum
 export const launchType = {
   FREE: "free",
+  FREE_WITH_BADGE: "free_with_badge",
   PREMIUM: "premium",
   PREMIUM_PLUS: "premium_plus",
 } as const

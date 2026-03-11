@@ -307,45 +307,47 @@ export async function submitProject(projectData: ProjectSubmissionData) {
         .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
 
       if (normalizedTags.length > 0) {
-        // Upsert tags
-        for (const t of normalizedTags) {
-          await db
-            .insert(tagTable)
-            .values({
-              id: t.id,
-              name: t.name,
-              slug: t.slug,
-              moderationStatus: tagModerationStatus.PENDING,
-              projectCount: 0,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .onConflictDoNothing({ target: tagTable.id })
-        }
+        await db.transaction(async (tx) => {
+          // Upsert tags
+          for (const t of normalizedTags) {
+            await tx
+              .insert(tagTable)
+              .values({
+                id: t.id,
+                name: t.name,
+                slug: t.slug,
+                moderationStatus: tagModerationStatus.PENDING,
+                projectCount: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .onConflictDoNothing({ target: tagTable.id })
+          }
 
-        // Insert associations
-        await db.insert(projectToTag).values(
-          normalizedTags.map((t) => ({
-            projectId: newProject.id,
-            tagId: t.id,
-          })),
-        )
+          // Insert associations
+          await tx.insert(projectToTag).values(
+            normalizedTags.map((t) => ({
+              projectId: newProject.id,
+              tagId: t.id,
+            })),
+          )
 
-        // Update project counts
-        for (const t of normalizedTags) {
-          const countResult = await db
-            .select({ count: count() })
-            .from(projectToTag)
-            .where(eq(projectToTag.tagId, t.id))
+          // Update project counts
+          for (const t of normalizedTags) {
+            const countResult = await tx
+              .select({ count: count() })
+              .from(projectToTag)
+              .where(eq(projectToTag.tagId, t.id))
 
-          await db
-            .update(tagTable)
-            .set({
-              projectCount: countResult[0]?.count || 0,
-              updatedAt: new Date(),
-            })
-            .where(eq(tagTable.id, t.id))
-        }
+            await tx
+              .update(tagTable)
+              .set({
+                projectCount: countResult[0]?.count || 0,
+                updatedAt: new Date(),
+              })
+              .where(eq(tagTable.id, t.id))
+          }
+        })
       }
     }
 

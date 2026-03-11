@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
     }
 
+    // Only allow HTTP/HTTPS to prevent SSRF (file://, ftp://, etc.)
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return NextResponse.json({ error: "Only HTTP/HTTPS URLs are supported" }, { status: 400 })
+    }
+
     // Crawl the website
     let crawlResult
     try {
@@ -121,14 +126,17 @@ export async function POST(request: NextRequest) {
 async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise<string | null> {
   try {
     // Resolve relative URLs
-    let resolvedUrl: string
+    let resolvedUrl: URL
     try {
-      resolvedUrl = new URL(imageUrl, baseUrl.origin).toString()
+      resolvedUrl = new URL(imageUrl, baseUrl.origin)
     } catch {
       return null
     }
 
-    const response = await fetch(resolvedUrl, {
+    // Only allow HTTP/HTTPS to prevent SSRF
+    if (!["http:", "https:"].includes(resolvedUrl.protocol)) return null
+
+    const response = await fetch(resolvedUrl.toString(), {
       signal: AbortSignal.timeout(10000),
       headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenLaunch/1.0)" },
     })
@@ -176,7 +184,8 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
       finalContentType = "image/avif"
     }
 
-    const fileName = `autofill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.avif`
+    const ext = finalContentType.includes("gif") ? "gif" : "avif"
+    const fileName = `autofill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
     const fileUrl = await uploadFileToR2(finalBuffer, fileName, finalContentType, "logos")
 
     return fileUrl
