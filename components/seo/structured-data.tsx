@@ -189,6 +189,61 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
   )
 }
 
+// Comparison Schema - 对比页面
+interface ComparisonSchemaProps {
+  projectAName: string
+  projectAUrl: string
+  projectBName: string
+  projectBUrl: string
+  slug: string
+  description: string
+}
+
+export function ComparisonSchema({
+  projectAName,
+  projectAUrl,
+  projectBName,
+  projectBUrl,
+  slug,
+  description,
+}: ComparisonSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${projectAName} vs ${projectBName}`,
+    description,
+    url: `${baseUrl}/compare/${slug}`,
+    about: [
+      {
+        "@type": "SoftwareApplication",
+        name: projectAName,
+        url: projectAUrl,
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: projectBName,
+        url: projectBUrl,
+      },
+    ],
+    publisher: {
+      "@type": "Organization",
+      name: "aat.ee",
+      logo: {
+        "@type": "ImageObject",
+        url: `${baseUrl}/logo.png`,
+      },
+    },
+  }
+
+  return (
+    <Script
+      id="schema-comparison"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
 // ItemList Schema - 列表页面
 interface ItemListItem {
   name: string

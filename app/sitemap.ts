@@ -1,7 +1,14 @@
 import { MetadataRoute } from "next"
 
 import { db } from "@/drizzle/db"
-import { launchStatus, project } from "@/drizzle/db/schema"
+import {
+  alternativePage,
+  comparisonPage,
+  launchStatus,
+  project,
+  tag,
+  tagModerationStatus,
+} from "@/drizzle/db/schema"
 import { eq, or } from "drizzle-orm"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
@@ -109,5 +116,71 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  return [...staticPages, ...projectUrls]
+  // Tags
+  const tags = await db
+    .select({ slug: tag.slug, updatedAt: tag.updatedAt })
+    .from(tag)
+    .where(eq(tag.moderationStatus, tagModerationStatus.APPROVED))
+
+  const tagUrls: MetadataRoute.Sitemap = tags.map((t) => ({
+    url: `${baseUrl}/tags/${t.slug}`,
+    lastModified: t.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }))
+
+  // Comparison pages
+  const comparisons = await db
+    .select({ slug: comparisonPage.slug, updatedAt: comparisonPage.updatedAt })
+    .from(comparisonPage)
+
+  const comparisonUrls: MetadataRoute.Sitemap = comparisons.map((c) => ({
+    url: `${baseUrl}/compare/${c.slug}`,
+    lastModified: c.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }))
+
+  // Alternative pages
+  const alternatives = await db
+    .select({ slug: alternativePage.slug, updatedAt: alternativePage.updatedAt })
+    .from(alternativePage)
+
+  const alternativeUrls: MetadataRoute.Sitemap = alternatives.map((a) => ({
+    url: `${baseUrl}/alternatives/${a.slug}`,
+    lastModified: a.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }))
+
+  // Static pages for new sections
+  const newStaticPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/tags`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/compare`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/alternatives`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+  ]
+
+  return [
+    ...staticPages,
+    ...newStaticPages,
+    ...projectUrls,
+    ...tagUrls,
+    ...comparisonUrls,
+    ...alternativeUrls,
+  ]
 }

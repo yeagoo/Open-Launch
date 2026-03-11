@@ -344,3 +344,160 @@ export const productHuntImport = pgTable(
     }
   },
 )
+
+// ─── Tag moderation status ───────────────────────────────────────────────────
+export const tagModerationStatus = {
+  APPROVED: "approved",
+  PENDING: "pending",
+  FLAGGED: "flagged",
+  DELETED: "deleted",
+} as const
+
+export type TagModerationStatus = (typeof tagModerationStatus)[keyof typeof tagModerationStatus]
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+export const tag = pgTable(
+  "tag",
+  {
+    id: text("id").primaryKey(), // slugified, e.g. "machine-learning"
+    name: text("name").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    moderationStatus: text("moderation_status").notNull().default(tagModerationStatus.APPROVED),
+    moderationNote: text("moderation_note"),
+    projectCount: integer("project_count").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: index("tag_slug_idx").on(table.slug),
+      moderationStatusIdx: index("tag_moderation_status_idx").on(table.moderationStatus),
+    }
+  },
+)
+
+export const projectToTag = pgTable(
+  "project_to_tag",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => tag.id, { onDelete: "cascade" }),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.projectId, table.tagId),
+      tagIdIdx: index("project_to_tag_tag_id_idx").on(table.tagId),
+    }
+  },
+)
+
+// ─── Crawl cache ─────────────────────────────────────────────────────────────
+export const crawledData = pgTable(
+  "crawled_data",
+  {
+    id: text("id").primaryKey(),
+    url: text("url").notNull().unique(),
+    projectId: text("project_id").references(() => project.id, {
+      onDelete: "set null",
+    }),
+    content: text("content").notNull(),
+    contentHash: text("content_hash"),
+    crawledAt: timestamp("crawled_at").notNull().defaultNow(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      urlIdx: index("crawled_data_url_idx").on(table.url),
+      projectIdIdx: index("crawled_data_project_id_idx").on(table.projectId),
+      expiresAtIdx: index("crawled_data_expires_at_idx").on(table.expiresAt),
+    }
+  },
+)
+
+// ─── Comparison pages ────────────────────────────────────────────────────────
+export const comparisonPage = pgTable(
+  "comparison_page",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    projectAId: text("project_a_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    projectBId: text("project_b_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    categoryId: text("category_id").references(() => category.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    content: text("content").notNull(),
+    structuredData: json("structured_data"),
+    generatedAt: timestamp("generated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: index("comparison_page_slug_idx").on(table.slug),
+      projectAIdx: index("comparison_page_project_a_idx").on(table.projectAId),
+      projectBIdx: index("comparison_page_project_b_idx").on(table.projectBId),
+    }
+  },
+)
+
+// ─── Alternative pages ───────────────────────────────────────────────────────
+export const alternativePage = pgTable(
+  "alternative_page",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    subjectProjectId: text("subject_project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    content: text("content").notNull(),
+    generatedAt: timestamp("generated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: index("alternative_page_slug_idx").on(table.slug),
+      subjectProjectIdIdx: index("alternative_page_subject_project_id_idx").on(
+        table.subjectProjectId,
+      ),
+    }
+  },
+)
+
+export const alternativePageToProject = pgTable(
+  "alternative_page_to_project",
+  {
+    alternativePageId: text("alternative_page_id")
+      .notNull()
+      .references(() => alternativePage.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    aiScore: integer("ai_score"),
+    prosConsJson: json("pros_cons_json"),
+    useCases: text("use_cases"),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.alternativePageId, table.projectId),
+      pageIdIdx: index("alt_page_to_project_page_id_idx").on(table.alternativePageId),
+      projectIdIdx: index("alt_page_to_project_project_id_idx").on(table.projectId),
+    }
+  },
+)

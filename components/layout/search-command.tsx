@@ -143,7 +143,9 @@ export function SearchCommand() {
                   const url =
                     result.type === "project"
                       ? `/projects/${result.slug || result.id}`
-                      : `/categories?category=${result.id}`
+                      : result.type === "tag"
+                        ? `/tags/${result.slug || result.id}`
+                        : `/categories?category=${result.id}`
                   router.push(url)
                 })
               }}
