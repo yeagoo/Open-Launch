@@ -19,6 +19,7 @@ import {
   RiInformationLine,
   RiListCheck,
   RiLoader4Line,
+  RiMagicLine,
   RiRocketLine,
   RiStarLine,
 } from "@remixicon/react"
@@ -121,6 +122,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
   const [launchDateLimitError, setLaunchDateLimitError] = useState<string | null>(null)
   const [isLoadingDateCheck, setIsLoadingDateCheck] = useState(false)
 
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [isVerifyingBadge, setIsVerifyingBadge] = useState(false)
   const [badgeVerificationMessage, setBadgeVerificationMessage] = useState<string | null>(null)
 
@@ -255,6 +257,66 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       setError("Failed to load categories")
     } finally {
       setIsLoadingCategories(false)
+    }
+  }
+
+  const handleAutoFill = async () => {
+    if (!formData.websiteUrl || isAutoFilling) return
+
+    try {
+      new URL(formData.websiteUrl)
+    } catch {
+      setError("Please enter a valid URL before using Auto Fill.")
+      return
+    }
+
+    setIsAutoFilling(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/projects/auto-fill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteUrl: formData.websiteUrl }),
+        signal: AbortSignal.timeout(90000),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || `Failed to analyze website (${response.status})`)
+      }
+
+      const data = await response.json()
+
+      // Only fill fields the user hasn't manually entered yet
+      setFormData((prev) => ({
+        ...prev,
+        name: prev.name || data.name || prev.name,
+        description:
+          prev.description || (data.description ? `<p>${data.description}</p>` : prev.description),
+        categories: prev.categories.length > 0 ? prev.categories : data.categories || [],
+        pricing: prev.pricing || data.pricing || prev.pricing,
+        platforms: prev.platforms.length > 0 ? prev.platforms : data.platforms || [],
+      }))
+
+      // Tags: only set if user hasn't added any
+      if (techStackTags.length === 0 && data.tags?.length > 0) {
+        const newTags = data.tags.map((t: string, i: number) => ({
+          id: `autofill-${i}-${t}`,
+          text: t,
+        }))
+        setTechStackTags(newTags)
+      }
+
+      // Logo: only set if user hasn't uploaded one
+      if (!uploadedLogoUrl && data.logoUrl) {
+        setUploadedLogoUrl(data.logoUrl)
+      }
+    } catch (err) {
+      console.error("Auto-fill error:", err)
+      setError(err instanceof Error ? err.message : "Failed to auto-fill. Please try again.")
+    } finally {
+      setIsAutoFilling(false)
     }
   }
 
@@ -685,15 +747,36 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <Label htmlFor="websiteUrl">
                 Website URL <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="websiteUrl"
-                name="websiteUrl"
-                type="url"
-                value={formData.websiteUrl}
-                onChange={handleInputChange}
-                placeholder="https://myawesomeproject.com"
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="websiteUrl"
+                  name="websiteUrl"
+                  type="url"
+                  value={formData.websiteUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://myawesomeproject.com"
+                  required
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAutoFill}
+                  disabled={!formData.websiteUrl || isAutoFilling}
+                  className="shrink-0"
+                >
+                  {isAutoFilling ? (
+                    <RiLoader4Line className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RiMagicLine className="mr-1.5 h-4 w-4" />
+                  )}
+                  {isAutoFilling ? "Analyzing..." : "Auto Fill"}
+                </Button>
+              </div>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Enter your website URL and click Auto Fill to automatically populate the form.
+              </p>
             </div>
             <div>
               <Label htmlFor="description">
