@@ -78,7 +78,7 @@ export const SEO_ARTICLE_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PAY
 
 export const SPONSORSHIP_SLOTS = {
   TOTAL: 3,
-  USED: 2,
+  USED: 3,
 } as const
 
 export const DOMAIN_AUTHORITY = 37
