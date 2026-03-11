@@ -25,6 +25,12 @@ const sponsors: Sponsor[] = [
     url: "https://screenhello.com",
     logoUrl: "https://statics.aat.ee/logos/1768924192870-5aa3cxgphay.avif",
   },
+  {
+    name: "EOL.Wiki",
+    description: "Know when your software reaches end of life",
+    url: "https://eol.wiki/",
+    logoUrl: "https://statics.aat.ee/logos/1773211667127-g2ha01fraao.avif",
+  },
 ]
 
 export function SidebarSponsors() {
