@@ -2,8 +2,9 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-import { ExternalLink } from "lucide-react"
+import { ArrowRightLeft, ExternalLink, Layers } from "lucide-react"
 
 interface Sponsor {
   name: string
@@ -33,7 +34,26 @@ const sponsors: Sponsor[] = [
   },
 ]
 
+const exploreLinks = [
+  {
+    href: "/compare",
+    icon: ArrowRightLeft,
+    label: "Compare Tools",
+    description: "Side-by-side comparisons",
+  },
+  {
+    href: "/alternatives",
+    icon: Layers,
+    label: "Alternatives",
+    description: "Find similar products",
+  },
+]
+
 export function SidebarSponsors() {
+  const pathname = usePathname()
+  // Hide the explore block on pages that already have their own Explore More section
+  const hideExplore = pathname.startsWith("/compare") || pathname.startsWith("/alternatives")
+
   return (
     <div className="space-y-4 py-4">
       <h3 className="flex items-center gap-2 font-semibold">Sponsors</h3>
@@ -69,6 +89,27 @@ export function SidebarSponsors() {
           </Link>
         ))}
       </div>
+
+      {!hideExplore && (
+        <div className="border-border/50 border-t pt-4">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold">Explore</h3>
+          <div className="space-y-1">
+            {exploreLinks.map(({ href, icon: Icon, label, description }) => (
+              <Link
+                key={href}
+                href={href}
+                className="hover:bg-muted/50 group flex items-center gap-3 rounded-md p-2 transition-colors"
+              >
+                <Icon className="text-muted-foreground group-hover:text-primary h-4 w-4 shrink-0 transition-colors" />
+                <div className="min-w-0">
+                  <div className="text-sm leading-none font-medium">{label}</div>
+                  <div className="text-muted-foreground mt-0.5 text-xs">{description}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

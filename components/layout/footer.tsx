@@ -8,6 +8,8 @@ import { usePathname } from "next/navigation"
 const discoverLinks = [
   { title: "Trending", href: "/trending" },
   { title: "Categories", href: "/categories" },
+  { title: "Compare Tools", href: "/compare" },
+  { title: "Alternatives", href: "/alternatives" },
   { title: "Submit Project", href: "/projects/submit" },
 ]
 
