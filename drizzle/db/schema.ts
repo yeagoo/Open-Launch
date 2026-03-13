@@ -111,7 +111,7 @@ export const project = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description").notNull(),
-    websiteUrl: text("website_url").notNull(),
+    websiteUrl: text("website_url").notNull().unique(),
     logoUrl: text("logo_url").notNull(),
     coverImageUrl: text("cover_image_url"),
     productImage: text("product_image"),
