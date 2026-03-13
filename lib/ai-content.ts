@@ -317,17 +317,17 @@ export async function analyzeAlternative(
     crawledMarkdown: string
   },
 ): Promise<AlternativeAnalysis> {
-  const systemPrompt = `You are a tech product analyst. Determine if the candidate product is a genuine alternative to the subject product.
+  const systemPrompt = `You are a tech product analyst writing an "alternatives" directory page.
 
-Two products are alternatives if they serve the same primary use case and a user could reasonably switch from one to the other.
+Your job is to describe how the candidate product relates to the subject product for users who are evaluating their options. Products do NOT need to be identical — they just need to address a similar problem space or user need. Partial overlaps, complementary tools, and "frequently compared" products all qualify.
 
 Return a JSON object:
 {
-  "isAlternative": true/false,
-  "confidenceScore": 0-100 (100 = definitely an alternative, 0 = completely unrelated),
+  "isAlternative": true,
+  "confidenceScore": 0-100 (how well the candidate serves as an option for users of the subject: 80-100 = near-identical use case, 50-79 = strong overlap, 30-49 = partial overlap but worth considering, 0-29 = unrelated),
   "pros": ["advantage of candidate over subject", ...],
   "cons": ["disadvantage of candidate compared to subject", ...],
-  "useCases": "Brief description of when someone would choose the candidate instead."
+  "useCases": "1-2 sentences on when a user might choose the candidate over the subject."
 }
 
 Return ONLY the JSON object, no other text.`
