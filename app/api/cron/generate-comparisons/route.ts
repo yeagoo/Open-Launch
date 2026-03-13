@@ -99,19 +99,18 @@ export async function GET(request: NextRequest) {
           const sorted = [projA.slug, projB.slug].sort()
           const slug = `${sorted[0]}-vs-${sorted[1]}`
 
-          // Check if comparison already exists
-          const existing = await db
-            .select({ id: comparisonPage.id })
-            .from(comparisonPage)
-            .where(eq(comparisonPage.slug, slug))
-            .limit(1)
-
-          if (existing.length > 0) {
-            skipped++
-            continue
-          }
-
           try {
+            // Skip if comparison page already exists (avoid wasting crawl + LLM cost)
+            const [existing] = await db
+              .select({ id: comparisonPage.id })
+              .from(comparisonPage)
+              .where(eq(comparisonPage.slug, slug))
+              .limit(1)
+            if (existing) {
+              skipped++
+              continue
+            }
+
             // Crawl both websites
             const [crawlA, crawlB] = await Promise.all([
               getCachedOrCrawl(projA.id, projA.websiteUrl, 7, { timeout: CRAWL_TIMEOUT }),
@@ -136,23 +135,28 @@ export async function GET(request: NextRequest) {
             const [projectAId, projectBId] =
               projA.slug === sorted[0] ? [projA.id, projB.id] : [projB.id, projA.id]
 
-            await db.insert(comparisonPage).values({
-              id: crypto.randomUUID(),
-              slug,
-              projectAId,
-              projectBId,
-              categoryId: cat.id,
-              title: content.title,
-              metaTitle: content.metaTitle,
-              metaDescription: content.metaDescription,
-              content: content.rawMarkdown,
-              structuredData: content.structuredData,
-              generatedAt: new Date(),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
+            const rows = await db
+              .insert(comparisonPage)
+              .values({
+                id: crypto.randomUUID(),
+                slug,
+                projectAId,
+                projectBId,
+                categoryId: cat.id,
+                title: content.title,
+                metaTitle: content.metaTitle,
+                metaDescription: content.metaDescription,
+                content: content.rawMarkdown,
+                structuredData: content.structuredData,
+                generatedAt: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .onConflictDoNothing({ target: comparisonPage.slug })
+              .returning({ id: comparisonPage.id })
 
-            generated++
+            if (rows.length > 0) generated++
+            else skipped++
           } catch (error) {
             console.error(`Error generating comparison ${projA.name} vs ${projB.name}:`, error)
             errors++

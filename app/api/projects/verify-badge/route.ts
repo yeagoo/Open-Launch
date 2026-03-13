@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { auth } from "@/lib/auth"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { isPrivateHostname } from "@/lib/utils"
 
 /**
  * Verify if a website contains the aat.ee badge link.
@@ -51,29 +52,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only HTTP/HTTPS URLs are supported" }, { status: 400 })
     }
 
-    // Fetch the website content with timeout
+    if (isPrivateHostname(url.hostname)) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
+    }
+
+    // Fetch the website content, following redirects with SSRF checks at each hop
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
 
     try {
-      const response = await fetch(url.toString(), {
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "aat.ee Badge Verifier/1.0",
-        },
-        redirect: "follow",
-      })
+      let currentUrl = url
+      let finalResponse: Response | null = null
+
+      for (let hop = 0; hop <= 5; hop++) {
+        const r = await fetch(currentUrl.toString(), {
+          signal: controller.signal,
+          headers: { "User-Agent": "aat.ee Badge Verifier/1.0" },
+          redirect: "manual",
+        })
+
+        if (r.status >= 300 && r.status < 400) {
+          const location = r.headers.get("location")
+          if (!location) break
+          let nextUrl: URL
+          try {
+            nextUrl = new URL(location, currentUrl.toString())
+          } catch {
+            break
+          }
+          if (
+            !["http:", "https:"].includes(nextUrl.protocol) ||
+            isPrivateHostname(nextUrl.hostname)
+          ) {
+            clearTimeout(timeoutId)
+            return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
+          }
+          currentUrl = nextUrl
+          continue
+        }
+
+        finalResponse = r
+        break
+      }
 
       clearTimeout(timeoutId)
 
-      if (!response.ok) {
+      if (!finalResponse || !finalResponse.ok) {
         return NextResponse.json(
-          { error: `Failed to fetch website: ${response.status}` },
+          { error: `Failed to fetch website: ${finalResponse?.status ?? "unknown"}` },
           { status: 400 },
         )
       }
 
-      const html = await response.text()
+      const html = await finalResponse.text()
 
       // Check for aat.ee domain link
       const hasDomain = /www\.aat\.ee/i.test(html) || /aat\.ee\/\?ref=badge/i.test(html)

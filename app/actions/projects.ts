@@ -219,7 +219,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     const {
       name,
       description,
-      websiteUrl,
+      websiteUrl: rawWebsiteUrl,
       logoUrl,
       productImage,
       categories,
@@ -231,6 +231,9 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       hasBadgeVerified,
       tags,
     } = projectData
+
+    // Normalize URL: lowercase + strip trailing slash (consistent with check-url endpoint)
+    const websiteUrl = rawWebsiteUrl.toLowerCase().replace(/\/$/, "")
 
     // Validation
     if (
@@ -244,6 +247,26 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       !pricing
     ) {
       return { success: false, error: "Missing required fields" }
+    }
+
+    // If the URL belongs to a payment_pending/payment_failed project owned by this user,
+    // delete it so they can resubmit (check-url already treats these as "available")
+    const [existingByUrl] = await db
+      .select({ id: project.id, createdBy: project.createdBy, launchStatus: project.launchStatus })
+      .from(project)
+      .where(eq(project.websiteUrl, websiteUrl))
+      .limit(1)
+
+    if (existingByUrl) {
+      if (
+        existingByUrl.createdBy === session.user.id &&
+        (existingByUrl.launchStatus === "payment_pending" ||
+          existingByUrl.launchStatus === "payment_failed")
+      ) {
+        await db.delete(project).where(eq(project.id, existingByUrl.id))
+      } else {
+        return { success: false, error: "This website URL has already been submitted" }
+      }
     }
 
     // Générer le slug à partir du nom dans projectData
@@ -348,6 +371,25 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     }
     return { success: false, error: "Failed to submit project" }
   }
+}
+
+/**
+ * Delete a draft project that belongs to the authenticated user.
+ * Only deletes if the project has no scheduled launch date (i.e., it's an orphaned draft).
+ * Used for cleanup when post-submission steps (e.g. scheduleLaunch) fail.
+ */
+export async function deleteMyDraftProject(projectId: string): Promise<void> {
+  const session = await getSession()
+  if (!session?.user?.id) return
+
+  await db.delete(project).where(
+    and(
+      eq(project.id, projectId),
+      eq(project.createdBy, session.user.id),
+      // Only delete if still unscheduled (no launch date = orphaned draft)
+      sql`${project.scheduledLaunchDate} IS NULL`,
+    ),
+  )
 }
 
 async function enrichProjectsWithUserData<T extends { id: string }>(
