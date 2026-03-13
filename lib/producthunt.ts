@@ -216,6 +216,104 @@ export function extractTags(topics: ProductHuntTopic[]): string[] {
 }
 
 /**
+ * ProductHunt topic 名称 → 平台 category ID 映射表
+ */
+const TOPIC_TO_CATEGORY: Record<string, string> = {
+  // AI & ML
+  "Artificial Intelligence": "ai",
+  "AI Assistant": "ai",
+  "Generative AI": "ai",
+  ChatGPT: "ai",
+  "Machine Learning": "machine-learning",
+  "Natural Language Processing": "nlp",
+  "Computer Vision": "machine-learning",
+
+  // Developer Tools
+  "Developer Tools": "developer-tools",
+  GitHub: "developer-tools",
+  API: "api",
+  APIs: "api",
+  "Open Source": "open-source",
+  "Web Development": "web-dev",
+  "Web App": "web-dev",
+  JavaScript: "web-dev",
+  Mobile: "mobile-dev",
+  iOS: "mobile-dev",
+  Android: "mobile-dev",
+  "React Native": "mobile-dev",
+  DevOps: "devops",
+  "Cloud Computing": "devops",
+  Databases: "databases",
+  Testing: "testing-qa",
+  "No Code": "cms",
+  "No-Code": "cms",
+  WordPress: "cms",
+  Serverless: "serverless",
+  Security: "security",
+  Cybersecurity: "security",
+
+  // Design
+  "Design Tools": "design-tools",
+  Figma: "design-tools",
+  UX: "ui-ux",
+  UI: "ui-ux",
+  Prototyping: "prototyping",
+  Graphics: "graphics",
+
+  // Business
+  SaaS: "saas",
+  Marketing: "marketing-tools",
+  "Email Marketing": "marketing-tools",
+  SEO: "marketing-tools",
+  "Social Media": "marketing-tools",
+  Sales: "sales-tools",
+  CRM: "sales-tools",
+  Productivity: "productivity",
+  "Task Management": "productivity",
+  "Project Management": "productivity",
+  Finance: "finance-tech",
+  Fintech: "finance-tech",
+  Payments: "finance-tech",
+  "E-Commerce": "ecommerce",
+  Ecommerce: "ecommerce",
+  Analytics: "analytics",
+  "Business Intelligence": "analytics",
+  "Data Visualization": "data-science",
+  "Data Science": "data-science",
+
+  // Niche
+  Blockchain: "blockchain",
+  Crypto: "blockchain",
+  Web3: "blockchain",
+  AR: "ar-vr",
+  VR: "ar-vr",
+  Gaming: "gaming",
+  Education: "edtech",
+  EdTech: "edtech",
+  Health: "healthtech",
+  HealthTech: "healthtech",
+  Fitness: "healthtech",
+  "Green Tech": "greentech",
+  Sustainability: "greentech",
+  IoT: "iot",
+  Hardware: "hardware",
+  Wearables: "wearables",
+  Robotics: "robotics",
+}
+
+/**
+ * 从 ProductHunt topics 中提取匹配的平台 category IDs
+ */
+export function extractCategoryIds(topics: ProductHuntTopic[]): string[] {
+  const ids = new Set<string>()
+  for (const topic of topics) {
+    const categoryId = TOPIC_TO_CATEGORY[topic.name]
+    if (categoryId) ids.add(categoryId)
+  }
+  return Array.from(ids).slice(0, 3) // 最多 3 个分类
+}
+
+/**
  * 清理 URL 中的跟踪参数
  */
 function cleanTrackingParams(url: string): string {

@@ -4,6 +4,7 @@ import { db } from "@/drizzle/db"
 import {
   productHuntImport,
   project,
+  projectToCategory,
   projectToTag,
   tagModerationStatus,
   tag as tagTable,
@@ -14,6 +15,7 @@ import { count, eq } from "drizzle-orm"
 import { downloadAndUploadImage } from "@/lib/image-upload"
 import {
   cleanDescription,
+  extractCategoryIds,
   extractTags,
   generateSlug,
   getRealWebsiteUrl,
@@ -121,6 +123,7 @@ export async function GET(request: Request) {
         tomorrow.setHours(0, 0, 0, 0)
 
         const tags = extractTags(post.topics)
+        const categoryIds = extractCategoryIds(post.topics)
         const description = cleanDescription(post.description)
 
         // 获取真实网站地址（跟随 ProductHunt 重定向）
@@ -199,6 +202,16 @@ export async function GET(request: Request) {
           hasBadgeVerified: false,
           badgeVerifiedAt: null,
         })
+
+        // 写入 categories
+        if (categoryIds.length > 0) {
+          await db
+            .insert(projectToCategory)
+            .values(categoryIds.map((categoryId) => ({ projectId, categoryId })))
+          console.log(`🏷️  Categories assigned: ${categoryIds.join(", ")}`)
+        } else {
+          console.log(`⚠️  No matching categories found for "${post.name}"`)
+        }
 
         // 写入 tag 系统
         if (tags.length > 0) {
