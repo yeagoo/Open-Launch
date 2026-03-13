@@ -21,7 +21,7 @@ const API_KEY = process.env.CRON_API_KEY
 const MAX_PROJECTS_PER_RUN = 1
 const MAX_CANDIDATES = 5
 const MIN_ALTERNATIVES = 3
-const MIN_CONFIDENCE_SCORE = 60
+const MIN_CONFIDENCE_SCORE = 50
 const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
 
 export async function GET(request: NextRequest) {
@@ -154,6 +154,9 @@ export async function GET(request: NextRequest) {
               },
             )
 
+            console.log(
+              `  📊 ${candidate.name}: isAlt=${analysis.isAlternative}, score=${analysis.confidenceScore}`,
+            )
             if (analysis.isAlternative && analysis.confidenceScore >= MIN_CONFIDENCE_SCORE) {
               confirmedAlternatives.push({
                 project: candidate,
