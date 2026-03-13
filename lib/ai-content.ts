@@ -236,6 +236,72 @@ ${truncateContent(projectB.crawledMarkdown)}`
   }
 }
 
+// ─── Alternative Pre-screening ───────────────────────────────────────────────
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .substring(0, 200)
+}
+
+/**
+ * Phase 1: Cheap pre-screening — no crawl needed.
+ * Given a subject product and up to 25 candidates (name + description + techStack only),
+ * returns IDs of candidates that are likely genuine alternatives (max 5).
+ */
+export async function prescreenAlternatives(
+  subject: {
+    name: string
+    description: string
+    techStack: string[]
+  },
+  candidates: Array<{
+    id: string
+    name: string
+    description: string
+    techStack: string[]
+  }>,
+): Promise<string[]> {
+  if (candidates.length === 0) return []
+
+  const subjectDesc = stripHtml(subject.description)
+  const candidateList = candidates
+    .map(
+      (c) =>
+        `ID:${c.id} | ${c.name} | ${stripHtml(c.description)} | tags: ${c.techStack.slice(0, 5).join(", ")}`,
+    )
+    .join("\n")
+
+  const systemPrompt = `You are a product analyst. Identify which candidates are genuine alternatives to the subject product — meaning a user could realistically switch from the subject to the candidate to accomplish the same primary goal.
+
+Return ONLY a JSON array of candidate IDs (strings). Maximum 5. Return [] if none qualify.
+Example: ["id1", "id2"]`
+
+  const userPrompt = `Subject: ${subject.name}
+Description: ${subjectDesc}
+Tags: ${subject.techStack.slice(0, 5).join(", ")}
+
+Candidates:
+${candidateList}`
+
+  try {
+    const raw = await callDeepSeek(systemPrompt, userPrompt, {
+      temperature: 0.1,
+      maxTokens: 200,
+    })
+    const parsed = JSON.parse(extractJson(raw))
+    if (!Array.isArray(parsed)) return []
+    // Validate returned IDs exist in candidates
+    const validIds = new Set(candidates.map((c) => c.id))
+    return parsed.filter((id: unknown) => typeof id === "string" && validIds.has(id)).slice(0, 5)
+  } catch {
+    return []
+  }
+}
+
 // ─── Alternative Analysis ────────────────────────────────────────────────────
 
 export async function analyzeAlternative(
