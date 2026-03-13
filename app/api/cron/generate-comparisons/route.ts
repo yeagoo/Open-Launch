@@ -10,7 +10,7 @@ import {
   projectToCategory,
   upvote,
 } from "@/drizzle/db/schema"
-import { and, count, desc, eq, or } from "drizzle-orm"
+import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { generateComparisonContent } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 90
 
 const API_KEY = process.env.CRON_API_KEY
-const MAX_NEW_COMPARISONS_PER_RUN = 3
+const MAX_NEW_COMPARISONS_PER_RUN = 1
 const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
 
 export async function GET(request: NextRequest) {
@@ -31,8 +31,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get all categories
-    const categories = await db.select().from(categoryTable)
+    // Get categories that have at least 2 ongoing/launched projects (skip empty ones)
+    const categories = await db
+      .select({ id: categoryTable.id, name: categoryTable.name })
+      .from(categoryTable)
+      .where(
+        sql`(
+          SELECT COUNT(DISTINCT p.id)
+          FROM project p
+          JOIN project_to_category ptc ON ptc.project_id = p.id AND ptc.category_id = ${categoryTable.id}
+          WHERE p.launch_status IN ('ongoing', 'launched')
+        ) >= 2`,
+      )
 
     let generated = 0
     let skipped = 0
