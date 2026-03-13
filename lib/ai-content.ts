@@ -257,7 +257,7 @@ Two products are alternatives if they serve the same primary use case and a user
 Return a JSON object:
 {
   "isAlternative": true/false,
-  "confidenceScore": 0-100,
+  "confidenceScore": 0-100 (100 = definitely an alternative, 0 = completely unrelated),
   "pros": ["advantage of candidate over subject", ...],
   "cons": ["disadvantage of candidate compared to subject", ...],
   "useCases": "Brief description of when someone would choose the candidate instead."
