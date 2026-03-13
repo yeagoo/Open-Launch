@@ -16,9 +16,11 @@ import { generateComparisonContent } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 
 export const dynamic = "force-dynamic"
+export const maxDuration = 90
 
 const API_KEY = process.env.CRON_API_KEY
-const MAX_NEW_COMPARISONS_PER_RUN = 10
+const MAX_NEW_COMPARISONS_PER_RUN = 3
+const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,8 +104,8 @@ export async function GET(request: NextRequest) {
           try {
             // Crawl both websites
             const [crawlA, crawlB] = await Promise.all([
-              getCachedOrCrawl(projA.id, projA.websiteUrl, 7),
-              getCachedOrCrawl(projB.id, projB.websiteUrl, 7),
+              getCachedOrCrawl(projA.id, projA.websiteUrl, 7, { timeout: CRAWL_TIMEOUT }),
+              getCachedOrCrawl(projB.id, projB.websiteUrl, 7, { timeout: CRAWL_TIMEOUT }),
             ])
 
             // Generate comparison content

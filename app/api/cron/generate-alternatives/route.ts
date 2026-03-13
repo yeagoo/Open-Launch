@@ -15,11 +15,14 @@ import { analyzeAlternative, generateAlternativesPageContent } from "@/lib/ai-co
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 
 export const dynamic = "force-dynamic"
+export const maxDuration = 90
 
 const API_KEY = process.env.CRON_API_KEY
-const MAX_PROJECTS_PER_RUN = 5
+const MAX_PROJECTS_PER_RUN = 1
+const MAX_CANDIDATES = 5
 const MIN_ALTERNATIVES = 3
 const MIN_CONFIDENCE_SCORE = 60
+const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
 
 export async function GET(request: NextRequest) {
   try {
@@ -102,7 +105,7 @@ export async function GET(request: NextRequest) {
             projectTable.description,
             projectTable.websiteUrl,
           )
-          .limit(10)
+          .limit(MAX_CANDIDATES)
 
         if (candidates.length < MIN_ALTERNATIVES) {
           skipped++
@@ -110,7 +113,14 @@ export async function GET(request: NextRequest) {
         }
 
         // Crawl subject project
-        const subjectCrawl = await getCachedOrCrawl(subjectProject.id, subjectProject.websiteUrl, 7)
+        const subjectCrawl = await getCachedOrCrawl(
+          subjectProject.id,
+          subjectProject.websiteUrl,
+          7,
+          {
+            timeout: CRAWL_TIMEOUT,
+          },
+        )
 
         // Analyze each candidate
         const confirmedAlternatives: Array<{
@@ -123,7 +133,9 @@ export async function GET(request: NextRequest) {
 
         for (const candidate of candidates) {
           try {
-            const candidateCrawl = await getCachedOrCrawl(candidate.id, candidate.websiteUrl, 7)
+            const candidateCrawl = await getCachedOrCrawl(candidate.id, candidate.websiteUrl, 7, {
+              timeout: CRAWL_TIMEOUT,
+            })
 
             const analysis = await analyzeAlternative(
               {

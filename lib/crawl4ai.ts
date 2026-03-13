@@ -139,6 +139,7 @@ export async function getCachedOrCrawl(
   projectId: string | null,
   url: string,
   ttlDays = 7,
+  options?: CrawlOptions,
 ): Promise<CrawlResult> {
   const now = new Date()
 
@@ -158,7 +159,7 @@ export async function getCachedOrCrawl(
   }
 
   // Crawl fresh
-  const result = await crawlUrl(url)
+  const result = await crawlUrl(url, options)
   const id = crypto.randomUUID()
   const expiresAt = addDays(now, ttlDays)
 
