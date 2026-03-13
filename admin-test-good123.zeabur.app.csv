@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh" dir="ltr">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SQL命令 - postgresql.zeabur.internal - Adminer</title>
+<link rel="stylesheet" href="?file=default.css&amp;version=5.4.2">
+<link rel='stylesheet' media='(prefers-color-scheme: dark)' href='?file=dark.css&amp;version=5.4.2'>
+<meta name='color-scheme' content='light dark'>
+<script src='?file=functions.js&amp;version=5.4.2' nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk="></script>
+<link rel='icon' href='data:image/gif;base64,R0lGODlhEAAQAJEAAAQCBPz+/PwCBAROZCH5BAEAAAAALAAAAAAQABAAAAI2hI+pGO1rmghihiUdvUBnZ3XBQA7f05mOak1RWXrNq5nQWHMKvuoJ37BhVEEfYxQzHjWQ5qIAADs='>
+<link rel='apple-touch-icon' href='?file=logo.png&amp;version=5.4.2'>
+
+<body class='ltr nojs adminer'>
+<script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">mixin(document.body, {onkeydown: bodyKeydown, onclick: bodyClick});
+document.body.classList.replace('nojs', 'js');
+const offlineMessage = '您离线了。';
+const thousandsSeparator = ',';</script>
+<div id='help' class='jush-pgsql jsonly hidden'></div>
+<script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">mixin(qs('#help'), {onmouseover: () => { helpOpen = 1; }, onmouseout: helpMouseout});</script>
+<div id='content'>
+<span id='menuopen' class='jsonly'><button type='submit' name='' title='' class='icon icon-move'><span>menu</span></button></span><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">qs('#menuopen').onclick = event => { qs('#foot').classList.toggle('foot'); event.stopPropagation(); }</script>
+<p id="breadcrumb"><a href="?pgsql=postgresql.zeabur.internal">PostgreSQL</a> » <a href='?pgsql=postgresql.zeabur.internal&amp;username=root' accesskey='1' title='Alt+Shift+1'>postgresql.zeabur.internal</a> » <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=">openlaunch</a> » <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public">public</a> » SQL命令
+<h2>SQL命令</h2>
+<div id='ajaxstatus' class='jsonly hidden'></div>
+
+<form action="" method="post" enctype="multipart/form-data" id="form">
+<p><textarea name='query' rows='20' cols='80' class='sqlarea jush-pgsql' spellcheck='false' wrap='off'>  -- 查看哪些项目没有分类（来自 bot 导入）
+  SELECT p.id, p.name, p.website_url
+  FROM project p
+  LEFT JOIN project_to_category ptc ON p.id = ptc.project_id
+  WHERE ptc.project_id IS NULL AND p.launch_status IN (&#039;ongoing&#039;, &#039;launched&#039;);
+</textarea><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">qs('textarea').focus();
+qs('#form').onsubmit = partial(sqlSubmit, qs('#form'), '?pgsql=postgresql.zeabur.internal&username=root&db=openlaunch&ns=public');</script>
+<p><input type='submit' value='执行' title='Ctrl+Enter'>
+限制行数: <input type='number' name='limit' class='size' value=''>
+<label><input type='checkbox' name='error_stops' value='1'>出错时停止</label>
+<label><input type='checkbox' name='only_errors' value='1'>仅显示错误</label>
+<input type='hidden' name='token' value='936088:655070'>
+<fieldset><legend><a href='#fieldset-history'>历史</a><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">qsl('a').onclick = partial(toggle, 'fieldset-history');</script></legend><div id='fieldset-history' class='hidden'>
+<a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;sql=&amp;history=0">编辑</a> <span class='time' title='2026-03-13'>07:58:57</span> <code class='jush-pgsql'>-- 查看哪些项目没有分类（来自 bot 导入）   SELECT p.id, p.name, p.website_url   FROM project p  </code><i>…</i><br>
+<input type='submit' name='clear' value='清除'>
+<a href='?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;sql=&amp;history=all'>编辑全部</a>
+</div></fieldset>
+</form>
+</div>
+
+<div id='foot' class='foot'>
+<div id='menu'>
+<h1><a href='https://www.adminer.org/' target="_blank" rel="noreferrer noopener" id='h1'><img src='?file=logo.png&amp;version=5.4.2' width='24' height='24' alt='' id='logo'>Adminer</a> <span class='version'>5.4.2 <a href='https://www.adminer.org/#download' target="_blank" rel="noreferrer noopener" id='version'></a></span></h1>
+<form action='' method='post'>
+<div id='lang'><label>语言: <select name='lang'><option value="en">English<option value="ar">العربية<option value="bg">Български<option value="bn">বাংলা<option value="bs">Bosanski<option value="ca">Català<option value="cs">Čeština<option value="da">Dansk<option value="de">Deutsch<option value="el">Ελληνικά<option value="es">Español<option value="et">Eesti<option value="fa">فارسی<option value="fi">Suomi<option value="fr">Français<option value="gl">Galego<option value="he">עברית<option value="hi">हिन्दी<option value="hu">Magyar<option value="id">Bahasa Indonesia<option value="it">Italiano<option value="ja">日本語<option value="ka">ქართული<option value="ko">한국어<option value="lt">Lietuvių<option value="lv">Latviešu<option value="ms">Bahasa Melayu<option value="nl">Nederlands<option value="no">Norsk<option value="pl">Polski<option value="pt">Português<option value="pt-br">Português (Brazil)<option value="ro">Limba Română<option value="ru">Русский<option value="sk">Slovenčina<option value="sl">Slovenski<option value="sr">Српски<option value="sv">Svenska<option value="ta">த‌மிழ்<option value="th">ภาษาไทย<option value="tr">Türkçe<option value="uk">Українська<option value="uz">Oʻzbekcha<option value="vi">Tiếng Việt<option value="zh" selected>简体中文<option value="zh-tw">繁體中文</select><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">qsl('select').onchange = function () { this.form.submit(); };</script></label> <input type='submit' value='使用' class='hidden'>
+<input type='hidden' name='token' value='27510:515376'>
+</div>
+</form>
+<script src='?file=jush.js&amp;version=5.4.2' nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=" defer></script>
+<script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">
+var jushLinks = { pgsql:{
+	"?pgsql=postgresql.zeabur.internal&username=root&db=openlaunch&ns=public&table=$&": /\b(account|alternative_page|alternative_page_to_project|blog_article|category|comparison_page|crawled_data|fuma_comments|fuma_rates|fuma_roles|launch_quota|product_hunt_import|project|project_to_category|project_to_tag|promo_code|promo_code_usage|seo_article|session|tag|upvote|user|verification|waitlist_submission)\b/g
+}
+};
+jushLinks.bac = jushLinks.pgsql;
+jushLinks.bra = jushLinks.pgsql;
+jushLinks.sqlite_quo = jushLinks.pgsql;
+jushLinks.mssql_bra = jushLinks.pgsql;
+addEventListener('DOMContentLoaded', () => { autocompleter = jush.autocompleteSql('""', {"account":["id","account_id","provider_id","user_id","access_token","refresh_token","id_token","access_token_expires_at","refresh_token_expires_at","scope","password","created_at","updated_at"],"alternative_page":["id","slug","subject_project_id","title","meta_title","meta_description","content","generated_at","created_at","updated_at"],"alternative_page_to_project":["alternative_page_id","project_id","ai_score","pros_cons_json","use_cases","sort_order"],"blog_article":["id","slug","title","description","content","image","tags","author","meta_title","meta_description","published_at","created_at","updated_at"],"category":["id","name","created_at","updated_at"],"comparison_page":["id","slug","project_a_id","project_b_id","category_id","title","meta_title","meta_description","content","structured_data","generated_at","created_at","updated_at"],"crawled_data":["id","url","project_id","content","content_hash","crawled_at","expires_at","created_at","updated_at"],"fuma_comments":["id","page","thread","author","content","timestamp"],"fuma_rates":["user_id","comment_id","like"],"fuma_roles":["user_id","name","can_delete"],"launch_quota":["id","date","free_count","premium_count","created_at","updated_at","badge_count"],"product_hunt_import":["id","product_hunt_id","product_hunt_url","project_id","votes_count","rank","imported_at","created_at"],"project":["id","name","slug","description","website_url","logo_url","cover_image_url","github_url","twitter_url","tech_stack","pricing","platforms","launch_status","scheduled_launch_date","launch_type","featured_on_homepage","daily_ranking","created_at","updated_at","created_by","product_image","has_badge_verified","badge_verified_at"],"project_to_category":["project_id","category_id"],"project_to_tag":["project_id","tag_id"],"promo_code":["id","code","discount_amount","usage_limit","used_count","expires_at","is_active","created_by","created_at","updated_at"],"promo_code_usage":["id","promo_code_id","user_id","project_id","used_at"],"seo_article":["id","slug","title","description","content","meta_title","meta_description","published_at","created_at","updated_at","image"],"session":["id","expires_at","token","created_at","updated_at","ip_address","user_agent","user_id","impersonated_by"],"tag":["id","name","slug","moderation_status","moderation_note","project_count","created_at","updated_at"],"upvote":["id","user_id","project_id","created_at"],"user":["id","name","email","email_verified","image","created_at","updated_at","stripe_customer_id","role","banned","ban_reason","ban_expires","is_bot"],"verification":["id","identifier","value","expires_at","created_at","updated_at"],"waitlist_submission":["id","project_url","created_at","ip_address","user_agent"]}); });
+</script>
+<script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">syntaxHighlighting('18', '');</script>
+<form action=''>
+<p id='dbs'>
+<input type='hidden' name='pgsql' value='postgresql.zeabur.internal'>
+<input type='hidden' name='username' value='root'>
+<label title='数据库'>数据库: <select name='db'><option value=""><option selected>openlaunch<option>postgres<option>template1<option>zeabur</select><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">mixin(qsl('select'), {onmousedown: dbMouseDown, onchange: dbChange});</script>
+</label><input type='submit' value='使用' class='hidden'>
+<br><label>模式: <select name='ns'><option value=""><option>drizzle<option>information_schema<option>pg_catalog<option>pg_toast<option selected>public</select><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">mixin(qsl('select'), {onmousedown: dbMouseDown, onchange: dbChange});</script>
+</label><input type='hidden' name='sql' value=''>
+</p></form>
+<p class='links'>
+<a href='?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;sql=' class='active '>SQL命令</a>
+<a href='?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;import='>导入</a>
+<a href='?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;dump=' id='dump'>导出</a>
+<a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;create=">创建表</a>
+<ul id='tables'><script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">mixin(qs('#tables'), {onmouseover: menuOver, onmouseout: menuOut});</script>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=account" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=account" class='structure' title='显示结构'>account</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=alternative_page" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=alternative_page" class='structure' title='显示结构'>alternative_page</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=alternative_page_to_project" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=alternative_page_to_project" class='structure' title='显示结构'>alternative_page_to_project</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=blog_article" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=blog_article" class='structure' title='显示结构'>blog_article</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=category" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=category" class='structure' title='显示结构'>category</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=comparison_page" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=comparison_page" class='structure' title='显示结构'>comparison_page</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=crawled_data" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=crawled_data" class='structure' title='显示结构'>crawled_data</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=fuma_comments" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=fuma_comments" class='structure' title='显示结构'>fuma_comments</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=fuma_rates" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=fuma_rates" class='structure' title='显示结构'>fuma_rates</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=fuma_roles" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=fuma_roles" class='structure' title='显示结构'>fuma_roles</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=launch_quota" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=launch_quota" class='structure' title='显示结构'>launch_quota</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=product_hunt_import" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=product_hunt_import" class='structure' title='显示结构'>product_hunt_import</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=project" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=project" class='structure' title='显示结构'>project</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=project_to_category" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=project_to_category" class='structure' title='显示结构'>project_to_category</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=project_to_tag" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=project_to_tag" class='structure' title='显示结构'>project_to_tag</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=promo_code" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=promo_code" class='structure' title='显示结构'>promo_code</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=promo_code_usage" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=promo_code_usage" class='structure' title='显示结构'>promo_code_usage</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=seo_article" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=seo_article" class='structure' title='显示结构'>seo_article</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=session" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=session" class='structure' title='显示结构'>session</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=tag" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=tag" class='structure' title='显示结构'>tag</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=upvote" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=upvote" class='structure' title='显示结构'>upvote</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=user" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=user" class='structure' title='显示结构'>user</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=verification" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=verification" class='structure' title='显示结构'>verification</a>
+<li><a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;select=waitlist_submission" class='select' title='选择数据'>选择</a> <a href="?pgsql=postgresql.zeabur.internal&amp;username=root&amp;db=openlaunch&amp;ns=public&amp;table=waitlist_submission" class='structure' title='显示结构'>waitlist_submission</a>
+</ul>
+</div>
+<form action="" method="post">
+<p class="logout">
+<span>root
+</span>
+<input type="submit" name="logout" value="登出" id="logout">
+<input type='hidden' name='token' value='702585:855615'>
+</form>
+</div>
+
+<script nonce="NTVlZGYyYjI3ZjkyZTlhMDgxMTdmMDg4ZmYzNTVjODk=">setupSubmitHighlight(document);</script>
