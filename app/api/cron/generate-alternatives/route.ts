@@ -34,10 +34,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Find launched projects without an alternatives page
-    const existingPageProjectIds = db
-      .select({ subjectProjectId: alternativePage.subjectProjectId })
-      .from(alternativePage)
+    // Find launched projects without an alternatives page,
+    // pre-filtered to only those with 3+ other projects sharing the same tags.
+    // This avoids wasting crawl/AI budget on products with no real alternatives yet.
+    const sharedTagCountSql = sql<number>`(
+      SELECT COUNT(DISTINCT pt2.project_id)
+      FROM project_to_tag pt1
+      JOIN project_to_tag pt2 ON pt2.tag_id = pt1.tag_id AND pt2.project_id != ${projectTable.id}
+      JOIN project p2 ON p2.id = pt2.project_id AND p2.launch_status IN ('ongoing', 'launched')
+      WHERE pt1.project_id = ${projectTable.id}
+    )`
 
     const candidateProjects = await db
       .select({
@@ -54,9 +60,11 @@ export async function GET(request: NextRequest) {
             eq(projectTable.launchStatus, launchStatus.ONGOING),
             eq(projectTable.launchStatus, launchStatus.LAUNCHED),
           ),
-          sql`${projectTable.id} NOT IN (${existingPageProjectIds})`,
+          sql`${projectTable.id} NOT IN (SELECT subject_project_id FROM alternative_page)`,
+          sql`${sharedTagCountSql} >= ${MIN_ALTERNATIVES}`,
         ),
       )
+      .orderBy(sql`${sharedTagCountSql} DESC`)
       .limit(MAX_PROJECTS_PER_RUN)
 
     let generated = 0
