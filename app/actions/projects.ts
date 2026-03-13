@@ -249,111 +249,103 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     // Générer le slug à partir du nom dans projectData
     const slug = await generateUniqueSlug(name)
 
-    // Insérer le projet
-    const [newProject] = await db
-      .insert(projectTable)
-      .values({
-        id: crypto.randomUUID(),
-        // Utiliser les variables déstructurées de projectData
-        name,
-        slug,
-        description,
-        websiteUrl,
-        logoUrl,
-        productImage: productImage ?? undefined,
-        techStack,
-        platforms,
-        pricing,
-        githubUrl: githubUrl ?? undefined,
-        twitterUrl: twitterUrl ?? undefined,
-        hasBadgeVerified: hasBadgeVerified ?? false,
-        badgeVerifiedAt: hasBadgeVerified ? new Date() : undefined,
-        createdBy: session.user.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning({ id: projectTable.id, slug: projectTable.slug })
+    const { projectToTag, tag: tagTable, tagModerationStatus } = await import("@/drizzle/db/schema")
 
-    // Ajouter les catégories
-    if (categories.length > 0) {
-      await db.insert(projectToCategory).values(
-        categories.map((categoryId) => ({
-          projectId: newProject.id,
-          categoryId,
-        })),
-      )
+    const normalizeTag = (raw: string) => {
+      const trimmed = raw.trim()
+      const tagSlug = trimmed
+        .toLowerCase()
+        .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+      return { id: tagSlug, name: trimmed, slug: tagSlug }
     }
 
-    // Ajouter les tags (inline to avoid nested server action session issues)
-    if (tags && tags.length > 0) {
-      const {
-        projectToTag,
-        tag: tagTable,
-        tagModerationStatus,
-      } = await import("@/drizzle/db/schema")
+    const normalizedTags =
+      tags && tags.length > 0
+        ? tags
+            .slice(0, 10)
+            .map(normalizeTag)
+            .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
+        : []
 
-      const normalizeTag = (raw: string) => {
-        const trimmed = raw.trim()
-        const slug = trimmed
-          .toLowerCase()
-          .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-        return { id: slug, name: trimmed, slug }
-      }
-
-      const normalizedTags = tags
-        .slice(0, 10)
-        .map(normalizeTag)
-        .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
-
-      if (normalizedTags.length > 0) {
-        await db.transaction(async (tx) => {
-          // Upsert tags
-          for (const t of normalizedTags) {
-            await tx
-              .insert(tagTable)
-              .values({
-                id: t.id,
-                name: t.name,
-                slug: t.slug,
-                moderationStatus: tagModerationStatus.PENDING,
-                projectCount: 0,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              })
-              .onConflictDoNothing({ target: tagTable.id })
-          }
-
-          // Insert associations
-          await tx.insert(projectToTag).values(
-            normalizedTags.map((t) => ({
-              projectId: newProject.id,
-              tagId: t.id,
-            })),
-          )
-
-          // Update project counts
-          for (const t of normalizedTags) {
-            const countResult = await tx
-              .select({ count: count() })
-              .from(projectToTag)
-              .where(eq(projectToTag.tagId, t.id))
-
-            await tx
-              .update(tagTable)
-              .set({
-                projectCount: countResult[0]?.count || 0,
-                updatedAt: new Date(),
-              })
-              .where(eq(tagTable.id, t.id))
-          }
+    const newProject = await db.transaction(async (tx) => {
+      // Insert project
+      const [inserted] = await tx
+        .insert(projectTable)
+        .values({
+          id: crypto.randomUUID(),
+          name,
+          slug,
+          description,
+          websiteUrl,
+          logoUrl,
+          productImage: productImage ?? undefined,
+          techStack,
+          platforms,
+          pricing,
+          githubUrl: githubUrl ?? undefined,
+          twitterUrl: twitterUrl ?? undefined,
+          hasBadgeVerified: hasBadgeVerified ?? false,
+          badgeVerifiedAt: hasBadgeVerified ? new Date() : undefined,
+          createdBy: session.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
+        .returning({ id: projectTable.id, slug: projectTable.slug })
+
+      // Insert categories
+      if (categories.length > 0) {
+        await tx.insert(projectToCategory).values(
+          categories.map((categoryId) => ({
+            projectId: inserted.id,
+            categoryId,
+          })),
+        )
       }
-    }
+
+      // Upsert tags + associations
+      if (normalizedTags.length > 0) {
+        for (const t of normalizedTags) {
+          await tx
+            .insert(tagTable)
+            .values({
+              id: t.id,
+              name: t.name,
+              slug: t.slug,
+              moderationStatus: tagModerationStatus.PENDING,
+              projectCount: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoNothing({ target: tagTable.id })
+        }
+
+        await tx
+          .insert(projectToTag)
+          .values(normalizedTags.map((t) => ({ projectId: inserted.id, tagId: t.id })))
+
+        for (const t of normalizedTags) {
+          const countResult = await tx
+            .select({ count: count() })
+            .from(projectToTag)
+            .where(eq(projectToTag.tagId, t.id))
+          await tx
+            .update(tagTable)
+            .set({ projectCount: countResult[0]?.count || 0, updatedAt: new Date() })
+            .where(eq(tagTable.id, t.id))
+        }
+      }
+
+      return inserted
+    })
 
     return { success: true, projectId: newProject.id, slug: newProject.slug }
   } catch (error) {
     console.error("Error submitting project:", error)
+    // Unique constraint on websiteUrl
+    if (error instanceof Error && error.message.includes("project_website_url_unique")) {
+      return { success: false, error: "This website URL has already been submitted" }
+    }
     return { success: false, error: "Failed to submit project" }
   }
 }
