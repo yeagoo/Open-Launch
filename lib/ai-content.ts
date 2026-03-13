@@ -273,30 +273,19 @@ Candidate Alternative: ${candidateProject.name}
 Description: ${candidateProject.description}
 Website: ${truncateContent(candidateProject.crawledMarkdown, 4000)}`
 
-  try {
-    const raw = await callDeepSeek(systemPrompt, userPrompt, {
-      temperature: 0.2,
-      maxTokens: 500,
-    })
+  const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    temperature: 0.2,
+    maxTokens: 500,
+  })
 
-    const parsed = JSON.parse(extractJson(raw))
+  const parsed = JSON.parse(extractJson(raw))
 
-    return {
-      isAlternative: !!parsed.isAlternative,
-      confidenceScore: Math.min(100, Math.max(0, parsed.confidenceScore || 0)),
-      pros: parsed.pros || [],
-      cons: parsed.cons || [],
-      useCases: parsed.useCases || "",
-    }
-  } catch (error) {
-    console.error(`Alternative analysis error for ${candidateProject.name}:`, error)
-    return {
-      isAlternative: false,
-      confidenceScore: 0,
-      pros: [],
-      cons: [],
-      useCases: "",
-    }
+  return {
+    isAlternative: !!parsed.isAlternative,
+    confidenceScore: Math.min(100, Math.max(0, parsed.confidenceScore || 0)),
+    pros: parsed.pros || [],
+    cons: parsed.cons || [],
+    useCases: parsed.useCases || "",
   }
 }
 
