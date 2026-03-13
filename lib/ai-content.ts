@@ -297,7 +297,8 @@ ${candidateList}`
     // Validate returned IDs exist in candidates
     const validIds = new Set(candidates.map((c) => c.id))
     return parsed.filter((id: unknown) => typeof id === "string" && validIds.has(id)).slice(0, 5)
-  } catch {
+  } catch (error) {
+    console.error("prescreenAlternatives failed:", error instanceof Error ? error.message : error)
     return []
   }
 }

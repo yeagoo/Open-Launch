@@ -62,17 +62,19 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
 
   // 获取 ProductHunt 的"今日"（基于太平洋时间 PST/PDT，UTC-8/-7）
   // ProductHunt 的一天从太平洋时间 00:00 开始
+  // 正确做法：减去 8h 得到"太平洋日期"，再加回 8h 换算回 UTC
   const now = new Date()
 
-  // 转换为太平洋时间（简化处理：UTC-8）
-  const pacificOffset = -8 * 60 // PST offset in minutes
-  const pacificNow = new Date(now.getTime() + pacificOffset * 60 * 1000)
+  const PT_OFFSET_MS = 8 * 60 * 60 * 1000 // PST = UTC-8 (忽略夏令时，误差 ≤1h，可接受)
+  // 将当前 UTC 时间偏移为太平洋时间，用 UTC 方法读取年月日
+  const pacificNow = new Date(now.getTime() - PT_OFFSET_MS)
+  const year = pacificNow.getUTCFullYear()
+  const month = pacificNow.getUTCMonth()
+  const day = pacificNow.getUTCDate()
 
-  // 太平洋时间的今日开始和结束
-  const todayStart = new Date(pacificNow)
-  todayStart.setUTCHours(0, 0, 0, 0)
-  const todayEnd = new Date(pacificNow)
-  todayEnd.setUTCHours(23, 59, 59, 999)
+  // 太平洋时间 00:00 对应的 UTC 时间 = Date.UTC(y,m,d) + 8h
+  const todayStart = new Date(Date.UTC(year, month, day) + PT_OFFSET_MS)
+  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1)
 
   const postedAfter = todayStart.toISOString()
   const postedBefore = todayEnd.toISOString()

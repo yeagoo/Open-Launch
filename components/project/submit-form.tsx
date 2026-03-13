@@ -58,7 +58,7 @@ import {
   scheduleLaunch,
 } from "@/app/actions/launch"
 import type { LaunchAvailability } from "@/app/actions/launch"
-import { getAllCategories, submitProject } from "@/app/actions/projects"
+import { deleteMyDraftProject, getAllCategories, submitProject } from "@/app/actions/projects"
 
 interface ProjectFormData {
   name: string
@@ -555,12 +555,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       if (formData.scheduledDate) {
         try {
           const formattedDate = format(parseISO(formData.scheduledDate), DATE_FORMAT.API)
-          const launchSuccess = await scheduleLaunch(
-            projectId,
-            formattedDate,
-            formData.launchType,
-            userId,
-          )
+          const launchSuccess = await scheduleLaunch(projectId, formattedDate, formData.launchType)
 
           if (!launchSuccess) {
             console.error(
@@ -582,6 +577,10 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
           }
         } catch (scheduleError: unknown) {
           console.error("Error during launch scheduling:", scheduleError)
+          // Clean up the orphaned project so the user can retry with the same URL
+          await deleteMyDraftProject(projectId).catch((e) =>
+            console.error("Failed to clean up draft project:", e),
+          )
           setError(
             scheduleError instanceof Error
               ? scheduleError.message

@@ -242,31 +242,26 @@ export async function GET(request: NextRequest) {
 
         const pageSlug = `${subjectProject.slug}-alternatives`
 
-        const existingPage = await db
-          .select({ id: alternativePage.id })
-          .from(alternativePage)
-          .where(eq(alternativePage.slug, pageSlug))
-          .limit(1)
-
-        if (existingPage.length > 0) {
-          skipped++
-          continue
-        }
-
         const pageId = crypto.randomUUID()
         await db.transaction(async (tx) => {
-          await tx.insert(alternativePage).values({
-            id: pageId,
-            slug: pageSlug,
-            subjectProjectId: subjectProject.id,
-            title: pageContent.title,
-            metaTitle: pageContent.metaTitle,
-            metaDescription: pageContent.metaDescription,
-            content: pageContent.rawMarkdown,
-            generatedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
+          const rows = await tx
+            .insert(alternativePage)
+            .values({
+              id: pageId,
+              slug: pageSlug,
+              subjectProjectId: subjectProject.id,
+              title: pageContent.title,
+              metaTitle: pageContent.metaTitle,
+              metaDescription: pageContent.metaDescription,
+              content: pageContent.rawMarkdown,
+              generatedAt: new Date(),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoNothing({ target: alternativePage.slug })
+            .returning({ id: alternativePage.id })
+
+          if (rows.length === 0) return // already exists, skip relations
 
           for (let i = 0; i < confirmedAlternatives.length; i++) {
             const alt = confirmedAlternatives[i]

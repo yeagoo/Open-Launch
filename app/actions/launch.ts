@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
@@ -14,6 +15,7 @@ import {
 import { addDays, format, isBefore, parse } from "date-fns"
 import { and, count as drizzleCount, eq, gte, lt, ne, sql } from "drizzle-orm"
 
+import { auth } from "@/lib/auth"
 import {
   DATE_FORMAT,
   LAUNCH_LIMITS,
@@ -21,6 +23,10 @@ import {
   LAUNCH_TYPES,
   USER_DAILY_LAUNCH_LIMIT,
 } from "@/lib/constants"
+
+async function getSession() {
+  return auth.api.getSession({ headers: await headers() })
+}
 
 export interface LaunchAvailability {
   date: string
@@ -166,10 +172,36 @@ export async function scheduleLaunch(
   projectId: string,
   date: string,
   launchTypeValue: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES],
-  userId: string | undefined,
 ): Promise<boolean> {
-  if (!userId) {
-    throw new Error("User ID is required to schedule a launch.")
+  const session = await getSession()
+  if (!session?.user?.id) {
+    throw new Error("Authentication required.")
+  }
+  const userId = session.user.id
+
+  // Verify the project exists and belongs to the authenticated user
+  const [project] = await db
+    .select({
+      id: projectTable.id,
+      createdBy: projectTable.createdBy,
+      hasBadgeVerified: projectTable.hasBadgeVerified,
+    })
+    .from(projectTable)
+    .where(eq(projectTable.id, projectId))
+    .limit(1)
+
+  if (!project) {
+    throw new Error("Project not found.")
+  }
+  if (project.createdBy !== userId) {
+    throw new Error("You do not have permission to schedule this project.")
+  }
+
+  // Badge launch type requires server-verified badge
+  if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE && !project.hasBadgeVerified) {
+    throw new Error(
+      "Badge not verified. Please verify your badge before scheduling a badge launch.",
+    )
   }
 
   try {

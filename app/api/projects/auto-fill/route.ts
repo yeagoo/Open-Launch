@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { isPrivateHostname } from "@/lib/utils"
 import { getAllCategories } from "@/app/actions/projects"
 
 export const maxDuration = 120
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest) {
     // Only allow HTTP/HTTPS to prevent SSRF (file://, ftp://, etc.)
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
       return NextResponse.json({ error: "Only HTTP/HTTPS URLs are supported" }, { status: 400 })
+    }
+
+    if (isPrivateHostname(parsedUrl.hostname)) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
     }
 
     // Crawl the website
@@ -133,8 +138,9 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
       return null
     }
 
-    // Only allow HTTP/HTTPS to prevent SSRF
+    // Only allow HTTP/HTTPS and block private addresses to prevent SSRF
     if (!["http:", "https:"].includes(resolvedUrl.protocol)) return null
+    if (isPrivateHostname(resolvedUrl.hostname)) return null
 
     const response = await fetch(resolvedUrl.toString(), {
       signal: AbortSignal.timeout(10000),
