@@ -8,7 +8,6 @@ import {
   launchStatus,
   project as projectTable,
   projectToCategory,
-  projectToTag,
 } from "@/drizzle/db/schema"
 import { and, eq, or, sql } from "drizzle-orm"
 
@@ -35,14 +34,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Find launched projects without an alternatives page,
-    // pre-filtered to only those with 3+ other projects sharing the same tags.
-    // This avoids wasting crawl/AI budget on products with no real alternatives yet.
-    const sharedTagCountSql = sql<number>`(
-      SELECT COUNT(DISTINCT pt2.project_id)
-      FROM project_to_tag pt1
-      JOIN project_to_tag pt2 ON pt2.tag_id = pt1.tag_id AND pt2.project_id != ${projectTable.id}
-      JOIN project p2 ON p2.id = pt2.project_id AND p2.launch_status IN ('ongoing', 'launched')
-      WHERE pt1.project_id = ${projectTable.id}
+    // pre-filtered to only those with 3+ other ongoing/launched projects in the same category.
+    const sameCategoryCountSql = sql<number>`(
+      SELECT COUNT(DISTINCT pc2.project_id)
+      FROM project_to_category pc1
+      JOIN project_to_category pc2 ON pc2.category_id = pc1.category_id AND pc2.project_id != ${projectTable.id}
+      JOIN project p2 ON p2.id = pc2.project_id AND p2.launch_status IN ('ongoing', 'launched')
+      WHERE pc1.project_id = ${projectTable.id}
     )`
 
     const candidateProjects = await db
@@ -61,10 +59,10 @@ export async function GET(request: NextRequest) {
             eq(projectTable.launchStatus, launchStatus.LAUNCHED),
           ),
           sql`${projectTable.id} NOT IN (SELECT subject_project_id FROM alternative_page)`,
-          sql`${sharedTagCountSql} >= ${MIN_ALTERNATIVES}`,
+          sql`${sameCategoryCountSql} >= ${MIN_ALTERNATIVES}`,
         ),
       )
-      .orderBy(sql`${sharedTagCountSql} DESC`)
+      .orderBy(sql`${sameCategoryCountSql} DESC`)
       .limit(MAX_PROJECTS_PER_RUN)
 
     let generated = 0
@@ -87,81 +85,37 @@ export async function GET(request: NextRequest) {
 
         const categoryIds = subjectCategories.map((c) => c.categoryId)
 
-        // Get subject's tags for better candidate matching
-        const subjectTags = await db
-          .select({ tagId: projectToTag.tagId })
-          .from(projectToTag)
-          .where(eq(projectToTag.projectId, subjectProject.id))
-        const tagIds = subjectTags.map((t) => t.tagId)
-
-        // Prefer tag-matching candidates, fall back to category-matching
-        let candidates =
-          tagIds.length > 0
-            ? await db
-                .select({
-                  id: projectTable.id,
-                  name: projectTable.name,
-                  slug: projectTable.slug,
-                  description: projectTable.description,
-                  websiteUrl: projectTable.websiteUrl,
-                })
-                .from(projectTable)
-                .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
-                .where(
-                  and(
-                    sql`${projectToTag.tagId} IN ${tagIds}`,
-                    sql`${projectTable.id} != ${subjectProject.id}`,
-                    or(
-                      eq(projectTable.launchStatus, launchStatus.ONGOING),
-                      eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-                    ),
-                  ),
-                )
-                .groupBy(
-                  projectTable.id,
-                  projectTable.name,
-                  projectTable.slug,
-                  projectTable.description,
-                  projectTable.websiteUrl,
-                )
-                .limit(MAX_CANDIDATES)
-            : []
-
-        // Fall back to category-based if not enough tag matches
-        if (candidates.length < MIN_ALTERNATIVES) {
-          candidates = await db
-            .select({
-              id: projectTable.id,
-              name: projectTable.name,
-              slug: projectTable.slug,
-              description: projectTable.description,
-              websiteUrl: projectTable.websiteUrl,
-            })
-            .from(projectTable)
-            .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
-            .where(
-              and(
-                sql`${projectToCategory.categoryId} IN ${categoryIds}`,
-                sql`${projectTable.id} != ${subjectProject.id}`,
-                or(
-                  eq(projectTable.launchStatus, launchStatus.ONGOING),
-                  eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-                ),
+        // Get candidates from the same categories
+        const candidates = await db
+          .select({
+            id: projectTable.id,
+            name: projectTable.name,
+            slug: projectTable.slug,
+            description: projectTable.description,
+            websiteUrl: projectTable.websiteUrl,
+          })
+          .from(projectTable)
+          .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+          .where(
+            and(
+              sql`${projectToCategory.categoryId} IN ${categoryIds}`,
+              sql`${projectTable.id} != ${subjectProject.id}`,
+              or(
+                eq(projectTable.launchStatus, launchStatus.ONGOING),
+                eq(projectTable.launchStatus, launchStatus.LAUNCHED),
               ),
-            )
-            .groupBy(
-              projectTable.id,
-              projectTable.name,
-              projectTable.slug,
-              projectTable.description,
-              projectTable.websiteUrl,
-            )
-            .limit(MAX_CANDIDATES)
-        }
+            ),
+          )
+          .groupBy(
+            projectTable.id,
+            projectTable.name,
+            projectTable.slug,
+            projectTable.description,
+            projectTable.websiteUrl,
+          )
+          .limit(MAX_CANDIDATES)
 
-        console.log(
-          `🔍 "${subjectProject.name}": ${candidates.length} candidates via ${tagIds.length > 0 ? "tags" : "categories"}`,
-        )
+        console.log(`🔍 "${subjectProject.name}": ${candidates.length} candidates via categories`)
 
         if (candidates.length < MIN_ALTERNATIVES) {
           console.log(
