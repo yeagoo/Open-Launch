@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
           .where(eq(projectToCategory.projectId, subjectProject.id))
 
         if (subjectCategories.length === 0) {
+          console.log(`⏭️  Skipping "${subjectProject.name}": no categories`)
           skipped++
           continue
         }
@@ -108,6 +109,9 @@ export async function GET(request: NextRequest) {
           .limit(MAX_CANDIDATES)
 
         if (candidates.length < MIN_ALTERNATIVES) {
+          console.log(
+            `⏭️  Skipping "${subjectProject.name}": only ${candidates.length} candidates (need ${MIN_ALTERNATIVES})`,
+          )
           skipped++
           continue
         }
@@ -166,6 +170,9 @@ export async function GET(request: NextRequest) {
 
         // Need at least MIN_ALTERNATIVES confirmed alternatives
         if (confirmedAlternatives.length < MIN_ALTERNATIVES) {
+          console.log(
+            `⏭️  Skipping "${subjectProject.name}": only ${confirmedAlternatives.length} confirmed alternatives (need ${MIN_ALTERNATIVES})`,
+          )
           skipped++
           continue
         }
