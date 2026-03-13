@@ -26,7 +26,7 @@ const MAX_PROJECTS_PER_RUN = 1
 const MAX_PRESCREEN_CANDIDATES = 25 // Phase 1: description-only, cheap
 const MAX_DEEP_ANALYZE = 5 // Phase 2: crawl + AI, expensive
 const MIN_ALTERNATIVES = 2
-const MIN_CONFIDENCE_SCORE = 50
+const MIN_CONFIDENCE_SCORE = 30 // Phase 2 enrichment threshold — Phase 1 prescreening is the quality gate
 const CRAWL_TIMEOUT = 15000
 
 export async function GET(request: NextRequest) {
@@ -203,7 +203,9 @@ export async function GET(request: NextRequest) {
               `  📊 ${candidate.name}: isAlt=${analysis.isAlternative}, score=${analysis.confidenceScore}`,
             )
 
-            if (analysis.isAlternative && analysis.confidenceScore >= MIN_CONFIDENCE_SCORE) {
+            // Phase 1 prescreening is the quality gate; Phase 2 provides enrichment (pros/cons/useCases).
+            // Accept all prescreened candidates that score above the minimum threshold.
+            if (analysis.confidenceScore >= MIN_CONFIDENCE_SCORE) {
               confirmedAlternatives.push({
                 project: candidate,
                 score: analysis.confidenceScore,
