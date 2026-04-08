@@ -17,11 +17,38 @@ const resourcesLinks = [
   { title: "Pricing", href: "/pricing" },
   { title: "Sponsors", href: "/sponsors" },
   { title: "Blog", href: "/blog" },
+  { title: "Friends", href: "/friends" },
 ]
 
 const legalLinks = [
   { title: "Terms of Service", href: "/legal/terms" },
   { title: "Privacy Policy", href: "/legal/privacy" },
+]
+
+const friendLinks = [
+  { title: "Debian.Club", href: "https://debian.club/" },
+  { title: "HestiaCP CN", href: "https://hestiacp.cn/" },
+  { title: "PortCyou", href: "https://portcyou.com/" },
+  { title: "CloudFan", href: "https://cloud.fan/" },
+  { title: "AlmaLinuxCN", href: "https://www.almalinux.com.cn/" },
+  { title: "P.Cafe", href: "https://p.cafe/" },
+  { title: "RankFan", href: "https://www.rank.fan/" },
+  { title: "APP on ARM", href: "https://www.apponarm.com/" },
+  { title: "ScreenHello", href: "https://www.screenhello.com/" },
+  { title: "MF8", href: "https://mf8.biz/" },
+  { title: "AAT.ee", href: "https://aat.ee/" },
+  { title: "II.Pe", href: "https://ii.pe/" },
+  { title: "FreeHost", href: "https://freehost.work/" },
+  { title: "BigKr", href: "https://bigkr.com/" },
+  { title: "EOL.Wiki", href: "https://eol.wiki/" },
+  { title: "GEO.Fan", href: "https://geo.fan/" },
+  { title: "WebCasa", href: "https://web.casa" },
+  { title: "LiteHTTPD", href: "https://litehttpd.com" },
+  { title: "LLStack", href: "https://llstack.com" },
+  { title: "HiEmdash", href: "https://hiemdash.com" },
+  { title: "QOO.IM", href: "https://qoo.im" },
+  { title: "Ubuntu.Fan", href: "https://ubuntu.fan/" },
+  { title: "RunEntLinux", href: "https://runentlinux.com/" },
 ]
 
 export default function FooterSection() {
@@ -113,122 +140,19 @@ export default function FooterSection() {
               Friends
             </h3>
             <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <a
-                href="https://debian.club/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                Debian.Club
-              </a>
-              <span>|</span>
-              <a
-                href="https://hestiacp.cn/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                HestiaCP CN
-              </a>
-              <span>|</span>
-              <a
-                href="https://portcyou.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                PortCyou
-              </a>
-              <span>|</span>
-              <a
-                href="https://cloud.fan/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                CloudFan
-              </a>
-              <span>|</span>
-              <a
-                href="https://www.almalinux.com.cn/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                AlmaLinuxCN
-              </a>
-              <span>|</span>
-              <a
-                href="https://p.cafe/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                P.Cafe
-              </a>
-              <span>|</span>
-              <a
-                href="https://www.rank.fan/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                RankFan
-              </a>
-              <span>|</span>
-              <a
-                href="https://run.claw.cloud/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                ClawCloud Run
-              </a>
-              <span>|</span>
-              <a
-                href="https://www.apponarm.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                APP on ARM
-              </a>
-              <span>|</span>
-              <a
-                href="https://www.screenhello.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                ScreenHello
-              </a>
-              <span>|</span>
-              <a
-                href="https://mf8.biz/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                MF8
-              </a>
-              <span>|</span>
-              <a
-                href="https://aat.ee/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                AAT.ee
-              </a>
-              <span>|</span>
-              <a
-                href="https://ii.pe/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary transition-colors"
-              >
-                II.Pe
-              </a>
+              {friendLinks.map((link, i) => (
+                <span key={link.title} className="flex items-center gap-2">
+                  {i > 0 && <span>|</span>}
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary transition-colors"
+                  >
+                    {link.title}
+                  </a>
+                </span>
+              ))}
             </div>
 
             {/* Badges Section */}
@@ -335,6 +259,38 @@ export default function FooterSection() {
                   className="hidden dark:block"
                 />
               </a>
+
+              {/* MF8 Badge */}
+              <a href="https://www.mf8.biz" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://www.mf8.biz/badge/badge_light.svg"
+                  alt="Featured on MF8"
+                  style={{ height: "30px", width: "auto" }}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://www.mf8.biz/badge/badge_dark.svg"
+                  alt="Featured on MF8"
+                  style={{ height: "30px", width: "auto" }}
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* BigKr Badge */}
+              <a href="https://bigkr.com" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://bigkr.com/badge/badge_light.svg"
+                  alt="Featured on BigKr"
+                  style={{ height: "30px", width: "auto" }}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://bigkr.com/badge/badge_dark.svg"
+                  alt="Featured on BigKr"
+                  style={{ height: "30px", width: "auto" }}
+                  className="hidden dark:block"
+                />
+              </a>
             </div>
           </div>
         )}
@@ -396,6 +352,38 @@ export default function FooterSection() {
                 <img
                   src="https://hicyou.com/badge/featured-dark.svg"
                   alt="Featured on Hi Cyou"
+                  style={{ height: "30px", width: "auto" }}
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* MF8 Badge */}
+              <a href="https://www.mf8.biz" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://www.mf8.biz/badge/badge_light.svg"
+                  alt="Featured on MF8"
+                  style={{ height: "30px", width: "auto" }}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://www.mf8.biz/badge/badge_dark.svg"
+                  alt="Featured on MF8"
+                  style={{ height: "30px", width: "auto" }}
+                  className="hidden dark:block"
+                />
+              </a>
+
+              {/* BigKr Badge */}
+              <a href="https://bigkr.com" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="https://bigkr.com/badge/badge_light.svg"
+                  alt="Featured on BigKr"
+                  style={{ height: "30px", width: "auto" }}
+                  className="block dark:hidden"
+                />
+                <img
+                  src="https://bigkr.com/badge/badge_dark.svg"
+                  alt="Featured on BigKr"
                   style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />

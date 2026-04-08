@@ -201,6 +201,85 @@ export default async function Home() {
                 </Link>
               </div>
             </div>
+
+            {/* Linux Docs Alliance */}
+            <div className="space-y-3 py-4">
+              <h3 className="flex items-center gap-2 font-semibold">Linux Docs Alliance</h3>
+              <div className="space-y-2">
+                <a
+                  href="https://debian.club/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
+                >
+                  Debian.Club
+                </a>
+                <a
+                  href="https://ubuntu.fan/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
+                >
+                  Ubuntu.Fan
+                </a>
+                <a
+                  href="https://runentlinux.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
+                >
+                  RunEntLinux
+                </a>
+                <a
+                  href="https://www.almalinux.com.cn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
+                >
+                  AlmaLinuxCN
+                </a>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Check software support lifecycle at:
+                <a
+                  href="https://eol.wiki/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary ml-1 hover:underline"
+                >
+                  EOL.Wiki
+                </a>
+              </p>
+            </div>
+
+            {/* Recommended Tools */}
+            <div className="space-y-3 py-4">
+              <h3 className="flex items-center gap-2 font-semibold">Recommended</h3>
+              <div className="space-y-2">
+                <a
+                  href="https://web.casa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:bg-muted/40 -mx-2 block rounded-md p-2 transition-colors"
+                >
+                  <span className="text-sm font-medium">WebCasa</span>
+                  <span className="text-muted-foreground block text-xs">
+                    AI-native open-source server control panel
+                  </span>
+                </a>
+                <a
+                  href="https://litehttpd.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:bg-muted/40 -mx-2 block rounded-md p-2 transition-colors"
+                >
+                  <span className="text-sm font-medium">LiteHTTPD</span>
+                  <span className="text-muted-foreground block text-xs">
+                    Lightweight web server, highly compatible with Apache HTTPD
+                  </span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
