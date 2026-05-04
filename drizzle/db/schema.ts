@@ -502,3 +502,28 @@ export const alternativePageToProject = pgTable(
     }
   },
 )
+
+// ─── Admin audit log ─────────────────────────────────────────────────────────
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: text("id").primaryKey(),
+    adminUserId: text("admin_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    metadata: json("metadata"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      adminUserIdIdx: index("admin_audit_log_admin_user_id_idx").on(table.adminUserId),
+      actionIdx: index("admin_audit_log_action_idx").on(table.action),
+      createdAtIdx: index("admin_audit_log_created_at_idx").on(table.createdAt),
+    }
+  },
+)
