@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
+import { buildLocaleAlternates } from "@/lib/i18n-metadata"
+
 export async function generateMetadata({
   params,
 }: {
@@ -13,6 +15,7 @@ export async function generateMetadata({
   return {
     title: `${t("title")} | aat.ee`,
     description: t("subtitle"),
+    alternates: buildLocaleAlternates("/friends", locale),
   }
 }
 

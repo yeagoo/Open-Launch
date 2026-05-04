@@ -9,11 +9,12 @@ import { useTranslations } from "next-intl"
 import { LanguageSwitcher } from "./language-switcher"
 
 const discoverLinks = [
-  { key: "trending", href: "/trending" },
-  { key: "categories", href: "/categories" },
-  { key: "compareTools", href: "/compare" },
-  { key: "alternatives", href: "/alternatives" },
-  { key: "submitProject", href: "/projects/submit" },
+  { key: "trending", href: "/trending", localized: true },
+  { key: "categories", href: "/categories", localized: true },
+  // /compare and /alternatives are English-only — bypass locale routing
+  { key: "compareTools", href: "/compare", localized: false },
+  { key: "alternatives", href: "/alternatives", localized: false },
+  { key: "submitProject", href: "/projects/submit", localized: true },
 ] as const
 
 const resourcesLinks = [
@@ -84,16 +85,27 @@ export default function FooterSection() {
                 {t("discover")}
               </h3>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
-                {discoverLinks.map((link) => (
-                  <li key={link.key}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
-                    >
-                      {tLinks(link.key)}
-                    </Link>
-                  </li>
-                ))}
+                {discoverLinks.map((link) =>
+                  link.localized ? (
+                    <li key={link.key}>
+                      <Link
+                        href={link.href}
+                        className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
+                      >
+                        {tLinks(link.key)}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={link.key}>
+                      <a
+                        href={link.href}
+                        className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
+                      >
+                        {tLinks(link.key)}
+                      </a>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
 
