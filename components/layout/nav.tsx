@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { headers } from "next/headers"
-import Link from "next/link"
 
+import { Link } from "@/i18n/navigation"
 import {
   RiDashboardLine,
   RiFlashlightLine,
@@ -15,6 +15,7 @@ import {
   RiUserAddLine,
 } from "@remixicon/react"
 import { User } from "better-auth"
+import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import {
@@ -38,6 +39,8 @@ export default async function Nav() {
     headers: await headers(),
   })
   const user = session?.user
+  const t = await getTranslations("nav")
+  const tCommon = await getTranslations("common")
 
   return (
     <nav className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm">
@@ -65,10 +68,10 @@ export default async function Nav() {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/sign-in">Sign in</Link>
+                <Link href="/sign-in">{t("signIn")}</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/sign-up">Sign up</Link>
+                <Link href="/sign-up">{t("signUp")}</Link>
               </Button>
             </>
           )}
@@ -81,7 +84,7 @@ export default async function Nav() {
             <Button variant="default" size="sm" asChild className="mr-2">
               <Link href="/sign-in">
                 <RiLoginBoxLine className="h-4 w-4" />
-                Sign in
+                {t("signIn")}
               </Link>
             </Button>
           )}
@@ -95,7 +98,7 @@ export default async function Nav() {
               <div className="flex h-full flex-col">
                 <div className="px-2">
                   <SheetHeader className="mb-2 pb-0">
-                    <SheetTitle>Menu</SheetTitle>
+                    <SheetTitle>{tCommon("menu")}</SheetTitle>
                   </SheetHeader>
                 </div>
 
@@ -113,7 +116,7 @@ export default async function Nav() {
                     <div className="mb-4">
                       <div className="mb-2 px-6">
                         <h3 className="text-muted-foreground mb-2 text-xs font-medium">
-                          NAVIGATION
+                          {t("navigation")}
                         </h3>
                       </div>
                       <div className="space-y-1">
@@ -123,7 +126,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiHomeLine className="text-muted-foreground h-4 w-4" />
-                            <span>Home</span>
+                            <span>{t("home")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -132,7 +135,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiFlashlightLine className="text-muted-foreground h-4 w-4" />
-                            <span>Trending</span>
+                            <span>{t("trending")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -141,7 +144,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiLayoutGridLine className="text-muted-foreground h-4 w-4" />
-                            <span>Categories</span>
+                            <span>{t("categories")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -150,7 +153,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiMedalLine className="text-muted-foreground h-4 w-4" />
-                            <span>Winners</span>
+                            <span>{t("winners")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -159,7 +162,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiMoneyDollarCircleLine className="text-muted-foreground h-4 w-4" />
-                            <span>Pricing</span>
+                            <span>{t("pricing")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -168,7 +171,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiFlashlightLine className="text-muted-foreground h-4 w-4" />
-                            <span>Fast Track 🚀</span>
+                            <span>{t("fastTrack")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -177,7 +180,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiHandCoinLine className="text-muted-foreground h-4 w-4" />
-                            <span>Sponsors</span>
+                            <span>{t("sponsors")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -186,7 +189,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiDashboardLine className="text-muted-foreground h-4 w-4" />
-                            <span>Dashboard</span>
+                            <span>{t("dashboard")}</span>
                           </Link>
                         </SheetClose>
                       </div>
@@ -199,7 +202,9 @@ export default async function Nav() {
                   {/* Actions */}
                   <div className="mb-4">
                     <div className="mb-2 px-6">
-                      <h3 className="text-muted-foreground mb-2 text-xs font-medium">ACTIONS</h3>
+                      <h3 className="text-muted-foreground mb-2 text-xs font-medium">
+                        {t("actions")}
+                      </h3>
                     </div>
                     <div>
                       <ThemeToggleMenu />
@@ -213,7 +218,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiLoginBoxLine className="text-muted-foreground h-4 w-4" />
-                            <span>Sign in</span>
+                            <span>{t("signIn")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
@@ -222,7 +227,7 @@ export default async function Nav() {
                             className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
                           >
                             <RiUserAddLine className="text-muted-foreground h-4 w-4" />
-                            <span>Sign up</span>
+                            <span>{t("signUp")}</span>
                           </Link>
                         </SheetClose>
                       </div>

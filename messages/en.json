@@ -1,5 +1,224 @@
 {
   "common": {
-    "siteName": "aat.ee"
+    "siteName": "aat.ee",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "viewAll": "View all",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "more": "More",
+    "menu": "Menu",
+    "close": "Close",
+    "tryAgain": "Try again"
+  },
+  "nav": {
+    "explore": "Explore",
+    "exploreDesc": {
+      "trendingTitle": "Trending Now",
+      "trendingDesc": "Discover the most popular projects",
+      "winnersTitle": "Daily Winners",
+      "winnersDesc": "See the best projects of the day",
+      "monthTitle": "Best of Month",
+      "monthDesc": "See the best projects of the month",
+      "categoriesTitle": "Categories",
+      "categoriesDesc": "Browse projects by category"
+    },
+    "dashboard": "Dashboard",
+    "submitProject": "Submit Project",
+    "pricing": "Pricing",
+    "fastTrack": "Fast Track 🚀",
+    "sponsors": "Sponsors",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "navigation": "NAVIGATION",
+    "actions": "ACTIONS",
+    "home": "Home",
+    "trending": "Trending",
+    "categories": "Categories",
+    "winners": "Winners"
+  },
+  "footer": {
+    "rightsReserved": "All rights reserved.",
+    "discover": "Discover",
+    "resources": "Resources",
+    "legal": "Legal",
+    "friends": "Friends",
+    "links": {
+      "trending": "Trending",
+      "categories": "Categories",
+      "compareTools": "Compare Tools",
+      "alternatives": "Alternatives",
+      "submitProject": "Submit Project",
+      "pricing": "Pricing",
+      "sponsors": "Sponsors",
+      "blog": "Blog",
+      "friendsPage": "Friends",
+      "termsOfService": "Terms of Service",
+      "privacyPolicy": "Privacy Policy"
+    }
+  },
+  "home": {
+    "metadata": {
+      "today": "Today's Launched Products on aat.ee",
+      "todayDesc": "Discover the latest product launches today on aat.ee - startups, AI tools, and SaaS products"
+    },
+    "banner": {
+      "title": "Launch platform for your products",
+      "subtitle": "Submit, get a badge & backlink"
+    },
+    "sections": {
+      "todayTitle": "Top Projects Launching Today",
+      "yesterdayTitle": "Yesterday's Launches",
+      "monthTitle": "This Month's Best",
+      "topCategories": "Top Categories",
+      "quickAccess": "Quick Access",
+      "linuxAlliance": "Linux Docs Alliance",
+      "linuxAllianceFooter": "Check software support lifecycle at:",
+      "recommended": "Recommended",
+      "webcasaDesc": "AI-native open-source server control panel",
+      "litehttpdDesc": "Lightweight web server, highly compatible with Apache HTTPD",
+      "trendingNow": "Trending Now",
+      "dailyWinners": "Daily Winners",
+      "bestOfMonth": "Best of Month",
+      "dashboard": "Dashboard",
+      "projectsCount": "{count} projects"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account to continue",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Login",
+      "submitting": "Logging in...",
+      "loading": "Loading...",
+      "withGoogle": "Login with Google",
+      "withGithub": "Login with GitHub",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "orContinueWith": "Or continue with",
+      "captchaRequired": "Please complete the security verification",
+      "genericError": "An error occurred",
+      "successToast": "Successfully signed in",
+      "termsAgreement": "By clicking continue, you agree to our",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "subtitle": "Join aat.ee to launch and discover products",
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "loading": "Loading...",
+      "withGoogle": "Sign up with Google",
+      "withGithub": "Sign up with GitHub",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "orContinueWith": "Or continue with",
+      "captchaRequired": "Please complete the security verification",
+      "genericError": "An error occurred"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link",
+      "emailLabel": "Email",
+      "submit": "Send reset link",
+      "backToSignIn": "Back to sign in",
+      "successMessage": "If that email exists, we sent a reset link."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "passwordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "submit": "Reset password",
+      "successMessage": "Password reset. Redirecting...",
+      "mismatchError": "Passwords do not match"
+    },
+    "verifyEmail": {
+      "sentTitle": "Check your email",
+      "sentMessage": "We sent a verification link to your inbox.",
+      "successTitle": "Email verified!",
+      "successMessage": "Your account is ready. Redirecting to dashboard..."
+    }
+  },
+  "project": {
+    "list": {
+      "title": "Projects",
+      "submitButton": "Submit a project",
+      "empty": "No projects yet."
+    },
+    "detail": {
+      "upvote": "Upvote",
+      "upvoted": "Upvoted",
+      "visit": "Visit",
+      "share": "Share",
+      "comments": "Comments",
+      "categories": "Categories",
+      "tags": "Tags",
+      "launchedOn": "Launched on",
+      "scheduledFor": "Scheduled for",
+      "ongoing": "Ongoing",
+      "launched": "Launched",
+      "scheduled": "Scheduled",
+      "byMaker": "by"
+    },
+    "submit": {
+      "title": "Submit your project",
+      "subtitle": "Share your product with thousands of users",
+      "websiteUrl": "Website URL",
+      "name": "Project name",
+      "description": "Description",
+      "category": "Category",
+      "tags": "Tags",
+      "logo": "Logo",
+      "submitButton": "Submit project",
+      "autoFill": "Auto-fill from URL"
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Choose the plan that fits your launch",
+    "free": "Free",
+    "premium": "Premium",
+    "premiumPlus": "Premium Plus",
+    "perLaunch": "per launch",
+    "getStarted": "Get started",
+    "subscribe": "Subscribe",
+    "compareFeatures": "Compare features"
+  },
+  "search": {
+    "placeholder": "Search projects...",
+    "noResults": "No results found",
+    "recentSearches": "Recent searches"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "unauthorized": "Unauthorized",
+    "notFound": "Page not found",
+    "rateLimited": "Too many requests. Please wait.",
+    "serverError": "Server error. Please try again later."
+  },
+  "friends": {
+    "title": "Friends",
+    "subtitle": "Our friends and partners across the web.",
+    "backToHome": "Back to Home",
+    "groups": {
+      "linuxCommunities": "Linux Communities",
+      "toolsServices": "Tools & Services",
+      "directories": "Directories & Discovery",
+      "knowledgeReference": "Knowledge & Reference"
+    }
   }
 }

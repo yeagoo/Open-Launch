@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+import { Link } from "@/i18n/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { RiGithubFill, RiGoogleFill } from "@remixicon/react"
+import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
@@ -20,6 +21,7 @@ import { TurnstileCaptcha } from "./turnstile-captcha"
 
 export function SignInForm() {
   const router = useRouter()
+  const t = useTranslations("auth.signIn")
   const [loadingButtons, setLoadingButtons] = useState({
     google: false,
     email: false,
@@ -45,7 +47,7 @@ export function SignInForm() {
         callbackURL: "/dashboard",
       })
     } catch (error) {
-      setGeneralError(error instanceof Error ? error.message : "An error occurred")
+      setGeneralError(error instanceof Error ? error.message : t("genericError"))
     } finally {
       setLoadingButtons((prevState) => ({ ...prevState, [provider]: false }))
     }
@@ -53,7 +55,7 @@ export function SignInForm() {
 
   const handleLoginEmail = async (data: SignInFormData) => {
     if (!turnstileToken) {
-      setGeneralError("Please complete the security verification")
+      setGeneralError(t("captchaRequired"))
       return
     }
 
@@ -79,7 +81,7 @@ export function SignInForm() {
       }
       router.push("/dashboard")
     } catch (error) {
-      setGeneralError(error instanceof Error ? error.message : "An error occurred")
+      setGeneralError(error instanceof Error ? error.message : t("genericError"))
     } finally {
       setLoadingButtons((prevState) => ({ ...prevState, email: false }))
     }
@@ -89,24 +91,22 @@ export function SignInForm() {
     oneTap({
       fetchOptions: {
         onError: ({ error }) => {
-          toast.error(error.message || "An error occurred")
+          toast.error(error.message || t("genericError"))
         },
         onSuccess: () => {
-          toast.success("Successfully signed in")
+          toast.success(t("successToast"))
           window.location.href = "/dashboard"
         },
       },
     })
-  }, [])
+  }, [t])
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 sm:px-0">
       <Card className="w-full rounded-md shadow-none">
         <CardHeader className="flex flex-col items-center gap-2 px-4 sm:px-6">
-          <CardTitle className="text-center text-xl sm:text-2xl">Welcome back</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account to continue
-          </CardDescription>
+          <CardTitle className="text-center text-xl sm:text-2xl">{t("title")}</CardTitle>
+          <CardDescription className="text-center">{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="px-4 pb-6 sm:px-6">
           <form onSubmit={handleSubmit(handleLoginEmail)} className="flex flex-col gap-4">
@@ -118,7 +118,7 @@ export function SignInForm() {
               disabled={loadingButtons.google}
             >
               <RiGoogleFill className="me-1" size={16} aria-hidden="true" />
-              {loadingButtons.google ? "Loading..." : "Login with Google"}
+              {loadingButtons.google ? t("loading") : t("withGoogle")}
             </Button>
             <Button
               className="w-full cursor-pointer"
@@ -128,17 +128,17 @@ export function SignInForm() {
               disabled={loadingButtons.github}
             >
               <RiGithubFill className="me-1" size={16} aria-hidden="true" />
-              {loadingButtons.github ? "Loading..." : "Login with GitHub"}
+              {loadingButtons.github ? t("loading") : t("withGithub")}
             </Button>
 
             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
               <span className="bg-background text-muted-foreground relative z-10 px-2">
-                Or continue with
+                {t("orContinueWith")}
               </span>
             </div>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("emailLabel")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -150,12 +150,12 @@ export function SignInForm() {
               </div>
               <div className="grid gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-1">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t("passwordLabel")}</Label>
                   <Link
                     href="/forgot-password"
                     className="text-xs underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    {t("forgotPassword")}
                   </Link>
                 </div>
                 <Input id="password" type="password" {...register("password")} className="w-full" />
@@ -172,22 +172,22 @@ export function SignInForm() {
                 className="w-full cursor-pointer"
                 disabled={loadingButtons.email || !turnstileToken}
               >
-                {loadingButtons.email ? "Logging in..." : "Login"}
+                {loadingButtons.email ? t("submitting") : t("submit")}
               </Button>
             </div>
 
             <div className="text-muted-foreground text-center text-sm">
-              Don&apos;t have an account?{" "}
+              {t("noAccount")}{" "}
               <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
-                Sign up
+                {t("signUpLink")}
               </Link>
             </div>
           </form>
         </CardContent>
       </Card>
       <div className="text-muted-foreground [&_a]:hover:text-primary px-4 text-center text-xs text-balance [&_a]:underline [&_a]:underline-offset-4">
-        By clicking continue, you agree to our <Link href="/legal/terms">Terms of Service</Link> and{" "}
-        <Link href="/legal/privacy">Privacy Policy</Link>.
+        {t("termsAgreement")} <Link href="/legal/terms">{t("termsOfService")}</Link> {t("and")}{" "}
+        <Link href="/legal/privacy">{t("privacyPolicy")}</Link>.
       </div>
     </div>
   )
