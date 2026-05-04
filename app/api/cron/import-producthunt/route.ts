@@ -12,6 +12,7 @@ import {
 } from "@/drizzle/db/schema"
 import { count, eq } from "drizzle-orm"
 
+import { verifyCronAuth } from "@/lib/cron-auth"
 import { downloadAndUploadImage } from "@/lib/image-upload"
 import {
   cleanDescription,
@@ -29,19 +30,8 @@ import {
  */
 export async function GET(request: Request) {
   try {
-    // 验证 Cron Secret（防止被滥用）
-    const authHeader = request.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    if (!cronSecret) {
-      console.error("❌ CRON_SECRET is not configured")
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
-    }
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error("❌ Unauthorized cron access attempt")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     console.log("🚀 Starting ProductHunt import cron job...")
 
