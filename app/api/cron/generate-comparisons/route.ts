@@ -14,22 +14,18 @@ import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { generateComparisonContent } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
+import { verifyCronAuth } from "@/lib/cron-auth"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 90
 
-const API_KEY = process.env.CRON_API_KEY
 const MAX_NEW_COMPARISONS_PER_RUN = 1
 const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization")
-    const providedKey = authHeader?.replace("Bearer ", "")
-
-    if (!API_KEY || providedKey !== API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     // Get categories that have at least 2 ongoing/launched projects (skip empty ones)
     const categories = await db

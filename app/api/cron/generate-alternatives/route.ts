@@ -17,11 +17,11 @@ import {
   prescreenAlternatives,
 } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
+import { verifyCronAuth } from "@/lib/cron-auth"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 90
 
-const API_KEY = process.env.CRON_API_KEY
 const MAX_PROJECTS_PER_RUN = 1
 const MAX_PRESCREEN_CANDIDATES = 25 // Phase 1: description-only, cheap
 const MAX_DEEP_ANALYZE = 5 // Phase 2: crawl + AI, expensive
@@ -31,12 +31,8 @@ const CRAWL_TIMEOUT = 15000
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization")
-    const providedKey = authHeader?.replace("Bearer ", "")
-
-    if (!API_KEY || providedKey !== API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     // Select projects that have >= MIN_ALTERNATIVES same-category peers,
     // prioritising those with the most peers (most likely to succeed).

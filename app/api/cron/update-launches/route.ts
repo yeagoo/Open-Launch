@@ -6,18 +6,12 @@ import { launchStatus, project, upvote } from "@/drizzle/db/schema"
 import { endOfDay, startOfDay, subDays, subHours } from "date-fns"
 import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 
-// Clé API pour sécuriser l'endpoint
-const API_KEY = process.env.CRON_API_KEY
+import { verifyCronAuth } from "@/lib/cron-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    // Vérification de la clé API
-    const authHeader = request.headers.get("authorization")
-    const providedKey = authHeader?.replace("Bearer ", "")
-
-    if (!API_KEY || providedKey !== API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     // Date actuelle en UTC
     const now = new Date()

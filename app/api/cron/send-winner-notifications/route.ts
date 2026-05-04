@@ -5,18 +5,13 @@ import { launchStatus, project, user } from "@/drizzle/db/schema"
 import { endOfDay, startOfDay, subDays } from "date-fns"
 import { and, eq, gte, inArray, lt } from "drizzle-orm"
 
+import { verifyCronAuth } from "@/lib/cron-auth"
 import { sendWinnerBadgeEmail } from "@/lib/transactional-emails"
-
-const API_KEY = process.env.CRON_API_KEY
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization")
-    const providedKey = authHeader?.replace("Bearer ", "")
-
-    if (!API_KEY || providedKey !== API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     const now = new Date()
     const yesterday = subDays(startOfDay(now), 1)

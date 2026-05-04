@@ -6,17 +6,12 @@ import { tag, tagModerationStatus } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
 import { moderateTags } from "@/lib/ai-content"
-
-const API_KEY = process.env.CRON_API_KEY
+import { verifyCronAuth } from "@/lib/cron-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization")
-    const providedKey = authHeader?.replace("Bearer ", "")
-
-    if (!API_KEY || providedKey !== API_KEY) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     // Fetch all tags with PENDING status (awaiting moderation)
     const recentTags = await db

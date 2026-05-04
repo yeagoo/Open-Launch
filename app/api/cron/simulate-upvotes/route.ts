@@ -5,6 +5,8 @@ import { db } from "@/drizzle/db"
 import { launchStatus, project, upvote, user } from "@/drizzle/db/schema"
 import { and, eq, inArray, sql } from "drizzle-orm"
 
+import { verifyCronAuth } from "@/lib/cron-auth"
+
 export const dynamic = "force-dynamic"
 
 /**
@@ -13,12 +15,8 @@ export const dynamic = "force-dynamic"
  */
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const secret = searchParams.get("secret") || request.headers.get("x-cron-secret")
-
-    if (secret !== process.env.CRON_SECRET) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const authError = verifyCronAuth(request)
+    if (authError) return authError
 
     // 1. 获取所有 Bot 用户
     const bots = await db.select().from(user).where(eq(user.isBot, true))
