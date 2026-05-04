@@ -1,15 +1,24 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
-export const metadata: Metadata = {
-  title: "Friends | aat.ee",
-  description:
-    "Our friends and partners - a curated collection of useful tools, communities, and resources.",
+import { Link } from "@/i18n/navigation"
+import { getTranslations, setRequestLocale } from "next-intl/server"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "friends" })
+  return {
+    title: `${t("title")} | aat.ee`,
+    description: t("subtitle"),
+  }
 }
 
 const friendGroups = [
   {
-    title: "Linux Communities",
+    key: "linuxCommunities",
     links: [
       { name: "Debian.Club", href: "https://debian.club/", desc: "Debian community" },
       { name: "HestiaCP CN", href: "https://hestiacp.cn/", desc: "HestiaCP Chinese community" },
@@ -21,7 +30,7 @@ const friendGroups = [
     ],
   },
   {
-    title: "Tools & Services",
+    key: "toolsServices",
     links: [
       { name: "PortCyou", href: "https://portcyou.com/", desc: "Port monitoring" },
       { name: "CloudFan", href: "https://cloud.fan/", desc: "Cloud services" },
@@ -35,7 +44,7 @@ const friendGroups = [
     ],
   },
   {
-    title: "Directories & Discovery",
+    key: "directories",
     links: [
       { name: "P.Cafe", href: "https://p.cafe/", desc: "Product cafe" },
       { name: "RankFan", href: "https://www.rank.fan/", desc: "Rankings" },
@@ -47,29 +56,31 @@ const friendGroups = [
     ],
   },
   {
-    title: "Knowledge & Reference",
+    key: "knowledgeReference",
     links: [
       { name: "EOL.Wiki", href: "https://eol.wiki/", desc: "Software end-of-life tracker" },
       { name: "GEO.Fan", href: "https://geo.fan/", desc: "GEO Fan" },
     ],
   },
-]
+] as const
 
-export default function FriendsPage() {
+export default async function FriendsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations("friends")
+  const tGroups = await getTranslations("friends.groups")
   return (
     <main className="bg-muted/30 min-h-screen">
       <div className="container mx-auto max-w-4xl px-4 py-8 md:py-12">
         <div className="mb-8">
-          <h1 className="text-foreground text-2xl font-bold md:text-3xl">Friends</h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Our friends and partners across the web.
-          </p>
+          <h1 className="text-foreground text-2xl font-bold md:text-3xl">{t("title")}</h1>
+          <p className="text-muted-foreground mt-2 text-sm">{t("subtitle")}</p>
         </div>
 
         <div className="space-y-8">
           {friendGroups.map((group) => (
-            <section key={group.title}>
-              <h2 className="text-foreground mb-4 text-lg font-semibold">{group.title}</h2>
+            <section key={group.key}>
+              <h2 className="text-foreground mb-4 text-lg font-semibold">{tGroups(group.key)}</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                 {group.links.map((link) => (
                   <a
@@ -93,7 +104,7 @@ export default function FriendsPage() {
             href="/"
             className="text-muted-foreground hover:text-primary text-sm transition-colors"
           >
-            &larr; Back to Home
+            &larr; {t("backToHome")}
           </Link>
         </div>
       </div>

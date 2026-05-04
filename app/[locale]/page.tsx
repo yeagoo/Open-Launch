@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { headers } from "next/headers"
-import Link from "next/link"
+
+import { Link } from "@/i18n/navigation"
+import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { cn } from "@/lib/utils"
@@ -11,19 +13,23 @@ import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
-export default async function Home() {
-  // Récupérer les données réelles
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  setRequestLocale(locale)
+
+  const t = await getTranslations("home")
+  const tSections = await getTranslations("home.sections")
+  const tCommon = await getTranslations("common")
+
   const todayProjects = await getTodayProjects()
   const yesterdayProjects = await getYesterdayProjects()
   const monthProjects = await getMonthBestProjects()
   const topCategories = await getTopCategories(5)
 
-  // // Get session
   const session = await auth.api.getSession({
     headers: await headers(),
   })
 
-  // Prepare data for ItemList Schema (today's projects)
   const itemListData = todayProjects.map((p) => ({
     name: p.name,
     slug: p.slug,
@@ -32,40 +38,34 @@ export default async function Home() {
 
   return (
     <main className="bg-muted/30 min-h-screen">
-      {/* Structured Data - ItemList Schema */}
       {itemListData.length > 0 && (
         <ItemListSchema
-          name="Today's Launched Products on aat.ee"
-          description="Discover the latest product launches today on aat.ee - startups, AI tools, and SaaS products"
+          name={t("metadata.today")}
+          description={t("metadata.todayDesc")}
           items={itemListData}
           listType="project"
         />
       )}
       <div className="container mx-auto max-w-6xl px-4 pt-6 pb-12 md:pt-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
-          {/* Contenu principal */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
             {/* Welcome */}
             <div className="bg-secondary/70 hover:bg-secondary border-border/40 relative z-10 overflow-hidden rounded-lg border">
               <div className="container mx-auto max-w-6xl px-4 py-3 md:py-4">
-                {/* Mobile Layout - Centered */}
                 <div className="flex flex-col items-center justify-center gap-3 md:hidden">
                   <Link href="/pricing" className="flex cursor-pointer flex-col gap-2 text-center">
                     <div>
                       <h1 className="text-foreground text-base font-semibold">
-                        <span>Launch platform for your products</span>
+                        <span>{t("banner.title")}</span>
                       </h1>
                       <p className="text-muted-foreground text-xs">
-                        <span>Submit, get a badge & backlink</span>
+                        <span>{t("banner.subtitle")}</span>
                       </p>
                     </div>
                   </Link>
                 </div>
 
-                {/* Desktop Layout - Text left, Image right */}
-
                 <div className="hidden items-center justify-center gap-12 md:flex">
-                  {/* image 1 */}
                   <div className="flex-shrink-0">
                     <img
                       src="/oppieG.png"
@@ -73,19 +73,17 @@ export default async function Home() {
                       className="h-24 w-24 object-contain"
                     />
                   </div>
-                  {/* text */}
                   <div className="flex flex-col items-center justify-center gap-4 text-center">
                     <Link href="/pricing" className="cursor-pointer">
                       <h1 className="text-foreground text-lg font-semibold">
-                        <span>Launch platform for your products</span>
+                        <span>{t("banner.title")}</span>
                       </h1>
                       <p className="text-muted-foreground text-sm">
-                        <span>Submit, get a badge & backlink</span>
+                        <span>{t("banner.subtitle")}</span>
                       </p>
                     </Link>
                   </div>
 
-                  {/* image 2 */}
                   <div className="flex-shrink-0">
                     <img
                       src="/oppieD.png"
@@ -98,14 +96,14 @@ export default async function Home() {
             </div>
 
             <ProjectSection
-              title="Top Projects Launching Today"
+              title={tSections("todayTitle")}
               projects={todayProjects}
               sortByUpvotes={true}
               isAuthenticated={!!session?.user}
             />
 
             <ProjectSection
-              title="Yesterday's Launches"
+              title={tSections("yesterdayTitle")}
               projects={yesterdayProjects}
               moreHref="/trending?filter=yesterday"
               sortByUpvotes={true}
@@ -113,7 +111,7 @@ export default async function Home() {
             />
 
             <ProjectSection
-              title="This Month's Best"
+              title={tSections("monthTitle")}
               projects={monthProjects}
               moreHref="/trending?filter=month"
               sortByUpvotes={true}
@@ -123,10 +121,8 @@ export default async function Home() {
 
           {/* Sidebar */}
           <div className="top-24">
-            {/* Sponsors */}
             <SidebarSponsors />
 
-            {/* Build for Joy */}
             <div className="py-4">
               <img src="/images/img1.png" alt="build for joy" className="w-full rounded-lg" />
             </div>
@@ -134,10 +130,12 @@ export default async function Home() {
             {/* Categories */}
             <div className="space-y-3 py-4">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-semibold">Top Categories</h3>
+                <h3 className="flex items-center gap-2 font-semibold">
+                  {tSections("topCategories")}
+                </h3>
                 <Button variant="ghost" size="sm" className="text-sm" asChild>
                   <Link href="/categories" className="flex items-center gap-1">
-                    View all
+                    {tCommon("viewAll")}
                   </Link>
                 </Button>
               </div>
@@ -153,58 +151,51 @@ export default async function Home() {
                   >
                     <span className="text-sm">{category.name}</span>
                     <span className="text-muted-foreground bg-secondary rounded-full px-2 py-0.5 text-xs">
-                      {category.count} projects
+                      {tSections("projectsCount", { count: category.count })}
                     </span>
                   </Link>
                 ))}
               </div>
             </div>
-            {/* Podium
-            {yesterdayProjects.length > 0 && (
-              <div className="p-5 pt-0 space-y-3">
-                <h3 className="font-semibold flex items-center gap-2">
-                  Yesterday&apos;s Top Launches
-                </h3>
-                <TopLaunchesPodium topProjects={yesterdayProjects} />
-              </div>
-            )} */}
 
             {/* Quick Links */}
             <div className="space-y-3 py-4">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <h3 className="flex items-center gap-2 font-semibold">{tSections("quickAccess")}</h3>
               <div className="space-y-2">
                 {session?.user && (
                   <Link
                     href="/dashboard"
                     className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
                   >
-                    Dashboard
+                    {tSections("dashboard")}
                   </Link>
                 )}
                 <Link
                   href="/trending"
                   className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
                 >
-                  Trending Now
+                  {tSections("trendingNow")}
                 </Link>
                 <Link
                   href="/winners"
                   className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
                 >
-                  Daily Winners
+                  {tSections("dailyWinners")}
                 </Link>
                 <Link
                   href="/trending?filter=month"
                   className="-mx-2 flex items-center gap-2 rounded-md p-2 text-sm transition-colors hover:underline"
                 >
-                  Best of Month
+                  {tSections("bestOfMonth")}
                 </Link>
               </div>
             </div>
 
             {/* Linux Docs Alliance */}
             <div className="space-y-3 py-4">
-              <h3 className="flex items-center gap-2 font-semibold">Linux Docs Alliance</h3>
+              <h3 className="flex items-center gap-2 font-semibold">
+                {tSections("linuxAlliance")}
+              </h3>
               <div className="space-y-2">
                 <a
                   href="https://debian.club/"
@@ -240,7 +231,7 @@ export default async function Home() {
                 </a>
               </div>
               <p className="text-muted-foreground text-xs">
-                Check software support lifecycle at:
+                {tSections("linuxAllianceFooter")}
                 <a
                   href="https://eol.wiki/"
                   target="_blank"
@@ -252,9 +243,9 @@ export default async function Home() {
               </p>
             </div>
 
-            {/* Recommended Tools */}
+            {/* Recommended */}
             <div className="space-y-3 py-4">
-              <h3 className="flex items-center gap-2 font-semibold">Recommended</h3>
+              <h3 className="flex items-center gap-2 font-semibold">{tSections("recommended")}</h3>
               <div className="space-y-2">
                 <a
                   href="https://web.casa"
@@ -264,7 +255,7 @@ export default async function Home() {
                 >
                   <span className="text-sm font-medium">WebCasa</span>
                   <span className="text-muted-foreground block text-xs">
-                    AI-native open-source server control panel
+                    {tSections("webcasaDesc")}
                   </span>
                 </a>
                 <a
@@ -275,7 +266,7 @@ export default async function Home() {
                 >
                   <span className="text-sm font-medium">LiteHTTPD</span>
                   <span className="text-muted-foreground block text-xs">
-                    Lightweight web server, highly compatible with Apache HTTPD
+                    {tSections("litehttpdDesc")}
                   </span>
                 </a>
               </div>

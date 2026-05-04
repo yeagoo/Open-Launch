@@ -1,29 +1,30 @@
 /* eslint-disable @next/next/no-img-element */
 "use client"
 
-import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-// Link groups for a columnar layout
+import { Link } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
+
 const discoverLinks = [
-  { title: "Trending", href: "/trending" },
-  { title: "Categories", href: "/categories" },
-  { title: "Compare Tools", href: "/compare" },
-  { title: "Alternatives", href: "/alternatives" },
-  { title: "Submit Project", href: "/projects/submit" },
-]
+  { key: "trending", href: "/trending" },
+  { key: "categories", href: "/categories" },
+  { key: "compareTools", href: "/compare" },
+  { key: "alternatives", href: "/alternatives" },
+  { key: "submitProject", href: "/projects/submit" },
+] as const
 
 const resourcesLinks = [
-  { title: "Pricing", href: "/pricing" },
-  { title: "Sponsors", href: "/sponsors" },
-  { title: "Blog", href: "/blog" },
-  { title: "Friends", href: "/friends" },
-]
+  { key: "pricing", href: "/pricing" },
+  { key: "sponsors", href: "/sponsors" },
+  { key: "blog", href: "/blog" },
+  { key: "friendsPage", href: "/friends" },
+] as const
 
 const legalLinks = [
-  { title: "Terms of Service", href: "/legal/terms" },
-  { title: "Privacy Policy", href: "/legal/privacy" },
-]
+  { key: "termsOfService", href: "/legal/terms" },
+  { key: "privacyPolicy", href: "/legal/privacy" },
+] as const
 
 const friendLinks = [
   { title: "Debian.Club", href: "https://debian.club/" },
@@ -53,7 +54,9 @@ const friendLinks = [
 
 export default function FooterSection() {
   const pathname = usePathname()
-  const isHomePage = pathname === "/"
+  const isHomePage = pathname === "/" || /^\/[a-z]{2}$/.test(pathname)
+  const t = useTranslations("footer")
+  const tLinks = useTranslations("footer.links")
   return (
     <footer className="bg-background border-t pt-6 pb-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -67,7 +70,7 @@ export default function FooterSection() {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              © {new Date().getFullYear()} aat.ee. All rights reserved.
+              © {new Date().getFullYear()} aat.ee. {t("rightsReserved")}
             </p>
           </div>
 
@@ -76,16 +79,16 @@ export default function FooterSection() {
             {/* Discover Column */}
             <div className="text-left">
               <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                Discover
+                {t("discover")}
               </h3>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
                 {discoverLinks.map((link) => (
-                  <li key={link.title}>
+                  <li key={link.key}>
                     <Link
                       href={link.href}
                       className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
                     >
-                      {link.title}
+                      {tLinks(link.key)}
                     </Link>
                   </li>
                 ))}
@@ -95,16 +98,16 @@ export default function FooterSection() {
             {/* Resources Column */}
             <div className="text-left">
               <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                Resources
+                {t("resources")}
               </h3>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
                 {resourcesLinks.map((link) => (
-                  <li key={link.title}>
+                  <li key={link.key}>
                     <Link
                       href={link.href}
                       className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
                     >
-                      {link.title}
+                      {tLinks(link.key)}
                     </Link>
                   </li>
                 ))}
@@ -114,16 +117,16 @@ export default function FooterSection() {
             {/* Legal Column */}
             <div className="text-left">
               <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                Legal
+                {t("legal")}
               </h3>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
                 {legalLinks.map((link) => (
-                  <li key={link.title}>
+                  <li key={link.key}>
                     <Link
                       href={link.href}
                       className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
                     >
-                      {link.title}
+                      {tLinks(link.key)}
                     </Link>
                   </li>
                 ))}
@@ -137,7 +140,7 @@ export default function FooterSection() {
           <div className="border-border/40 mt-8 border-t pt-6">
             {/* Friends Links */}
             <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
-              Friends
+              {t("friends")}
             </h3>
             <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               {friendLinks.map((link, i) => (
