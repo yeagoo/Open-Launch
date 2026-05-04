@@ -1,10 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
+import type { Metadata } from "next"
 import { headers } from "next/headers"
 
 import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { buildLocaleAlternates } from "@/lib/i18n-metadata"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProjectSection } from "@/components/home/project-section"
@@ -12,6 +14,15 @@ import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  return { alternates: buildLocaleAlternates("/", locale) }
+}
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params

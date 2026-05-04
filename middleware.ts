@@ -10,10 +10,23 @@ const BOT_UA_REGEX = /bot|crawler|spider|crawling|slurp|facebookexternalhit/i
 
 const SESSION_GUARDED_PATHS = ["/dashboard", "/settings", "/admin"]
 
+// Routes that intentionally live outside the [locale] segment (English-only or admin)
+const NON_LOCALIZED_PREFIXES = ["/admin", "/compare", "/alternatives"]
+
+// Build a regex that matches a leading supported-locale segment, e.g. "/zh", "/et"
+const LEADING_LOCALE_REGEX = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`)
+
+function stripLocale(pathname: string): string {
+  return pathname.replace(LEADING_LOCALE_REGEX, "") || "/"
+}
+
 function isSessionGuarded(pathname: string): boolean {
-  // Strip leading locale segment if present (e.g. "/zh/dashboard" -> "/dashboard")
-  const stripped = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, "") || "/"
+  const stripped = stripLocale(pathname)
   return SESSION_GUARDED_PATHS.some((p) => stripped === p || stripped.startsWith(p + "/"))
+}
+
+function isNonLocalized(pathname: string): boolean {
+  return NON_LOCALIZED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))
 }
 
 export async function middleware(request: NextRequest) {
@@ -25,6 +38,11 @@ export async function middleware(request: NextRequest) {
     if (!sessionCookie) {
       return NextResponse.redirect(new URL("/", request.url))
     }
+  }
+
+  // Non-localized routes (admin / compare / alternatives) skip intl rewriting entirely
+  if (isNonLocalized(pathname)) {
+    return NextResponse.next()
   }
 
   // Bots: strip Accept-Language so next-intl uses the default locale (no surprise redirects)
@@ -44,7 +62,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match all paths except API, static assets, image optimizer, and SEO files
   matcher: [
     "/((?!api|_next|_vercel|.*\\..*|sitemap.xml|robots.txt|feed.xml|llms.txt|favicon.ico).*)",
   ],

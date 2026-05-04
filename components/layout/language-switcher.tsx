@@ -1,7 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 
 import { usePathname, useRouter } from "@/i18n/navigation"
 import { routing } from "@/i18n/routing"
@@ -36,15 +36,18 @@ export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps)
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
+  const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
   const handleSelect = (next: string) => {
+    const query = searchParams.toString()
+    const targetPath = query ? `${pathname}?${query}` : pathname
     startTransition(() => {
-      router.replace(
-        // @ts-expect-error - dynamic locale value at runtime
-        { pathname, params },
-        { locale: next as (typeof routing.locales)[number] },
-      )
+      // pathname/params is the dynamic-route shape next-intl expects when no
+      // typed pathnames map is configured; cast keeps it simple.
+      router.replace({ pathname: targetPath, params } as Parameters<typeof router.replace>[0], {
+        locale: next as (typeof routing.locales)[number],
+      })
     })
   }
 
