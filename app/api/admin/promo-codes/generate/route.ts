@@ -5,6 +5,7 @@ import { db } from "@/drizzle/db"
 import { promoCode, user } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
+import { logAdminAction } from "@/lib/admin-audit"
 import { auth } from "@/lib/auth"
 import { PROMO_CODE_SETTINGS } from "@/lib/constants"
 
@@ -112,6 +113,19 @@ export async function POST(request: Request) {
 
     // 批量插入优惠码
     await db.insert(promoCode).values(promoCodeRecords)
+
+    await logAdminAction({
+      adminUserId: session.user.id,
+      action: "promo_code.generate",
+      targetType: "promo_code",
+      metadata: {
+        count: promoCodes.length,
+        prefix,
+        discountAmount,
+        usageLimit,
+        validityDays,
+      },
+    })
 
     return NextResponse.json({
       success: true,
