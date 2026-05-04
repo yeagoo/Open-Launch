@@ -55,7 +55,7 @@ export function UploadButton({
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "上传失败")
+        throw new Error(data.error || "Upload failed")
       }
 
       // 调用成功回调
@@ -68,8 +68,8 @@ export function UploadButton({
         },
       ])
     } catch (error) {
-      console.error("上传错误:", error)
-      onUploadError?.(error instanceof Error ? error : new Error("上传失败"))
+      console.error("Upload error:", error)
+      onUploadError?.(error instanceof Error ? error : new Error("Upload failed"))
     } finally {
       setIsUploading(false)
       // 重置文件输入
@@ -96,11 +96,10 @@ export function UploadButton({
             ) : (
               <RiImageAddLine className="h-4 w-4" />
             )}
-            {isUploading ? "上传中..." : "上传图片"}
+            {isUploading ? "Uploading..." : "Upload Image"}
           </span>
         )}
       </label>
     </div>
   )
 }
-
