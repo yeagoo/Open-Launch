@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { launchStatus, project, upvote } from "@/drizzle/db/schema"
+import { crawledData, launchStatus, project, upvote } from "@/drizzle/db/schema"
 import { endOfDay, startOfDay, subDays, subHours } from "date-fns"
 import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 
@@ -181,6 +181,12 @@ export async function GET(request: NextRequest) {
     )
     console.log(`- ${abandonedPayments.length} abandoned payments deleted for projects`)
 
+    const expiredCache = await db
+      .delete(crawledData)
+      .where(lt(crawledData.expiresAt, now))
+      .returning({ id: crawledData.id })
+    console.log(`- ${expiredCache.length} expired crawl cache rows deleted`)
+
     // 如果有项目状态变化，重新生成 sitemap
     if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
       revalidatePath("/sitemap.xml")
@@ -195,6 +201,7 @@ export async function GET(request: NextRequest) {
         topCalculated: rankGroups.length > 0 ? Math.min(3, totalRanked) : 0,
         totalLaunchedYesterday: justLaunchedProjectIds.length,
         abandonedPaymentsDeleted: abandonedPayments.length,
+        expiredCacheDeleted: expiredCache.length,
       },
     })
   } catch (error) {
