@@ -8,7 +8,7 @@ export function getR2Client() {
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
-    throw new Error("R2 配置缺失，请检查环境变量")
+    throw new Error("R2 configuration missing. Check environment variables.")
   }
 
   return new S3Client({
@@ -31,7 +31,7 @@ export async function getUploadUrl(
   const bucketName = process.env.R2_BUCKET_NAME
 
   if (!bucketName) {
-    throw new Error("R2_BUCKET_NAME 环境变量未设置")
+    throw new Error("R2_BUCKET_NAME environment variable is not set")
   }
 
   // 生成唯一文件名
@@ -70,7 +70,7 @@ export async function uploadFileToR2(
   const bucketName = process.env.R2_BUCKET_NAME
 
   if (!bucketName) {
-    throw new Error("R2_BUCKET_NAME 环境变量未设置")
+    throw new Error("R2_BUCKET_NAME environment variable is not set")
   }
 
   // 生成唯一文件名
@@ -98,7 +98,7 @@ export async function uploadFileToR2(
   // 返回公共访问 URL
   const publicDomain = process.env.R2_PUBLIC_DOMAIN
   if (!publicDomain) {
-    throw new Error("R2_PUBLIC_DOMAIN 环境变量未设置")
+    throw new Error("R2_PUBLIC_DOMAIN environment variable is not set")
   }
 
   return `${publicDomain}/${key}`

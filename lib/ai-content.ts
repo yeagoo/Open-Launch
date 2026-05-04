@@ -51,7 +51,7 @@ async function callDeepSeek(
   options?: { temperature?: number; maxTokens?: number },
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY
-  const model = process.env.DEEPSEEK_MODEL || "deepseek-chat"
+  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
 
   if (!apiKey) {
     throw new Error("DEEPSEEK_API_KEY environment variable is not set")
