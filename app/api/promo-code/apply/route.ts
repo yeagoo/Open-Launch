@@ -7,6 +7,7 @@ import { and, eq, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { PROMO_CODE_SETTINGS } from "@/lib/constants"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 /**
  * 应用优惠码到项目
@@ -21,6 +22,16 @@ export async function POST(request: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Rate limit: 10 apply attempts per minute per user
+    const { success: rateLimitOk } = await checkRateLimit(
+      `promo-apply:${session.user.id}`,
+      10,
+      60 * 1000,
+    )
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: "Too many attempts. Please wait." }, { status: 429 })
     }
 
     const { code, projectId } = await request.json()
