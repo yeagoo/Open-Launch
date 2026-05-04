@@ -48,3 +48,4 @@ blog-article.ts
 seo-article.ts
 # Email template previews
 email-previews/
+mitm_mcp_traffic.db
