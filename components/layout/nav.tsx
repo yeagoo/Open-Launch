@@ -30,6 +30,7 @@ import {
 import { ThemeToggle } from "../theme/theme-toggle"
 import { ThemeToggleMenu } from "../theme/theme-toggle-menu"
 import { Button } from "../ui/button"
+import { LanguageSwitcher } from "./language-switcher"
 import { NavMenu } from "./nav-menu"
 import { SearchCommand } from "./search-command"
 import { UserNav } from "./user-nav"
@@ -62,6 +63,7 @@ export default async function Nav() {
         <div className="hidden items-center gap-3 md:flex">
           {session && <SearchCommand />}
 
+          <LanguageSwitcher />
           <ThemeToggle />
           {session ? (
             <UserNav user={user as User} />
