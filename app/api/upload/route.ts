@@ -5,6 +5,7 @@ import sharp from "sharp"
 
 import { auth } from "@/lib/auth"
 import { uploadFileToR2 } from "@/lib/r2-client"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 // 文件大小限制（1MB）
 const MAX_FILE_SIZE = 1024 * 1024
@@ -37,7 +38,20 @@ export async function POST(request: NextRequest) {
     // 验证用户
     const user = await authenticateUser()
     if (!user) {
-      return NextResponse.json({ error: "未授权访问" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Rate limit: 20 uploads per hour per user
+    const { success: rateLimitOk, reset } = await checkRateLimit(
+      `upload:${user.id}`,
+      20,
+      60 * 60 * 1000,
+    )
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: `Upload limit exceeded. Try again in ${reset} seconds.` },
+        { status: 429 },
+      )
     }
 
     // 获取表单数据
@@ -46,25 +60,25 @@ export async function POST(request: NextRequest) {
     const folder = formData.get("folder") as string | null
 
     if (!file) {
-      return NextResponse.json({ error: "未找到文件" }, { status: 400 })
+      return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
     // 验证文件夹
     if (folder !== "logos" && folder !== "products") {
-      return NextResponse.json({ error: "无效的文件夹类型" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid folder type" }, { status: 400 })
     }
 
     // 验证文件类型
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "不支持的文件类型，仅支持图片格式（JPEG, PNG, WEBP, GIF, AVIF）" },
+        { error: "Unsupported file type. Allowed: JPEG, PNG, WEBP, GIF, AVIF" },
         { status: 400 },
       )
     }
 
     // 验证文件大小
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "文件大小超过 1MB 限制" }, { status: 400 })
+      return NextResponse.json({ error: "File size exceeds 1MB limit" }, { status: 400 })
     }
 
     // 转换文件为 Buffer
@@ -103,9 +117,9 @@ export async function POST(request: NextRequest) {
       uploadedBy: user.id,
     })
   } catch (error) {
-    console.error("文件上传错误:", error)
+    console.error("Upload error:", error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "文件上传失败" },
+      { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 },
     )
   }

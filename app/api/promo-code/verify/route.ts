@@ -7,6 +7,7 @@ import { and, eq, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { PROMO_CODE_SETTINGS } from "@/lib/constants"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,16 @@ export async function POST(request: Request) {
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Rate limit: 10 verify attempts per minute per user (prevents brute force)
+    const { success: rateLimitOk } = await checkRateLimit(
+      `promo-verify:${session.user.id}`,
+      10,
+      60 * 1000,
+    )
+    if (!rateLimitOk) {
+      return NextResponse.json({ error: "Too many attempts. Please wait." }, { status: 429 })
     }
 
     const { code } = await request.json()
