@@ -25,20 +25,19 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">1. Introduction</h2>
               <p className="mb-3">
-                Welcome to aat.ee. These Terms of Service govern your use of our platform,
-                which focuses on discovering and supporting projects.
+                Welcome to aat.ee. These Terms of Service govern your use of our platform, which
+                focuses on discovering and supporting projects.
               </p>
               <p className="mb-3">
-                By using aat.ee, you agree to these terms. If you don't agree, please don't use
-                our services.
+                By using aat.ee, you agree to these terms. If you don't agree, please don't use our
+                services.
               </p>
             </section>
 
             <section>
               <h2 className="mb-3 text-xl font-semibold">2. Using Our Service</h2>
               <p className="mb-3">
-                <strong>Age Requirements:</strong> You must be at least 13 years old to use
-                aat.ee.
+                <strong>Age Requirements:</strong> You must be at least 13 years old to use aat.ee.
               </p>
               <p className="mb-3">
                 <strong>Account Responsibility:</strong> If you create an account, you're
@@ -60,8 +59,8 @@ export default function TermsOfServicePage() {
               <h2 className="mb-3 text-xl font-semibold">3. Content</h2>
               <p className="mb-3">
                 <strong>Your Content:</strong> When you submit projects, comments, or other content
-                on aat.ee, you retain ownership, but grant us permission to display and use
-                that content on our platform.
+                on aat.ee, you retain ownership, but grant us permission to display and use that
+                content on our platform.
               </p>
               <p className="mb-3">
                 <strong>Responsibility:</strong> You're responsible for the content you submit. Make
@@ -77,9 +76,9 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">4. Third-Party Content</h2>
               <p className="mb-3">
-                aat.ee may contain links to third-party websites or services, including
-                projects. We're not responsible for the content, policies, or practices of these
-                third parties.
+                aat.ee may contain links to third-party websites or services, including projects.
+                We're not responsible for the content, policies, or practices of these third
+                parties.
               </p>
               <p className="mb-3">
                 Your interactions with third-party services are between you and that third party.
@@ -101,8 +100,8 @@ export default function TermsOfServicePage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">6. Disclaimers</h2>
               <p className="mb-3">
-                aat.ee is provided "as is" without warranties of any kind. We don't guarantee
-                that the service will be uninterrupted, secure, or error-free.
+                aat.ee is provided "as is" without warranties of any kind. We don't guarantee that
+                the service will be uninterrupted, secure, or error-free.
               </p>
               <p className="mb-3">
                 We're not responsible for the accuracy or reliability of any content posted by users

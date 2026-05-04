@@ -6,9 +6,8 @@ import { notFound } from "next/navigation"
 import { RiArrowLeftLine } from "@remixicon/react"
 
 import { auth } from "@/lib/auth"
+import { BadgesDisplay } from "@/components/badges/BadgesDisplay"
 import { getProjectBySlug } from "@/app/actions/project-details"
-
-import { BadgesDisplay } from "../../../../components/badges/BadgesDisplay"
 
 interface BadgesPageProps {
   params: Promise<{

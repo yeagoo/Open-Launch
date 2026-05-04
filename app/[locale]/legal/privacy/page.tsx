@@ -24,8 +24,8 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="mb-3 text-xl font-semibold">1. Introduction</h2>
               <p className="mb-3">
-                At aat.ee, we highly value the protection of your personal data. This privacy
-                policy explains how we collect, use, and protect your information when you use our
+                At aat.ee, we highly value the protection of your personal data. This privacy policy
+                explains how we collect, use, and protect your information when you use our
                 platform.
               </p>
             </section>
