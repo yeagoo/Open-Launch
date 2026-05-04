@@ -1,7 +1,10 @@
 import type { NextConfig } from "next"
 
 import createMDX from "@next/mdx"
+import createNextIntlPlugin from "next-intl/plugin"
 import remarkGfm from "remark-gfm"
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
 const securityHeaders = [
   {
@@ -75,5 +78,5 @@ const withMDX = createMDX({
   },
 })
 
-// Combine MDX and Next.js config
-export default withMDX(nextConfig)
+// Combine MDX, next-intl, and Next.js config
+export default withNextIntl(withMDX(nextConfig))
