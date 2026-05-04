@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation"
 import { Link } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 
+import { LanguageSwitcher } from "./language-switcher"
+
 const discoverLinks = [
   { key: "trending", href: "/trending" },
   { key: "categories", href: "/categories" },
@@ -131,6 +133,9 @@ export default function FooterSection() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-4">
+                <LanguageSwitcher variant="footer" />
+              </div>
             </div>
           </div>
         </div>
