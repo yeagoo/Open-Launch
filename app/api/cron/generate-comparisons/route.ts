@@ -82,22 +82,31 @@ export async function GET(request: NextRequest) {
 
       if (topProjects.length < 2) continue
 
-      // Comparison pages are English-only — replace descriptions with the
-      // canonical English translation (falls back to source if missing).
+      // Comparison pages are English-only — only consider projects that
+      // already have an English translation. The translate-projects cron
+      // backfills these continuously; projects skipped here will be picked
+      // up on a future run.
       const enDescriptions = await getEnglishDescriptions(topProjects.map((p) => p.id))
-      for (const p of topProjects) {
-        p.description = enDescriptions[p.id] ?? p.description
+      const eligibleProjects = topProjects.filter((p) => p.id in enDescriptions)
+      if (eligibleProjects.length < 2) {
+        console.log(
+          `⏭️  Category "${cat.name}": only ${eligibleProjects.length} projects have en translations`,
+        )
+        continue
+      }
+      for (const p of eligibleProjects) {
+        p.description = enDescriptions[p.id]!
       }
 
-      // Generate pairs from top projects
-      for (let i = 0; i < topProjects.length && generated < MAX_NEW_COMPARISONS_PER_RUN; i++) {
+      // Generate pairs from eligible (English-translated) projects
+      for (let i = 0; i < eligibleProjects.length && generated < MAX_NEW_COMPARISONS_PER_RUN; i++) {
         for (
           let j = i + 1;
-          j < topProjects.length && generated < MAX_NEW_COMPARISONS_PER_RUN;
+          j < eligibleProjects.length && generated < MAX_NEW_COMPARISONS_PER_RUN;
           j++
         ) {
-          const projA = topProjects[i]
-          const projB = topProjects[j]
+          const projA = eligibleProjects[i]
+          const projB = eligibleProjects[j]
 
           // Canonical slug ordering
           const sorted = [projA.slug, projB.slug].sort()

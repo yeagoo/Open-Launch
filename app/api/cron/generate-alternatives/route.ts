@@ -130,16 +130,35 @@ export async function GET(request: NextRequest) {
           continue
         }
 
-        // Alternatives pages are English-only — replace descriptions with the
-        // canonical English translation for both subject and pool.
+        // Alternatives pages are English-only — require en translations for
+        // both subject and any pool member used downstream. Skip the subject
+        // (will retry next run) if its English translation isn't ready.
         const enDescriptions = await getEnglishDescriptions([
           subjectProject.id,
           ...pool.map((p) => p.id),
         ])
-        subjectProject.description = enDescriptions[subjectProject.id] ?? subjectProject.description
-        for (const p of pool) {
-          p.description = enDescriptions[p.id] ?? p.description
+        if (!(subjectProject.id in enDescriptions)) {
+          console.log(`⏭️  Skipping "${subjectProject.name}": no en translation yet`)
+          skipped++
+          continue
         }
+        subjectProject.description = enDescriptions[subjectProject.id]!
+
+        // Drop pool members that don't have en translations yet
+        const eligiblePool = pool.filter((p) => p.id in enDescriptions)
+        for (const p of eligiblePool) {
+          p.description = enDescriptions[p.id]!
+        }
+        if (eligiblePool.length < MIN_ALTERNATIVES) {
+          console.log(
+            `⏭️  Skipping "${subjectProject.name}": only ${eligiblePool.length} pool members have en translations`,
+          )
+          skipped++
+          continue
+        }
+        // Replace pool with the eligible subset for the rest of the iteration
+        pool.length = 0
+        pool.push(...eligiblePool)
 
         // Ask AI which candidates are likely alternatives (cheap: names + descriptions only)
         const prescreenedIds = await prescreenAlternatives(
