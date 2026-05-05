@@ -1,5 +1,5 @@
 import { db } from "@/drizzle/db"
-import { projectTranslation } from "@/drizzle/db/schema"
+import { project, projectTranslation } from "@/drizzle/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
 
 /**
@@ -46,4 +46,63 @@ export async function getLocalizedProjectDescription(
   if (en) return en.description
 
   return fallback
+}
+
+/**
+ * Bulk: fetch the English description for a list of projects, with source/
+ * project-table fallback. Used by English-only cron jobs (comparison /
+ * alternatives content generation) so they always feed English text to the AI.
+ */
+export async function getEnglishDescriptions(
+  projectIds: string[],
+): Promise<Record<string, string>> {
+  if (projectIds.length === 0) return {}
+
+  const result: Record<string, string> = {}
+
+  // Pass 1: try locale=en
+  const enRows = await db
+    .select({
+      projectId: projectTranslation.projectId,
+      description: projectTranslation.description,
+    })
+    .from(projectTranslation)
+    .where(
+      and(inArray(projectTranslation.projectId, projectIds), eq(projectTranslation.locale, "en")),
+    )
+  for (const r of enRows) result[r.projectId] = r.description
+
+  const stillMissing = projectIds.filter((id) => !(id in result))
+  if (stillMissing.length === 0) return result
+
+  // Pass 2: source rows for projects without an en translation yet
+  const sourceRows = await db
+    .select({
+      projectId: projectTranslation.projectId,
+      description: projectTranslation.description,
+    })
+    .from(projectTranslation)
+    .where(
+      and(
+        inArray(projectTranslation.projectId, stillMissing),
+        eq(projectTranslation.isSource, true),
+      ),
+    )
+  for (const r of sourceRows) {
+    if (!(r.projectId in result)) result[r.projectId] = r.description
+  }
+
+  const stillMissing2 = projectIds.filter((id) => !(id in result))
+  if (stillMissing2.length === 0) return result
+
+  // Pass 3: bare project.description as last resort
+  const bareRows = await db
+    .select({ id: project.id, description: project.description })
+    .from(project)
+    .where(inArray(project.id, stillMissing2))
+  for (const r of bareRows) {
+    if (!(r.id in result)) result[r.id] = r.description
+  }
+
+  return result
 }

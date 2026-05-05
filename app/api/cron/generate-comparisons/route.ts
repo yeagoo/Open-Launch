@@ -15,6 +15,7 @@ import { and, count, desc, eq, or, sql } from "drizzle-orm"
 import { generateComparisonContent } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { getEnglishDescriptions } from "@/lib/get-project-translation"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 90
@@ -80,6 +81,13 @@ export async function GET(request: NextRequest) {
         .limit(5)
 
       if (topProjects.length < 2) continue
+
+      // Comparison pages are English-only — replace descriptions with the
+      // canonical English translation (falls back to source if missing).
+      const enDescriptions = await getEnglishDescriptions(topProjects.map((p) => p.id))
+      for (const p of topProjects) {
+        p.description = enDescriptions[p.id] ?? p.description
+      }
 
       // Generate pairs from top projects
       for (let i = 0; i < topProjects.length && generated < MAX_NEW_COMPARISONS_PER_RUN; i++) {
