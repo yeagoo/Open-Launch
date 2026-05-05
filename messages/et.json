@@ -1,7 +1,7 @@
 {
   "common": {
     "siteName": "aat.ee",
-    "loading": "Laadimine...",
+    "loading": "Laen...",
     "save": "Salvesta",
     "cancel": "Tühista",
     "submit": "Esita",
@@ -20,26 +20,26 @@
   "nav": {
     "explore": "Avasta",
     "exploreDesc": {
-      "trendingTitle": "Populaarne praegu",
+      "trendingTitle": "Praegu populaarsed",
       "trendingDesc": "Avasta kõige populaarsemad projektid",
       "winnersTitle": "Päeva võitjad",
-      "winnersDesc": "Vaata päeva parimaid projekte",
+      "winnersDesc": "Vaata tänaseid parimaid projekte",
       "monthTitle": "Kuu parimad",
-      "monthDesc": "Vaata kuu parimaid projekte",
+      "monthDesc": "Vaata selle kuu parimaid projekte",
       "categoriesTitle": "Kategooriad",
-      "categoriesDesc": "Sirvi kategooriaid"
+      "categoriesDesc": "Sirvi projekte kategooriate kaupa"
     },
-    "dashboard": "Juhtpaneel",
+    "dashboard": "Töölaud",
     "submitProject": "Esita projekt",
     "pricing": "Hinnad",
-    "fastTrack": "Kiire tee 🚀",
+    "fastTrack": "Kiire rada 🚀",
     "sponsors": "Sponsorid",
     "signIn": "Logi sisse",
     "signUp": "Registreeru",
     "navigation": "NAVIGATSIOON",
     "actions": "TOIMINGUD",
     "home": "Avaleht",
-    "trending": "Populaarne",
+    "trending": "Populaarsed",
     "categories": "Kategooriad",
     "winners": "Võitjad"
   },
@@ -50,7 +50,7 @@
     "legal": "Õiguslik",
     "friends": "Sõbrad",
     "links": {
-      "trending": "Populaarne",
+      "trending": "Populaarsed",
       "categories": "Kategooriad",
       "compareTools": "Võrdle tööriistu",
       "alternatives": "Alternatiivid",
@@ -65,48 +65,48 @@
   },
   "home": {
     "metadata": {
-      "today": "Täna turuletulnud tooted aat.ee-s",
-      "todayDesc": "Avasta viimaseid tooteid täna aat.ee-s - iduettevõtted, AI tööriistad ja SaaS tooted"
+      "today": "Täna lansseeritud tooted aat.ee-s",
+      "todayDesc": "Avasta viimased tootetutvustused täna aat.ee-s – startupid, AI tööriistad ja SaaS tooted"
     },
     "banner": {
-      "title": "Turuletuleku platvorm sinu toodetele",
-      "subtitle": "Esita, hangi märk ja tagasilink"
+      "title": "Oma toodete käivitusplatvorm",
+      "subtitle": "Esita, saa märk ja tagasilink"
     },
     "sections": {
-      "todayTitle": "Täna turuletulevad parimad projektid",
-      "yesterdayTitle": "Eilased turuletulekud",
-      "monthTitle": "Kuu parimad",
-      "topCategories": "Populaarseimad kategooriad",
-      "quickAccess": "Kiire juurdepääs",
+      "todayTitle": "Populaarseimad täna käivituvad projektid",
+      "yesterdayTitle": "Eilsed käivitused",
+      "monthTitle": "Selle kuu parimad",
+      "topCategories": "Populaarsemad kategooriad",
+      "quickAccess": "Kiirjuurdepääs",
       "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "Kontrolli tarkvara tugitsükli teavet aadressil:",
+      "linuxAllianceFooter": "Vaata tarkvara tugitsükli aadressil:",
       "recommended": "Soovitatud",
       "webcasaDesc": "AI-põhine avatud lähtekoodiga serveri halduspaneel",
       "litehttpdDesc": "Kergejalgne veebiserver, väga ühilduv Apache HTTPD-ga",
-      "trendingNow": "Praegu populaarne",
+      "trendingNow": "Praegu populaarsed",
       "dailyWinners": "Päeva võitjad",
       "bestOfMonth": "Kuu parimad",
-      "dashboard": "Juhtpaneel",
+      "dashboard": "Töölaud",
       "projectsCount": "{count} projekti"
     }
   },
   "auth": {
     "signIn": {
       "title": "Tere tulemast tagasi",
-      "subtitle": "Jätkamiseks logige sisse oma kontole",
+      "subtitle": "Logige sisse oma kontole jätkamiseks",
       "emailLabel": "E-post",
       "passwordLabel": "Parool",
       "submit": "Logi sisse",
-      "submitting": "Sisselogimine...",
+      "submitting": "Logitakse sisse...",
       "loading": "Laadimine...",
       "withGoogle": "Logi sisse Google'iga",
-      "withGithub": "Logi sisse GitHub'iga",
+      "withGithub": "Logi sisse GitHubiga",
       "forgotPassword": "Unustasid parooli?",
-      "noAccount": "Pole veel kontot?",
+      "noAccount": "Pole kontot?",
       "signUpLink": "Registreeru",
-      "orContinueWith": "Või jätka",
-      "captchaRequired": "Palun sooritage turvakontroll",
-      "genericError": "Ilmnes viga",
+      "orContinueWith": "Või jätka kasutades",
+      "captchaRequired": "Palun lõpeta turvakontroll",
+      "genericError": "Tekkis viga",
       "successToast": "Edukalt sisse logitud",
       "termsAgreement": "Jätkates nõustute meie",
       "termsOfService": "Kasutustingimustega",
@@ -114,7 +114,7 @@
       "privacyPolicy": "Privaatsuspoliitikaga"
     },
     "signUp": {
-      "title": "Loo oma konto",
+      "title": "Loo konto",
       "subtitle": "Liitu aat.ee-ga, et tutvustada ja avastada tooteid",
       "nameLabel": "Nimi",
       "emailLabel": "E-post",
@@ -123,20 +123,20 @@
       "submitting": "Konto loomine...",
       "loading": "Laadimine...",
       "withGoogle": "Registreeru Google'iga",
-      "withGithub": "Registreeru GitHub'iga",
+      "withGithub": "Registreeru GitHubiga",
       "haveAccount": "On juba konto?",
       "signInLink": "Logi sisse",
-      "orContinueWith": "Või jätka",
-      "captchaRequired": "Palun sooritage turvakontroll",
-      "genericError": "Ilmnes viga"
+      "orContinueWith": "Või jätka kasutades",
+      "captchaRequired": "Palun lõpeta turvakontroll",
+      "genericError": "Tekkis viga"
     },
     "forgotPassword": {
-      "title": "Lähtesta oma parool",
-      "subtitle": "Sisesta oma e-post ja saadame sulle lähtestuslingi",
+      "title": "Lähtesta parool",
+      "subtitle": "Sisesta oma e-post ja me saadame sulle lähtestuslingi",
       "emailLabel": "E-post",
       "submit": "Saada lähtestuslink",
       "backToSignIn": "Tagasi sisselogimisele",
-      "successMessage": "Kui see e-post on registreeritud, siis saatsime lähtestuslingi."
+      "successMessage": "Kui see e-post on olemas, saatsime lähtestuslingi."
     },
     "resetPassword": {
       "title": "Määra uus parool",
@@ -144,13 +144,13 @@
       "confirmLabel": "Kinnita parool",
       "submit": "Lähtesta parool",
       "successMessage": "Parool lähtestatud. Suunamine...",
-      "mismatchError": "Paroolid ei ühti"
+      "mismatchError": "Paroolid ei kattu"
     },
     "verifyEmail": {
       "sentTitle": "Kontrolli oma e-posti",
-      "sentMessage": "Saatsime sinu e-posti kinnituslingi.",
+      "sentMessage": "Saatsime kinnituslingi sinu postkasti.",
       "successTitle": "E-post kinnitatud!",
-      "successMessage": "Sinu konto on valmis. Suunamine juhtpaneelile..."
+      "successMessage": "Sinu konto on valmis. Suunamine töölauale..."
     }
   },
   "project": {
@@ -167,33 +167,48 @@
       "comments": "Kommentaarid",
       "categories": "Kategooriad",
       "tags": "Sildid",
-      "launchedOn": "Turuletulnud",
-      "scheduledFor": "Plaanitud",
-      "ongoing": "Käimas",
-      "launched": "Turutulnud",
-      "scheduled": "Plaanitud",
-      "byMaker": "Autor:"
+      "launchedOn": "Lansseeritud",
+      "scheduledFor": "Kavandatud",
+      "ongoing": "Pooleli",
+      "launched": "Lansseeritud",
+      "scheduled": "Kavandatud",
+      "byMaker": "Autor"
     },
     "submit": {
       "title": "Esita oma projekt",
       "subtitle": "Jaga oma toodet tuhandete kasutajatega",
-      "websiteUrl": "Veebiaadress",
+      "websiteUrl": "Veebilehe URL",
       "name": "Projekti nimi",
       "description": "Kirjeldus",
       "category": "Kategooria",
       "tags": "Sildid",
       "logo": "Logo",
       "submitButton": "Esita projekt",
-      "autoFill": "Täida automaatselt aadressi järgi"
+      "autoFill": "Täida URL-i põhjal automaatselt"
+    },
+    "sidebar": {
+      "achievement": "Saavutus",
+      "publisher": "Avaldaja",
+      "unknownCreator": "Tundmatu looja",
+      "launchDate": "Lansseerimise kuupäev",
+      "platform": "Platvorm",
+      "pricing": "Hinnakujundus",
+      "socials": "Sotsiaalmeedia",
+      "productKeywords": "Toote võtmesõnad"
+    },
+    "comments": {
+      "heading": "Kommentaarid",
+      "notLaunchedYet": "Kommentaarid on saadaval pärast projekti lansseerimist.",
+      "placeholder": "Lisa kommentaar..."
     }
   },
   "pricing": {
     "title": "Hinnad",
-    "subtitle": "Vali oma turuletulekule sobiv plaan",
+    "subtitle": "Vali oma käivitusele sobiv plaan",
     "free": "Tasuta",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
-    "perLaunch": "turuletuleku kohta",
+    "perLaunch": "käivituse kohta",
     "getStarted": "Alusta",
     "subscribe": "Telli",
     "compareFeatures": "Võrdle funktsioone"
@@ -201,24 +216,24 @@
   "search": {
     "placeholder": "Otsi projekte...",
     "noResults": "Tulemusi ei leitud",
-    "recentSearches": "Viimased otsingud"
+    "recentSearches": "Hiljutised otsingud"
   },
   "errors": {
     "generic": "Midagi läks valesti. Palun proovi uuesti.",
-    "unauthorized": "Volitamata",
+    "unauthorized": "Volitused puuduvad",
     "notFound": "Lehte ei leitud",
     "rateLimited": "Liiga palju päringuid. Palun oota.",
     "serverError": "Serveri viga. Palun proovi hiljem uuesti."
   },
   "friends": {
     "title": "Sõbrad",
-    "subtitle": "Meie sõbrad ja partnerid veebis.",
+    "subtitle": "Meie sõbrad ja partnerid üle veebi.",
     "backToHome": "Tagasi avalehele",
     "groups": {
       "linuxCommunities": "Linuxi kogukonnad",
       "toolsServices": "Tööriistad ja teenused",
       "directories": "Kataloogid ja avastamine",
-      "knowledgeReference": "Teadmised ja teatmikud"
+      "knowledgeReference": "Teadmised ja viited"
     }
   }
 }

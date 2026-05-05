@@ -20,7 +20,7 @@
   "nav": {
     "explore": "Explorer",
     "exploreDesc": {
-      "trendingTitle": "Tendance",
+      "trendingTitle": "Tendances actuelles",
       "trendingDesc": "Découvrez les projets les plus populaires",
       "winnersTitle": "Gagnants du jour",
       "winnersDesc": "Voir les meilleurs projets du jour",
@@ -34,12 +34,12 @@
     "pricing": "Tarifs",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "Sponsors",
-    "signIn": "Connexion",
-    "signUp": "Inscription",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
     "navigation": "NAVIGATION",
     "actions": "ACTIONS",
     "home": "Accueil",
-    "trending": "Tendance",
+    "trending": "Tendances",
     "categories": "Catégories",
     "winners": "Gagnants"
   },
@@ -50,7 +50,7 @@
     "legal": "Mentions légales",
     "friends": "Amis",
     "links": {
-      "trending": "Tendance",
+      "trending": "Tendances",
       "categories": "Catégories",
       "compareTools": "Comparer les outils",
       "alternatives": "Alternatives",
@@ -66,24 +66,24 @@
   "home": {
     "metadata": {
       "today": "Produits lancés aujourd'hui sur aat.ee",
-      "todayDesc": "Découvrez les derniers lancements de produits sur aat.ee aujourd'hui - startups, outils IA et SaaS"
+      "todayDesc": "Découvrez les derniers lancements de produits aujourd'hui sur aat.ee - startups, outils IA et produits SaaS"
     },
     "banner": {
       "title": "Plateforme de lancement pour vos produits",
-      "subtitle": "Soumettez, obtenez un badge et un lien retour"
+      "subtitle": "Soumettez, obtenez un badge et un backlink"
     },
     "sections": {
       "todayTitle": "Meilleurs projets lancés aujourd'hui",
       "yesterdayTitle": "Lancements d'hier",
       "monthTitle": "Meilleurs du mois",
-      "topCategories": "Catégories principales",
+      "topCategories": "Meilleures catégories",
       "quickAccess": "Accès rapide",
-      "linuxAlliance": "Alliance des docs Linux",
-      "linuxAllianceFooter": "Vérifiez le cycle de vie des logiciels sur :",
+      "linuxAlliance": "Linux Docs Alliance",
+      "linuxAllianceFooter": "Vérifiez le cycle de vie du support logiciel sur :",
       "recommended": "Recommandé",
-      "webcasaDesc": "Panneau de contrôle serveur open source basé sur l'IA",
+      "webcasaDesc": "Panneau de contrôle serveur open-source natif IA",
       "litehttpdDesc": "Serveur web léger, hautement compatible avec Apache HTTPD",
-      "trendingNow": "Tendance",
+      "trendingNow": "Tendances actuelles",
       "dailyWinners": "Gagnants du jour",
       "bestOfMonth": "Meilleurs du mois",
       "dashboard": "Tableau de bord",
@@ -94,7 +94,7 @@
     "signIn": {
       "title": "Bon retour",
       "subtitle": "Connectez-vous à votre compte pour continuer",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Mot de passe",
       "submit": "Connexion",
       "submitting": "Connexion en cours...",
@@ -102,12 +102,12 @@
       "withGoogle": "Connexion avec Google",
       "withGithub": "Connexion avec GitHub",
       "forgotPassword": "Mot de passe oublié ?",
-      "noAccount": "Pas encore de compte ?",
-      "signUpLink": "Inscrivez-vous",
-      "orContinueWith": "Ou continuez avec",
+      "noAccount": "Pas de compte ?",
+      "signUpLink": "S'inscrire",
+      "orContinueWith": "Ou continuer avec",
       "captchaRequired": "Veuillez compléter la vérification de sécurité",
       "genericError": "Une erreur est survenue",
-      "successToast": "Connexion réussie",
+      "successToast": "Connecté avec succès",
       "termsAgreement": "En cliquant sur continuer, vous acceptez nos",
       "termsOfService": "Conditions d'utilisation",
       "and": "et",
@@ -117,26 +117,26 @@
       "title": "Créez votre compte",
       "subtitle": "Rejoignez aat.ee pour lancer et découvrir des produits",
       "nameLabel": "Nom",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Mot de passe",
       "submit": "Créer un compte",
-      "submitting": "Création du compte en cours...",
+      "submitting": "Création du compte...",
       "loading": "Chargement...",
-      "withGoogle": "Inscription avec Google",
-      "withGithub": "Inscription avec GitHub",
-      "haveAccount": "Vous avez déjà un compte ?",
-      "signInLink": "Connectez-vous",
-      "orContinueWith": "Ou continuez avec",
+      "withGoogle": "S'inscrire avec Google",
+      "withGithub": "S'inscrire avec GitHub",
+      "haveAccount": "Déjà un compte ?",
+      "signInLink": "Se connecter",
+      "orContinueWith": "Ou continuer avec",
       "captchaRequired": "Veuillez compléter la vérification de sécurité",
       "genericError": "Une erreur est survenue"
     },
     "forgotPassword": {
       "title": "Réinitialisez votre mot de passe",
-      "subtitle": "Saisissez votre email et nous vous enverrons un lien de réinitialisation",
-      "emailLabel": "Email",
+      "subtitle": "Entrez votre e-mail et nous vous enverrons un lien de réinitialisation",
+      "emailLabel": "E-mail",
       "submit": "Envoyer le lien de réinitialisation",
       "backToSignIn": "Retour à la connexion",
-      "successMessage": "Si cet email existe, nous avons envoyé un lien de réinitialisation."
+      "successMessage": "Si cet e-mail existe, nous avons envoyé un lien de réinitialisation."
     },
     "resetPassword": {
       "title": "Définir un nouveau mot de passe",
@@ -147,9 +147,9 @@
       "mismatchError": "Les mots de passe ne correspondent pas"
     },
     "verifyEmail": {
-      "sentTitle": "Vérifiez votre email",
+      "sentTitle": "Vérifiez votre e-mail",
       "sentMessage": "Nous avons envoyé un lien de vérification dans votre boîte de réception.",
-      "successTitle": "Email vérifié !",
+      "successTitle": "E-mail vérifié !",
       "successMessage": "Votre compte est prêt. Redirection vers le tableau de bord..."
     }
   },
@@ -157,39 +157,54 @@
     "list": {
       "title": "Projets",
       "submitButton": "Soumettre un projet",
-      "empty": "Aucun projet pour le moment."
+      "empty": "Aucun projet pour l'instant."
     },
     "detail": {
-      "upvote": "Voter",
-      "upvoted": "Voté",
+      "upvote": "Upvote",
+      "upvoted": "Upvoté",
       "visit": "Visiter",
       "share": "Partager",
       "comments": "Commentaires",
       "categories": "Catégories",
-      "tags": "Étiquettes",
+      "tags": "Tags",
       "launchedOn": "Lancé le",
-      "scheduledFor": "Prévu pour",
+      "scheduledFor": "Programmé pour",
       "ongoing": "En cours",
       "launched": "Lancé",
-      "scheduled": "Prévu",
+      "scheduled": "Programmé",
       "byMaker": "par"
     },
     "submit": {
-      "title": "Soumettre votre projet",
+      "title": "Soumettez votre projet",
       "subtitle": "Partagez votre produit avec des milliers d'utilisateurs",
       "websiteUrl": "URL du site web",
       "name": "Nom du projet",
       "description": "Description",
       "category": "Catégorie",
-      "tags": "Étiquettes",
+      "tags": "Tags",
       "logo": "Logo",
       "submitButton": "Soumettre le projet",
-      "autoFill": "Remplissage automatique depuis l'URL"
+      "autoFill": "Auto-remplir depuis l'URL"
+    },
+    "sidebar": {
+      "achievement": "Récompense",
+      "publisher": "Éditeur",
+      "unknownCreator": "Créateur inconnu",
+      "launchDate": "Date de lancement",
+      "platform": "Plateforme",
+      "pricing": "Tarifs",
+      "socials": "Réseaux sociaux",
+      "productKeywords": "Mots-clés du produit"
+    },
+    "comments": {
+      "heading": "Commentaires",
+      "notLaunchedYet": "Les commentaires seront disponibles une fois le projet lancé.",
+      "placeholder": "Ajouter un commentaire..."
     }
   },
   "pricing": {
     "title": "Tarifs",
-    "subtitle": "Choisissez le forfait adapté à votre lancement",
+    "subtitle": "Choisissez le plan adapté à votre lancement",
     "free": "Gratuit",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
@@ -204,7 +219,7 @@
     "recentSearches": "Recherches récentes"
   },
   "errors": {
-    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
     "unauthorized": "Non autorisé",
     "notFound": "Page non trouvée",
     "rateLimited": "Trop de requêtes. Veuillez patienter.",
@@ -218,7 +233,7 @@
       "linuxCommunities": "Communautés Linux",
       "toolsServices": "Outils et services",
       "directories": "Annuaire et découverte",
-      "knowledgeReference": "Savoir et référence"
+      "knowledgeReference": "Connaissances et référence"
     }
   }
 }

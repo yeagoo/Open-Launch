@@ -13,6 +13,7 @@ import {
   RiVipCrownLine,
 } from "@remixicon/react"
 import { format } from "date-fns"
+import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
@@ -31,6 +32,7 @@ import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
 interface ProjectPageProps {
   params: Promise<{
     slug: string
+    locale: string
   }>
 }
 
@@ -90,7 +92,10 @@ export async function generateMetadata(
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { slug } = await params
+  const { slug, locale } = await params
+  setRequestLocale(locale)
+  const tSidebar = await getTranslations("project.sidebar")
+  const tComments = await getTranslations("project.comments")
   const projectData = await getProjectBySlug(slug)
 
   if (!projectData) {
@@ -363,16 +368,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {/* Comments */}
               <div>
                 <h2 className="mb-4 text-lg font-semibold" id="comments">
-                  Comments
+                  {tComments("heading")}
                 </h2>
                 {projectData.launchStatus === "ongoing" ||
                 projectData.launchStatus === "launched" ? (
-                  <ProjectComments projectId={projectData.id} />
+                  <ProjectComments
+                    projectId={projectData.id}
+                    placeholder={tComments("placeholder")}
+                  />
                 ) : (
                   <div className="py-6 text-center">
-                    <p className="text-muted-foreground">
-                      Comments will be available once the project is launched.
-                    </p>
+                    <p className="text-muted-foreground">{tComments("notLaunchedYet")}</p>
                   </div>
                 )}
               </div>
@@ -388,7 +394,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 projectData.dailyRanking <= 3 && (
                   <div className="space-y-3">
                     <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      Achievement
+                      {tSidebar("achievement")}
                     </h3>
                     <div className="flex">
                       <img
@@ -408,7 +414,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {/* Publisher */}
               <div className="space-y-3">
                 <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                  Publisher
+                  {tSidebar("publisher")}
                 </h3>
                 <div className="flex items-center gap-3">
                   {projectData.creator ? (
@@ -431,7 +437,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       </div>
                     </>
                   ) : (
-                    <span className="text-muted-foreground text-sm">Unknown creator</span>
+                    <span className="text-muted-foreground text-sm">
+                      {tSidebar("unknownCreator")}
+                    </span>
                   )}
                 </div>
               </div>
@@ -441,7 +449,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      Launch Date
+                      {tSidebar("launchDate")}
                     </span>
                     <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
                     <span className="text-foreground text-sm font-medium">
@@ -456,7 +464,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      Platform
+                      {tSidebar("platform")}
                     </span>
                     <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
                     <span className="text-foreground text-sm font-medium capitalize">
@@ -471,7 +479,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      Pricing
+                      {tSidebar("pricing")}
                     </span>
                     <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
                     <span className="text-foreground text-sm font-medium capitalize">
@@ -486,7 +494,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      Socials
+                      {tSidebar("socials")}
                     </span>
                     <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
                     <div className="flex items-center gap-2">
@@ -521,7 +529,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {projectData.techStack && projectData.techStack.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                    Product Keywords
+                    {tSidebar("productKeywords")}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {projectData.techStack.slice(0, 6).map((tech) => (
