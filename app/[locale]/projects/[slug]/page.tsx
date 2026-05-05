@@ -16,6 +16,7 @@ import { format } from "date-fns"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { getLocalizedProjectDescription } from "@/lib/get-project-translation"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
@@ -40,7 +41,7 @@ export async function generateMetadata(
   { params }: ProjectPageProps,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
   const projectData = await getProjectBySlug(slug)
 
   if (!projectData) {
@@ -49,24 +50,30 @@ export async function generateMetadata(
     }
   }
 
-  // Function to strip HTML tags from text
   function stripHtml(html: string): string {
     return html.replace(/<[^>]*>/g, "").trim()
   }
 
+  const localizedDescription = await getLocalizedProjectDescription(
+    projectData.id,
+    locale,
+    projectData.description,
+  )
+
   const previousImages = (await parent).openGraph?.images || []
   const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
+  const canonicalPath = locale === "en" ? `/projects/${slug}` : `/${locale}/projects/${slug}`
 
   return {
     title: `${projectData.name} | aat.ee`,
-    description: stripHtml(projectData.description),
+    description: stripHtml(localizedDescription),
     alternates: {
-      canonical: `${baseUrl}/projects/${slug}`,
+      canonical: `${baseUrl}${canonicalPath}`,
     },
     openGraph: {
       title: `${projectData.name} on aat.ee`,
-      description: stripHtml(projectData.description),
-      url: `${baseUrl}/projects/${slug}`,
+      description: stripHtml(localizedDescription),
+      url: `${baseUrl}${canonicalPath}`,
       siteName: "aat.ee",
       type: "website",
       images: [
@@ -85,7 +92,7 @@ export async function generateMetadata(
       site: "@aat_ee",
       creator: "@aat_ee",
       title: `${projectData.name} on aat.ee`,
-      description: stripHtml(projectData.description),
+      description: stripHtml(localizedDescription),
       images: [projectData.productImage || projectData.logoUrl],
     },
   }
@@ -101,6 +108,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   if (!projectData) {
     notFound()
   }
+
+  const localizedDescription = await getLocalizedProjectDescription(
+    projectData.id,
+    locale,
+    projectData.description,
+  )
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -138,7 +151,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       {/* Structured Data - Product Schema */}
       <ProductSchema
         name={projectData.name}
-        description={stripHtml(projectData.description)}
+        description={stripHtml(localizedDescription)}
         websiteUrl={projectData.websiteUrl}
         imageUrl={projectData.productImage || projectData.logoUrl}
         platforms={projectData.platforms || []}
@@ -349,7 +362,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               )}
               {/* Description */}
               <div className="w-full">
-                <RichTextDisplay content={projectData.description} />
+                <RichTextDisplay content={localizedDescription} />
               </div>
 
               {/* Edit button pour owners */}
