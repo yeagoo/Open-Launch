@@ -6,6 +6,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 import { platformType, pricingType } from "@/drizzle/db/schema"
+import { routing } from "@/i18n/routing"
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
@@ -25,6 +26,7 @@ import {
 } from "@remixicon/react"
 import { addDays, format, parseISO } from "date-fns"
 import { Tag, TagInput } from "emblor"
+import { useLocale } from "next-intl"
 
 import {
   DATE_FORMAT,
@@ -64,6 +66,7 @@ interface ProjectFormData {
   name: string
   websiteUrl: string
   description: string
+  sourceLocale: (typeof routing.locales)[number]
   categories: string[]
   techStack: string[]
 
@@ -75,6 +78,17 @@ interface ProjectFormData {
   launchType: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES]
   productImage: string | null
   hasBadgeVerified: boolean
+}
+
+const SOURCE_LOCALE_LABELS: Record<(typeof routing.locales)[number], string> = {
+  en: "English",
+  zh: "简体中文",
+  es: "Español",
+  pt: "Português",
+  fr: "Français",
+  ja: "日本語",
+  ko: "한국어",
+  et: "Eesti",
 }
 
 interface DateGroup {
@@ -89,11 +103,16 @@ interface SubmitProjectFormProps {
 
 export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
   const router = useRouter()
+  const locale = useLocale() as (typeof routing.locales)[number]
+  const defaultSourceLocale = (routing.locales as readonly string[]).includes(locale)
+    ? locale
+    : routing.defaultLocale
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<ProjectFormData>({
     name: "",
     websiteUrl: "",
     description: "",
+    sourceLocale: defaultSourceLocale as (typeof routing.locales)[number],
     categories: [],
     techStack: [],
     platforms: [],
@@ -530,6 +549,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       const projectData = {
         name: formData.name,
         description: formData.description,
+        sourceLocale: formData.sourceLocale,
         websiteUrl: formData.websiteUrl,
         logoUrl: finalLogoUrl,
         productImage: formData.productImage,
@@ -778,6 +798,35 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <p className="text-muted-foreground mt-1 text-xs">
                 Enter your website URL and click Auto Fill to automatically populate the form.
               </p>
+            </div>
+            <div>
+              <Label htmlFor="sourceLocale">
+                Description language <span className="text-red-500">*</span>
+              </Label>
+              <p className="text-muted-foreground mb-2 text-xs">
+                Pick the language you&apos;re writing the description in. Other languages will be
+                auto-translated.
+              </p>
+              <Select
+                value={formData.sourceLocale}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sourceLocale: value as (typeof routing.locales)[number],
+                  }))
+                }
+              >
+                <SelectTrigger id="sourceLocale" className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {routing.locales.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {SOURCE_LOCALE_LABELS[loc]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="description">

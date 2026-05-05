@@ -9,6 +9,7 @@ import {
   launchStatus,
   project,
   projectToCategory,
+  projectTranslation,
   upvote,
   user,
 } from "@/drizzle/db/schema"
@@ -134,13 +135,44 @@ export async function updateProject(
     }
 
     // Update description (sanitize untrusted HTML for XSS prevention)
-    await db
-      .update(project)
-      .set({
-        description: sanitizeRichText(data.description),
-        updatedAt: new Date(),
-      })
-      .where(eq(project.id, projectId))
+    const sanitized = sanitizeRichText(data.description)
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(project)
+        .set({ description: sanitized, updatedAt: new Date() })
+        .where(eq(project.id, projectId))
+
+      // Refresh the source-locale translation row
+      await tx
+        .insert(projectTranslation)
+        .values({
+          projectId,
+          locale: projectData.sourceLocale,
+          description: sanitized,
+          isSource: true,
+          aiGenerated: false,
+        })
+        .onConflictDoUpdate({
+          target: [projectTranslation.projectId, projectTranslation.locale],
+          set: {
+            description: sanitized,
+            isSource: true,
+            aiGenerated: false,
+            updatedAt: new Date(),
+          },
+        })
+
+      // Invalidate AI-generated translations so the cron regenerates them
+      await tx
+        .delete(projectTranslation)
+        .where(
+          and(
+            eq(projectTranslation.projectId, projectId),
+            eq(projectTranslation.aiGenerated, true),
+          ),
+        )
+    })
 
     // Update categories (remove old ones and add new ones)
     // First, delete existing categories
