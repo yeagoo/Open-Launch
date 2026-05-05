@@ -49,3 +49,6 @@ seo-article.ts
 # Email template previews
 email-previews/
 mitm_mcp_traffic.db
+
+# Cron script log output
+logs/
