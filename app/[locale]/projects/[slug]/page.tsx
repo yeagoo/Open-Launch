@@ -21,9 +21,9 @@ import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { EditButton } from "@/components/project/edit-button"
-import { ProjectComments } from "@/components/project/project-comments"
 import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
 import { ShareButton } from "@/components/project/share-button"
+import { TranslatedComments } from "@/components/project/translated-comments"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { BreadcrumbSchema, ProductSchema } from "@/components/seo/structured-data"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
@@ -372,9 +372,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </h2>
                 {projectData.launchStatus === "ongoing" ||
                 projectData.launchStatus === "launched" ? (
-                  <ProjectComments
+                  <TranslatedComments
                     projectId={projectData.id}
                     placeholder={tComments("placeholder")}
+                    currentUserId={session?.user?.id ?? null}
                   />
                 ) : (
                   <div className="py-6 text-center">

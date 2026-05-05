@@ -8,7 +8,7 @@
     "delete": "Excluir",
     "edit": "Editar",
     "search": "Pesquisar",
-    "viewAll": "Ver tudo",
+    "viewAll": "Ver todos",
     "back": "Voltar",
     "next": "Próximo",
     "previous": "Anterior",
@@ -20,17 +20,17 @@
   "nav": {
     "explore": "Explorar",
     "exploreDesc": {
-      "trendingTitle": "Em alta agora",
+      "trendingTitle": "Em Alta Agora",
       "trendingDesc": "Descubra os projetos mais populares",
-      "winnersTitle": "Vencedores do dia",
+      "winnersTitle": "Vencedores do Dia",
       "winnersDesc": "Veja os melhores projetos do dia",
-      "monthTitle": "Melhores do mês",
+      "monthTitle": "Melhores do Mês",
       "monthDesc": "Veja os melhores projetos do mês",
       "categoriesTitle": "Categorias",
       "categoriesDesc": "Navegue por projetos por categoria"
     },
     "dashboard": "Painel",
-    "submitProject": "Enviar projeto",
+    "submitProject": "Enviar Projeto",
     "pricing": "Preços",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "Patrocinadores",
@@ -39,7 +39,7 @@
     "navigation": "NAVEGAÇÃO",
     "actions": "AÇÕES",
     "home": "Início",
-    "trending": "Em alta",
+    "trending": "Em Alta",
     "categories": "Categorias",
     "winners": "Vencedores"
   },
@@ -47,14 +47,14 @@
     "rightsReserved": "Todos os direitos reservados.",
     "discover": "Descobrir",
     "resources": "Recursos",
-    "legal": "Legal",
+    "legal": "Jurídico",
     "friends": "Amigos",
     "links": {
-      "trending": "Em alta",
+      "trending": "Em Alta",
       "categories": "Categorias",
-      "compareTools": "Comparar ferramentas",
+      "compareTools": "Comparar Ferramentas",
       "alternatives": "Alternativas",
-      "submitProject": "Enviar projeto",
+      "submitProject": "Enviar Projeto",
       "pricing": "Preços",
       "sponsors": "Patrocinadores",
       "blog": "Blog",
@@ -65,7 +65,7 @@
   },
   "home": {
     "metadata": {
-      "today": "Produtos lançados hoje no aat.ee",
+      "today": "Produtos Lançados Hoje no aat.ee",
       "todayDesc": "Descubra os lançamentos de produtos mais recentes hoje no aat.ee - startups, ferramentas de IA e produtos SaaS"
     },
     "banner": {
@@ -73,19 +73,19 @@
       "subtitle": "Envie, ganhe um distintivo e backlink"
     },
     "sections": {
-      "todayTitle": "Principais projetos sendo lançados hoje",
-      "yesterdayTitle": "Lançamentos de ontem",
-      "monthTitle": "Melhores deste mês",
-      "topCategories": "Principais categorias",
-      "quickAccess": "Acesso rápido",
-      "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "Verifique o ciclo de vida do suporte do software em:",
+      "todayTitle": "Principais Projetos Lançando Hoje",
+      "yesterdayTitle": "Lançamentos de Ontem",
+      "monthTitle": "Melhores do Mês",
+      "topCategories": "Principais Categorias",
+      "quickAccess": "Acesso Rápido",
+      "linuxAlliance": "Aliança de Documentação Linux",
+      "linuxAllianceFooter": "Verifique o ciclo de vida do suporte de software em:",
       "recommended": "Recomendados",
-      "webcasaDesc": "Painel de controle de servidor open-source nativo de IA",
+      "webcasaDesc": "Painel de controle de servidor open-source nativo em IA",
       "litehttpdDesc": "Servidor web leve, altamente compatível com Apache HTTPD",
-      "trendingNow": "Em alta agora",
-      "dailyWinners": "Vencedores do dia",
-      "bestOfMonth": "Melhores do mês",
+      "trendingNow": "Em Alta Agora",
+      "dailyWinners": "Vencedores do Dia",
+      "bestOfMonth": "Melhores do Mês",
       "dashboard": "Painel",
       "projectsCount": "{count} projetos"
     }
@@ -94,7 +94,7 @@
     "signIn": {
       "title": "Bem-vindo de volta",
       "subtitle": "Entre na sua conta para continuar",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Senha",
       "submit": "Entrar",
       "submitting": "Entrando...",
@@ -105,7 +105,7 @@
       "noAccount": "Não tem uma conta?",
       "signUpLink": "Cadastre-se",
       "orContinueWith": "Ou continue com",
-      "captchaRequired": "Conclua a verificação de segurança",
+      "captchaRequired": "Por favor, complete a verificação de segurança",
       "genericError": "Ocorreu um erro",
       "successToast": "Login realizado com sucesso",
       "termsAgreement": "Ao clicar em continuar, você concorda com nossos",
@@ -117,7 +117,7 @@
       "title": "Crie sua conta",
       "subtitle": "Junte-se ao aat.ee para lançar e descobrir produtos",
       "nameLabel": "Nome",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Senha",
       "submit": "Criar conta",
       "submitting": "Criando conta...",
@@ -125,21 +125,21 @@
       "withGoogle": "Cadastre-se com Google",
       "withGithub": "Cadastre-se com GitHub",
       "haveAccount": "Já tem uma conta?",
-      "signInLink": "Entre",
+      "signInLink": "Entrar",
       "orContinueWith": "Ou continue com",
-      "captchaRequired": "Conclua a verificação de segurança",
+      "captchaRequired": "Por favor, complete a verificação de segurança",
       "genericError": "Ocorreu um erro"
     },
     "forgotPassword": {
-      "title": "Redefina sua senha",
-      "subtitle": "Digite seu email e enviaremos um link de redefinição",
-      "emailLabel": "Email",
+      "title": "Redefinir sua senha",
+      "subtitle": "Digite seu e-mail e enviaremos um link de redefinição",
+      "emailLabel": "E-mail",
       "submit": "Enviar link de redefinição",
       "backToSignIn": "Voltar ao login",
-      "successMessage": "Se esse email existir, enviamos um link de redefinição."
+      "successMessage": "Se esse e-mail existir, enviamos um link de redefinição."
     },
     "resetPassword": {
-      "title": "Defina uma nova senha",
+      "title": "Definir uma nova senha",
       "passwordLabel": "Nova senha",
       "confirmLabel": "Confirmar senha",
       "submit": "Redefinir senha",
@@ -147,9 +147,9 @@
       "mismatchError": "As senhas não coincidem"
     },
     "verifyEmail": {
-      "sentTitle": "Verifique seu email",
+      "sentTitle": "Verifique seu e-mail",
       "sentMessage": "Enviamos um link de verificação para sua caixa de entrada.",
-      "successTitle": "Email verificado!",
+      "successTitle": "E-mail verificado!",
       "successMessage": "Sua conta está pronta. Redirecionando para o painel..."
     }
   },
@@ -184,7 +184,7 @@
       "tags": "Tags",
       "logo": "Logo",
       "submitButton": "Enviar projeto",
-      "autoFill": "Preenchimento automático a partir da URL"
+      "autoFill": "Preenchimento automático da URL"
     },
     "sidebar": {
       "achievement": "Conquista",
@@ -199,12 +199,37 @@
     "comments": {
       "heading": "Comentários",
       "notLaunchedYet": "Os comentários estarão disponíveis assim que o projeto for lançado.",
-      "placeholder": "Adicione um comentário..."
+      "placeholder": "Adicione um comentário...",
+      "noComments": "Nenhum comentário ainda. Seja o primeiro!",
+      "loading": "Carregando comentários...",
+      "loadFailed": "Falha ao carregar comentários. Tente novamente.",
+      "signInPrompt": "Entre para comentar",
+      "reply": "Responder",
+      "like": "Curtir",
+      "dislike": "Não curtir",
+      "edit": "Editar",
+      "delete": "Excluir",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "send": "Enviar",
+      "replyingTo": "Respondendo a {name}",
+      "deleteConfirm": "Excluir este comentário?",
+      "deleteSuccess": "Comentário excluído",
+      "deleteError": "Falha ao excluir comentário",
+      "editSuccess": "Comentário atualizado",
+      "editError": "Falha ao atualizar comentário",
+      "rateError": "Falha ao avaliar comentário",
+      "showReplies": "Mostrar {count, plural, one {# resposta} other {# respostas}}",
+      "hideReplies": "Ocultar respostas",
+      "justNow": "agora mesmo",
+      "minutesAgo": "há {count, plural, one {# minuto} other {# minutos}}",
+      "hoursAgo": "há {count, plural, one {# hora} other {# horas}}",
+      "daysAgo": "há {count, plural, one {# dia} other {# dias}}"
     }
   },
   "pricing": {
     "title": "Preços",
-    "subtitle": "Escolha o plano que se adequa ao seu lançamento",
+    "subtitle": "Escolha o plano que se adapta ao seu lançamento",
     "free": "Gratuito",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
@@ -222,7 +247,7 @@
     "generic": "Algo deu errado. Tente novamente.",
     "unauthorized": "Não autorizado",
     "notFound": "Página não encontrada",
-    "rateLimited": "Muitas solicitações. Aguarde.",
+    "rateLimited": "Muitas requisições. Aguarde.",
     "serverError": "Erro do servidor. Tente novamente mais tarde."
   },
   "friends": {

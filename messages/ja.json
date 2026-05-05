@@ -8,7 +8,7 @@
     "delete": "削除",
     "edit": "編集",
     "search": "検索",
-    "viewAll": "すべて表示",
+    "viewAll": "すべて見る",
     "back": "戻る",
     "next": "次へ",
     "previous": "前へ",
@@ -21,9 +21,9 @@
     "explore": "探索",
     "exploreDesc": {
       "trendingTitle": "トレンド",
-      "trendingDesc": "人気のプロジェクトを見つける",
-      "winnersTitle": "デイリー勝者",
-      "winnersDesc": "本日のベストプロジェクトを見る",
+      "trendingDesc": "最も人気のあるプロジェクトを発見",
+      "winnersTitle": "デイリーウィナー",
+      "winnersDesc": "今日のベストプロジェクトを見る",
       "monthTitle": "今月のベスト",
       "monthDesc": "今月のベストプロジェクトを見る",
       "categoriesTitle": "カテゴリ",
@@ -31,7 +31,7 @@
     },
     "dashboard": "ダッシュボード",
     "submitProject": "プロジェクトを提出",
-    "pricing": "料金プラン",
+    "pricing": "料金",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "スポンサー",
     "signIn": "ログイン",
@@ -41,7 +41,7 @@
     "home": "ホーム",
     "trending": "トレンド",
     "categories": "カテゴリ",
-    "winners": "勝者"
+    "winners": "ウィナー"
   },
   "footer": {
     "rightsReserved": "All rights reserved.",
@@ -53,9 +53,9 @@
       "trending": "トレンド",
       "categories": "カテゴリ",
       "compareTools": "ツール比較",
-      "alternatives": "代替ツール",
+      "alternatives": "代替品",
       "submitProject": "プロジェクトを提出",
-      "pricing": "料金プラン",
+      "pricing": "料金",
       "sponsors": "スポンサー",
       "blog": "ブログ",
       "friendsPage": "フレンド",
@@ -65,12 +65,12 @@
   },
   "home": {
     "metadata": {
-      "today": "本日 aat.ee で公開されたプロダクト",
-      "todayDesc": "aat.ee で本日公開された最新のプロダクト（スタートアップ、AIツール、SaaS）を発見"
+      "today": "今日 aat.ee で公開された製品",
+      "todayDesc": "aat.ee で今日公開された最新製品（スタートアップ、AIツール、SaaS製品）を発見"
     },
     "banner": {
-      "title": "あなたのプロダクトのローンチプラットフォーム",
-      "subtitle": "提出して、バッジとバックリンクを入手"
+      "title": "製品向けローンチプラットフォーム",
+      "subtitle": "提出、バッジとバックリンクを獲得"
     },
     "sections": {
       "todayTitle": "本日公開中のトッププロジェクト",
@@ -79,15 +79,15 @@
       "topCategories": "トップカテゴリ",
       "quickAccess": "クイックアクセス",
       "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "ソフトウェアサポートライフサイクルはこちら:",
+      "linuxAllianceFooter": "ソフトウェアサポートのライフサイクルを確認:",
       "recommended": "おすすめ",
-      "webcasaDesc": "AIネイティブなオープンソースサーバー管理パネル",
-      "litehttpdDesc": "軽量Webサーバー、Apache HTTPDとの高い互換性",
-      "trendingNow": "トレンド",
-      "dailyWinners": "デイリー勝者",
+      "webcasaDesc": "AIネイティブなオープンソースサーバーコントロールパネル",
+      "litehttpdDesc": "軽量Webサーバー、Apache HTTPDと高い互換性",
+      "trendingNow": "現在トレンド",
+      "dailyWinners": "デイリーウィナー",
       "bestOfMonth": "今月のベスト",
       "dashboard": "ダッシュボード",
-      "projectsCount": "{count} プロジェクト"
+      "projectsCount": "{count} 件のプロジェクト"
     }
   },
   "auth": {
@@ -102,28 +102,28 @@
       "withGoogle": "Googleでログイン",
       "withGithub": "GitHubでログイン",
       "forgotPassword": "パスワードをお忘れですか？",
-      "noAccount": "アカウントをお持ちでないですか？",
+      "noAccount": "アカウントをお持ちでない場合",
       "signUpLink": "新規登録",
       "orContinueWith": "または次で続行",
       "captchaRequired": "セキュリティ認証を完了してください",
       "genericError": "エラーが発生しました",
-      "successToast": "ログインしました",
-      "termsAgreement": "続行をクリックすることで、以下に同意したことになります",
+      "successToast": "ログインに成功しました",
+      "termsAgreement": "続行することで、以下の内容に同意したことになります",
       "termsOfService": "利用規約",
       "and": "および",
       "privacyPolicy": "プライバシーポリシー"
     },
     "signUp": {
       "title": "アカウント作成",
-      "subtitle": "aat.ee に参加してプロダクトをローンチ・発見",
+      "subtitle": "aat.eeに参加して製品を公開・発見",
       "nameLabel": "名前",
       "emailLabel": "メールアドレス",
       "passwordLabel": "パスワード",
       "submit": "アカウント作成",
       "submitting": "アカウント作成中...",
       "loading": "読み込み中...",
-      "withGoogle": "Googleで登録",
-      "withGithub": "GitHubで登録",
+      "withGoogle": "Googleで新規登録",
+      "withGithub": "GitHubで新規登録",
       "haveAccount": "すでにアカウントをお持ちですか？",
       "signInLink": "ログイン",
       "orContinueWith": "または次で続行",
@@ -132,7 +132,7 @@
     },
     "forgotPassword": {
       "title": "パスワードをリセット",
-      "subtitle": "メールアドレスを入力すると、リセットリンクを送信します",
+      "subtitle": "メールアドレスを入力するとリセットリンクを送信します",
       "emailLabel": "メールアドレス",
       "submit": "リセットリンクを送信",
       "backToSignIn": "ログインに戻る",
@@ -150,20 +150,20 @@
       "sentTitle": "メールを確認してください",
       "sentMessage": "確認リンクを受信トレイに送信しました。",
       "successTitle": "メール確認完了！",
-      "successMessage": "アカウントの準備ができました。ダッシュボードにリダイレクト中..."
+      "successMessage": "アカウントの準備ができました。ダッシュボードにリダイレクトします..."
     }
   },
   "project": {
     "list": {
       "title": "プロジェクト",
       "submitButton": "プロジェクトを提出",
-      "empty": "まだプロジェクトがありません。"
+      "empty": "まだプロジェクトはありません。"
     },
     "detail": {
-      "upvote": "いいね",
-      "upvoted": "いいね済み",
+      "upvote": "いいね！",
+      "upvoted": "いいね！済み",
       "visit": "訪問",
-      "share": "シェア",
+      "share": "共有",
       "comments": "コメント",
       "categories": "カテゴリ",
       "tags": "タグ",
@@ -172,11 +172,11 @@
       "ongoing": "進行中",
       "launched": "公開済み",
       "scheduled": "予定",
-      "byMaker": "by"
+      "byMaker": "作成者:"
     },
     "submit": {
       "title": "プロジェクトを提出",
-      "subtitle": "あなたのプロダクトを何千人ものユーザーにシェア",
+      "subtitle": "数千人のユーザーに製品を紹介しましょう",
       "websiteUrl": "ウェブサイトURL",
       "name": "プロジェクト名",
       "description": "説明",
@@ -188,30 +188,55 @@
     },
     "sidebar": {
       "achievement": "実績",
-      "publisher": "公開者",
-      "unknownCreator": "作成者不明",
+      "publisher": "パブリッシャー",
+      "unknownCreator": "不明な作成者",
       "launchDate": "公開日",
       "platform": "プラットフォーム",
-      "pricing": "料金",
+      "pricing": "価格",
       "socials": "ソーシャル",
-      "productKeywords": "プロダクトキーワード"
+      "productKeywords": "製品キーワード"
     },
     "comments": {
       "heading": "コメント",
       "notLaunchedYet": "プロジェクトが公開されるまでコメントは利用できません。",
-      "placeholder": "コメントを追加..."
+      "placeholder": "コメントを追加...",
+      "noComments": "まだコメントはありません。最初に投稿しましょう！",
+      "loading": "コメントを読み込み中...",
+      "loadFailed": "コメントの読み込みに失敗しました。もう一度お試しください。",
+      "signInPrompt": "コメントするにはログイン",
+      "reply": "返信",
+      "like": "いいね",
+      "dislike": "よくない",
+      "edit": "編集",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "save": "保存",
+      "send": "送信",
+      "replyingTo": "{name} に返信",
+      "deleteConfirm": "このコメントを削除しますか？",
+      "deleteSuccess": "コメントを削除しました",
+      "deleteError": "コメントの削除に失敗しました",
+      "editSuccess": "コメントを更新しました",
+      "editError": "コメントの更新に失敗しました",
+      "rateError": "コメントの評価に失敗しました",
+      "showReplies": "返信を表示 ({count, plural, one {# 件} other {# 件}})",
+      "hideReplies": "返信を非表示",
+      "justNow": "たった今",
+      "minutesAgo": "{count, plural, one {# 分前} other {# 分前}}",
+      "hoursAgo": "{count, plural, one {# 時間前} other {# 時間前}}",
+      "daysAgo": "{count, plural, one {# 日前} other {# 日前}}"
     }
   },
   "pricing": {
-    "title": "料金プラン",
-    "subtitle": "あなたのローンチに合ったプランを選択",
+    "title": "料金",
+    "subtitle": "ローンチに合ったプランを選んでください",
     "free": "無料",
     "premium": "プレミアム",
     "premiumPlus": "プレミアムプラス",
     "perLaunch": "ローンチごと",
-    "getStarted": "始める",
+    "getStarted": "はじめる",
     "subscribe": "購読",
-    "compareFeatures": "機能比較"
+    "compareFeatures": "機能を比較"
   },
   "search": {
     "placeholder": "プロジェクトを検索...",
@@ -231,9 +256,9 @@
     "backToHome": "ホームに戻る",
     "groups": {
       "linuxCommunities": "Linux コミュニティ",
-      "toolsServices": "ツール & サービス",
-      "directories": "ディレクトリ & 発見",
-      "knowledgeReference": "知識 & リファレンス"
+      "toolsServices": "ツールとサービス",
+      "directories": "ディレクトリと発見",
+      "knowledgeReference": "知識とリファレンス"
     }
   }
 }
