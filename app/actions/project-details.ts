@@ -15,6 +15,7 @@ import {
 import { and, eq, ne, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { sanitizeRichText } from "@/lib/sanitize"
 
 // Get session helper
 async function getSession() {
@@ -132,11 +133,11 @@ export async function updateProject(
       }
     }
 
-    // Update description
+    // Update description (sanitize untrusted HTML for XSS prevention)
     await db
       .update(project)
       .set({
-        description: data.description,
+        description: sanitizeRichText(data.description),
         updatedAt: new Date(),
       })
       .where(eq(project.id, projectId))
