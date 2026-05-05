@@ -15,6 +15,8 @@ import {
 import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
+import { sanitizeRichText } from "@/lib/sanitize"
 
 // Fonction pour générer un slug unique
 async function generateUniqueSlug(name: string): Promise<string> {
@@ -235,6 +237,16 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     // Normalize URL: lowercase + strip trailing slash (consistent with check-url endpoint)
     const websiteUrl = rawWebsiteUrl.toLowerCase().replace(/\/$/, "")
 
+    // Sanitize untrusted HTML before persistence (XSS prevention)
+    const sanitizedDescription = sanitizeRichText(description)
+
+    // Server-side badge re-verification — do not trust the client claim.
+    // Only re-fetch when the client claims true (avoid wasted requests).
+    let serverVerifiedBadge = false
+    if (hasBadgeVerified) {
+      serverVerifiedBadge = await verifyAatBadgeServerSide(websiteUrl)
+    }
+
     // Validation
     if (
       !name ||
@@ -299,7 +311,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
           id: crypto.randomUUID(),
           name,
           slug,
-          description,
+          description: sanitizedDescription,
           websiteUrl,
           logoUrl,
           productImage: productImage ?? undefined,
@@ -308,8 +320,8 @@ export async function submitProject(projectData: ProjectSubmissionData) {
           pricing,
           githubUrl: githubUrl ?? undefined,
           twitterUrl: twitterUrl ?? undefined,
-          hasBadgeVerified: hasBadgeVerified ?? false,
-          badgeVerifiedAt: hasBadgeVerified ? new Date() : undefined,
+          hasBadgeVerified: serverVerifiedBadge,
+          badgeVerifiedAt: serverVerifiedBadge ? new Date() : undefined,
           createdBy: session.user.id,
           createdAt: new Date(),
           updatedAt: new Date(),
