@@ -179,172 +179,206 @@ export async function scheduleLaunch(
   }
   const userId = session.user.id
 
-  // Verify the project exists and belongs to the authenticated user
-  const [project] = await db
-    .select({
-      id: projectTable.id,
-      createdBy: projectTable.createdBy,
-      hasBadgeVerified: projectTable.hasBadgeVerified,
-    })
-    .from(projectTable)
-    .where(eq(projectTable.id, projectId))
-    .limit(1)
-
-  if (!project) {
-    throw new Error("Project not found.")
-  }
-  if (project.createdBy !== userId) {
-    throw new Error("You do not have permission to schedule this project.")
-  }
-
-  // Badge launch type requires server-verified badge
-  if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE && !project.hasBadgeVerified) {
-    throw new Error(
-      "Badge not verified. Please verify your badge before scheduling a badge launch.",
-    )
-  }
-
+  // ─── Input validation (no DB I/O yet) ──────────────────────────────────────
+  let parsedDate: Date
   try {
-    // Vérifier si la date est au format correct et la convertir en Date
-    let parsedDate: Date
-
-    try {
-      // Essayer d'abord le format standard
-      parsedDate = parse(date, DATE_FORMAT.API, new Date())
-
-      // Vérifier si la date est valide
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Date invalide après parsing")
-      }
-    } catch {
-      // Si le parsing échoue, essayer de créer une Date directement
-      parsedDate = new Date(date)
-
-      // Vérifier si la date est valide
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error(`Format de date invalide: ${date}`)
-      }
+    parsedDate = parse(date, DATE_FORMAT.API, new Date())
+    if (isNaN(parsedDate.getTime())) throw new Error("Invalid date after parsing")
+  } catch {
+    parsedDate = new Date(date)
+    if (isNaN(parsedDate.getTime())) {
+      throw new Error(`Invalid date format: ${date}`)
     }
+  }
 
-    // Normaliser les dates pour comparer uniquement les jours (sans les heures)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0) // Réinitialiser l'heure à minuit
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-    let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
-    let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
+  let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
+  let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
+  if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
+    minDaysAhead = 1
+  } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
+    minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
+    maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
+  }
 
-    if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
-      minDaysAhead = 1 // Badge users can launch next day
-    } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
-      minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
-      maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
-    }
+  const minDate = addDays(today, minDaysAhead)
+  const maxDate = addDays(today, maxDaysAhead)
+  const normalizedParsedDate = new Date(parsedDate)
+  normalizedParsedDate.setHours(0, 0, 0, 0)
 
-    // Calculer la date minimale à minuit
-    const minDate = addDays(today, minDaysAhead)
-    const maxDate = addDays(today, maxDaysAhead)
-
-    // Normaliser parsedDate à minuit également pour la comparaison
-    const normalizedParsedDate = new Date(parsedDate)
-    normalizedParsedDate.setHours(0, 0, 0, 0)
-
-    // Comparer les dates normalisées
-    if (normalizedParsedDate < minDate) {
-      throw new Error(`La date de lancement doit être au moins ${minDaysAhead} jour(s) à l'avance`)
-    }
-
-    if (normalizedParsedDate > maxDate) {
-      throw new Error(
-        `La date de lancement ne peut pas être plus de ${maxDaysAhead} jours à l'avance pour ce type de lancement`,
-      )
-    }
-
-    // Vérifier la limite de lancement de l'utilisateur AVANT de vérifier les slots globaux
-    const userLaunchLimitCheck = await checkUserLaunchLimit(
-      userId,
-      format(parsedDate, DATE_FORMAT.API),
+  if (normalizedParsedDate < minDate) {
+    throw new Error(`Launch date must be at least ${minDaysAhead} day(s) in advance`)
+  }
+  if (normalizedParsedDate > maxDate) {
+    throw new Error(
+      `Launch date cannot be more than ${maxDaysAhead} days in advance for this launch type`,
     )
-    if (!userLaunchLimitCheck.allowed) {
-      throw new Error(
-        `You have reached your daily launch limit of ${userLaunchLimitCheck.limit} project(s) for this date.`,
-      )
-    }
+  }
 
-    // Vérifier la disponibilité globale des slots
-    const availability = await getLaunchAvailability(format(parsedDate, DATE_FORMAT.API))
-    let hasAvailability = false
+  // Canonical UTC launch timestamp (always at LAUNCH_HOUR_UTC on the chosen day)
+  const launchDate = new Date(
+    Date.UTC(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      parsedDate.getDate(),
+      LAUNCH_SETTINGS.LAUNCH_HOUR_UTC,
+      0,
+      0,
+      0,
+    ),
+  )
 
-    if (launchTypeValue === LAUNCH_TYPES.FREE) {
-      hasAvailability = availability.freeSlots > 0
-    } else if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
-      hasAvailability = availability.badgeSlots > 0
-    } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
-      hasAvailability = availability.premiumSlots > 0
-    }
+  const initialStatus: LaunchStatus =
+    launchTypeValue === LAUNCH_TYPES.PREMIUM ? launchStatus.PAYMENT_PENDING : launchStatus.SCHEDULED
+  const isFreeOrBadge =
+    launchTypeValue === LAUNCH_TYPES.FREE || launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE
 
-    if (!hasAvailability) {
-      throw new Error("No availability for the selected date and launch type")
-    }
-
-    // CORRECTION: Créer une date UTC correcte pour le jour sélectionné à 8h UTC
-    // Extraire l'année, le mois et le jour de parsedDate
-    const year = parsedDate.getFullYear()
-    const month = parsedDate.getMonth()
-    const day = parsedDate.getDate()
-
-    // Créer une nouvelle date UTC avec ces composants et l'heure à 8h UTC
-    const launchDate = new Date(
-      Date.UTC(year, month, day, LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0),
-    )
-
-    // Déterminer le statut initial en fonction du type de lancement
-    let initialStatus: LaunchStatus = launchStatus.SCHEDULED
-
-    // Pour les lancements premium, définir le statut à PAYMENT_PENDING
-    if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
-      initialStatus = launchStatus.PAYMENT_PENDING
-    }
-
-    // Mettre à jour le projet avec la date de lancement et le type
-    const updateResult = await db
-      .update(projectTable)
-      .set({
-        scheduledLaunchDate: launchDate, // Utiliser la date UTC correcte
-        launchType: launchTypeValue as LaunchType,
-        launchStatus: initialStatus, // Définir le statut initial en fonction du type de lancement
-        featuredOnHomepage: false, // Premium Launch 不再自动 Featured
-        updatedAt: new Date(),
-      })
-      .where(eq(projectTable.id, projectId))
-
-    // Vérifier si la mise à jour a réussi
-    if (!updateResult) {
-      throw new Error("Failed to update project schedule")
-    }
-
-    // Update quotas for free and badge launches immediately
-    // For premium launches, quotas are updated after payment confirmation
-    if (launchTypeValue === LAUNCH_TYPES.FREE || launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
-      const quotaResult = await db
-        .select()
-        .from(launchQuota)
-        .where(eq(launchQuota.date, launchDate))
+  // ─── Atomic schedule + quota update inside a single transaction ────────────
+  // Locks the project row + launchQuota row for the date so concurrent calls serialize.
+  try {
+    await db.transaction(async (tx) => {
+      // 1. Lock the project row and verify ownership + reschedule guard
+      const [project] = await tx
+        .select({
+          id: projectTable.id,
+          createdBy: projectTable.createdBy,
+          hasBadgeVerified: projectTable.hasBadgeVerified,
+          launchStatus: projectTable.launchStatus,
+          scheduledLaunchDate: projectTable.scheduledLaunchDate,
+        })
+        .from(projectTable)
+        .where(eq(projectTable.id, projectId))
+        .for("update")
         .limit(1)
 
-      const isBadge = launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE
+      if (!project) throw new Error("Project not found.")
+      if (project.createdBy !== userId) {
+        throw new Error("You do not have permission to schedule this project.")
+      }
 
-      if (quotaResult.length === 0) {
-        await db.insert(launchQuota).values({
+      // Reschedule guard: only allow scheduling when the project has no live
+      // schedule yet. Re-attempt is allowed only after a failed payment.
+      if (project.scheduledLaunchDate && project.launchStatus !== launchStatus.PAYMENT_FAILED) {
+        throw new Error("This project is already scheduled.")
+      }
+
+      if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE && !project.hasBadgeVerified) {
+        throw new Error(
+          "Badge not verified. Please verify your badge before scheduling a badge launch.",
+        )
+      }
+
+      // 2. Ensure the launchQuota row for this date exists, then lock it.
+      // Concurrent scheduleLaunch calls for the same date all serialize on this lock.
+      await tx
+        .insert(launchQuota)
+        .values({
           id: crypto.randomUUID(),
           date: launchDate,
-          freeCount: isBadge ? 0 : 1,
-          badgeCount: isBadge ? 1 : 0,
+          freeCount: 0,
+          badgeCount: 0,
           premiumCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
-      } else {
-        await db
+        .onConflictDoNothing({ target: launchQuota.date })
+
+      const [quota] = await tx
+        .select()
+        .from(launchQuota)
+        .where(eq(launchQuota.date, launchDate))
+        .for("update")
+        .limit(1)
+
+      if (!quota) {
+        throw new Error("Failed to acquire launch quota lock")
+      }
+
+      // 3. Re-count actual scheduled projects on this date INSIDE the lock.
+      // The quota counter is denormalized; the project table is canonical.
+      const dayStart = new Date(parsedDate)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = addDays(dayStart, 1)
+      const [counts] = await tx
+        .select({
+          freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})::int`,
+          badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')::int`,
+          premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})::int`,
+          total: sql<number>`count(*)::int`,
+        })
+        .from(projectTable)
+        .where(
+          and(
+            gte(projectTable.scheduledLaunchDate, dayStart),
+            lt(projectTable.scheduledLaunchDate, dayEnd),
+            eq(projectTable.launchStatus, launchStatus.SCHEDULED),
+            // Exclude the current project so re-attempts after PAYMENT_FAILED don't double-count
+            ne(projectTable.id, projectId),
+          ),
+        )
+
+      const freeCount = counts?.freeCount ?? 0
+      const badgeCount = counts?.badgeCount ?? 0
+      const premiumCount = counts?.premiumCount ?? 0
+      const totalCount = counts?.total ?? 0
+
+      if (totalCount >= LAUNCH_LIMITS.TOTAL_DAILY_LIMIT) {
+        throw new Error("No availability for the selected date")
+      }
+      if (launchTypeValue === LAUNCH_TYPES.FREE && freeCount >= LAUNCH_LIMITS.FREE_DAILY_LIMIT) {
+        throw new Error("No free launch slots available for the selected date")
+      }
+      if (
+        launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE &&
+        badgeCount >= LAUNCH_LIMITS.BADGE_DAILY_LIMIT
+      ) {
+        throw new Error("No badge launch slots available for the selected date")
+      }
+      if (
+        launchTypeValue === LAUNCH_TYPES.PREMIUM &&
+        premiumCount + freeCount + badgeCount >= LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT
+      ) {
+        throw new Error("No premium launch slots available for the selected date")
+      }
+
+      // 4. Per-user daily limit (also inside the TX for consistency)
+      const [userCount] = await tx
+        .select({ value: drizzleCount(projectTable.id) })
+        .from(projectTable)
+        .where(
+          and(
+            eq(projectTable.createdBy, userId),
+            gte(projectTable.scheduledLaunchDate, dayStart),
+            lt(projectTable.scheduledLaunchDate, dayEnd),
+            ne(projectTable.launchStatus, launchStatus.PAYMENT_FAILED),
+            ne(projectTable.launchStatus, launchStatus.PAYMENT_PENDING),
+            ne(projectTable.id, projectId),
+          ),
+        )
+      if ((userCount?.value ?? 0) >= USER_DAILY_LAUNCH_LIMIT) {
+        throw new Error(
+          `You have reached your daily launch limit of ${USER_DAILY_LAUNCH_LIMIT} project(s) for this date.`,
+        )
+      }
+
+      // 5. Update project
+      await tx
+        .update(projectTable)
+        .set({
+          scheduledLaunchDate: launchDate,
+          launchType: launchTypeValue as LaunchType,
+          launchStatus: initialStatus,
+          featuredOnHomepage: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectTable.id, projectId))
+
+      // 6. Update denormalized quota counter (premium quota is updated post-payment)
+      if (isFreeOrBadge) {
+        const isBadge = launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE
+        await tx
           .update(launchQuota)
           .set({
             ...(isBadge
@@ -352,19 +386,17 @@ export async function scheduleLaunch(
               : { freeCount: sql`${launchQuota.freeCount} + 1` }),
             updatedAt: new Date(),
           })
-          .where(eq(launchQuota.id, quotaResult[0].id))
+          .where(eq(launchQuota.id, quota.id))
       }
-    }
+    })
 
-    // Revalider les chemins
     revalidatePath("/")
     revalidatePath("/dashboard")
     revalidatePath(`/projects/${projectId}`)
-
     return true
   } catch (error) {
     console.error("Error scheduling launch:", error)
-    throw error // Propager l'erreur au lieu de retourner false
+    throw error
   }
 }
 
