@@ -18,6 +18,7 @@ import {
 } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { getEnglishDescriptions } from "@/lib/get-project-translation"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 90
@@ -127,6 +128,17 @@ export async function GET(request: NextRequest) {
           console.log(`⏭️  Skipping "${subjectProject.name}": pool too small (${pool.length})`)
           skipped++
           continue
+        }
+
+        // Alternatives pages are English-only — replace descriptions with the
+        // canonical English translation for both subject and pool.
+        const enDescriptions = await getEnglishDescriptions([
+          subjectProject.id,
+          ...pool.map((p) => p.id),
+        ])
+        subjectProject.description = enDescriptions[subjectProject.id] ?? subjectProject.description
+        for (const p of pool) {
+          p.description = enDescriptions[p.id] ?? p.description
         }
 
         // Ask AI which candidates are likely alternatives (cheap: names + descriptions only)
