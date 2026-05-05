@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { ContentRenderer } from "@fuma-comment/react/atom"
 import { RiDeleteBinLine, RiReplyLine, RiThumbDownLine, RiThumbUpLine } from "@remixicon/react"
 import type { JSONContent } from "@tiptap/react"
-import { useFormatter, useTranslations } from "next-intl"
+import { useFormatter, useNow, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -324,6 +324,7 @@ function CommentRowView({
 }: CommentRowViewProps) {
   const t = useTranslations("project.comments")
   const formatter = useFormatter()
+  const now = useNow({ updateInterval: 60_000 })
   const timestamp = useMemo(() => new Date(comment.timestamp), [comment.timestamp])
   const liked = comment.liked === true
   const disliked = comment.liked === false
@@ -352,7 +353,7 @@ function CommentRowView({
               {comment.author.name}
             </span>
             <span className="text-muted-foreground text-xs">
-              {formatter.relativeTime(timestamp)}
+              {formatter.relativeTime(timestamp, now)}
             </span>
           </div>
 
@@ -461,6 +462,7 @@ function ReplyView({
 }) {
   const t = useTranslations("project.comments")
   const formatter = useFormatter()
+  const now = useNow({ updateInterval: 60_000 })
   const timestamp = useMemo(() => new Date(comment.timestamp), [comment.timestamp])
   const liked = comment.liked === true
   const disliked = comment.liked === false
@@ -484,7 +486,7 @@ function ReplyView({
             {comment.author.name}
           </span>
           <span className="text-muted-foreground text-[11px]">
-            {formatter.relativeTime(timestamp)}
+            {formatter.relativeTime(timestamp, now)}
           </span>
         </div>
         <div className="text-foreground/90 mt-1 text-sm">
