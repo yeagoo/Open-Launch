@@ -1,0 +1,55 @@
+name: Translate Projects Cron
+
+# Translates project descriptions for the 7 non-source locales via DeepSeek.
+# Each tick processes up to 5 projects (35 AI calls). Backfilling 1212 projects
+# takes ~20 hours of continuous ticks.
+
+on:
+  schedule:
+    # GitHub Actions minimum interval is 5 minutes. May drift under load.
+    - cron: "*/5 * * * *"
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+# Avoid overlapping runs (one tick at a time)
+concurrency:
+  group: translate-projects-cron
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Trigger translate-projects endpoint
+        env:
+          API_URL: ${{ vars.PRODUCTION_URL || 'https://aat.ee' }}
+          CRON_API_KEY: ${{ secrets.CRON_API_KEY }}
+        run: |
+          if [ -z "$CRON_API_KEY" ]; then
+            echo "::error::CRON_API_KEY secret is not set"
+            exit 1
+          fi
+
+          response=$(curl -fsS -w "\n%{http_code}" \
+            -H "Authorization: Bearer $CRON_API_KEY" \
+            "$API_URL/api/cron/translate-projects" || true)
+
+          body=$(echo "$response" | head -n -1)
+          code=$(echo "$response" | tail -n 1)
+
+          echo "HTTP $code"
+          echo "$body"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::translate-projects failed with status $code"
+            exit 1
+          fi
+
+          # Pretty-print summary into the GitHub Actions UI
+          if command -v jq >/dev/null 2>&1; then
+            translated=$(echo "$body" | jq -r '.translated // 0')
+            failed=$(echo "$body" | jq -r '.failed // 0')
+            candidates=$(echo "$body" | jq -r '.candidates // 0')
+            echo "::notice title=Translate-Projects::candidates=$candidates translated=$translated failed=$failed"
+          fi
