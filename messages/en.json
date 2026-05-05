@@ -199,7 +199,32 @@
     "comments": {
       "heading": "Comments",
       "notLaunchedYet": "Comments will be available once the project is launched.",
-      "placeholder": "Add a comment..."
+      "placeholder": "Add a comment...",
+      "noComments": "No comments yet. Be the first!",
+      "loading": "Loading comments...",
+      "loadFailed": "Failed to load comments. Please try again.",
+      "signInPrompt": "Sign in to comment",
+      "reply": "Reply",
+      "like": "Like",
+      "dislike": "Dislike",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "save": "Save",
+      "send": "Send",
+      "replyingTo": "Replying to {name}",
+      "deleteConfirm": "Delete this comment?",
+      "deleteSuccess": "Comment deleted",
+      "deleteError": "Failed to delete comment",
+      "editSuccess": "Comment updated",
+      "editError": "Failed to update comment",
+      "rateError": "Failed to rate comment",
+      "showReplies": "Show {count, plural, one {# reply} other {# replies}}",
+      "hideReplies": "Hide replies",
+      "justNow": "just now",
+      "minutesAgo": "{count, plural, one {# minute} other {# minutes}} ago",
+      "hoursAgo": "{count, plural, one {# hour} other {# hours}} ago",
+      "daysAgo": "{count, plural, one {# day} other {# days}} ago"
     }
   },
   "pricing": {

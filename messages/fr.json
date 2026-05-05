@@ -34,8 +34,8 @@
     "pricing": "Tarifs",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "Sponsors",
-    "signIn": "Se connecter",
-    "signUp": "S'inscrire",
+    "signIn": "Connexion",
+    "signUp": "Inscription",
     "navigation": "NAVIGATION",
     "actions": "ACTIONS",
     "home": "Accueil",
@@ -52,7 +52,7 @@
     "links": {
       "trending": "Tendances",
       "categories": "Catégories",
-      "compareTools": "Comparer les outils",
+      "compareTools": "Comparer des outils",
       "alternatives": "Alternatives",
       "submitProject": "Soumettre un projet",
       "pricing": "Tarifs",
@@ -70,16 +70,16 @@
     },
     "banner": {
       "title": "Plateforme de lancement pour vos produits",
-      "subtitle": "Soumettez, obtenez un badge et un backlink"
+      "subtitle": "Soumettez, obtenez un badge et un lien retour"
     },
     "sections": {
       "todayTitle": "Meilleurs projets lancés aujourd'hui",
       "yesterdayTitle": "Lancements d'hier",
       "monthTitle": "Meilleurs du mois",
-      "topCategories": "Meilleures catégories",
+      "topCategories": "Catégories principales",
       "quickAccess": "Accès rapide",
       "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "Vérifiez le cycle de vie du support logiciel sur :",
+      "linuxAllianceFooter": "Consultez le cycle de vie du support logiciel sur :",
       "recommended": "Recommandé",
       "webcasaDesc": "Panneau de contrôle serveur open-source natif IA",
       "litehttpdDesc": "Serveur web léger, hautement compatible avec Apache HTTPD",
@@ -102,9 +102,9 @@
       "withGoogle": "Connexion avec Google",
       "withGithub": "Connexion avec GitHub",
       "forgotPassword": "Mot de passe oublié ?",
-      "noAccount": "Pas de compte ?",
-      "signUpLink": "S'inscrire",
-      "orContinueWith": "Ou continuer avec",
+      "noAccount": "Pas encore de compte ?",
+      "signUpLink": "Inscrivez-vous",
+      "orContinueWith": "Ou continuez avec",
       "captchaRequired": "Veuillez compléter la vérification de sécurité",
       "genericError": "Une erreur est survenue",
       "successToast": "Connecté avec succès",
@@ -122,11 +122,11 @@
       "submit": "Créer un compte",
       "submitting": "Création du compte...",
       "loading": "Chargement...",
-      "withGoogle": "S'inscrire avec Google",
-      "withGithub": "S'inscrire avec GitHub",
-      "haveAccount": "Déjà un compte ?",
-      "signInLink": "Se connecter",
-      "orContinueWith": "Ou continuer avec",
+      "withGoogle": "Inscription avec Google",
+      "withGithub": "Inscription avec GitHub",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signInLink": "Connectez-vous",
+      "orContinueWith": "Ou continuez avec",
       "captchaRequired": "Veuillez compléter la vérification de sécurité",
       "genericError": "Une erreur est survenue"
     },
@@ -136,7 +136,7 @@
       "emailLabel": "E-mail",
       "submit": "Envoyer le lien de réinitialisation",
       "backToSignIn": "Retour à la connexion",
-      "successMessage": "Si cet e-mail existe, nous avons envoyé un lien de réinitialisation."
+      "successMessage": "Si cet e-mail existe, un lien de réinitialisation a été envoyé."
     },
     "resetPassword": {
       "title": "Définir un nouveau mot de passe",
@@ -160,8 +160,8 @@
       "empty": "Aucun projet pour l'instant."
     },
     "detail": {
-      "upvote": "Upvote",
-      "upvoted": "Upvoté",
+      "upvote": "Voter",
+      "upvoted": "Voté",
       "visit": "Visiter",
       "share": "Partager",
       "comments": "Commentaires",
@@ -184,7 +184,7 @@
       "tags": "Tags",
       "logo": "Logo",
       "submitButton": "Soumettre le projet",
-      "autoFill": "Auto-remplir depuis l'URL"
+      "autoFill": "Remplissage automatique depuis l'URL"
     },
     "sidebar": {
       "achievement": "Récompense",
@@ -199,7 +199,32 @@
     "comments": {
       "heading": "Commentaires",
       "notLaunchedYet": "Les commentaires seront disponibles une fois le projet lancé.",
-      "placeholder": "Ajouter un commentaire..."
+      "placeholder": "Ajouter un commentaire...",
+      "noComments": "Aucun commentaire pour l'instant. Soyez le premier !",
+      "loading": "Chargement des commentaires...",
+      "loadFailed": "Échec du chargement des commentaires. Veuillez réessayer.",
+      "signInPrompt": "Connectez-vous pour commenter",
+      "reply": "Répondre",
+      "like": "Aimer",
+      "dislike": "Ne pas aimer",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "send": "Envoyer",
+      "replyingTo": "Répondre à {name}",
+      "deleteConfirm": "Supprimer ce commentaire ?",
+      "deleteSuccess": "Commentaire supprimé",
+      "deleteError": "Échec de la suppression du commentaire",
+      "editSuccess": "Commentaire mis à jour",
+      "editError": "Échec de la mise à jour du commentaire",
+      "rateError": "Échec de l'évaluation du commentaire",
+      "showReplies": "Afficher {count, plural, one {# réponse} other {# réponses}}",
+      "hideReplies": "Masquer les réponses",
+      "justNow": "à l'instant",
+      "minutesAgo": "il y a {count, plural, one {# minute} other {# minutes}}",
+      "hoursAgo": "il y a {count, plural, one {# heure} other {# heures}}",
+      "daysAgo": "il y a {count, plural, one {# jour} other {# jours}}"
     }
   },
   "pricing": {
@@ -219,7 +244,7 @@
     "recentSearches": "Recherches récentes"
   },
   "errors": {
-    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
     "unauthorized": "Non autorisé",
     "notFound": "Page non trouvée",
     "rateLimited": "Trop de requêtes. Veuillez patienter.",
@@ -233,7 +258,7 @@
       "linuxCommunities": "Communautés Linux",
       "toolsServices": "Outils et services",
       "directories": "Annuaire et découverte",
-      "knowledgeReference": "Connaissances et référence"
+      "knowledgeReference": "Connaissances et références"
     }
   }
 }

@@ -20,7 +20,7 @@
   "nav": {
     "explore": "探索",
     "exploreDesc": {
-      "trendingTitle": "正在流行",
+      "trendingTitle": "当前热门",
       "trendingDesc": "发现最受欢迎的项目",
       "winnersTitle": "每日优胜者",
       "winnersDesc": "查看今日最佳项目",
@@ -41,14 +41,14 @@
     "home": "首页",
     "trending": "热门",
     "categories": "分类",
-    "winners": "获奖者"
+    "winners": "优胜者"
   },
   "footer": {
-    "rightsReserved": "版权所有。",
+    "rightsReserved": "保留所有权利。",
     "discover": "发现",
     "resources": "资源",
     "legal": "法律",
-    "friends": "友链",
+    "friends": "友站",
     "links": {
       "trending": "热门",
       "categories": "分类",
@@ -58,19 +58,19 @@
       "pricing": "定价",
       "sponsors": "赞助商",
       "blog": "博客",
-      "friendsPage": "友链",
+      "friendsPage": "友站",
       "termsOfService": "服务条款",
       "privacyPolicy": "隐私政策"
     }
   },
   "home": {
     "metadata": {
-      "today": "今日在 aat.ee 上发布的产品",
-      "todayDesc": "在 aat.ee 上发现今日最新发布的产品——初创公司、AI 工具和 SaaS 产品"
+      "today": "今天在 aat.ee 上发布的产品",
+      "todayDesc": "在 aat.ee 上发现今天最新发布的产品——创业项目、AI 工具和 SaaS 产品"
     },
     "banner": {
-      "title": "发布你的产品平台",
-      "subtitle": "提交，获取徽章和外链"
+      "title": "你的产品发布平台",
+      "subtitle": "提交，获取徽章和反向链接"
     },
     "sections": {
       "todayTitle": "今日热门项目",
@@ -81,9 +81,9 @@
       "linuxAlliance": "Linux 文档联盟",
       "linuxAllianceFooter": "查看软件支持生命周期：",
       "recommended": "推荐",
-      "webcasaDesc": "AI 原生的开源服务器控制面板",
-      "litehttpdDesc": "轻量级 Web 服务器，与 Apache HTTPD 高度兼容",
-      "trendingNow": "正在流行",
+      "webcasaDesc": "AI 原生开源服务器控制面板",
+      "litehttpdDesc": "轻量级 Web 服务器，高度兼容 Apache HTTPD",
+      "trendingNow": "当前热门",
       "dailyWinners": "每日优胜者",
       "bestOfMonth": "本月最佳",
       "dashboard": "仪表盘",
@@ -93,7 +93,7 @@
   "auth": {
     "signIn": {
       "title": "欢迎回来",
-      "subtitle": "登录您的帐户以继续",
+      "subtitle": "登录您的账户以继续",
       "emailLabel": "邮箱",
       "passwordLabel": "密码",
       "submit": "登录",
@@ -102,7 +102,7 @@
       "withGoogle": "使用 Google 登录",
       "withGithub": "使用 GitHub 登录",
       "forgotPassword": "忘记密码？",
-      "noAccount": "没有帐户？",
+      "noAccount": "没有账户？",
       "signUpLink": "注册",
       "orContinueWith": "或继续使用",
       "captchaRequired": "请完成安全验证",
@@ -114,17 +114,17 @@
       "privacyPolicy": "隐私政策"
     },
     "signUp": {
-      "title": "创建帐户",
+      "title": "创建您的账户",
       "subtitle": "加入 aat.ee 发布和发现产品",
-      "nameLabel": "名称",
+      "nameLabel": "姓名",
       "emailLabel": "邮箱",
       "passwordLabel": "密码",
-      "submit": "创建帐户",
-      "submitting": "创建中...",
+      "submit": "创建账户",
+      "submitting": "创建账户中...",
       "loading": "加载中...",
       "withGoogle": "使用 Google 注册",
       "withGithub": "使用 GitHub 注册",
-      "haveAccount": "已有帐户？",
+      "haveAccount": "已有账户？",
       "signInLink": "登录",
       "orContinueWith": "或继续使用",
       "captchaRequired": "请完成安全验证",
@@ -143,14 +143,14 @@
       "passwordLabel": "新密码",
       "confirmLabel": "确认密码",
       "submit": "重置密码",
-      "successMessage": "密码已重置。正在跳转...",
-      "mismatchError": "两次输入的密码不一致"
+      "successMessage": "密码已重置。正在重定向...",
+      "mismatchError": "密码不匹配"
     },
     "verifyEmail": {
-      "sentTitle": "查看您的邮箱",
+      "sentTitle": "检查您的邮箱",
       "sentMessage": "我们已向您的收件箱发送了验证链接。",
       "successTitle": "邮箱已验证！",
-      "successMessage": "您的帐户已就绪。正在跳转至仪表盘..."
+      "successMessage": "您的账户已就绪。正在重定向到仪表盘..."
     }
   },
   "project": {
@@ -176,13 +176,13 @@
     },
     "submit": {
       "title": "提交您的项目",
-      "subtitle": "向数千用户分享您的产品",
+      "subtitle": "与成千上万的用户分享您的产品",
       "websiteUrl": "网站 URL",
       "name": "项目名称",
       "description": "描述",
       "category": "分类",
       "tags": "标签",
-      "logo": "Logo",
+      "logo": "标志",
       "submitButton": "提交项目",
       "autoFill": "从 URL 自动填充"
     },
@@ -198,20 +198,45 @@
     },
     "comments": {
       "heading": "评论",
-      "notLaunchedYet": "项目发布后才能查看评论。",
-      "placeholder": "添加评论..."
+      "notLaunchedYet": "项目发布后即可查看评论。",
+      "placeholder": "添加评论...",
+      "noComments": "暂无评论。成为第一个评论者！",
+      "loading": "加载评论中...",
+      "loadFailed": "加载评论失败。请重试。",
+      "signInPrompt": "登录后评论",
+      "reply": "回复",
+      "like": "赞",
+      "dislike": "踩",
+      "edit": "编辑",
+      "delete": "删除",
+      "cancel": "取消",
+      "save": "保存",
+      "send": "发送",
+      "replyingTo": "回复 {name}",
+      "deleteConfirm": "删除此评论？",
+      "deleteSuccess": "评论已删除",
+      "deleteError": "删除评论失败",
+      "editSuccess": "评论已更新",
+      "editError": "更新评论失败",
+      "rateError": "评价评论失败",
+      "showReplies": "显示 {count, plural, one {# reply} other {# replies}}",
+      "hideReplies": "隐藏回复",
+      "justNow": "刚刚",
+      "minutesAgo": "{count, plural, one {# minute} other {# minutes}} 前",
+      "hoursAgo": "{count, plural, one {# hour} other {# hours}} 前",
+      "daysAgo": "{count, plural, one {# day} other {# days}} 前"
     }
   },
   "pricing": {
     "title": "定价",
-    "subtitle": "选择适合您发布的套餐",
+    "subtitle": "选择适合您发布的方案",
     "free": "免费",
     "premium": "高级",
-    "premiumPlus": "高级 Plus",
+    "premiumPlus": "高级增强版",
     "perLaunch": "每次发布",
     "getStarted": "开始",
     "subscribe": "订阅",
-    "compareFeatures": "比较功能"
+    "compareFeatures": "功能对比"
   },
   "search": {
     "placeholder": "搜索项目...",
@@ -219,15 +244,15 @@
     "recentSearches": "最近搜索"
   },
   "errors": {
-    "generic": "出了点问题，请重试。",
+    "generic": "出了点问题。请重试。",
     "unauthorized": "未授权",
     "notFound": "页面未找到",
-    "rateLimited": "请求过多，请稍等。",
-    "serverError": "服务器错误，请稍后再试。"
+    "rateLimited": "请求过多。请稍候。",
+    "serverError": "服务器错误。请稍后重试。"
   },
   "friends": {
-    "title": "友链",
-    "subtitle": "我们的网络好友和合作伙伴。",
+    "title": "友站",
+    "subtitle": "我们遍布网络的友站和合作伙伴。",
     "backToHome": "返回首页",
     "groups": {
       "linuxCommunities": "Linux 社区",

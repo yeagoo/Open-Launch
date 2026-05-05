@@ -23,13 +23,13 @@
       "trendingTitle": "Tendencias ahora",
       "trendingDesc": "Descubre los proyectos más populares",
       "winnersTitle": "Ganadores del día",
-      "winnersDesc": "Mira los mejores proyectos del día",
+      "winnersDesc": "Ver los mejores proyectos del día",
       "monthTitle": "Lo mejor del mes",
-      "monthDesc": "Mira los mejores proyectos del mes",
+      "monthDesc": "Ver los mejores proyectos del mes",
       "categoriesTitle": "Categorías",
-      "categoriesDesc": "Explora proyectos por categoría"
+      "categoriesDesc": "Explorar proyectos por categoría"
     },
-    "dashboard": "Panel",
+    "dashboard": "Panel de control",
     "submitProject": "Enviar proyecto",
     "pricing": "Precios",
     "fastTrack": "Vía rápida 🚀",
@@ -59,34 +59,34 @@
       "sponsors": "Patrocinadores",
       "blog": "Blog",
       "friendsPage": "Amigos",
-      "termsOfService": "Términos de servicio",
+      "termsOfService": "Términos del servicio",
       "privacyPolicy": "Política de privacidad"
     }
   },
   "home": {
     "metadata": {
-      "today": "Lanzamientos de hoy en aat.ee",
-      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee – startups, herramientas de IA y productos SaaS"
+      "today": "Productos lanzados hoy en aat.ee",
+      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee: startups, herramientas de IA y productos SaaS"
     },
     "banner": {
       "title": "Plataforma de lanzamiento para tus productos",
       "subtitle": "Envía, obtén una insignia y un enlace"
     },
     "sections": {
-      "todayTitle": "Principales proyectos lanzados hoy",
+      "todayTitle": "Principales proyectos que se lanzan hoy",
       "yesterdayTitle": "Lanzamientos de ayer",
-      "monthTitle": "Lo mejor del mes",
-      "topCategories": "Categorías principales",
+      "monthTitle": "Lo mejor de este mes",
+      "topCategories": "Principales categorías",
       "quickAccess": "Acceso rápido",
       "linuxAlliance": "Alianza de Documentación de Linux",
-      "linuxAllianceFooter": "Consulta el ciclo de vida del soporte de software en:",
+      "linuxAllianceFooter": "Consulta el ciclo de vida de soporte del software en:",
       "recommended": "Recomendado",
-      "webcasaDesc": "Panel de control de servidor nativo en IA y código abierto",
+      "webcasaDesc": "Panel de control de servidor de código abierto nativo de IA",
       "litehttpdDesc": "Servidor web ligero, altamente compatible con Apache HTTPD",
       "trendingNow": "Tendencias ahora",
       "dailyWinners": "Ganadores del día",
       "bestOfMonth": "Lo mejor del mes",
-      "dashboard": "Panel",
+      "dashboard": "Panel de control",
       "projectsCount": "{count} proyectos"
     }
   },
@@ -102,14 +102,14 @@
       "withGoogle": "Iniciar sesión con Google",
       "withGithub": "Iniciar sesión con GitHub",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "noAccount": "¿No tienes cuenta?",
+      "noAccount": "¿No tienes una cuenta?",
       "signUpLink": "Regístrate",
       "orContinueWith": "O continúa con",
-      "captchaRequired": "Completa la verificación de seguridad",
+      "captchaRequired": "Por favor, completa la verificación de seguridad",
       "genericError": "Ocurrió un error",
       "successToast": "Sesión iniciada correctamente",
       "termsAgreement": "Al hacer clic en continuar, aceptas nuestros",
-      "termsOfService": "Términos de servicio",
+      "termsOfService": "Términos del servicio",
       "and": "y",
       "privacyPolicy": "Política de privacidad"
     },
@@ -124,18 +124,18 @@
       "loading": "Cargando...",
       "withGoogle": "Registrarse con Google",
       "withGithub": "Registrarse con GitHub",
-      "haveAccount": "¿Ya tienes cuenta?",
+      "haveAccount": "¿Ya tienes una cuenta?",
       "signInLink": "Inicia sesión",
       "orContinueWith": "O continúa con",
-      "captchaRequired": "Completa la verificación de seguridad",
+      "captchaRequired": "Por favor, completa la verificación de seguridad",
       "genericError": "Ocurrió un error"
     },
     "forgotPassword": {
-      "title": "Restablece tu contraseña",
+      "title": "Restablecer tu contraseña",
       "subtitle": "Ingresa tu correo y te enviaremos un enlace de restablecimiento",
       "emailLabel": "Correo electrónico",
       "submit": "Enviar enlace de restablecimiento",
-      "backToSignIn": "Volver a inicio de sesión",
+      "backToSignIn": "Volver a iniciar sesión",
       "successMessage": "Si ese correo existe, enviamos un enlace de restablecimiento."
     },
     "resetPassword": {
@@ -147,10 +147,10 @@
       "mismatchError": "Las contraseñas no coinciden"
     },
     "verifyEmail": {
-      "sentTitle": "Revisa tu correo",
+      "sentTitle": "Revisa tu correo electrónico",
       "sentMessage": "Enviamos un enlace de verificación a tu bandeja de entrada.",
       "successTitle": "¡Correo verificado!",
-      "successMessage": "Tu cuenta está lista. Redirigiendo al panel..."
+      "successMessage": "Tu cuenta está lista. Redirigiendo al panel de control..."
     }
   },
   "project": {
@@ -188,7 +188,7 @@
     },
     "sidebar": {
       "achievement": "Logro",
-      "publisher": "Editor",
+      "publisher": "Publicador",
       "unknownCreator": "Creador desconocido",
       "launchDate": "Fecha de lanzamiento",
       "platform": "Plataforma",
@@ -199,17 +199,42 @@
     "comments": {
       "heading": "Comentarios",
       "notLaunchedYet": "Los comentarios estarán disponibles una vez que el proyecto sea lanzado.",
-      "placeholder": "Añadir un comentario..."
+      "placeholder": "Añadir un comentario...",
+      "noComments": "Aún no hay comentarios. ¡Sé el primero!",
+      "loading": "Cargando comentarios...",
+      "loadFailed": "Error al cargar comentarios. Intenta de nuevo.",
+      "signInPrompt": "Inicia sesión para comentar",
+      "reply": "Responder",
+      "like": "Me gusta",
+      "dislike": "No me gusta",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "send": "Enviar",
+      "replyingTo": "Respondiendo a {name}",
+      "deleteConfirm": "¿Eliminar este comentario?",
+      "deleteSuccess": "Comentario eliminado",
+      "deleteError": "Error al eliminar comentario",
+      "editSuccess": "Comentario actualizado",
+      "editError": "Error al actualizar comentario",
+      "rateError": "Error al valorar comentario",
+      "showReplies": "Mostrar {count, plural, one {# respuesta} other {# respuestas}}",
+      "hideReplies": "Ocultar respuestas",
+      "justNow": "justo ahora",
+      "minutesAgo": "hace {count, plural, one {# minuto} other {# minutos}}",
+      "hoursAgo": "hace {count, plural, one {# hora} other {# horas}}",
+      "daysAgo": "hace {count, plural, one {# día} other {# días}}"
     }
   },
   "pricing": {
     "title": "Precios",
     "subtitle": "Elige el plan que se ajuste a tu lanzamiento",
-    "free": "Gratuito",
+    "free": "Gratis",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
     "perLaunch": "por lanzamiento",
-    "getStarted": "Empezar",
+    "getStarted": "Comenzar",
     "subscribe": "Suscribirse",
     "compareFeatures": "Comparar características"
   },
@@ -230,7 +255,7 @@
     "subtitle": "Nuestros amigos y socios en la web.",
     "backToHome": "Volver al inicio",
     "groups": {
-      "linuxCommunities": "Comunidades Linux",
+      "linuxCommunities": "Comunidades de Linux",
       "toolsServices": "Herramientas y servicios",
       "directories": "Directorios y descubrimiento",
       "knowledgeReference": "Conocimiento y referencia"
