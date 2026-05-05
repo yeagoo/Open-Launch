@@ -374,6 +374,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     initialCategories={projectData.categories}
                     isOwner={isOwner}
                     isScheduled={isScheduled}
+                    sourceLocale={projectData.sourceLocale}
                   />
                 </div>
               )}

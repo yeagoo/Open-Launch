@@ -9,12 +9,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 import { EditProjectForm } from "./edit-project-form"
 
+const LOCALE_DISPLAY: Record<string, string> = {
+  en: "English",
+  zh: "简体中文",
+  es: "Español",
+  pt: "Português",
+  fr: "Français",
+  ja: "日本語",
+  ko: "한국어",
+  et: "Eesti",
+}
+
 interface EditButtonProps {
   projectId: string
   initialDescription: string
   initialCategories: { id: string; name: string }[]
   isOwner: boolean
   isScheduled: boolean
+  sourceLocale?: string
 }
 
 export function EditButton({
@@ -23,6 +35,7 @@ export function EditButton({
   initialCategories,
   isOwner,
   isScheduled,
+  sourceLocale,
 }: EditButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -37,6 +50,8 @@ export function EditButton({
     window.location.reload()
   }
 
+  const sourceLabel = sourceLocale ? (LOCALE_DISPLAY[sourceLocale] ?? sourceLocale) : null
+
   return (
     <>
       <Button variant="outline" size="sm" className="h-9" onClick={() => setIsDialogOpen(true)}>
@@ -49,6 +64,13 @@ export function EditButton({
           <DialogHeader>
             <DialogTitle>Edit Project Information</DialogTitle>
           </DialogHeader>
+
+          {sourceLabel && (
+            <p className="text-muted-foreground -mt-2 text-xs">
+              You are editing the <strong>{sourceLabel}</strong> source. Other languages are
+              auto-translated and will refresh after you save.
+            </p>
+          )}
 
           <EditProjectForm
             projectId={projectId}
