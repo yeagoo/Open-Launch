@@ -10,6 +10,7 @@ import {
   project,
   project as projectTable,
   projectToCategory,
+  projectTranslation,
   upvote,
 } from "@/drizzle/db/schema"
 import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
@@ -192,9 +193,13 @@ export async function toggleUpvote(projectId: string) {
 }
 
 // Définir l'interface ici
+type ProjectLocale = "en" | "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
+const SUPPORTED_LOCALES: readonly ProjectLocale[] = ["en", "zh", "es", "pt", "fr", "ja", "ko", "et"]
+
 interface ProjectSubmissionData {
   name: string
   description: string
+  sourceLocale?: string
   websiteUrl: string
   logoUrl: string
   productImage: string | null
@@ -221,6 +226,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     const {
       name,
       description,
+      sourceLocale: rawSourceLocale,
       websiteUrl: rawWebsiteUrl,
       logoUrl,
       productImage,
@@ -233,6 +239,11 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       hasBadgeVerified,
       tags,
     } = projectData
+
+    // Validate sourceLocale (default to "en" for clients that don't supply it)
+    const sourceLocale: ProjectLocale = SUPPORTED_LOCALES.includes(rawSourceLocale as ProjectLocale)
+      ? (rawSourceLocale as ProjectLocale)
+      : "en"
 
     // Normalize URL: lowercase + strip trailing slash (consistent with check-url endpoint)
     const websiteUrl = rawWebsiteUrl.toLowerCase().replace(/\/$/, "")
@@ -322,11 +333,22 @@ export async function submitProject(projectData: ProjectSubmissionData) {
           twitterUrl: twitterUrl ?? undefined,
           hasBadgeVerified: serverVerifiedBadge,
           badgeVerifiedAt: serverVerifiedBadge ? new Date() : undefined,
+          sourceLocale,
           createdBy: session.user.id,
           createdAt: new Date(),
           updatedAt: new Date(),
         })
         .returning({ id: projectTable.id, slug: projectTable.slug })
+
+      // Persist the source-language description as a translation row.
+      // Other locales are populated asynchronously by the cron job.
+      await tx.insert(projectTranslation).values({
+        projectId: inserted.id,
+        locale: sourceLocale,
+        description: sanitizedDescription,
+        isSource: true,
+        aiGenerated: false,
+      })
 
       // Insert categories
       if (categories.length > 0) {
