@@ -127,6 +127,7 @@ export const project = pgTable(
     dailyRanking: integer("daily_ranking"),
     hasBadgeVerified: boolean("has_badge_verified").default(false),
     badgeVerifiedAt: timestamp("badge_verified_at"),
+    sourceLocale: text("source_locale").notNull().default("en"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     createdBy: text("created_by").references(() => user.id, {
@@ -136,6 +137,29 @@ export const project = pgTable(
   (table) => {
     return {
       nameIdx: index("project_name_idx").on(table.name),
+    }
+  },
+)
+
+// ─── Project translations (description per locale) ───────────────────────────
+export const projectTranslation = pgTable(
+  "project_translation",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    description: text("description").notNull(),
+    isSource: boolean("is_source").notNull().default(false),
+    aiGenerated: boolean("ai_generated").notNull().default(false),
+    generatedAt: timestamp("generated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey(table.projectId, table.locale),
+      projectIdIdx: index("project_translation_project_id_idx").on(table.projectId),
+      localeIdx: index("project_translation_locale_idx").on(table.locale),
     }
   },
 )
