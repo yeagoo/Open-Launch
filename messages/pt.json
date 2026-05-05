@@ -1,16 +1,16 @@
 {
   "common": {
     "siteName": "aat.ee",
-    "loading": "A carregar...",
-    "save": "Guardar",
+    "loading": "Carregando...",
+    "save": "Salvar",
     "cancel": "Cancelar",
-    "submit": "Submeter",
-    "delete": "Eliminar",
+    "submit": "Enviar",
+    "delete": "Excluir",
     "edit": "Editar",
     "search": "Pesquisar",
-    "viewAll": "Ver todos",
+    "viewAll": "Ver tudo",
     "back": "Voltar",
-    "next": "Seguinte",
+    "next": "Próximo",
     "previous": "Anterior",
     "more": "Mais",
     "menu": "Menu",
@@ -24,18 +24,18 @@
       "trendingDesc": "Descubra os projetos mais populares",
       "winnersTitle": "Vencedores do dia",
       "winnersDesc": "Veja os melhores projetos do dia",
-      "monthTitle": "Melhor do mês",
+      "monthTitle": "Melhores do mês",
       "monthDesc": "Veja os melhores projetos do mês",
       "categoriesTitle": "Categorias",
       "categoriesDesc": "Navegue por projetos por categoria"
     },
     "dashboard": "Painel",
-    "submitProject": "Submeter projeto",
+    "submitProject": "Enviar projeto",
     "pricing": "Preços",
-    "fastTrack": "Via rápida 🚀",
+    "fastTrack": "Fast Track 🚀",
     "sponsors": "Patrocinadores",
-    "signIn": "Iniciar sessão",
-    "signUp": "Criar conta",
+    "signIn": "Entrar",
+    "signUp": "Cadastrar",
     "navigation": "NAVEGAÇÃO",
     "actions": "AÇÕES",
     "home": "Início",
@@ -54,13 +54,13 @@
       "categories": "Categorias",
       "compareTools": "Comparar ferramentas",
       "alternatives": "Alternativas",
-      "submitProject": "Submeter projeto",
+      "submitProject": "Enviar projeto",
       "pricing": "Preços",
       "sponsors": "Patrocinadores",
       "blog": "Blog",
       "friendsPage": "Amigos",
-      "termsOfService": "Termos de serviço",
-      "privacyPolicy": "Política de privacidade"
+      "termsOfService": "Termos de Serviço",
+      "privacyPolicy": "Política de Privacidade"
     }
   },
   "home": {
@@ -69,23 +69,23 @@
       "todayDesc": "Descubra os lançamentos de produtos mais recentes hoje no aat.ee - startups, ferramentas de IA e produtos SaaS"
     },
     "banner": {
-      "title": "Plataforma de lançamento para os seus produtos",
-      "subtitle": "Submeta, obtenha um selo e backlink"
+      "title": "Plataforma de lançamento para seus produtos",
+      "subtitle": "Envie, ganhe um distintivo e backlink"
     },
     "sections": {
-      "todayTitle": "Principais projetos a lançar hoje",
+      "todayTitle": "Principais projetos sendo lançados hoje",
       "yesterdayTitle": "Lançamentos de ontem",
       "monthTitle": "Melhores deste mês",
       "topCategories": "Principais categorias",
       "quickAccess": "Acesso rápido",
-      "linuxAlliance": "Aliança de Documentação Linux",
-      "linuxAllianceFooter": "Verifique o ciclo de vida do suporte de software em:",
-      "recommended": "Recomendado",
-      "webcasaDesc": "Painel de controlo de servidor open-source nativo em IA",
+      "linuxAlliance": "Linux Docs Alliance",
+      "linuxAllianceFooter": "Verifique o ciclo de vida do suporte do software em:",
+      "recommended": "Recomendados",
+      "webcasaDesc": "Painel de controle de servidor open-source nativo de IA",
       "litehttpdDesc": "Servidor web leve, altamente compatível com Apache HTTPD",
       "trendingNow": "Em alta agora",
       "dailyWinners": "Vencedores do dia",
-      "bestOfMonth": "Melhor do mês",
+      "bestOfMonth": "Melhores do mês",
       "dashboard": "Painel",
       "projectsCount": "{count} projetos"
     }
@@ -93,77 +93,77 @@
   "auth": {
     "signIn": {
       "title": "Bem-vindo de volta",
-      "subtitle": "Inicie sessão na sua conta para continuar",
+      "subtitle": "Entre na sua conta para continuar",
       "emailLabel": "Email",
-      "passwordLabel": "Palavra-passe",
+      "passwordLabel": "Senha",
       "submit": "Entrar",
-      "submitting": "A iniciar sessão...",
-      "loading": "A carregar...",
+      "submitting": "Entrando...",
+      "loading": "Carregando...",
       "withGoogle": "Entrar com Google",
       "withGithub": "Entrar com GitHub",
-      "forgotPassword": "Esqueceu-se da palavra-passe?",
-      "noAccount": "Não tem conta?",
-      "signUpLink": "Criar conta",
+      "forgotPassword": "Esqueceu sua senha?",
+      "noAccount": "Não tem uma conta?",
+      "signUpLink": "Cadastre-se",
       "orContinueWith": "Ou continue com",
-      "captchaRequired": "Por favor, complete a verificação de segurança",
+      "captchaRequired": "Conclua a verificação de segurança",
       "genericError": "Ocorreu um erro",
-      "successToast": "Sessão iniciada com sucesso",
-      "termsAgreement": "Ao clicar em continuar, concorda com os nossos",
-      "termsOfService": "Termos de serviço",
+      "successToast": "Login realizado com sucesso",
+      "termsAgreement": "Ao clicar em continuar, você concorda com nossos",
+      "termsOfService": "Termos de Serviço",
       "and": "e",
-      "privacyPolicy": "Política de privacidade"
+      "privacyPolicy": "Política de Privacidade"
     },
     "signUp": {
-      "title": "Crie a sua conta",
+      "title": "Crie sua conta",
       "subtitle": "Junte-se ao aat.ee para lançar e descobrir produtos",
       "nameLabel": "Nome",
       "emailLabel": "Email",
-      "passwordLabel": "Palavra-passe",
+      "passwordLabel": "Senha",
       "submit": "Criar conta",
-      "submitting": "A criar conta...",
-      "loading": "A carregar...",
-      "withGoogle": "Criar conta com Google",
-      "withGithub": "Criar conta com GitHub",
-      "haveAccount": "Já tem conta?",
-      "signInLink": "Iniciar sessão",
+      "submitting": "Criando conta...",
+      "loading": "Carregando...",
+      "withGoogle": "Cadastre-se com Google",
+      "withGithub": "Cadastre-se com GitHub",
+      "haveAccount": "Já tem uma conta?",
+      "signInLink": "Entre",
       "orContinueWith": "Ou continue com",
-      "captchaRequired": "Por favor, complete a verificação de segurança",
+      "captchaRequired": "Conclua a verificação de segurança",
       "genericError": "Ocorreu um erro"
     },
     "forgotPassword": {
-      "title": "Redefinir a sua palavra-passe",
-      "subtitle": "Insira o seu email e enviaremos um link de redefinição",
+      "title": "Redefina sua senha",
+      "subtitle": "Digite seu email e enviaremos um link de redefinição",
       "emailLabel": "Email",
       "submit": "Enviar link de redefinição",
-      "backToSignIn": "Voltar ao início de sessão",
-      "successMessage": "Se esse email existir, enviámos um link de redefinição."
+      "backToSignIn": "Voltar ao login",
+      "successMessage": "Se esse email existir, enviamos um link de redefinição."
     },
     "resetPassword": {
-      "title": "Definir uma nova palavra-passe",
-      "passwordLabel": "Nova palavra-passe",
-      "confirmLabel": "Confirmar palavra-passe",
-      "submit": "Redefinir palavra-passe",
-      "successMessage": "Palavra-passe redefinida. A redirecionar...",
-      "mismatchError": "As palavras-passe não coincidem"
+      "title": "Defina uma nova senha",
+      "passwordLabel": "Nova senha",
+      "confirmLabel": "Confirmar senha",
+      "submit": "Redefinir senha",
+      "successMessage": "Senha redefinida. Redirecionando...",
+      "mismatchError": "As senhas não coincidem"
     },
     "verifyEmail": {
-      "sentTitle": "Verifique o seu email",
-      "sentMessage": "Enviámos um link de verificação para a sua caixa de entrada.",
+      "sentTitle": "Verifique seu email",
+      "sentMessage": "Enviamos um link de verificação para sua caixa de entrada.",
       "successTitle": "Email verificado!",
-      "successMessage": "A sua conta está pronta. A redirecionar para o painel..."
+      "successMessage": "Sua conta está pronta. Redirecionando para o painel..."
     }
   },
   "project": {
     "list": {
       "title": "Projetos",
-      "submitButton": "Submeter um projeto",
-      "empty": "Ainda não há projetos."
+      "submitButton": "Enviar um projeto",
+      "empty": "Nenhum projeto ainda."
     },
     "detail": {
-      "upvote": "Votar",
-      "upvoted": "Votado",
+      "upvote": "Apoiar",
+      "upvoted": "Apoiado",
       "visit": "Visitar",
-      "share": "Partilhar",
+      "share": "Compartilhar",
       "comments": "Comentários",
       "categories": "Categorias",
       "tags": "Tags",
@@ -175,16 +175,31 @@
       "byMaker": "por"
     },
     "submit": {
-      "title": "Submeta o seu projeto",
-      "subtitle": "Partilhe o seu produto com milhares de utilizadores",
+      "title": "Envie seu projeto",
+      "subtitle": "Compartilhe seu produto com milhares de usuários",
       "websiteUrl": "URL do site",
       "name": "Nome do projeto",
       "description": "Descrição",
       "category": "Categoria",
       "tags": "Tags",
-      "logo": "Logótipo",
-      "submitButton": "Submeter projeto",
-      "autoFill": "Preenchimento automático a partir do URL"
+      "logo": "Logo",
+      "submitButton": "Enviar projeto",
+      "autoFill": "Preenchimento automático a partir da URL"
+    },
+    "sidebar": {
+      "achievement": "Conquista",
+      "publisher": "Publicador",
+      "unknownCreator": "Criador desconhecido",
+      "launchDate": "Data de lançamento",
+      "platform": "Plataforma",
+      "pricing": "Preços",
+      "socials": "Redes sociais",
+      "productKeywords": "Palavras-chave do produto"
+    },
+    "comments": {
+      "heading": "Comentários",
+      "notLaunchedYet": "Os comentários estarão disponíveis assim que o projeto for lançado.",
+      "placeholder": "Adicione um comentário..."
     }
   },
   "pricing": {
@@ -195,8 +210,8 @@
     "premiumPlus": "Premium Plus",
     "perLaunch": "por lançamento",
     "getStarted": "Começar",
-    "subscribe": "Subscrever",
-    "compareFeatures": "Comparar funcionalidades"
+    "subscribe": "Assinar",
+    "compareFeatures": "Comparar recursos"
   },
   "search": {
     "placeholder": "Pesquisar projetos...",
@@ -204,15 +219,15 @@
     "recentSearches": "Pesquisas recentes"
   },
   "errors": {
-    "generic": "Algo correu mal. Por favor, tente novamente.",
+    "generic": "Algo deu errado. Tente novamente.",
     "unauthorized": "Não autorizado",
     "notFound": "Página não encontrada",
-    "rateLimited": "Demasiados pedidos. Por favor, aguarde.",
-    "serverError": "Erro do servidor. Por favor, tente novamente mais tarde."
+    "rateLimited": "Muitas solicitações. Aguarde.",
+    "serverError": "Erro do servidor. Tente novamente mais tarde."
   },
   "friends": {
     "title": "Amigos",
-    "subtitle": "Os nossos amigos e parceiros na web.",
+    "subtitle": "Nossos amigos e parceiros na web.",
     "backToHome": "Voltar ao Início",
     "groups": {
       "linuxCommunities": "Comunidades Linux",

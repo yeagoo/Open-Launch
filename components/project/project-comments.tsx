@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils"
 interface ProjectCommentsProps {
   projectId: string
   className?: string
+  placeholder?: string
 }
 
-export function ProjectComments({ projectId, className }: ProjectCommentsProps) {
+export function ProjectComments({ projectId, className, placeholder }: ProjectCommentsProps) {
   const [isClient, setIsClient] = useState(false)
   const router = useRouter()
 
@@ -43,6 +44,7 @@ export function ProjectComments({ projectId, className }: ProjectCommentsProps) 
       <Comments
         page={projectId}
         className="bg-background w-full"
+        editor={placeholder ? { placeholder } : undefined}
         auth={{
           type: "api",
           signIn,

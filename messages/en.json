@@ -185,6 +185,21 @@
       "logo": "Logo",
       "submitButton": "Submit project",
       "autoFill": "Auto-fill from URL"
+    },
+    "sidebar": {
+      "achievement": "Achievement",
+      "publisher": "Publisher",
+      "unknownCreator": "Unknown creator",
+      "launchDate": "Launch Date",
+      "platform": "Platform",
+      "pricing": "Pricing",
+      "socials": "Socials",
+      "productKeywords": "Product Keywords"
+    },
+    "comments": {
+      "heading": "Comments",
+      "notLaunchedYet": "Comments will be available once the project is launched.",
+      "placeholder": "Add a comment..."
     }
   },
   "pricing": {

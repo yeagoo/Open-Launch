@@ -6,13 +6,13 @@
     "cancel": "취소",
     "submit": "제출",
     "delete": "삭제",
-    "edit": "편집",
+    "edit": "수정",
     "search": "검색",
     "viewAll": "모두 보기",
     "back": "뒤로",
     "next": "다음",
     "previous": "이전",
-    "more": "더 보기",
+    "more": "더보기",
     "menu": "메뉴",
     "close": "닫기",
     "tryAgain": "다시 시도"
@@ -20,35 +20,35 @@
   "nav": {
     "explore": "탐색",
     "exploreDesc": {
-      "trendingTitle": "현재 인기",
+      "trendingTitle": "실시간 인기",
       "trendingDesc": "가장 인기 있는 프로젝트를 만나보세요",
-      "winnersTitle": "오늘의 우승자",
+      "winnersTitle": "오늘의 수상작",
       "winnersDesc": "오늘 최고의 프로젝트를 확인하세요",
       "monthTitle": "이달의 베스트",
       "monthDesc": "이달 최고의 프로젝트를 확인하세요",
       "categoriesTitle": "카테고리",
-      "categoriesDesc": "카테고리별로 프로젝트 둘러보기"
+      "categoriesDesc": "카테고리별 프로젝트 둘러보기"
     },
     "dashboard": "대시보드",
     "submitProject": "프로젝트 제출",
     "pricing": "가격",
-    "fastTrack": "빠른 트랙 🚀",
+    "fastTrack": "패스트 트랙 🚀",
     "sponsors": "스폰서",
     "signIn": "로그인",
     "signUp": "회원가입",
-    "navigation": "네비게이션",
+    "navigation": "탐색",
     "actions": "액션",
     "home": "홈",
     "trending": "인기",
     "categories": "카테고리",
-    "winners": "우승자"
+    "winners": "수상작"
   },
   "footer": {
     "rightsReserved": "모든 권리 보유.",
     "discover": "발견",
-    "resources": "리소스",
+    "resources": "자료",
     "legal": "법적 고지",
-    "friends": "친구들",
+    "friends": "친구",
     "links": {
       "trending": "인기",
       "categories": "카테고리",
@@ -58,33 +58,33 @@
       "pricing": "가격",
       "sponsors": "스폰서",
       "blog": "블로그",
-      "friendsPage": "친구들",
-      "termsOfService": "서비스 이용약관",
-      "privacyPolicy": "개인정보 처리방침"
+      "friendsPage": "친구",
+      "termsOfService": "이용약관",
+      "privacyPolicy": "개인정보처리방침"
     }
   },
   "home": {
     "metadata": {
-      "today": "오늘 aat.ee에 출시된 제품",
+      "today": "오늘 aat.ee에 출시된 제품들",
       "todayDesc": "오늘 aat.ee에서 최신 제품 출시를 확인하세요 - 스타트업, AI 도구, SaaS 제품"
     },
     "banner": {
-      "title": "제품 출시 플랫폼",
+      "title": "당신의 제품을 위한 출시 플랫폼",
       "subtitle": "제출하고 배지와 백링크를 받으세요"
     },
     "sections": {
-      "todayTitle": "오늘 출시되는 인기 프로젝트",
+      "todayTitle": "오늘 출시된 주요 프로젝트",
       "yesterdayTitle": "어제의 출시",
       "monthTitle": "이달의 베스트",
-      "topCategories": "인기 카테고리",
+      "topCategories": "주요 카테고리",
       "quickAccess": "빠른 접근",
-      "linuxAlliance": "Linux 문서 얼라이언스",
+      "linuxAlliance": "Linux 문서 연합",
       "linuxAllianceFooter": "소프트웨어 지원 수명 주기 확인:",
       "recommended": "추천",
-      "webcasaDesc": "AI 기반 오픈소스 서버 제어판",
+      "webcasaDesc": "AI 네이티브 오픈소스 서버 제어판",
       "litehttpdDesc": "경량 웹 서버, Apache HTTPD와 높은 호환성",
-      "trendingNow": "현재 인기",
-      "dailyWinners": "오늘의 우승자",
+      "trendingNow": "실시간 인기",
+      "dailyWinners": "오늘의 수상작",
       "bestOfMonth": "이달의 베스트",
       "dashboard": "대시보드",
       "projectsCount": "{count}개의 프로젝트"
@@ -105,13 +105,13 @@
       "noAccount": "계정이 없으신가요?",
       "signUpLink": "회원가입",
       "orContinueWith": "또는 다음으로 계속",
-      "captchaRequired": "보안 확인을 완료해 주세요",
+      "captchaRequired": "보안 확인을 완료해주세요",
       "genericError": "오류가 발생했습니다",
       "successToast": "로그인 성공",
-      "termsAgreement": "계속을 클릭하면 다음에 동의하게 됩니다",
-      "termsOfService": "서비스 이용약관",
+      "termsAgreement": "계속 버튼을 클릭하면 다음에 동의하는 것입니다:",
+      "termsOfService": "이용약관",
       "and": "및",
-      "privacyPolicy": "개인정보 처리방침"
+      "privacyPolicy": "개인정보처리방침"
     },
     "signUp": {
       "title": "계정 만들기",
@@ -127,7 +127,7 @@
       "haveAccount": "이미 계정이 있으신가요?",
       "signInLink": "로그인",
       "orContinueWith": "또는 다음으로 계속",
-      "captchaRequired": "보안 확인을 완료해 주세요",
+      "captchaRequired": "보안 확인을 완료해주세요",
       "genericError": "오류가 발생했습니다"
     },
     "forgotPassword": {
@@ -136,7 +136,7 @@
       "emailLabel": "이메일",
       "submit": "재설정 링크 보내기",
       "backToSignIn": "로그인으로 돌아가기",
-      "successMessage": "해당 이메일이 존재하는 경우 재설정 링크를 보냈습니다."
+      "successMessage": "해당 이메일이 존재하면 재설정 링크를 보냈습니다."
     },
     "resetPassword": {
       "title": "새 비밀번호 설정",
@@ -147,8 +147,8 @@
       "mismatchError": "비밀번호가 일치하지 않습니다"
     },
     "verifyEmail": {
-      "sentTitle": "이메일을 확인하세요",
-      "sentMessage": "받은 편지함으로 인증 링크를 보냈습니다.",
+      "sentTitle": "이메일 확인",
+      "sentMessage": "인증 링크를 받은 편지함으로 보냈습니다.",
       "successTitle": "이메일 인증 완료!",
       "successMessage": "계정이 준비되었습니다. 대시보드로 이동 중..."
     }
@@ -161,7 +161,7 @@
     },
     "detail": {
       "upvote": "추천",
-      "upvoted": "추천함",
+      "upvoted": "추천됨",
       "visit": "방문",
       "share": "공유",
       "comments": "댓글",
@@ -176,7 +176,7 @@
     },
     "submit": {
       "title": "프로젝트 제출",
-      "subtitle": "수천 명의 사용자에게 제품을 공유하세요",
+      "subtitle": "수천 명의 사용자와 제품을 공유하세요",
       "websiteUrl": "웹사이트 URL",
       "name": "프로젝트 이름",
       "description": "설명",
@@ -185,6 +185,21 @@
       "logo": "로고",
       "submitButton": "프로젝트 제출",
       "autoFill": "URL에서 자동 입력"
+    },
+    "sidebar": {
+      "achievement": "성과",
+      "publisher": "게시자",
+      "unknownCreator": "알 수 없는 제작자",
+      "launchDate": "출시일",
+      "platform": "플랫폼",
+      "pricing": "가격",
+      "socials": "소셜",
+      "productKeywords": "제품 키워드"
+    },
+    "comments": {
+      "heading": "댓글",
+      "notLaunchedYet": "프로젝트가 출시되면 댓글을 사용할 수 있습니다.",
+      "placeholder": "댓글 추가..."
     }
   },
   "pricing": {
@@ -200,25 +215,25 @@
   },
   "search": {
     "placeholder": "프로젝트 검색...",
-    "noResults": "검색 결과가 없습니다",
-    "recentSearches": "최근 검색어"
+    "noResults": "결과를 찾을 수 없습니다",
+    "recentSearches": "최근 검색"
   },
   "errors": {
-    "generic": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "generic": "문제가 발생했습니다. 다시 시도해주세요.",
     "unauthorized": "권한 없음",
     "notFound": "페이지를 찾을 수 없습니다",
-    "rateLimited": "요청이 너무 많습니다. 잠시 기다려 주세요.",
-    "serverError": "서버 오류입니다. 나중에 다시 시도해 주세요."
+    "rateLimited": "요청이 너무 많습니다. 잠시 기다려주세요.",
+    "serverError": "서버 오류입니다. 나중에 다시 시도해주세요."
   },
   "friends": {
-    "title": "친구들",
-    "subtitle": "웹상의 친구 및 파트너입니다.",
+    "title": "친구",
+    "subtitle": "웹 전역의 친구 및 파트너.",
     "backToHome": "홈으로 돌아가기",
     "groups": {
       "linuxCommunities": "Linux 커뮤니티",
       "toolsServices": "도구 및 서비스",
       "directories": "디렉토리 및 발견",
-      "knowledgeReference": "지식 및 참고"
+      "knowledgeReference": "지식 및 참고자료"
     }
   }
 }

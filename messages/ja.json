@@ -21,27 +21,27 @@
     "explore": "探索",
     "exploreDesc": {
       "trendingTitle": "トレンド",
-      "trendingDesc": "人気のプロジェクトを見つけよう",
-      "winnersTitle": "デイリーウィナー",
-      "winnersDesc": "今日のベストプロジェクトを見る",
-      "monthTitle": "月間ベスト",
-      "monthDesc": "月間ベストプロジェクトを見る",
+      "trendingDesc": "人気のプロジェクトを見つける",
+      "winnersTitle": "デイリー勝者",
+      "winnersDesc": "本日のベストプロジェクトを見る",
+      "monthTitle": "今月のベスト",
+      "monthDesc": "今月のベストプロジェクトを見る",
       "categoriesTitle": "カテゴリ",
       "categoriesDesc": "カテゴリ別にプロジェクトを閲覧"
     },
     "dashboard": "ダッシュボード",
-    "submitProject": "プロジェクトを投稿",
+    "submitProject": "プロジェクトを提出",
     "pricing": "料金プラン",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "スポンサー",
     "signIn": "ログイン",
-    "signUp": "登録",
+    "signUp": "新規登録",
     "navigation": "ナビゲーション",
     "actions": "アクション",
     "home": "ホーム",
     "trending": "トレンド",
     "categories": "カテゴリ",
-    "winners": "ウィナー"
+    "winners": "勝者"
   },
   "footer": {
     "rightsReserved": "All rights reserved.",
@@ -53,8 +53,8 @@
       "trending": "トレンド",
       "categories": "カテゴリ",
       "compareTools": "ツール比較",
-      "alternatives": "代替品",
-      "submitProject": "プロジェクトを投稿",
+      "alternatives": "代替ツール",
+      "submitProject": "プロジェクトを提出",
       "pricing": "料金プラン",
       "sponsors": "スポンサー",
       "blog": "ブログ",
@@ -65,27 +65,27 @@
   },
   "home": {
     "metadata": {
-      "today": "今日 aat.ee で公開された製品",
-      "todayDesc": "今日 aat.ee で公開された最新製品を発見 - スタートアップ、AI ツール、SaaS 製品"
+      "today": "本日 aat.ee で公開されたプロダクト",
+      "todayDesc": "aat.ee で本日公開された最新のプロダクト（スタートアップ、AIツール、SaaS）を発見"
     },
     "banner": {
-      "title": "あなたの製品のローンチプラットフォーム",
-      "subtitle": "投稿してバッジとバックリンクを獲得"
+      "title": "あなたのプロダクトのローンチプラットフォーム",
+      "subtitle": "提出して、バッジとバックリンクを入手"
     },
     "sections": {
-      "todayTitle": "今日ローンチされたトッププロジェクト",
+      "todayTitle": "本日公開中のトッププロジェクト",
       "yesterdayTitle": "昨日のローンチ",
       "monthTitle": "今月のベスト",
       "topCategories": "トップカテゴリ",
       "quickAccess": "クイックアクセス",
       "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "ソフトウェアサポートライフサイクルをチェック:",
+      "linuxAllianceFooter": "ソフトウェアサポートライフサイクルはこちら:",
       "recommended": "おすすめ",
-      "webcasaDesc": "AIネイティブなオープンソースサーバーコントロールパネル",
+      "webcasaDesc": "AIネイティブなオープンソースサーバー管理パネル",
       "litehttpdDesc": "軽量Webサーバー、Apache HTTPDとの高い互換性",
       "trendingNow": "トレンド",
-      "dailyWinners": "デイリーウィナー",
-      "bestOfMonth": "月間ベスト",
+      "dailyWinners": "デイリー勝者",
+      "bestOfMonth": "今月のベスト",
       "dashboard": "ダッシュボード",
       "projectsCount": "{count} プロジェクト"
     }
@@ -93,40 +93,40 @@
   "auth": {
     "signIn": {
       "title": "おかえりなさい",
-      "subtitle": "続行するにはアカウントにログイン",
+      "subtitle": "アカウントにログインして続行",
       "emailLabel": "メールアドレス",
       "passwordLabel": "パスワード",
       "submit": "ログイン",
       "submitting": "ログイン中...",
       "loading": "読み込み中...",
-      "withGoogle": "Google でログイン",
-      "withGithub": "GitHub でログイン",
+      "withGoogle": "Googleでログイン",
+      "withGithub": "GitHubでログイン",
       "forgotPassword": "パスワードをお忘れですか？",
       "noAccount": "アカウントをお持ちでないですか？",
-      "signUpLink": "登録",
-      "orContinueWith": "または以下で続ける",
+      "signUpLink": "新規登録",
+      "orContinueWith": "または次で続行",
       "captchaRequired": "セキュリティ認証を完了してください",
       "genericError": "エラーが発生しました",
-      "successToast": "ログインに成功しました",
-      "termsAgreement": "続行をクリックすることで、以下の条件に同意したことになります",
+      "successToast": "ログインしました",
+      "termsAgreement": "続行をクリックすることで、以下に同意したことになります",
       "termsOfService": "利用規約",
       "and": "および",
       "privacyPolicy": "プライバシーポリシー"
     },
     "signUp": {
-      "title": "アカウントを作成",
-      "subtitle": "aat.ee に参加して製品をローンチ・発見しましょう",
+      "title": "アカウント作成",
+      "subtitle": "aat.ee に参加してプロダクトをローンチ・発見",
       "nameLabel": "名前",
       "emailLabel": "メールアドレス",
       "passwordLabel": "パスワード",
       "submit": "アカウント作成",
       "submitting": "アカウント作成中...",
       "loading": "読み込み中...",
-      "withGoogle": "Google で登録",
-      "withGithub": "GitHub で登録",
+      "withGoogle": "Googleで登録",
+      "withGithub": "GitHubで登録",
       "haveAccount": "すでにアカウントをお持ちですか？",
       "signInLink": "ログイン",
-      "orContinueWith": "または以下で続ける",
+      "orContinueWith": "または次で続行",
       "captchaRequired": "セキュリティ認証を完了してください",
       "genericError": "エラーが発生しました"
     },
@@ -141,27 +141,27 @@
     "resetPassword": {
       "title": "新しいパスワードを設定",
       "passwordLabel": "新しいパスワード",
-      "confirmLabel": "パスワードを確認",
+      "confirmLabel": "パスワード確認",
       "submit": "パスワードをリセット",
-      "successMessage": "パスワードがリセットされました。リダイレクト中...",
+      "successMessage": "パスワードをリセットしました。リダイレクト中...",
       "mismatchError": "パスワードが一致しません"
     },
     "verifyEmail": {
       "sentTitle": "メールを確認してください",
       "sentMessage": "確認リンクを受信トレイに送信しました。",
-      "successTitle": "メール認証完了！",
-      "successMessage": "アカウントの準備が整いました。ダッシュボードにリダイレクト中..."
+      "successTitle": "メール確認完了！",
+      "successMessage": "アカウントの準備ができました。ダッシュボードにリダイレクト中..."
     }
   },
   "project": {
     "list": {
       "title": "プロジェクト",
-      "submitButton": "プロジェクトを投稿",
-      "empty": "まだプロジェクトはありません。"
+      "submitButton": "プロジェクトを提出",
+      "empty": "まだプロジェクトがありません。"
     },
     "detail": {
-      "upvote": "Upvote",
-      "upvoted": "Upvote済み",
+      "upvote": "いいね",
+      "upvoted": "いいね済み",
       "visit": "訪問",
       "share": "シェア",
       "comments": "コメント",
@@ -175,28 +175,43 @@
       "byMaker": "by"
     },
     "submit": {
-      "title": "プロジェクトを投稿",
-      "subtitle": "あなたの製品を数千人のユーザーと共有しましょう",
+      "title": "プロジェクトを提出",
+      "subtitle": "あなたのプロダクトを何千人ものユーザーにシェア",
       "websiteUrl": "ウェブサイトURL",
       "name": "プロジェクト名",
       "description": "説明",
       "category": "カテゴリ",
       "tags": "タグ",
       "logo": "ロゴ",
-      "submitButton": "プロジェクトを投稿",
+      "submitButton": "プロジェクトを提出",
       "autoFill": "URLから自動入力"
+    },
+    "sidebar": {
+      "achievement": "実績",
+      "publisher": "公開者",
+      "unknownCreator": "作成者不明",
+      "launchDate": "公開日",
+      "platform": "プラットフォーム",
+      "pricing": "料金",
+      "socials": "ソーシャル",
+      "productKeywords": "プロダクトキーワード"
+    },
+    "comments": {
+      "heading": "コメント",
+      "notLaunchedYet": "プロジェクトが公開されるまでコメントは利用できません。",
+      "placeholder": "コメントを追加..."
     }
   },
   "pricing": {
     "title": "料金プラン",
-    "subtitle": "あなたのローンチに最適なプランを選びましょう",
+    "subtitle": "あなたのローンチに合ったプランを選択",
     "free": "無料",
     "premium": "プレミアム",
     "premiumPlus": "プレミアムプラス",
-    "perLaunch": "1回のローンチあたり",
+    "perLaunch": "ローンチごと",
     "getStarted": "始める",
-    "subscribe": "サブスクライブ",
-    "compareFeatures": "機能を比較"
+    "subscribe": "購読",
+    "compareFeatures": "機能比較"
   },
   "search": {
     "placeholder": "プロジェクトを検索...",
@@ -207,7 +222,7 @@
     "generic": "問題が発生しました。もう一度お試しください。",
     "unauthorized": "認証されていません",
     "notFound": "ページが見つかりません",
-    "rateLimited": "リクエストが多すぎます。お待ちください。",
+    "rateLimited": "リクエストが多すぎます。しばらくお待ちください。",
     "serverError": "サーバーエラー。後でもう一度お試しください。"
   },
   "friends": {

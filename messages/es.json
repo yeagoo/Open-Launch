@@ -20,19 +20,19 @@
   "nav": {
     "explore": "Explorar",
     "exploreDesc": {
-      "trendingTitle": "Tendencia ahora",
+      "trendingTitle": "Tendencias ahora",
       "trendingDesc": "Descubre los proyectos más populares",
       "winnersTitle": "Ganadores del día",
-      "winnersDesc": "Ve los mejores proyectos del día",
-      "monthTitle": "Mejor del mes",
-      "monthDesc": "Ve los mejores proyectos del mes",
+      "winnersDesc": "Mira los mejores proyectos del día",
+      "monthTitle": "Lo mejor del mes",
+      "monthDesc": "Mira los mejores proyectos del mes",
       "categoriesTitle": "Categorías",
-      "categoriesDesc": "Navega proyectos por categoría"
+      "categoriesDesc": "Explora proyectos por categoría"
     },
-    "dashboard": "Panel de control",
+    "dashboard": "Panel",
     "submitProject": "Enviar proyecto",
     "pricing": "Precios",
-    "fastTrack": "Fast Track 🚀",
+    "fastTrack": "Vía rápida 🚀",
     "sponsors": "Patrocinadores",
     "signIn": "Iniciar sesión",
     "signUp": "Registrarse",
@@ -59,34 +59,34 @@
       "sponsors": "Patrocinadores",
       "blog": "Blog",
       "friendsPage": "Amigos",
-      "termsOfService": "Términos del servicio",
+      "termsOfService": "Términos de servicio",
       "privacyPolicy": "Política de privacidad"
     }
   },
   "home": {
     "metadata": {
-      "today": "Productos lanzados hoy en aat.ee",
-      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee - startups, herramientas de IA y productos SaaS"
+      "today": "Lanzamientos de hoy en aat.ee",
+      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee – startups, herramientas de IA y productos SaaS"
     },
     "banner": {
       "title": "Plataforma de lanzamiento para tus productos",
-      "subtitle": "Envía, obtén una insignia y un backlink"
+      "subtitle": "Envía, obtén una insignia y un enlace"
     },
     "sections": {
       "todayTitle": "Principales proyectos lanzados hoy",
       "yesterdayTitle": "Lanzamientos de ayer",
       "monthTitle": "Lo mejor del mes",
-      "topCategories": "Principales categorías",
+      "topCategories": "Categorías principales",
       "quickAccess": "Acceso rápido",
       "linuxAlliance": "Alianza de Documentación de Linux",
-      "linuxAllianceFooter": "Consulta el ciclo de vida de soporte del software en:",
+      "linuxAllianceFooter": "Consulta el ciclo de vida del soporte de software en:",
       "recommended": "Recomendado",
-      "webcasaDesc": "Panel de control de servidor open-source nativo de IA",
+      "webcasaDesc": "Panel de control de servidor nativo en IA y código abierto",
       "litehttpdDesc": "Servidor web ligero, altamente compatible con Apache HTTPD",
-      "trendingNow": "Tendencia ahora",
+      "trendingNow": "Tendencias ahora",
       "dailyWinners": "Ganadores del día",
-      "bestOfMonth": "Mejor del mes",
-      "dashboard": "Panel de control",
+      "bestOfMonth": "Lo mejor del mes",
+      "dashboard": "Panel",
       "projectsCount": "{count} proyectos"
     }
   },
@@ -102,14 +102,14 @@
       "withGoogle": "Iniciar sesión con Google",
       "withGithub": "Iniciar sesión con GitHub",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "noAccount": "¿No tienes una cuenta?",
+      "noAccount": "¿No tienes cuenta?",
       "signUpLink": "Regístrate",
       "orContinueWith": "O continúa con",
-      "captchaRequired": "Por favor completa la verificación de seguridad",
+      "captchaRequired": "Completa la verificación de seguridad",
       "genericError": "Ocurrió un error",
       "successToast": "Sesión iniciada correctamente",
       "termsAgreement": "Al hacer clic en continuar, aceptas nuestros",
-      "termsOfService": "Términos del servicio",
+      "termsOfService": "Términos de servicio",
       "and": "y",
       "privacyPolicy": "Política de privacidad"
     },
@@ -124,18 +124,18 @@
       "loading": "Cargando...",
       "withGoogle": "Registrarse con Google",
       "withGithub": "Registrarse con GitHub",
-      "haveAccount": "¿Ya tienes una cuenta?",
+      "haveAccount": "¿Ya tienes cuenta?",
       "signInLink": "Inicia sesión",
       "orContinueWith": "O continúa con",
-      "captchaRequired": "Por favor completa la verificación de seguridad",
+      "captchaRequired": "Completa la verificación de seguridad",
       "genericError": "Ocurrió un error"
     },
     "forgotPassword": {
-      "title": "Restablecer tu contraseña",
+      "title": "Restablece tu contraseña",
       "subtitle": "Ingresa tu correo y te enviaremos un enlace de restablecimiento",
       "emailLabel": "Correo electrónico",
       "submit": "Enviar enlace de restablecimiento",
-      "backToSignIn": "Volver a iniciar sesión",
+      "backToSignIn": "Volver a inicio de sesión",
       "successMessage": "Si ese correo existe, enviamos un enlace de restablecimiento."
     },
     "resetPassword": {
@@ -150,7 +150,7 @@
       "sentTitle": "Revisa tu correo",
       "sentMessage": "Enviamos un enlace de verificación a tu bandeja de entrada.",
       "successTitle": "¡Correo verificado!",
-      "successMessage": "Tu cuenta está lista. Redirigiendo al panel de control..."
+      "successMessage": "Tu cuenta está lista. Redirigiendo al panel..."
     }
   },
   "project": {
@@ -185,6 +185,21 @@
       "logo": "Logotipo",
       "submitButton": "Enviar proyecto",
       "autoFill": "Autocompletar desde URL"
+    },
+    "sidebar": {
+      "achievement": "Logro",
+      "publisher": "Editor",
+      "unknownCreator": "Creador desconocido",
+      "launchDate": "Fecha de lanzamiento",
+      "platform": "Plataforma",
+      "pricing": "Precios",
+      "socials": "Redes sociales",
+      "productKeywords": "Palabras clave del producto"
+    },
+    "comments": {
+      "heading": "Comentarios",
+      "notLaunchedYet": "Los comentarios estarán disponibles una vez que el proyecto sea lanzado.",
+      "placeholder": "Añadir un comentario..."
     }
   },
   "pricing": {
@@ -194,7 +209,7 @@
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
     "perLaunch": "por lanzamiento",
-    "getStarted": "Comenzar",
+    "getStarted": "Empezar",
     "subscribe": "Suscribirse",
     "compareFeatures": "Comparar características"
   },
@@ -204,18 +219,18 @@
     "recentSearches": "Búsquedas recientes"
   },
   "errors": {
-    "generic": "Algo salió mal. Por favor inténtalo de nuevo.",
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
     "unauthorized": "No autorizado",
     "notFound": "Página no encontrada",
-    "rateLimited": "Demasiadas solicitudes. Por favor espera.",
-    "serverError": "Error del servidor. Por favor inténtalo más tarde."
+    "rateLimited": "Demasiadas solicitudes. Espera un momento.",
+    "serverError": "Error del servidor. Inténtalo más tarde."
   },
   "friends": {
     "title": "Amigos",
-    "subtitle": "Nuestros amigos y colaboradores en la web.",
+    "subtitle": "Nuestros amigos y socios en la web.",
     "backToHome": "Volver al inicio",
     "groups": {
-      "linuxCommunities": "Comunidades de Linux",
+      "linuxCommunities": "Comunidades Linux",
       "toolsServices": "Herramientas y servicios",
       "directories": "Directorios y descubrimiento",
       "knowledgeReference": "Conocimiento y referencia"
