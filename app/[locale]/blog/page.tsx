@@ -6,50 +6,49 @@ import { db } from "@/drizzle/db"
 import { blogArticle } from "@/drizzle/db/schema"
 import { desc } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
-export const metadata: Metadata = {
-  title: "Blog | aat.ee - Insights & Resources",
-  description:
-    "Discover insights, tutorials, and resources to help you build and launch successful products.",
-  keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
-  authors: [{ name: "aat.ee Team" }],
-  alternates: {
-    canonical: "/blog",
-  },
-  openGraph: {
-    title: "Blog | aat.ee - Insights & Resources",
-    description:
-      "Discover insights, tutorials, and resources to help you build and launch successful products.",
-    type: "website",
-    url: `${process.env.NEXT_PUBLIC_URL}/blog`,
-    siteName: "aat.ee",
-    locale: "en_US",
-    images: [
-      {
-        url: "/og-blog.png",
-        width: 1200,
-        height: 630,
-        alt: "aat.ee Blog",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@aat_ee",
-    creator: "@aat_ee",
-    title: "Blog | aat.ee - Insights & Resources",
-    description:
-      "Discover insights, tutorials, and resources to help you build and launch successful products.",
-    images: ["/og-blog.png"],
-  },
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.blog" })
+  const path = "/blog"
+  return {
+    title: t("title"),
+    description: t("description"),
+    keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
+    authors: [{ name: "aat.ee Team" }],
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      type: "website",
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      images: [{ url: "/og-blog.png", width: 1200, height: 630, alt: "aat.ee Blog" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@aat_ee",
+      creator: "@aat_ee",
+      title: t("title"),
+      description: t("description"),
+      images: ["/og-blog.png"],
+    },
+  }
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  }).format(date)
 }
 
 function calculateReadingTime(content: string): string {
@@ -68,7 +67,8 @@ async function getArticles() {
   }))
 }
 
-export default async function BlogPage() {
+export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
   const articles = await getArticles()
 
   return (
@@ -146,7 +146,7 @@ export default async function BlogPage() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <time dateTime={article.publishedAt.toISOString()}>
-                          {formatDate(article.publishedAt)}
+                          {formatDate(article.publishedAt, locale)}
                         </time>
                       </div>
                       <div className="flex items-center gap-1">

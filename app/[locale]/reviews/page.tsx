@@ -5,35 +5,45 @@ import Link from "next/link"
 import { db } from "@/drizzle/db"
 import { seoArticle } from "@/drizzle/db/schema"
 import { Calendar, Clock } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
-export const metadata: Metadata = {
-  title: "Product Reviews | aat.ee - In-Depth Product Analysis",
-  description:
-    "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
-  keywords: "product reviews, analysis, evaluation, tools, platforms, technology",
-  authors: [{ name: "aat.ee Team" }],
-  openGraph: {
-    title: "Product Reviews | aat.ee - In-Depth Product Analysis",
-    description:
-      "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
-    type: "website",
-    url: "/reviews",
-    siteName: "aat.ee",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Product Reviews | aat.ee - In-Depth Product Analysis",
-    description:
-      "Discover comprehensive product reviews and in-depth analysis of the latest tools and platforms to help you make informed decisions.",
-  },
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.reviews" })
+  const path = "/reviews"
+  return {
+    title: t("title"),
+    description: t("description"),
+    keywords: "product reviews, analysis, evaluation, tools, platforms, technology",
+    authors: [{ name: "aat.ee Team" }],
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      type: "website",
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+    },
+  }
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  }).format(date)
 }
 
 function calculateReadingTime(content: string): string {
@@ -52,7 +62,8 @@ async function getReviews() {
   }))
 }
 
-export default async function ReviewsPage() {
+export default async function ReviewsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
   const reviews = await getReviews()
 
   return (
@@ -130,7 +141,7 @@ export default async function ReviewsPage() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         <time dateTime={review.publishedAt.toISOString()}>
-                          {formatDate(review.publishedAt)}
+                          {formatDate(review.publishedAt, locale)}
                         </time>
                       </div>
                       <div className="flex items-center gap-1">

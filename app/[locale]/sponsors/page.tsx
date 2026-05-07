@@ -1,8 +1,11 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { RiCheckboxCircleFill } from "@remixicon/react"
+import { getTranslations } from "next-intl/server"
 
 import { SPONSORSHIP_SLOTS } from "@/lib/constants"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import {
   Accordion,
   AccordionContent,
@@ -11,9 +14,26 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 
-export const metadata = {
-  title: "Sponsors - aat.ee",
-  description: "Support aat.ee and gain visibility for your product or service.",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.sponsors" })
+  const path = "/sponsors"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+  }
 }
 
 export default async function SponsorsPage() {

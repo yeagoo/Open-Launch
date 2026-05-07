@@ -263,5 +263,58 @@
       "directories": "目录与发现",
       "knowledgeReference": "知识与参考"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "本月发布 — aat.ee 项目",
+      "description": "浏览 aat.ee 上本月发布的项目 —— 创业公司、AI 工具与 SaaS 产品。"
+    },
+    "trending": {
+      "title": "热门趋势 — aat.ee",
+      "description": "在 aat.ee 上发现热门科技产品、AI 工具和 SaaS。"
+    },
+    "categories": {
+      "title": "分类浏览 — aat.ee",
+      "description": "按分类浏览 aat.ee 上的科技产品 —— 找到创业公司、AI 工具和 SaaS 应用。"
+    },
+    "winners": {
+      "title": "每日胜出者 — aat.ee",
+      "description": "aat.ee 上每日发布的最高排名产品。"
+    },
+    "tags": {
+      "title": "标签 — aat.ee",
+      "description": "按标签探索 aat.ee 上的产品 —— AI、开发者工具、效率工具等。"
+    },
+    "pricing": {
+      "title": "定价 — aat.ee",
+      "description": "在 aat.ee 上对比发布套餐 —— 免费版、高级版和旗舰版。"
+    },
+    "blog": {
+      "title": "博客 — aat.ee",
+      "description": "aat.ee 团队的文章、发布攻略和产品更新。"
+    },
+    "badge": {
+      "title": "精选徽章 — aat.ee",
+      "description": "为你的网站获取 aat.ee 徽章，展示你的发布并获得 SEO 反向链接。"
+    },
+    "sponsors": {
+      "title": "赞助 — aat.ee",
+      "description": "赞助 aat.ee，触达精挑细选的创业者、工程师与科技爱好者群体。"
+    },
+    "reviews": {
+      "title": "产品评测 — aat.ee",
+      "description": "aat.ee 上对最新科技产品与工具的深度评测与分析。"
+    }
+  },
+  "breadcrumb": {
+    "home": "首页",
+    "projects": "项目",
+    "trending": "热门",
+    "tags": "标签",
+    "categories": "分类",
+    "winners": "胜出者",
+    "pricing": "定价",
+    "blog": "博客",
+    "badge": "精选徽章"
   }
 }

@@ -1,8 +1,19 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
-export const metadata = {
+import { buildEnglishOnlyAlternates, buildEnglishOnlyOpenGraph } from "@/lib/i18n-metadata"
+
+export const metadata: Metadata = {
   title: "Privacy Policy - aat.ee",
   description: "Privacy Policy for aat.ee platform",
+  alternates: buildEnglishOnlyAlternates("/legal/privacy"),
+  openGraph: {
+    title: "Privacy Policy - aat.ee",
+    description: "Privacy Policy for aat.ee platform",
+    ...buildEnglishOnlyOpenGraph("/legal/privacy"),
+    siteName: "aat.ee",
+    type: "website",
+  },
 }
 
 export default function PrivacyPolicyPage() {

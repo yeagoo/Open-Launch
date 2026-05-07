@@ -21,6 +21,7 @@ import {
   getLocalizedLongDescription,
   getLocalizedProjectDescription,
 } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
@@ -67,19 +68,16 @@ export async function generateMetadata(
   )
 
   const previousImages = (await parent).openGraph?.images || []
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
-  const canonicalPath = locale === "en" ? `/projects/${slug}` : `/${locale}/projects/${slug}`
+  const path = `/projects/${slug}`
 
   return {
     title: `${projectData.name} | aat.ee`,
     description: stripHtml(localizedDescription),
-    alternates: {
-      canonical: `${baseUrl}${canonicalPath}`,
-    },
+    alternates: buildLocaleAlternates(path, locale),
     openGraph: {
       title: `${projectData.name} on aat.ee`,
       description: stripHtml(localizedDescription),
-      url: `${baseUrl}${canonicalPath}`,
+      ...buildLocaleOpenGraph(path, locale),
       siteName: "aat.ee",
       type: "website",
       images: [
@@ -122,6 +120,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   )
 
   const tDetail = await getTranslations("project.detail")
+  const tBreadcrumb = await getTranslations("breadcrumb")
   const [longDescriptionMarkdown, relatedProjects] = await Promise.all([
     getLocalizedLongDescription(projectData.id, locale),
     getRelatedProjects(projectData.id, locale, 4),
@@ -175,8 +174,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
-          { name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` },
-          { name: "Projects", url: `${process.env.NEXT_PUBLIC_URL}/projects` },
+          { name: tBreadcrumb("home"), url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: tBreadcrumb("projects"), url: `${process.env.NEXT_PUBLIC_URL}/projects` },
           { name: projectData.name },
         ]}
       />
@@ -185,7 +184,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         {/* Breadcrumb Navigation */}
         <div className="pt-6">
           <Breadcrumb
-            items={[{ name: "Projects", href: "/projects" }, { name: projectData.name }]}
+            items={[
+              { name: tBreadcrumb("projects"), href: "/projects" },
+              { name: projectData.name },
+            ]}
           />
         </div>
 

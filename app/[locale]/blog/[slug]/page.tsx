@@ -15,10 +15,12 @@ import {
 } from "@remixicon/react"
 import { eq } from "drizzle-orm"
 import { ArrowLeft, Calendar, Clock } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 
 import { DOMAIN_AUTHORITY, LAUNCH_SETTINGS, SEO_ARTICLE_PAYMENT_LINK } from "@/lib/constants"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -35,9 +37,9 @@ import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/structured-dat
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; locale: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
 
   const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
 
@@ -49,7 +51,7 @@ export async function generateMetadata({
   }
 
   const { title, description, metaTitle, metaDescription } = article[0]
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
+  const path = `/blog/${slug}`
 
   return {
     title: metaTitle || `${title} | aat.ee`,
@@ -57,6 +59,7 @@ export async function generateMetadata({
     keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
     authors: [{ name: article[0].author || "aat.ee Team" }],
     category: "Technology",
+    alternates: buildLocaleAlternates(path, locale),
     openGraph: {
       title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
@@ -64,9 +67,8 @@ export async function generateMetadata({
       publishedTime: article[0].publishedAt.toISOString(),
       modifiedTime: article[0].updatedAt.toISOString(),
       authors: [article[0].author || "aat.ee Team"],
+      ...buildLocaleOpenGraph(path, locale),
       siteName: "aat.ee",
-      locale: "en_US",
-      url: `${baseUrl}/blog/${slug}`,
       ...(article[0].image && { images: [article[0].image] }),
     },
     twitter: {
@@ -77,18 +79,15 @@ export async function generateMetadata({
       site: "@aat_ee",
       ...(article[0].image && { images: [article[0].image] }),
     },
-    alternates: {
-      canonical: `${baseUrl}/blog/${slug}`,
-    },
   }
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  }).format(date)
 }
 
 function calculateReadingTime(content: string): string {
@@ -98,8 +97,13 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`
 }
 
-export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function BlogArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string; locale: string }>
+}) {
+  const { slug, locale } = await params
+  const tBreadcrumb = await getTranslations("breadcrumb")
 
   const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
 
@@ -126,8 +130,8 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
-          { name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` },
-          { name: "Blog", url: `${process.env.NEXT_PUBLIC_URL}/blog` },
+          { name: tBreadcrumb("home"), url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: tBreadcrumb("blog"), url: `${process.env.NEXT_PUBLIC_URL}/blog` },
           { name: title },
         ]}
       />
@@ -135,7 +139,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <div className="mb-4">
-          <Breadcrumb items={[{ name: "Blog", href: "/blog" }, { name: title }]} />
+          <Breadcrumb items={[{ name: tBreadcrumb("blog"), href: "/blog" }, { name: title }]} />
         </div>
 
         {/* Back Button */}
@@ -159,7 +163,9 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
                 <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <time dateTime={publishedAt.toISOString()}>{formatDate(publishedAt)}</time>
+                    <time dateTime={publishedAt.toISOString()}>
+                      {formatDate(publishedAt, locale)}
+                    </time>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />

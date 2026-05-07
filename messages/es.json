@@ -263,5 +263,58 @@
       "directories": "Directorios y descubrimiento",
       "knowledgeReference": "Conocimiento y referencia"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "Proyectos — Lanzamientos del mes | aat.ee",
+      "description": "Explora los proyectos lanzados este mes en aat.ee — startups, herramientas de IA y productos SaaS."
+    },
+    "trending": {
+      "title": "Tendencias — aat.ee",
+      "description": "Descubre productos tecnológicos en tendencia, herramientas de IA y lanzamientos SaaS en aat.ee."
+    },
+    "categories": {
+      "title": "Categorías — aat.ee",
+      "description": "Explora productos tecnológicos por categoría en aat.ee — encuentra startups, herramientas de IA y apps SaaS."
+    },
+    "winners": {
+      "title": "Ganadores diarios — aat.ee",
+      "description": "Los productos mejor clasificados lanzados en aat.ee, día a día."
+    },
+    "tags": {
+      "title": "Etiquetas — aat.ee",
+      "description": "Explora productos por etiqueta en aat.ee — IA, herramientas de desarrollo, productividad y más."
+    },
+    "pricing": {
+      "title": "Precios — aat.ee",
+      "description": "Compara los planes de lanzamiento en aat.ee — Gratis, Premium y Premium Plus."
+    },
+    "blog": {
+      "title": "Blog — aat.ee",
+      "description": "Artículos, guías de lanzamiento y novedades del equipo de aat.ee."
+    },
+    "badge": {
+      "title": "Insignias destacadas — aat.ee",
+      "description": "Obtén una insignia de aat.ee para tu sitio y muestra tu lanzamiento con un enlace SEO."
+    },
+    "sponsors": {
+      "title": "Patrocinadores — aat.ee",
+      "description": "Patrocina aat.ee y llega a una audiencia seleccionada de creadores, fundadores y entusiastas de la tecnología."
+    },
+    "reviews": {
+      "title": "Reseñas de productos — aat.ee",
+      "description": "Reseñas y análisis en profundidad de los productos y herramientas tecnológicas más recientes en aat.ee."
+    }
+  },
+  "breadcrumb": {
+    "home": "Inicio",
+    "projects": "Proyectos",
+    "trending": "Tendencias",
+    "tags": "Etiquetas",
+    "categories": "Categorías",
+    "winners": "Ganadores",
+    "pricing": "Precios",
+    "blog": "Blog",
+    "badge": "Insignias"
   }
 }

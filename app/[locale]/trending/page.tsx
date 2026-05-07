@@ -1,12 +1,14 @@
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import { headers } from "next/headers"
 import Link from "next/link"
 
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
 import { ProjectCard } from "@/components/home/project-card"
@@ -29,9 +31,26 @@ interface ProjectSummary {
   categories?: { id: string; name: string }[]
 }
 
-export const metadata = {
-  title: "Trending - aat.ee",
-  description: "Discover trending tech products on aat.ee",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.trending" })
+  const path = "/trending"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+  }
 }
 
 // Composant Skeleton principal

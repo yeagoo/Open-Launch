@@ -1,9 +1,20 @@
 /* eslint-disable react/no-unescaped-entities */
+import type { Metadata } from "next"
 import Link from "next/link"
 
-export const metadata = {
+import { buildEnglishOnlyAlternates, buildEnglishOnlyOpenGraph } from "@/lib/i18n-metadata"
+
+export const metadata: Metadata = {
   title: "Terms of Service - aat.ee",
   description: "Terms of Service for aat.ee platform",
+  alternates: buildEnglishOnlyAlternates("/legal/terms"),
+  openGraph: {
+    title: "Terms of Service - aat.ee",
+    description: "Terms of Service for aat.ee platform",
+    ...buildEnglishOnlyOpenGraph("/legal/terms"),
+    siteName: "aat.ee",
+    type: "website",
+  },
 }
 
 export default function TermsOfServicePage() {

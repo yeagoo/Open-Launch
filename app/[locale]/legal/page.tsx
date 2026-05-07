@@ -1,10 +1,24 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { RiFilePaper2Line, RiShieldUserLine } from "@remixicon/react"
 
-export const metadata = {
+import { buildEnglishOnlyAlternates, buildEnglishOnlyOpenGraph } from "@/lib/i18n-metadata"
+
+// Legal docs are kept in English regardless of visitor locale (machine-translated
+// legal text carries actual liability). Canonical and og:locale are pinned to
+// English so search engines treat any localized URL as the same document.
+export const metadata: Metadata = {
   title: "Legal Information - aat.ee",
   description: "Legal information and policies for aat.ee platform",
+  alternates: buildEnglishOnlyAlternates("/legal"),
+  openGraph: {
+    title: "Legal Information - aat.ee",
+    description: "Legal information and policies for aat.ee platform",
+    ...buildEnglishOnlyOpenGraph("/legal"),
+    siteName: "aat.ee",
+    type: "website",
+  },
 }
 
 export default function LegalPage() {
