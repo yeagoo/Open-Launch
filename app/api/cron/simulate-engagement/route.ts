@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { fumaComments, project, upvote, user } from "@/drizzle/db/schema"
-import { and, eq, gte, inArray, lt, sql } from "drizzle-orm"
+import { and, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { verifyCronAuth } from "@/lib/cron-auth"
@@ -98,8 +98,10 @@ export async function GET(request: Request) {
       errors: [] as string[],
     }
 
-    // Helper: insert a single bot upvote, swallowing the unique-violation
-    // that fires if the bot already upvoted this project.
+    // Helper: insert a single bot upvote. Postgres unique-violation (SQLSTATE
+    // 23505) is the expected duplicate and stays silent; everything else
+    // (connection blip, FK error, etc.) is logged so the cron doesn't hide
+    // real bugs as "just another duplicate".
     async function castBotUpvote(botId: string, projectId: string): Promise<boolean> {
       try {
         await db.insert(upvote).values({
@@ -109,7 +111,11 @@ export async function GET(request: Request) {
           createdAt: new Date(),
         })
         return true
-      } catch {
+      } catch (err) {
+        const code = (err as { code?: string })?.code
+        if (code !== "23505") {
+          console.error(`upvote insert failed (bot=${botId}, project=${projectId}):`, err)
+        }
         return false
       }
     }
@@ -175,7 +181,11 @@ export async function GET(request: Request) {
           and(
             inArray(upvote.projectId, ongoingIds),
             gte(upvote.createdAt, since),
-            eq(user.isBot, false),
+            // Treat NULL is_bot as "not a bot". Better Auth signups occasionally
+            // bypass the column default depending on adapter, so a strict
+            // `is_bot = false` would silently drop those users' real upvotes
+            // out of the amplification count.
+            or(eq(user.isBot, false), isNull(user.isBot)),
           ),
         )
 

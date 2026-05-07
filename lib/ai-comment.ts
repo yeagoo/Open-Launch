@@ -205,7 +205,6 @@ export const BANNED_OPENINGS = [
   "This is great",
   "This is amazing",
   "Excited to see",
-  "Such a",
   // Chinese
   "终于",
   "太棒",
