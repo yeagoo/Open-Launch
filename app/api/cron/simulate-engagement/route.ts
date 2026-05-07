@@ -97,15 +97,15 @@ export async function GET(request: Request) {
       }
     }
 
-    // 4. COMMENT LOGIC - 3 different bot users, 1-3 projects
+    // 4. COMMENT LOGIC — 5 unique bots cycle across 2-5 projects.
+    // Comment volume bumped ~75% over the previous 1-3 to make threads feel
+    // populated; persona/intent/language variety happens inside generateComment.
     console.log(`💬 Processing comments...`)
 
-    // Select 3 unique bot users for comments
     const shuffledBotsForComments = [...bots].sort(() => 0.5 - Math.random())
-    const botsForComments = shuffledBotsForComments.slice(0, Math.min(3, bots.length))
+    const botsForComments = shuffledBotsForComments.slice(0, Math.min(5, bots.length))
 
-    // Select 1-3 projects to comment on
-    const commentCount = Math.floor(Math.random() * 3) + 1
+    const commentCount = Math.floor(Math.random() * 4) + 2 // 2..5
     const shuffledForComments = [...recentProjects].sort(() => 0.5 - Math.random())
     const projectsToComment = shuffledForComments.slice(
       0,
