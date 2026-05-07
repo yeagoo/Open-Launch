@@ -263,5 +263,58 @@
       "directories": "Directories & Discovery",
       "knowledgeReference": "Knowledge & Reference"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "Projects — This Month's Launches | aat.ee",
+      "description": "Browse projects launched this month on aat.ee — startups, AI tools, and SaaS products."
+    },
+    "trending": {
+      "title": "Trending — aat.ee",
+      "description": "Discover trending tech products, AI tools, and SaaS launches on aat.ee."
+    },
+    "categories": {
+      "title": "Categories — aat.ee",
+      "description": "Browse tech products by category on aat.ee — find startups, AI tools, and SaaS apps."
+    },
+    "winners": {
+      "title": "Daily Winners — aat.ee",
+      "description": "Top-ranked products launched on aat.ee, day by day."
+    },
+    "tags": {
+      "title": "Tags — aat.ee",
+      "description": "Explore products by tag on aat.ee — AI, developer tools, productivity, and more."
+    },
+    "pricing": {
+      "title": "Pricing — aat.ee",
+      "description": "Compare launch packages on aat.ee — Free, Premium, and Premium Plus tiers."
+    },
+    "blog": {
+      "title": "Blog — aat.ee",
+      "description": "Articles, launch playbooks, and product updates from the aat.ee team."
+    },
+    "badge": {
+      "title": "Featured Badges — aat.ee",
+      "description": "Get an aat.ee badge for your site to show off your launch and earn an SEO backlink."
+    },
+    "sponsors": {
+      "title": "Sponsors — aat.ee",
+      "description": "Sponsor aat.ee and reach a curated audience of makers, founders, and tech enthusiasts."
+    },
+    "reviews": {
+      "title": "Product Reviews — aat.ee",
+      "description": "In-depth reviews and analysis of the latest tech products and tools on aat.ee."
+    }
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "projects": "Projects",
+    "trending": "Trending",
+    "tags": "Tags",
+    "categories": "Categories",
+    "winners": "Winners",
+    "pricing": "Pricing",
+    "blog": "Blog",
+    "badge": "Featured Badges"
   }
 }

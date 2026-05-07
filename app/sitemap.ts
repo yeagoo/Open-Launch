@@ -86,8 +86,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedEntries("/reviews", { changeFrequency: "weekly", priority: 0.7 }),
     ...localizedEntries("/sponsors", { changeFrequency: "monthly", priority: 0.6 }),
     ...localizedEntries("/friends", { changeFrequency: "monthly", priority: 0.5 }),
-    ...localizedEntries("/legal/privacy", { changeFrequency: "yearly", priority: 0.3 }),
-    ...localizedEntries("/legal/terms", { changeFrequency: "yearly", priority: 0.3 }),
+    // Legal docs are English-only — translating them carries liability, so
+    // we don't emit hreflang sitemap entries for them either.
+    englishOnlyEntry("/legal", { changeFrequency: "yearly", priority: 0.2 }),
+    englishOnlyEntry("/legal/privacy", { changeFrequency: "yearly", priority: 0.3 }),
+    englishOnlyEntry("/legal/terms", { changeFrequency: "yearly", priority: 0.3 }),
     ...localizedEntries("/tags", { changeFrequency: "weekly", priority: 0.8 }),
   ]
 

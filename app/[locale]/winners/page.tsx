@@ -1,20 +1,39 @@
 /* eslint-disable react/no-unescaped-entities */
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { RiCalendarLine, RiHistoryLine, RiTrophyFill } from "@remixicon/react"
 import { format, subDays } from "date-fns"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/date-picker"
 import { WinnerCard } from "@/components/winners/winner-card"
 import { getWinnersByDate } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
-export const metadata = {
-  title: "Daily Winners - aat.ee",
-  description: "Check out the daily winners on aat.ee",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.winners" })
+  const path = "/winners"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+  }
 }
 
 // Composant pour afficher le message quand il n'y a pas de gagnants

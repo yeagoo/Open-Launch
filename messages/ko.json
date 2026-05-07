@@ -263,5 +263,58 @@
       "directories": "디렉토리 및 발견",
       "knowledgeReference": "지식 및 참고 자료"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "프로젝트 — 이번 달 출시 | aat.ee",
+      "description": "aat.ee에서 이번 달 출시된 프로젝트 ─ 스타트업, AI 도구, SaaS 제품을 둘러보세요."
+    },
+    "trending": {
+      "title": "인기 — aat.ee",
+      "description": "aat.ee에서 인기 있는 테크 제품, AI 도구, SaaS 출시를 만나보세요."
+    },
+    "categories": {
+      "title": "카테고리 — aat.ee",
+      "description": "카테고리별로 aat.ee의 테크 제품을 살펴보세요 ─ 스타트업, AI 도구, SaaS 앱."
+    },
+    "winners": {
+      "title": "데일리 위너 — aat.ee",
+      "description": "aat.ee에서 매일 선정되는 최상위 제품들."
+    },
+    "tags": {
+      "title": "태그 — aat.ee",
+      "description": "태그로 aat.ee의 제품을 찾아보세요 ─ AI, 개발자 도구, 생산성, 그 외."
+    },
+    "pricing": {
+      "title": "가격 — aat.ee",
+      "description": "aat.ee의 출시 플랜 비교 ─ 무료, Premium, Premium Plus."
+    },
+    "blog": {
+      "title": "블로그 — aat.ee",
+      "description": "aat.ee 팀이 전하는 아티클, 출시 가이드, 제품 업데이트."
+    },
+    "badge": {
+      "title": "추천 배지 — aat.ee",
+      "description": "당신의 사이트에 aat.ee 배지를 달고 출시를 알리고 SEO 백링크도 얻으세요."
+    },
+    "sponsors": {
+      "title": "스폰서 — aat.ee",
+      "description": "aat.ee를 후원하고 메이커, 창업자, 테크 애호가로 구성된 엄선된 독자에게 다가가세요."
+    },
+    "reviews": {
+      "title": "제품 리뷰 — aat.ee",
+      "description": "aat.ee의 최신 테크 제품과 도구에 대한 심층 리뷰와 분석."
+    }
+  },
+  "breadcrumb": {
+    "home": "홈",
+    "projects": "프로젝트",
+    "trending": "인기",
+    "tags": "태그",
+    "categories": "카테고리",
+    "winners": "위너",
+    "pricing": "가격",
+    "blog": "블로그",
+    "badge": "배지"
   }
 }

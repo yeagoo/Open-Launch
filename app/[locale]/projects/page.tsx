@@ -5,39 +5,44 @@ import Link from "next/link"
 
 import { format } from "date-fns"
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { ProjectCard } from "@/components/home/project-card"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { BreadcrumbSchema } from "@/components/seo/structured-data"
 import { getMonthProjects } from "@/app/actions/projects-page"
 
-export const metadata: Metadata = {
-  title: "Projects - This Month's Launches | aat.ee",
-  description:
-    "Browse all projects launched this month on aat.ee - discover startups, AI tools, and SaaS products",
-  alternates: {
-    canonical: "/projects",
-  },
-  openGraph: {
-    title: "Projects - This Month's Launches | aat.ee",
-    description:
-      "Browse all projects launched this month on aat.ee - discover startups, AI tools, and SaaS products",
-    url: `${process.env.NEXT_PUBLIC_URL}/projects`,
-    siteName: "aat.ee",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@aat_ee",
-    creator: "@aat_ee",
-    title: "Projects - This Month's Launches | aat.ee",
-    description:
-      "Browse all projects launched this month on aat.ee - discover startups, AI tools, and SaaS products",
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.projects" })
+  const path = "/projects"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@aat_ee",
+      creator: "@aat_ee",
+      title: t("title"),
+      description: t("description"),
+    },
+  }
 }
 
 interface ProjectsPageProps {
@@ -173,18 +178,22 @@ async function ProjectsContent({ page }: { page: number }) {
 export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
   const params = await searchParams
   const page = Number(params.page) || 1
+  const tBreadcrumb = await getTranslations("breadcrumb")
 
   return (
     <div className="bg-background min-h-screen">
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
-        items={[{ name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` }, { name: "Projects" }]}
+        items={[
+          { name: tBreadcrumb("home"), url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: tBreadcrumb("projects") },
+        ]}
       />
 
       <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Breadcrumb Navigation */}
         <div className="mb-4">
-          <Breadcrumb items={[{ name: "Projects" }]} />
+          <Breadcrumb items={[{ name: tBreadcrumb("projects") }]} />
         </div>
 
         <Suspense fallback={<ProjectsSkeleton />}>

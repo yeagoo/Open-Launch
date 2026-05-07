@@ -263,5 +263,58 @@
       "directories": "Kataloogid ja avastamine",
       "knowledgeReference": "Teadmised ja teatmikud"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "Projektid — Selle kuu lansseerimised | aat.ee",
+      "description": "Sirvi sel kuul aat.ee-s avaldatud projekte — idufirmad, AI-tööriistad ja SaaS-tooted."
+    },
+    "trending": {
+      "title": "Trendis — aat.ee",
+      "description": "Avasta aat.ee-s populaarsed tehnoloogiatooted, AI-tööriistad ja SaaS-lansseerimised."
+    },
+    "categories": {
+      "title": "Kategooriad — aat.ee",
+      "description": "Sirvi aat.ee tooteid kategooria järgi — idufirmad, AI-tööriistad ja SaaS-rakendused."
+    },
+    "winners": {
+      "title": "Päeva võitjad — aat.ee",
+      "description": "aat.ee-s päevadega avalikustatud tipprojektid."
+    },
+    "tags": {
+      "title": "Sildid — aat.ee",
+      "description": "Avasta aat.ee tooteid sildi kaudu — AI, arendustööriistad, tootlikkus ja palju muud."
+    },
+    "pricing": {
+      "title": "Hinnad — aat.ee",
+      "description": "Võrdle aat.ee lansseerimispakette — Tasuta, Premium ja Premium Plus."
+    },
+    "blog": {
+      "title": "Blogi — aat.ee",
+      "description": "aat.ee tiimi artiklid, lansseerimisjuhendid ja tooteuuendused."
+    },
+    "badge": {
+      "title": "Esiletõstetud märgid — aat.ee",
+      "description": "Hangi oma saidile aat.ee märk, näita oma lansseerimist ja saa SEO tagasilinki."
+    },
+    "sponsors": {
+      "title": "Sponsorid — aat.ee",
+      "description": "Toeta aat.ee-d ja jõua valitud loojate, asutajate ja tehnoloogiahuviliste auditooriumini."
+    },
+    "reviews": {
+      "title": "Tooteülevaated — aat.ee",
+      "description": "Põhjalikud ülevaated ja analüüsid aat.ee uusimatest tehnoloogiatoodetest ja -tööriistadest."
+    }
+  },
+  "breadcrumb": {
+    "home": "Avaleht",
+    "projects": "Projektid",
+    "trending": "Trendis",
+    "tags": "Sildid",
+    "categories": "Kategooriad",
+    "winners": "Võitjad",
+    "pricing": "Hinnad",
+    "blog": "Blogi",
+    "badge": "Märgid"
   }
 }

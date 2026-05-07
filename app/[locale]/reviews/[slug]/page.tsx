@@ -19,6 +19,7 @@ import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 
 import { DOMAIN_AUTHORITY, LAUNCH_SETTINGS, SEO_ARTICLE_PAYMENT_LINK } from "@/lib/constants"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -33,9 +34,9 @@ import { TableOfContents } from "@/components/blog/table-of-contents"
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; locale: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
 
   const article = await db.select().from(seoArticle).where(eq(seoArticle.slug, slug)).limit(1)
 
@@ -47,6 +48,7 @@ export async function generateMetadata({
   }
 
   const { title, description, metaTitle, metaDescription } = article[0]
+  const path = `/reviews/${slug}`
 
   return {
     title: metaTitle || `${title} | aat.ee`,
@@ -54,13 +56,14 @@ export async function generateMetadata({
     keywords: "review, product review, analysis, evaluation",
     authors: [{ name: "aat.ee Team" }],
     category: "Technology",
+    alternates: buildLocaleAlternates(path, locale),
     openGraph: {
       title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
       type: "article",
       publishedTime: article[0].publishedAt.toISOString(),
+      ...buildLocaleOpenGraph(path, locale),
       siteName: "aat.ee",
-      locale: "en_US",
     },
     twitter: {
       card: "summary_large_image",
@@ -69,18 +72,15 @@ export async function generateMetadata({
       creator: "@openlaunch",
       site: "@openlaunch",
     },
-    alternates: {
-      canonical: `/reviews/${slug}`,
-    },
   }
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  }).format(date)
 }
 
 function calculateReadingTime(content: string): string {
@@ -90,8 +90,12 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`
 }
 
-export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function ReviewPage({
+  params,
+}: {
+  params: Promise<{ slug: string; locale: string }>
+}) {
+  const { slug, locale } = await params
 
   const article = await db.select().from(seoArticle).where(eq(seoArticle.slug, slug)).limit(1)
 
@@ -126,7 +130,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
                 <div className="text-muted-foreground mb-4 flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <time dateTime={publishedAt.toISOString()}>{formatDate(publishedAt)}</time>
+                    <time dateTime={publishedAt.toISOString()}>
+                      {formatDate(publishedAt, locale)}
+                    </time>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />

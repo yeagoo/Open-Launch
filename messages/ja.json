@@ -263,5 +263,58 @@
       "directories": "ディレクトリと発見",
       "knowledgeReference": "知識とリファレンス"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "プロジェクト — 今月のローンチ | aat.ee",
+      "description": "aat.ee で今月公開されたプロジェクト ─ スタートアップ、AI ツール、SaaS をチェック。"
+    },
+    "trending": {
+      "title": "トレンド — aat.ee",
+      "description": "aat.ee でいま話題のテックプロダクト、AI ツール、SaaS ローンチを見つけよう。"
+    },
+    "categories": {
+      "title": "カテゴリー — aat.ee",
+      "description": "aat.ee のテックプロダクトをカテゴリーから探す ─ スタートアップ、AI、SaaS アプリ。"
+    },
+    "winners": {
+      "title": "デイリー受賞作 — aat.ee",
+      "description": "aat.ee で日ごとに発表される注目のローンチ作品。"
+    },
+    "tags": {
+      "title": "タグ — aat.ee",
+      "description": "タグから探す aat.ee の製品 ─ AI、開発者ツール、生産性ツールなど。"
+    },
+    "pricing": {
+      "title": "料金 — aat.ee",
+      "description": "aat.ee のローンチプランを比較 ─ 無料、Premium、Premium Plus。"
+    },
+    "blog": {
+      "title": "ブログ — aat.ee",
+      "description": "aat.ee チームによる記事、ローンチ攻略、プロダクト更新情報。"
+    },
+    "badge": {
+      "title": "フィーチャーバッジ — aat.ee",
+      "description": "サイトに貼れる aat.ee バッジでローンチをアピール。SEO 被リンクも獲得。"
+    },
+    "sponsors": {
+      "title": "スポンサー — aat.ee",
+      "description": "aat.ee を支援し、厳選されたメイカー・創業者・テック愛好家のオーディエンスにリーチ。"
+    },
+    "reviews": {
+      "title": "プロダクトレビュー — aat.ee",
+      "description": "aat.ee における最新のテックプロダクト・ツールの詳細レビューと分析。"
+    }
+  },
+  "breadcrumb": {
+    "home": "ホーム",
+    "projects": "プロジェクト",
+    "trending": "トレンド",
+    "tags": "タグ",
+    "categories": "カテゴリー",
+    "winners": "受賞作",
+    "pricing": "料金",
+    "blog": "ブログ",
+    "badge": "バッジ"
   }
 }

@@ -263,5 +263,58 @@
       "directories": "Diretórios e Descoberta",
       "knowledgeReference": "Conhecimento e Referência"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "Projetos — Lançamentos do mês | aat.ee",
+      "description": "Veja os projetos lançados este mês em aat.ee — startups, ferramentas de IA e produtos SaaS."
+    },
+    "trending": {
+      "title": "Em alta — aat.ee",
+      "description": "Descubra produtos de tecnologia em alta, ferramentas de IA e lançamentos SaaS em aat.ee."
+    },
+    "categories": {
+      "title": "Categorias — aat.ee",
+      "description": "Navegue por produtos de tecnologia por categoria em aat.ee — encontre startups, IA e apps SaaS."
+    },
+    "winners": {
+      "title": "Vencedores diários — aat.ee",
+      "description": "Os produtos mais bem classificados lançados em aat.ee, dia a dia."
+    },
+    "tags": {
+      "title": "Tags — aat.ee",
+      "description": "Explore produtos por tag em aat.ee — IA, ferramentas para desenvolvedores, produtividade e muito mais."
+    },
+    "pricing": {
+      "title": "Preços — aat.ee",
+      "description": "Compare os pacotes de lançamento em aat.ee — Grátis, Premium e Premium Plus."
+    },
+    "blog": {
+      "title": "Blog — aat.ee",
+      "description": "Artigos, guias de lançamento e novidades da equipe da aat.ee."
+    },
+    "badge": {
+      "title": "Selos em destaque — aat.ee",
+      "description": "Receba um selo da aat.ee para seu site e mostre seu lançamento com um backlink de SEO."
+    },
+    "sponsors": {
+      "title": "Patrocinadores — aat.ee",
+      "description": "Patrocine a aat.ee e alcance um público selecionado de criadores, fundadores e entusiastas de tecnologia."
+    },
+    "reviews": {
+      "title": "Avaliações de produtos — aat.ee",
+      "description": "Avaliações e análises detalhadas dos produtos e ferramentas de tecnologia mais recentes na aat.ee."
+    }
+  },
+  "breadcrumb": {
+    "home": "Início",
+    "projects": "Projetos",
+    "trending": "Em alta",
+    "tags": "Tags",
+    "categories": "Categorias",
+    "winners": "Vencedores",
+    "pricing": "Preços",
+    "blog": "Blog",
+    "badge": "Selos"
   }
 }

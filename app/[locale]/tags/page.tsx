@@ -1,22 +1,32 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
+import { getTranslations } from "next-intl/server"
+
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { getAllTags } from "@/app/actions/tags"
 
-const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
-
-export const metadata: Metadata = {
-  title: "Tags - aat.ee",
-  description: "Browse all project tags on aat.ee. Discover tools and products by topic.",
-  alternates: {
-    canonical: `${baseUrl}/tags`,
-  },
-  openGraph: {
-    title: "Tags - aat.ee",
-    description: "Browse all project tags on aat.ee. Discover tools and products by topic.",
-    url: `${baseUrl}/tags`,
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.tags" })
+  const path = "/tags"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+  }
 }
 
 export default async function TagsPage() {

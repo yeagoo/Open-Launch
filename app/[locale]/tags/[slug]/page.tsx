@@ -4,9 +4,10 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { RiArrowDownSLine, RiFilterLine } from "@remixicon/react"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -22,28 +23,29 @@ import { getProjectsByTag, getTagBySlug } from "@/app/actions/tags"
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
 
 type Props = {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string; locale: string }>
   searchParams: Promise<{ sort?: string; page?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
+  const { slug, locale } = await params
   const tag = await getTagBySlug(slug)
 
   if (!tag) {
     return { title: "Tag Not Found - aat.ee" }
   }
 
+  const path = `/tags/${tag.slug}`
   return {
     title: `#${tag.name} Projects - aat.ee`,
     description: `Discover ${tag.projectCount} projects tagged with #${tag.name} on aat.ee.`,
-    alternates: {
-      canonical: `${baseUrl}/tags/${tag.slug}`,
-    },
+    alternates: buildLocaleAlternates(path, locale),
     openGraph: {
       title: `#${tag.name} Projects - aat.ee`,
       description: `Discover ${tag.projectCount} projects tagged with #${tag.name} on aat.ee.`,
-      url: `${baseUrl}/tags/${tag.slug}`,
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
     },
   }
 }
@@ -221,6 +223,7 @@ export default async function TagPage({ params, searchParams }: Props) {
   const resolvedSearchParams = await searchParams
   const sortParam = resolvedSearchParams.sort || "recent"
   const pageParam = Math.max(1, parseInt(resolvedSearchParams.page || "1", 10) || 1)
+  const tBreadcrumb = await getTranslations("breadcrumb")
 
   const tag = await getTagBySlug(slug)
   if (!tag) return notFound()
@@ -229,7 +232,7 @@ export default async function TagPage({ params, searchParams }: Props) {
     <main className="bg-secondary/20">
       <BreadcrumbSchema
         items={[
-          { name: "Tags", url: `${baseUrl}/tags` },
+          { name: tBreadcrumb("tags"), url: `${baseUrl}/tags` },
           { name: `#${tag.name}`, url: `${baseUrl}/tags/${tag.slug}` },
         ]}
       />
@@ -237,7 +240,7 @@ export default async function TagPage({ params, searchParams }: Props) {
         <div className="mb-4">
           <nav className="text-muted-foreground mb-2 flex items-center gap-1 text-sm">
             <Link href="/tags" className="hover:underline">
-              Tags
+              {tBreadcrumb("tags")}
             </Link>
             <span>/</span>
             <span className="text-foreground font-medium">#{tag.name}</span>

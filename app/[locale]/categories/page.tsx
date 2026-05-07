@@ -1,10 +1,12 @@
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { RiArrowDownSLine, RiFilterLine } from "@remixicon/react"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -22,9 +24,26 @@ import {
   getTopCategories,
 } from "@/app/actions/projects"
 
-export const metadata = {
-  title: "Categories - aat.ee",
-  description: "Browse tech products by category on aat.ee",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.categories" })
+  const path = "/categories"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+  }
 }
 
 // Composant Skeleton pour le chargement des chaînes

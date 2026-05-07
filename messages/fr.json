@@ -263,5 +263,58 @@
       "directories": "Annuaire et découverte",
       "knowledgeReference": "Connaissances et références"
     }
+  },
+  "metadata": {
+    "projects": {
+      "title": "Projets — Lancements du mois | aat.ee",
+      "description": "Parcourez les projets lancés ce mois-ci sur aat.ee — startups, outils d'IA et produits SaaS."
+    },
+    "trending": {
+      "title": "Tendances — aat.ee",
+      "description": "Découvrez les produits tech en tendance, les outils d'IA et les lancements SaaS sur aat.ee."
+    },
+    "categories": {
+      "title": "Catégories — aat.ee",
+      "description": "Parcourez les produits tech par catégorie sur aat.ee — trouvez startups, outils d'IA et applis SaaS."
+    },
+    "winners": {
+      "title": "Gagnants du jour — aat.ee",
+      "description": "Les produits les mieux classés lancés sur aat.ee, jour après jour."
+    },
+    "tags": {
+      "title": "Tags — aat.ee",
+      "description": "Explorez les produits par tag sur aat.ee — IA, outils de développement, productivité et plus."
+    },
+    "pricing": {
+      "title": "Tarifs — aat.ee",
+      "description": "Comparez les formules de lancement sur aat.ee — Gratuit, Premium et Premium Plus."
+    },
+    "blog": {
+      "title": "Blog — aat.ee",
+      "description": "Articles, guides de lancement et actualités de l'équipe aat.ee."
+    },
+    "badge": {
+      "title": "Badges — aat.ee",
+      "description": "Obtenez un badge aat.ee pour votre site afin de mettre en avant votre lancement et un backlink SEO."
+    },
+    "sponsors": {
+      "title": "Sponsors — aat.ee",
+      "description": "Sponsorisez aat.ee et atteignez une audience qualifiée de makers, fondateurs et passionnés de tech."
+    },
+    "reviews": {
+      "title": "Tests de produits — aat.ee",
+      "description": "Tests et analyses approfondis des derniers produits et outils tech sur aat.ee."
+    }
+  },
+  "breadcrumb": {
+    "home": "Accueil",
+    "projects": "Projets",
+    "trending": "Tendances",
+    "tags": "Tags",
+    "categories": "Catégories",
+    "winners": "Gagnants",
+    "pricing": "Tarifs",
+    "blog": "Blog",
+    "badge": "Badges"
   }
 }

@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { db } from "@/drizzle/db"
@@ -6,8 +7,10 @@ import { seoArticle } from "@/drizzle/db/schema"
 import { RiArticleLine, RiCheckboxCircleFill, RiInformationLine, RiLinkM } from "@remixicon/react"
 import { desc } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 
 import { LAUNCH_LIMITS, LAUNCH_SETTINGS, SEO_ARTICLE_PAYMENT_LINK } from "@/lib/constants"
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import {
   Accordion,
   AccordionContent,
@@ -31,26 +34,33 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export const metadata = {
-  title: "Pricing - aat.ee",
-  description: "Choose the perfect plan for your project launch",
-  alternates: {
-    canonical: "/pricing",
-  },
-  openGraph: {
-    title: "Pricing - aat.ee",
-    description: "Choose the perfect plan for your project launch",
-    url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
-    siteName: "aat.ee",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@aat_ee",
-    creator: "@aat_ee",
-    title: "Pricing - aat.ee",
-    description: "Choose the perfect plan for your project launch",
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.pricing" })
+  const path = "/pricing"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@aat_ee",
+      creator: "@aat_ee",
+      title: t("title"),
+      description: t("description"),
+    },
+  }
 }
 
 const faqItems = [
@@ -81,12 +91,12 @@ const faqItems = [
   },
 ]
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+function formatDate(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  }).format(date)
 }
 
 function calculateReadingTime(content: string): string {
@@ -105,7 +115,8 @@ async function getLatestReviews() {
   }))
 }
 
-export default async function PricingPage() {
+export default async function PricingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
   const latestReviews = await getLatestReviews()
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8 md:py-12">
@@ -461,7 +472,7 @@ export default async function PricingPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               <time dateTime={review.publishedAt.toISOString()}>
-                                {formatDate(review.publishedAt)}
+                                {formatDate(review.publishedAt, locale)}
                               </time>
                             </div>
                             <div className="flex items-center gap-1">

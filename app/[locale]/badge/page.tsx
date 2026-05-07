@@ -3,35 +3,41 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { RiCheckLine, RiRocketLine, RiSpeedLine, RiStarLine } from "@remixicon/react"
+import { getTranslations } from "next-intl/server"
 
+import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { BreadcrumbSchema } from "@/components/seo/structured-data"
 
-export const metadata: Metadata = {
-  title: "Badge - Get Priority Launch | aat.ee",
-  description:
-    "Add our badge to your website and get priority launch access. Skip the queue and launch your product faster on aat.ee.",
-  alternates: {
-    canonical: "/badge",
-  },
-  openGraph: {
-    title: "Badge - Get Priority Launch | aat.ee",
-    description:
-      "Add our badge to your website and get priority launch access. Skip the queue and launch your product faster on aat.ee.",
-    url: `${process.env.NEXT_PUBLIC_URL}/badge`,
-    siteName: "aat.ee",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@aat_ee",
-    creator: "@aat_ee",
-    title: "Badge - Get Priority Launch | aat.ee",
-    description:
-      "Add our badge to your website and get priority launch access. Skip the queue and launch your product faster on aat.ee.",
-  },
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: "metadata.badge" })
+  const path = "/badge"
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates(path, locale),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      ...buildLocaleOpenGraph(path, locale),
+      siteName: "aat.ee",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@aat_ee",
+      creator: "@aat_ee",
+      title: t("title"),
+      description: t("description"),
+    },
+  }
 }
 
 const badgeCodeLight = `<a href="https://www.aat.ee/?ref=badge" target="_blank" rel="noopener" title="Featured on aat.ee">
@@ -53,7 +59,8 @@ const badgeCodeLight = `<a href="https://www.aat.ee/?ref=badge" target="_blank" 
 
 const badgeCode = badgeCodeLight // For backwards compatibility
 
-export default function BadgePage() {
+export default async function BadgePage() {
+  const tBreadcrumb = await getTranslations("breadcrumb")
   const benefits = [
     {
       icon: RiSpeedLine,
@@ -81,13 +88,16 @@ export default function BadgePage() {
     <div className="bg-background min-h-screen">
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
-        items={[{ name: "Home", url: `${process.env.NEXT_PUBLIC_URL}` }, { name: "Badge" }]}
+        items={[
+          { name: tBreadcrumb("home"), url: `${process.env.NEXT_PUBLIC_URL}` },
+          { name: tBreadcrumb("badge") },
+        ]}
       />
 
       <div className="container mx-auto max-w-4xl px-4 py-8">
         {/* Breadcrumb Navigation */}
         <div className="mb-6">
-          <Breadcrumb items={[{ name: "Badge" }]} />
+          <Breadcrumb items={[{ name: tBreadcrumb("badge") }]} />
         </div>
 
         {/* Hero Section */}
