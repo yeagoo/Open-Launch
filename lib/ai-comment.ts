@@ -175,9 +175,22 @@ function pickRandom<T>(items: readonly T[]): T {
 // English seeds + the most common templated openings translated into the
 // other 7 site locales. The model will still skirt these by paraphrasing,
 // but listing the common ones cuts the dominant attractors.
-const BANNED_OPENINGS = [
+// Exported so the cron can scan historical comments for these prefixes when
+// picking which old comments to rewrite.
+export const BANNED_OPENINGS = [
   // English
   "This could save",
+  "This could revolutionize",
+  "This could change",
+  "This could be a game",
+  "This is exactly",
+  "This is going to",
+  "This sounds like",
+  "This sounds amazing",
+  "This sounds great",
+  "This looks like",
+  "This looks incredible",
+  "This looks promising",
   "Finally",
   "Looks great",
   "Love how",
@@ -192,6 +205,7 @@ const BANNED_OPENINGS = [
   "This is great",
   "This is amazing",
   "Excited to see",
+  "Such a",
   // Chinese
   "终于",
   "太棒",

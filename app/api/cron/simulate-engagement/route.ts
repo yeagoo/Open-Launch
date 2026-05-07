@@ -3,10 +3,15 @@ import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { fumaComments, project, upvote, user } from "@/drizzle/db/schema"
-import { and, eq, gte, inArray, lt } from "drizzle-orm"
+import { and, eq, gte, inArray, lt, sql } from "drizzle-orm"
 
-import { formatCommentContent, generateComment } from "@/lib/ai-comment"
+import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { verifyCronAuth } from "@/lib/cron-auth"
+
+// How many stale templated bot comments to rewrite per cron tick. The
+// historical backlog (~2.5k templated comments from the pre-diversity prompt)
+// is amortised across cron runs rather than blasted in one shot.
+const REWRITES_PER_RUN = 3
 
 export const dynamic = "force-dynamic"
 
@@ -65,6 +70,7 @@ export async function GET(request: Request) {
     const results = {
       upvotesAdded: 0,
       commentsPosted: 0,
+      commentsRewritten: 0,
       errors: [] as string[],
     }
 
@@ -158,8 +164,92 @@ export async function GET(request: Request) {
       }
     }
 
+    // 4.5. STALE COMMENT REWRITE — pick a few old templated bot comments
+    // (matching the pre-diversity-prompt opening list) and regenerate them
+    // with the current generator. We skip threads where the bot received
+    // a real reply, since rewriting the parent would orphan the reply's
+    // context.
+    console.log(`🔄 Rewriting up to ${REWRITES_PER_RUN} stale comments...`)
+
+    // Build a regex pattern from BANNED_OPENINGS for PG ~* (case-insensitive)
+    // matching. Escape regex metachars so " a-z " openings stay literal.
+    const escapedOpenings = BANNED_OPENINGS.map((o) =>
+      o.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+    ).join("|")
+    const stalePattern = `^(${escapedOpenings})`
+
+    const staleCandidates = await db.execute<{
+      id: number
+      page: string
+      author: string
+      text: string
+    }>(sql`
+      SELECT
+        c.id,
+        c.page,
+        c.author,
+        c.content->'content'->0->'content'->0->>'text' AS text
+      FROM ${fumaComments} c
+      JOIN ${user} u ON u.id = c.author
+      WHERE u.is_bot = true
+        AND NOT EXISTS (
+          SELECT 1 FROM ${fumaComments} r WHERE r.thread = c.id
+        )
+        AND (c.content->'content'->0->'content'->0->>'text') ~* ${stalePattern}
+      ORDER BY c.timestamp ASC
+      LIMIT ${REWRITES_PER_RUN}
+    `)
+
+    const staleRows =
+      (
+        staleCandidates as unknown as {
+          rows?: Array<{ id: number; page: string; author: string; text: string }>
+        }
+      ).rows ??
+      (staleCandidates as unknown as Array<{
+        id: number
+        page: string
+        author: string
+        text: string
+      }>)
+
+    for (const row of staleRows) {
+      try {
+        const [proj] = await db
+          .select({ id: project.id, name: project.name, description: project.description })
+          .from(project)
+          .where(eq(project.id, row.page))
+          .limit(1)
+
+        if (!proj) {
+          // Project gone — leave the orphan comment alone.
+          continue
+        }
+
+        const newText = await generateComment(
+          proj.name,
+          proj.description.substring(0, 200),
+          proj.description,
+        )
+
+        // Update only the content; keep timestamp + author so the comment
+        // stays in its original position in the thread.
+        await db
+          .update(fumaComments)
+          .set({ content: formatCommentContent(newText) })
+          .where(eq(fumaComments.id, row.id))
+
+        results.commentsRewritten++
+        console.log(`  ✏️  rewrote #${row.id} on ${proj.name}: "${newText.slice(0, 60)}…"`)
+      } catch (err) {
+        const msg = `Failed to rewrite #${row.id}: ${err instanceof Error ? err.message : err}`
+        console.error(`  ❌ ${msg}`)
+        results.errors.push(msg)
+      }
+    }
+
     // 5. Revalidate cache
-    if (results.upvotesAdded > 0 || results.commentsPosted > 0) {
+    if (results.upvotesAdded > 0 || results.commentsPosted > 0 || results.commentsRewritten > 0) {
       console.log("🔄 Revalidating cache...")
       revalidatePath("/")
       revalidatePath("/trending")
@@ -175,6 +265,7 @@ export async function GET(request: Request) {
         projectsFound: recentProjects.length,
         upvotesAdded: results.upvotesAdded,
         commentsPosted: results.commentsPosted,
+        commentsRewritten: results.commentsRewritten,
         errors: results.errors,
       },
     })
