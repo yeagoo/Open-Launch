@@ -13,6 +13,18 @@ import { verifyCronAuth } from "@/lib/cron-auth"
 // is amortised across cron runs rather than blasted in one shot.
 const REWRITES_PER_RUN = 3
 
+// Upvote phase tuning. The cron is scheduled "0 */2 * * *" — every 2 hours —
+// so we look back exactly 2 hours when counting real-user upvotes to amplify.
+// AMP_LOOKBACK_HOURS matches the cron interval to avoid overlapping (which
+// would double-amp the same real vote) and to avoid gaps as long as the cron
+// fires on time. AMP_CAP caps how many bot votes a single project can earn
+// per tick so a HN-spike doesn't trigger a 100-vote bot avalanche.
+const AMP_LOOKBACK_HOURS = 2
+const AMP_CAP_PER_PROJECT = 20
+// Base cadence: pick a few ongoing projects and seed bot upvotes regardless
+// of real-user activity. Keeps cold-start projects feeling alive.
+const BASE_CADENCE_MAX_PROJECTS = 6
+
 export const dynamic = "force-dynamic"
 
 /**
@@ -38,7 +50,16 @@ export async function GET(request: Request) {
 
     console.log(`✅ Found ${bots.length} bot users`)
 
-    // 2. Get projects from today and yesterday
+    // 2a. Today's active launches — the only projects bot upvotes are
+    // allowed to touch. Comments still allow yesterday's launched projects
+    // (queried below) since people do comment on closed launches.
+    const ongoingProjects = await db
+      .select()
+      .from(project)
+      .where(eq(project.launchStatus, "ongoing"))
+
+    // 2b. Comment scope kept on the original window so threads on yesterday's
+    // launches keep getting fresh discussion.
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
     yesterday.setHours(0, 0, 0, 0)
@@ -58,47 +79,128 @@ export async function GET(request: Request) {
         ),
       )
 
-    if (recentProjects.length === 0) {
+    if (ongoingProjects.length === 0 && recentProjects.length === 0) {
       return NextResponse.json(
-        { message: "No recent projects found to engage with" },
+        { message: "No active or recent projects found to engage with" },
         { status: 200 },
       )
     }
 
-    console.log(`📦 Found ${recentProjects.length} recent projects`)
+    console.log(
+      `📦 ${ongoingProjects.length} ongoing (vote scope), ${recentProjects.length} recent (comment scope)`,
+    )
 
     const results = {
       upvotesAdded: 0,
+      upvotesAmplified: 0,
       commentsPosted: 0,
       commentsRewritten: 0,
       errors: [] as string[],
     }
 
-    // 3. UPVOTE LOGIC - Random 6 projects, allow duplicates
-    const shuffledForUpvotes = [...recentProjects].sort(() => 0.5 - Math.random())
-    const projectsToUpvote = shuffledForUpvotes.slice(0, Math.min(6, recentProjects.length))
+    // Helper: insert a single bot upvote, swallowing the unique-violation
+    // that fires if the bot already upvoted this project.
+    async function castBotUpvote(botId: string, projectId: string): Promise<boolean> {
+      try {
+        await db.insert(upvote).values({
+          id: crypto.randomUUID(),
+          userId: botId,
+          projectId,
+          createdAt: new Date(),
+        })
+        return true
+      } catch {
+        return false
+      }
+    }
 
-    console.log(`👍 Processing upvotes for ${projectsToUpvote.length} projects...`)
+    // Helper: pick `count` bots from `bots` that haven't already upvoted
+    // `projectId`. Cuts down on duplicate-insert noise vs blind sampling.
+    async function pickAvailableBots(projectId: string, count: number) {
+      if (count <= 0) return []
+      const already = await db
+        .select({ userId: upvote.userId })
+        .from(upvote)
+        .where(
+          and(
+            eq(upvote.projectId, projectId),
+            inArray(
+              upvote.userId,
+              bots.map((b) => b.id),
+            ),
+          ),
+        )
+      const usedIds = new Set(already.map((r) => r.userId))
+      const available = bots.filter((b) => !usedIds.has(b.id))
+      return [...available].sort(() => 0.5 - Math.random()).slice(0, count)
+    }
 
-    for (const proj of projectsToUpvote) {
-      // Random 1-3 upvotes per project
-      const upvoteCount = Math.floor(Math.random() * 3) + 1
-      const shuffledBots = [...bots].sort(() => 0.5 - Math.random())
-      const selectedBots = shuffledBots.slice(0, upvoteCount)
+    // 3a. UPVOTE BASE CADENCE — only ongoing projects, 1-3 random bot votes
+    // each so cold-start launches feel populated even with no real traffic.
+    if (ongoingProjects.length > 0) {
+      const shuffledForUpvotes = [...ongoingProjects].sort(() => 0.5 - Math.random())
+      const projectsToUpvote = shuffledForUpvotes.slice(
+        0,
+        Math.min(BASE_CADENCE_MAX_PROJECTS, ongoingProjects.length),
+      )
+      console.log(`👍 Base cadence: ${projectsToUpvote.length} projects`)
 
-      for (const bot of selectedBots) {
-        try {
-          await db.insert(upvote).values({
-            id: crypto.randomUUID(),
-            userId: bot.id,
-            projectId: proj.id,
-            createdAt: new Date(),
-          })
-          results.upvotesAdded++
-          console.log(`  ✅ ${bot.name} upvoted ${proj.name}`)
-        } catch {
-          // Duplicate upvote, skip silently (this is expected)
-          console.log(`  ⏭️  ${bot.name} already upvoted ${proj.name} (skipped)`)
+      for (const proj of projectsToUpvote) {
+        const baseCount = Math.floor(Math.random() * 3) + 1 // 1..3
+        const selected = await pickAvailableBots(proj.id, baseCount)
+        for (const bot of selected) {
+          const ok = await castBotUpvote(bot.id, proj.id)
+          if (ok) {
+            results.upvotesAdded++
+            console.log(`  ✅ ${bot.name} upvoted ${proj.name}`)
+          }
+        }
+      }
+    }
+
+    // 3b. UPVOTE 1:1 AMPLIFICATION — for each ongoing project, count how many
+    // real-user upvotes landed in the last AMP_LOOKBACK_HOURS hours and add
+    // a matching number of bot upvotes (capped at AMP_CAP_PER_PROJECT). The
+    // 2-hour lookback equals the cron interval so windows neither overlap
+    // (avoiding double-amp) nor leave gaps when the cron fires on schedule.
+    if (ongoingProjects.length > 0) {
+      const since = new Date(Date.now() - AMP_LOOKBACK_HOURS * 60 * 60 * 1000)
+      const ongoingIds = ongoingProjects.map((p) => p.id)
+
+      const realUpvoteRows = await db
+        .select({ projectId: upvote.projectId })
+        .from(upvote)
+        .innerJoin(user, eq(user.id, upvote.userId))
+        .where(
+          and(
+            inArray(upvote.projectId, ongoingIds),
+            gte(upvote.createdAt, since),
+            eq(user.isBot, false),
+          ),
+        )
+
+      const realCounts = new Map<string, number>()
+      for (const r of realUpvoteRows) {
+        realCounts.set(r.projectId, (realCounts.get(r.projectId) ?? 0) + 1)
+      }
+
+      console.log(
+        `🔁 Amp scan: ${realUpvoteRows.length} real upvotes in last ${AMP_LOOKBACK_HOURS}h across ${realCounts.size} projects`,
+      )
+
+      for (const proj of ongoingProjects) {
+        const realCount = realCounts.get(proj.id) ?? 0
+        if (realCount === 0) continue
+        const ampTarget = Math.min(realCount, AMP_CAP_PER_PROJECT)
+        const selected = await pickAvailableBots(proj.id, ampTarget)
+        let amped = 0
+        for (const bot of selected) {
+          const ok = await castBotUpvote(bot.id, proj.id)
+          if (ok) amped++
+        }
+        if (amped > 0) {
+          results.upvotesAmplified += amped
+          console.log(`  ✨ ${proj.name}: real=${realCount} amped=${amped}`)
         }
       }
     }
@@ -249,7 +351,12 @@ export async function GET(request: Request) {
     }
 
     // 5. Revalidate cache
-    if (results.upvotesAdded > 0 || results.commentsPosted > 0 || results.commentsRewritten > 0) {
+    if (
+      results.upvotesAdded > 0 ||
+      results.upvotesAmplified > 0 ||
+      results.commentsPosted > 0 ||
+      results.commentsRewritten > 0
+    ) {
       console.log("🔄 Revalidating cache...")
       revalidatePath("/")
       revalidatePath("/trending")
@@ -262,8 +369,10 @@ export async function GET(request: Request) {
       message: "Virtual engagement simulation completed",
       data: {
         botsAvailable: bots.length,
-        projectsFound: recentProjects.length,
+        ongoingProjects: ongoingProjects.length,
+        recentProjects: recentProjects.length,
         upvotesAdded: results.upvotesAdded,
+        upvotesAmplified: results.upvotesAmplified,
         commentsPosted: results.commentsPosted,
         commentsRewritten: results.commentsRewritten,
         errors: results.errors,
