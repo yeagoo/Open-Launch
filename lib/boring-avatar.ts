@@ -7,6 +7,8 @@
  * by the backfill script and served as a regular static asset.
  */
 
+import { createHash } from "node:crypto"
+
 import { createElement } from "react"
 
 import Avatar from "boring-avatars"
@@ -50,6 +52,18 @@ export function pickAvatarConfig(seed: string): AvatarConfig {
   // h is set; `>>` would coerce to signed and break for ~half of seeds.
   const palette = PALETTES[(h >>> 8) % PALETTES.length]
   return { variant, palette: [...palette] }
+}
+
+/**
+ * Opaque, URL-safe filename derived from the userId. Hashing prevents leaking
+ * internal IDs — particularly the `bot-user-N` pattern, which would otherwise
+ * make every AI commenter trivially identifiable from their avatar URL.
+ *
+ * 16 hex chars = 64 bits of entropy → collision probability is negligible
+ * for any realistic user count.
+ */
+export function avatarFilename(seed: string): string {
+  return createHash("sha256").update(seed).digest("hex").slice(0, 16) + ".svg"
 }
 
 /**
