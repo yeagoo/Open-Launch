@@ -1,9 +1,9 @@
 "use client"
 
 import { useTransition } from "react"
-import { useParams, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
-import { usePathname, useRouter } from "@/i18n/navigation"
+import { usePathname } from "@/i18n/navigation"
 import { routing } from "@/i18n/routing"
 import { RiGlobalLine } from "@remixicon/react"
 import { useLocale } from "next-intl"
@@ -33,21 +33,22 @@ interface LanguageSwitcherProps {
 
 export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps) {
   const locale = useLocale()
-  const router = useRouter()
   const pathname = usePathname()
-  const params = useParams()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
   const handleSelect = (next: string) => {
+    if (next === locale) return
     const query = searchParams.toString()
-    const targetPath = query ? `${pathname}?${query}` : pathname
+    const path = pathname && pathname !== "/" ? pathname : ""
+    const prefix =
+      next === routing.defaultLocale && routing.localePrefix === "as-needed" ? "" : `/${next}`
+    const target = `${prefix}${path}${query ? `?${query}` : ""}` || "/"
     startTransition(() => {
-      // pathname/params is the dynamic-route shape next-intl expects when no
-      // typed pathnames map is configured; cast keeps it simple.
-      router.replace({ pathname: targetPath, params } as Parameters<typeof router.replace>[0], {
-        locale: next as (typeof routing.locales)[number],
-      })
+      // Hard navigation: soft-routing keeps RSC payloads cached per-locale, so
+      // server-rendered strings (project descriptions, etc.) stay in the old
+      // language until the user manually refreshes.
+      window.location.assign(target)
     })
   }
 

@@ -172,7 +172,10 @@
       "ongoing": "Käimas",
       "launched": "Tutvustatud",
       "scheduled": "Planeeritud",
-      "byMaker": "autorilt"
+      "byMaker": "autorilt",
+      "aboutHeading": "{name} kohta",
+      "relatedHeading": "Seotud tooted",
+      "relatedSubtitle": "Teised tööriistad, mida võiksid kaaluda"
     },
     "submit": {
       "title": "Esita oma projekt",

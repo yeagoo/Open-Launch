@@ -2,7 +2,9 @@ import { Suspense } from "react"
 import Link from "next/link"
 
 import { RiArrowDownSLine, RiFilterLine } from "@remixicon/react"
+import { getLocale } from "next-intl/server"
 
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -85,12 +87,15 @@ async function CategoryData({
   const ITEMS_PER_PAGE = 10
   const currentPage = Math.max(1, page)
 
-  const { projects: paginatedProjects, totalCount } = await getProjectsByCategory(
+  const { projects: paginatedProjectsRaw, totalCount } = await getProjectsByCategory(
     categoryId,
     currentPage,
     ITEMS_PER_PAGE,
     sort,
   )
+
+  const locale = await getLocale()
+  const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
 
   const isAuthenticated =
     paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false

@@ -29,6 +29,10 @@ const MAX_DEEP_ANALYZE = 5 // Phase 2: crawl + AI, expensive
 const MIN_ALTERNATIVES = 2
 const MIN_CONFIDENCE_SCORE = 30 // Phase 2 enrichment threshold — Phase 1 prescreening is the quality gate
 const CRAWL_TIMEOUT = 15000
+// Don't re-evaluate subjects that already failed (no pool / no en translations
+// / no AI matches) until this many days have passed. Lets the catalog grow
+// without burning DeepSeek calls on the same dead-ends every 5 minutes.
+const REATTEMPT_DAYS = 30
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,6 +50,8 @@ export async function GET(request: NextRequest) {
         ON p2.id = pc2.project_id AND p2.launch_status IN ('ongoing', 'launched')
       WHERE pc1.project_id = ${projectTable.id}
     )`
+
+    const reattemptCutoff = new Date(Date.now() - REATTEMPT_DAYS * 24 * 60 * 60 * 1000)
 
     const candidateProjects = await db
       .select({
@@ -65,10 +71,21 @@ export async function GET(request: NextRequest) {
           ),
           sql`${projectTable.id} NOT IN (SELECT subject_project_id FROM alternative_page)`,
           sql`${sameCategoryCountSql} >= ${MIN_ALTERNATIVES}`,
+          sql`(${projectTable.alternativesAttemptedAt} IS NULL OR ${projectTable.alternativesAttemptedAt} < ${reattemptCutoff})`,
         ),
       )
       .orderBy(sql`${sameCategoryCountSql} DESC`)
       .limit(MAX_PROJECTS_PER_RUN)
+
+    // Stamp `alternatives_attempted_at` so projects that fail any criterion
+    // (insufficient pool, no en translations yet, AI rejected all candidates)
+    // don't loop back into the candidate set on the very next tick.
+    const markAttempted = async (projectId: string) => {
+      await db
+        .update(projectTable)
+        .set({ alternativesAttemptedAt: new Date() })
+        .where(eq(projectTable.id, projectId))
+    }
 
     let generated = 0
     let skipped = 0
@@ -84,6 +101,7 @@ export async function GET(request: NextRequest) {
 
         if (subjectCategories.length === 0) {
           console.log(`⏭️  Skipping "${subjectProject.name}": no categories`)
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -126,6 +144,7 @@ export async function GET(request: NextRequest) {
 
         if (pool.length < MIN_ALTERNATIVES) {
           console.log(`⏭️  Skipping "${subjectProject.name}": pool too small (${pool.length})`)
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -139,6 +158,7 @@ export async function GET(request: NextRequest) {
         ])
         if (!(subjectProject.id in enDescriptions)) {
           console.log(`⏭️  Skipping "${subjectProject.name}": no en translation yet`)
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -153,6 +173,7 @@ export async function GET(request: NextRequest) {
           console.log(
             `⏭️  Skipping "${subjectProject.name}": only ${eligiblePool.length} pool members have en translations`,
           )
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -183,6 +204,7 @@ export async function GET(request: NextRequest) {
           console.log(
             `⏭️  Skipping "${subjectProject.name}": pre-screen found only ${prescreenedIds.length} (need ${MIN_ALTERNATIVES})`,
           )
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -251,6 +273,7 @@ export async function GET(request: NextRequest) {
           console.log(
             `⏭️  Skipping "${subjectProject.name}": only ${confirmedAlternatives.length} confirmed (need ${MIN_ALTERNATIVES})`,
           )
+          await markAttempted(subjectProject.id)
           skipped++
           continue
         }
@@ -308,8 +331,17 @@ export async function GET(request: NextRequest) {
         console.log(`✅ Generated alternatives page for "${subjectProject.name}"`)
         generated++
       } catch (error) {
+        // Stamp on catch too. Tradeoff: a transient outage (Crawl4AI / DeepSeek
+        // 5xx, DB blip) suppresses the subject for ~30 days when it would have
+        // succeeded on retry. The alternative — never stamping — lets a single
+        // permanently-broken project (dead websiteUrl, malformed URL) sit at
+        // the head of the priority queue and starve every other candidate
+        // forever, since the cron only processes 1 project per tick. The
+        // starvation case is recurring; the false-positive case is one-shot,
+        // so we stamp.
         console.error(`Error generating alternatives for ${subjectProject.name}:`, error)
         errors++
+        await markAttempted(subjectProject.id).catch(() => {})
       }
     }
 

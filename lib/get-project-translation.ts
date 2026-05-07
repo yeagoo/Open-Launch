@@ -1,6 +1,6 @@
 import { db } from "@/drizzle/db"
 import { projectTranslation } from "@/drizzle/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, inArray, or } from "drizzle-orm"
 
 /**
  * Resolve the description to display for a given (projectId, locale).
@@ -75,4 +75,86 @@ export async function getEnglishDescriptions(
   for (const r of enRows) result[r.projectId] = r.description
 
   return result
+}
+
+/**
+ * Resolve the long-form (markdown) description to render for a given
+ * (projectId, locale). Same fallback order as getLocalizedProjectDescription:
+ *   1. Exact locale match  2. Source-locale row  3. EN row  4. null
+ *
+ * Returns null when no long_description exists yet — caller should hide the
+ * "About" section instead of rendering an empty heading.
+ */
+export async function getLocalizedLongDescription(
+  projectId: string,
+  locale: string,
+): Promise<string | null> {
+  const rows = await db
+    .select({
+      locale: projectTranslation.locale,
+      longDescription: projectTranslation.longDescription,
+      isSource: projectTranslation.isSource,
+    })
+    .from(projectTranslation)
+    .where(eq(projectTranslation.projectId, projectId))
+
+  const exact = rows.find((r) => r.locale === locale && r.longDescription)
+  if (exact?.longDescription) return exact.longDescription
+
+  const source = rows.find((r) => r.isSource && r.longDescription)
+  if (source?.longDescription) return source.longDescription
+
+  const en = rows.find((r) => r.locale === "en" && r.longDescription)
+  if (en?.longDescription) return en.longDescription
+
+  return null
+}
+
+/**
+ * Bulk: localize a list of projects' descriptions in-place for a given locale.
+ *
+ * One query covers all `(projectId, locale|'en'|source)` rows. Same fallback
+ * order as `getLocalizedProjectDescription`: exact locale → source → en →
+ * the original `description` already on the project (kept untouched).
+ */
+export async function localizeProjectDescriptions<
+  T extends { id: string; description: string | null | undefined },
+>(projects: T[], locale: string): Promise<T[]> {
+  if (projects.length === 0) return projects
+
+  const ids = projects.map((p) => p.id)
+  const localeFilters =
+    locale === "en"
+      ? [eq(projectTranslation.locale, "en"), eq(projectTranslation.isSource, true)]
+      : [
+          eq(projectTranslation.locale, locale),
+          eq(projectTranslation.locale, "en"),
+          eq(projectTranslation.isSource, true),
+        ]
+
+  const rows = await db
+    .select({
+      projectId: projectTranslation.projectId,
+      locale: projectTranslation.locale,
+      description: projectTranslation.description,
+      isSource: projectTranslation.isSource,
+    })
+    .from(projectTranslation)
+    .where(and(inArray(projectTranslation.projectId, ids), or(...localeFilters)))
+
+  const byProject = new Map<string, { exact?: string; source?: string; en?: string }>()
+  for (const r of rows) {
+    const slot = byProject.get(r.projectId) ?? {}
+    if (r.locale === locale) slot.exact = r.description
+    if (r.isSource) slot.source = r.description
+    if (r.locale === "en") slot.en = r.description
+    byProject.set(r.projectId, slot)
+  }
+
+  return projects.map((p) => {
+    const slot = byProject.get(p.id)
+    if (!slot) return p
+    const localized = slot.exact ?? slot.source ?? slot.en
+    return localized ? { ...p, description: localized } : p
+  })
 }

@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,10 +33,17 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const tSections = await getTranslations("home.sections")
   const tCommon = await getTranslations("common")
 
-  const todayProjects = await getTodayProjects()
-  const yesterdayProjects = await getYesterdayProjects()
-  const monthProjects = await getMonthBestProjects()
-  const topCategories = await getTopCategories(5)
+  const [todayRaw, yesterdayRaw, monthRaw, topCategories] = await Promise.all([
+    getTodayProjects(),
+    getYesterdayProjects(),
+    getMonthBestProjects(),
+    getTopCategories(5),
+  ])
+  const [todayProjects, yesterdayProjects, monthProjects] = await Promise.all([
+    localizeProjectDescriptions(todayRaw, locale),
+    localizeProjectDescriptions(yesterdayRaw, locale),
+    localizeProjectDescriptions(monthRaw, locale),
+  ])
 
   const session = await auth.api.getSession({
     headers: await headers(),

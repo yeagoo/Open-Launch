@@ -172,7 +172,10 @@
       "ongoing": "진행 중",
       "launched": "런칭됨",
       "scheduled": "예정됨",
-      "byMaker": "제작자"
+      "byMaker": "제작자",
+      "aboutHeading": "{name} 소개",
+      "relatedHeading": "관련 제품",
+      "relatedSubtitle": "함께 고려해볼 만한 다른 도구"
     },
     "submit": {
       "title": "프로젝트 제출",
