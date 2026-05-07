@@ -2,8 +2,11 @@ import { Suspense } from "react"
 import { headers } from "next/headers"
 import Link from "next/link"
 
+import { getLocale } from "next-intl/server"
+
 import { auth } from "@/lib/auth"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { Button } from "@/components/ui/button"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
 import { ProjectCard } from "@/components/home/project-card"
@@ -91,6 +94,9 @@ async function TrendingData({
     projects = await getMonthBestProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_MONTH_LIMIT)
     title = "Best of the Month"
   }
+
+  const locale = await getLocale()
+  projects = await localizeProjectDescriptions(projects, locale)
 
   return (
     <div className="space-y-3 sm:space-y-4">

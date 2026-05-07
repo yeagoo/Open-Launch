@@ -3,11 +3,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import Markdown from "react-markdown"
-import rehypeSanitize from "rehype-sanitize"
-import remarkGfm from "remark-gfm"
-
 import { Badge } from "@/components/ui/badge"
+import { SafeMarkdown } from "@/components/ui/safe-markdown"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { BreadcrumbSchema } from "@/components/seo/structured-data"
 import { getAlternativePageBySlug } from "@/app/actions/alternatives"
@@ -99,9 +96,7 @@ export default async function AlternativeDetailPage({ params }: Props) {
 
             {/* Markdown overview content */}
             <article className="prose prose-zinc dark:prose-invert mb-8 max-w-none">
-              <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-                {page.content}
-              </Markdown>
+              <SafeMarkdown>{page.content}</SafeMarkdown>
             </article>
 
             {/* Alternative cards */}

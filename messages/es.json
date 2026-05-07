@@ -172,7 +172,10 @@
       "ongoing": "En curso",
       "launched": "Lanzado",
       "scheduled": "Programado",
-      "byMaker": "por"
+      "byMaker": "por",
+      "aboutHeading": "Acerca de {name}",
+      "relatedHeading": "Productos relacionados",
+      "relatedSubtitle": "Otras herramientas que podrías considerar"
     },
     "submit": {
       "title": "Envía tu proyecto",

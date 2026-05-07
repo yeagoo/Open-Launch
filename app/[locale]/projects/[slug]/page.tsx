@@ -16,13 +16,19 @@ import { format } from "date-fns"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
-import { getLocalizedProjectDescription } from "@/lib/get-project-translation"
+import { getRelatedProjects } from "@/lib/get-project-related"
+import {
+  getLocalizedLongDescription,
+  getLocalizedProjectDescription,
+} from "@/lib/get-project-translation"
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { EditButton } from "@/components/project/edit-button"
+import { LongDescription } from "@/components/project/long-description"
 import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
+import { RelatedProducts } from "@/components/project/related-products"
 import { ShareButton } from "@/components/project/share-button"
 import { TranslatedComments } from "@/components/project/translated-comments"
 import { UpvoteButton } from "@/components/project/upvote-button"
@@ -114,6 +120,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     locale,
     projectData.description,
   )
+
+  const tDetail = await getTranslations("project.detail")
+  const [longDescriptionMarkdown, relatedProjects] = await Promise.all([
+    getLocalizedLongDescription(projectData.id, locale),
+    getRelatedProjects(projectData.id, locale, 4),
+  ])
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -364,6 +376,23 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <div className="w-full">
                 <RichTextDisplay content={localizedDescription} />
               </div>
+
+              {/* AI-generated long-form overview */}
+              {longDescriptionMarkdown && (
+                <LongDescription
+                  heading={tDetail("aboutHeading", { name: projectData.name })}
+                  markdown={longDescriptionMarkdown}
+                />
+              )}
+
+              {/* Related products */}
+              {relatedProjects.length > 0 && (
+                <RelatedProducts
+                  heading={tDetail("relatedHeading")}
+                  subtitle={tDetail("relatedSubtitle")}
+                  items={relatedProjects}
+                />
+              )}
 
               {/* Edit button pour owners */}
               {isOwner && (

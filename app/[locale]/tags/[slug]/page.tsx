@@ -4,7 +4,9 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { RiArrowDownSLine, RiFilterLine } from "@remixicon/react"
+import { getLocale } from "next-intl/server"
 
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -79,12 +81,15 @@ async function TagData({
   const tag = await getTagBySlug(slug)
   if (!tag) return notFound()
 
-  const { projects: paginatedProjects, totalCount } = await getProjectsByTag(
+  const { projects: paginatedProjectsRaw, totalCount } = await getProjectsByTag(
     slug,
     currentPage,
     ITEMS_PER_PAGE,
     sort,
   )
+
+  const locale = await getLocale()
+  const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
 
   const isAuthenticated =
     paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false

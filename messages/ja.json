@@ -172,7 +172,10 @@
       "ongoing": "進行中",
       "launched": "公開済み",
       "scheduled": "予定",
-      "byMaker": "作成者:"
+      "byMaker": "作成者:",
+      "aboutHeading": "{name} について",
+      "relatedHeading": "関連プロダクト",
+      "relatedSubtitle": "検討に値する他のツール"
     },
     "submit": {
       "title": "プロジェクトを提出",

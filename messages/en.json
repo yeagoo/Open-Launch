@@ -172,7 +172,10 @@
       "ongoing": "Ongoing",
       "launched": "Launched",
       "scheduled": "Scheduled",
-      "byMaker": "by"
+      "byMaker": "by",
+      "aboutHeading": "About {name}",
+      "relatedHeading": "Related products",
+      "relatedSubtitle": "Other tools you might consider"
     },
     "submit": {
       "title": "Submit your project",

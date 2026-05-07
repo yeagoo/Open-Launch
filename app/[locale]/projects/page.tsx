@@ -5,8 +5,10 @@ import Link from "next/link"
 
 import { format } from "date-fns"
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react"
+import { getLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { Button } from "@/components/ui/button"
 import { ProjectCard } from "@/components/home/project-card"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -68,7 +70,10 @@ async function ProjectsContent({ page }: { page: number }) {
   const session = await auth.api.getSession({ headers: await headers() })
   const isAuthenticated = !!session?.user
 
-  const { projects, totalCount, totalPages } = await getMonthProjects(page, 10)
+  const { projects: projectsRaw, totalCount, totalPages } = await getMonthProjects(page, 10)
+
+  const locale = await getLocale()
+  const projects = await localizeProjectDescriptions(projectsRaw, locale)
 
   const currentMonth = format(new Date(), "MMMM yyyy")
 

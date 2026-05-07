@@ -3,7 +3,9 @@ import Link from "next/link"
 
 import { RiCalendarLine, RiHistoryLine, RiTrophyFill } from "@remixicon/react"
 import { format, subDays } from "date-fns"
+import { getLocale } from "next-intl/server"
 
+import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/date-picker"
 import { WinnerCard } from "@/components/winners/winner-card"
@@ -57,7 +59,9 @@ export default async function WinnersPage({
   }
 
   // Récupérer les gagnants de la date sélectionnée
-  const winners = await getWinnersByDate(selectedDate)
+  const winnersRaw = await getWinnersByDate(selectedDate)
+  const locale = await getLocale()
+  const winners = await localizeProjectDescriptions(winnersRaw, locale)
   const topCategories = await getTopCategories(5)
 
   // Date formatée pour l'affichage

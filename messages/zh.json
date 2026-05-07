@@ -172,7 +172,10 @@
       "ongoing": "进行中",
       "launched": "已发布",
       "scheduled": "已计划",
-      "byMaker": "由"
+      "byMaker": "由",
+      "aboutHeading": "关于 {name}",
+      "relatedHeading": "相关产品",
+      "relatedSubtitle": "你可能也会考虑的其他工具"
     },
     "submit": {
       "title": "提交您的项目",

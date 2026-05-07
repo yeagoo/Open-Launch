@@ -3,10 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import Markdown from "react-markdown"
-import rehypeSanitize from "rehype-sanitize"
-import remarkGfm from "remark-gfm"
-
+import { SafeMarkdown } from "@/components/ui/safe-markdown"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { BreadcrumbSchema, ComparisonSchema } from "@/components/seo/structured-data"
 import { getComparisonBySlug } from "@/app/actions/comparisons"
@@ -128,9 +125,7 @@ export default async function ComparisonDetailPage({ params }: Props) {
 
             {/* Markdown content */}
             <article className="prose prose-zinc dark:prose-invert max-w-none">
-              <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
-                {comparison.content}
-              </Markdown>
+              <SafeMarkdown>{comparison.content}</SafeMarkdown>
             </article>
           </div>
 
