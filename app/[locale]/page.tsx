@@ -10,7 +10,8 @@ import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ProjectSection } from "@/components/home/project-section"
+import { DenseList } from "@/components/home/dense-list"
+import { EditorialHero } from "@/components/home/editorial-hero"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
@@ -114,27 +115,51 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               </div>
             </div>
 
-            <ProjectSection
-              title={tSections("todayTitle")}
-              projects={todayProjects}
-              sortByUpvotes={true}
-              isAuthenticated={!!session?.user}
-            />
+            {/* Today's reads — hero (top 3) + dense list for the rest. */}
+            {(() => {
+              const sortedToday = [...todayProjects].sort(
+                (a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0),
+              )
+              const heroToday = sortedToday.slice(0, 3)
+              const restToday = sortedToday.slice(3)
+              const todayKicker = new Date().toLocaleDateString(
+                locale === "en" ? "en-US" : locale,
+                {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                },
+              )
+              return (
+                <>
+                  <EditorialHero
+                    projects={heroToday}
+                    heading={tSections("todayTitle")}
+                    kicker={todayKicker}
+                  />
+                  {restToday.length > 0 && (
+                    <DenseList projects={restToday} heading={tSections("todayTitle")} />
+                  )}
+                </>
+              )
+            })()}
 
-            <ProjectSection
-              title={tSections("yesterdayTitle")}
-              projects={yesterdayProjects}
+            <DenseList
+              projects={[...yesterdayProjects].sort(
+                (a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0),
+              )}
+              heading={tSections("yesterdayTitle")}
               moreHref="/trending?filter=yesterday"
-              sortByUpvotes={true}
-              isAuthenticated={!!session?.user}
+              moreLabel={tCommon("viewAll")}
             />
 
-            <ProjectSection
-              title={tSections("monthTitle")}
-              projects={monthProjects}
+            <DenseList
+              projects={[...monthProjects].sort(
+                (a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0),
+              )}
+              heading={tSections("monthTitle")}
               moreHref="/trending?filter=month"
-              sortByUpvotes={true}
-              isAuthenticated={!!session?.user}
+              moreLabel={tCommon("viewAll")}
             />
           </div>
 
