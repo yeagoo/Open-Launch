@@ -55,7 +55,7 @@ async function main() {
   for (const row of toProcess) {
     i++
     process.stdout.write(`[${i}/${toProcess.length}] ${row.name.slice(0, 40).padEnd(40)} ... `)
-    const real = await getRealWebsiteUrl(row.websiteUrl, row.websiteUrl)
+    const real = await getRealWebsiteUrl(row.websiteUrl)
 
     if (real && !real.includes("producthunt.com")) {
       // Project websiteUrl has a unique constraint. If the resolved URL
