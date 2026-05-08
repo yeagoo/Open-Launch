@@ -83,8 +83,9 @@ async function callDeepSeek(
   }
 
   const data = await response.json()
-  // Fire-and-forget; failures inside logAiUsage are swallowed.
-  void logAiUsage(options?.functionName ?? "ai-content", model, data?.usage)
+  // Awaited so the row lands before the request finishes (fire-and-forget
+  // is unreliable on serverless). logAiUsage swallows its own errors.
+  await logAiUsage(options?.functionName ?? "ai-content", model, data?.usage)
   const content = data.choices?.[0]?.message?.content?.trim()
 
   if (!content) {

@@ -11,6 +11,7 @@ import {
 import { eq, inArray, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { pickRelatedProjects, type RelatedCandidate } from "@/lib/enrich-project"
 
 export const dynamic = "force-dynamic"
@@ -211,7 +212,7 @@ export async function GET(request: NextRequest) {
   }
 
   // 5xx if every attempted subject errored (partial errors stay 200).
-  const status = errors.length > 0 && written === 0 ? 500 : 200
+  const status = cronStatusFromResult({ errorCount: errors.length, successCount: written })
   return NextResponse.json(
     {
       subjects: subjects.length,
