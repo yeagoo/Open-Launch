@@ -26,7 +26,7 @@ import {
 } from "@remixicon/react"
 import { addDays, format, parseISO } from "date-fns"
 import { Tag, TagInput } from "emblor"
-import { useLocale } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import {
@@ -111,6 +111,8 @@ interface SubmitProjectFormProps {
 }
 
 export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFormProps) {
+  const t = useTranslations("submitProject")
+
   // Stabilize the autocomplete options across re-renders. Without this,
   // every keystroke on any field would build a fresh array of 200 new
   // tag objects and pass it to emblor, which compares by reference and
@@ -257,7 +259,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
         hasBadgeVerified: false,
       })
       setUploadedLogoUrl(saved.uploadedLogoUrl)
-      toast.info("Restored your unsaved draft")
+      toast.info(t("toast.draftRestored"))
     },
   )
 
@@ -344,7 +346,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       setAvailableDates(availability)
     } catch (err) {
       console.error("Error loading dates:", err)
-      setFormError("Failed to load available dates")
+      setFormError(t("errors.form.loadDatesFailed"))
     } finally {
       setIsLoadingDates(false)
     }
@@ -384,7 +386,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       setCategories(data)
     } catch (err) {
       console.error("Error fetching categories:", err)
-      setFormError("Failed to load categories")
+      setFormError(t("errors.form.loadCategoriesFailed"))
     } finally {
       setIsLoadingCategories(false)
     }
@@ -396,7 +398,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     try {
       new URL(formData.websiteUrl)
     } catch {
-      setFieldErrors((prev) => ({ ...prev, websiteUrl: "Please enter a valid URL first" }))
+      setFieldErrors((prev) => ({
+        ...prev,
+        websiteUrl: t("errors.fields.websiteUrlInvalidQuick"),
+      }))
       return
     }
 
@@ -449,7 +454,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       }
     } catch (err) {
       console.error("Auto-fill error:", err)
-      setFormError(err instanceof Error ? err.message : "Failed to auto-fill. Please try again.")
+      setFormError(err instanceof Error ? err.message : t("errors.form.autoFillFailed"))
     } finally {
       setIsAutoFilling(false)
     }
@@ -572,40 +577,40 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   const validateStep = (step: number): Record<string, string> => {
     const errs: Record<string, string> = {}
     if (step === 1) {
-      if (!formData.name) errs.name = "Project name is required"
+      if (!formData.name) errs.name = t("errors.fields.nameRequired")
       if (!formData.websiteUrl) {
-        errs.websiteUrl = "Website URL is required"
+        errs.websiteUrl = t("errors.fields.websiteUrlRequired")
       } else {
         try {
           new URL(formData.websiteUrl)
         } catch {
-          errs.websiteUrl = "Please enter a valid URL (https://...)"
+          errs.websiteUrl = t("errors.fields.websiteUrlInvalid")
         }
       }
-      if (!formData.description) errs.description = "Description is required"
+      if (!formData.description) errs.description = t("errors.fields.descriptionRequired")
       if (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) {
-        errs.logoUrl = "Logo is required"
+        errs.logoUrl = t("errors.fields.logoRequired")
       }
     } else if (step === 2) {
       if (formData.categories.length === 0) {
-        errs.categories = "Pick at least one category"
+        errs.categories = t("errors.fields.categoriesMin")
       } else if (formData.categories.length > 3) {
-        errs.categories = "Maximum 3 categories"
+        errs.categories = t("errors.fields.categoriesMax")
       }
       if (formData.techStack.length === 0) {
-        errs.techStack = "Add at least one tag"
+        errs.techStack = t("errors.fields.techStackMin")
       } else if (formData.techStack.length > 10) {
-        errs.techStack = "Maximum 10 tags"
+        errs.techStack = t("errors.fields.techStackMax")
       }
       if (formData.platforms.length === 0) {
-        errs.platforms = "Select at least one platform"
+        errs.platforms = t("errors.fields.platformsMin")
       }
-      if (!formData.pricing) errs.pricing = "Select a pricing model"
+      if (!formData.pricing) errs.pricing = t("errors.fields.pricingRequired")
     } else if (step === 3) {
       if (!formData.scheduledDate) {
-        errs.scheduledDate = "Pick a launch date"
+        errs.scheduledDate = t("errors.fields.scheduledDateRequired")
       } else if (isLaunchDateOverLimit) {
-        errs.scheduledDate = launchDateLimitError || "This date exceeds your daily launch limit"
+        errs.scheduledDate = launchDateLimitError || t("errors.fields.scheduledDateOverLimit")
       }
     }
     return errs
@@ -656,7 +661,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
     const urlExists = await checkWebsiteUrl(formData.websiteUrl)
     if (urlExists) {
-      const dupErrs = { websiteUrl: "This URL has already been submitted" }
+      const dupErrs = { websiteUrl: t("errors.fields.websiteUrlDuplicate") }
       setFieldErrors(dupErrs)
       scrollToFirstError(dupErrs)
       setIsPending(false)
@@ -727,7 +732,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           setFormError(
             scheduleError instanceof Error
               ? scheduleError.message
-              : "An error occurred during scheduling.",
+              : t("errors.form.scheduleFailed"),
           )
           setIsPending(false)
           return
@@ -755,9 +760,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     } catch (submissionError: unknown) {
       console.error("Error during final submission:", submissionError)
       setFormError(
-        submissionError instanceof Error
-          ? submissionError.message
-          : "An unexpected error occurred.",
+        submissionError instanceof Error ? submissionError.message : t("errors.form.submitFailed"),
       )
       setIsPending(false)
     }
@@ -783,15 +786,15 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       <div className="container mx-auto max-w-3xl">
         <div className="flex items-center justify-between pt-2 sm:px-4 sm:pt-0">
           {[
-            { step: 1, label: "Project Info", icon: RiListCheck },
+            { step: 1, label: t("stepper.step1"), icon: RiListCheck },
             {
               step: 2,
-              label: "Details",
-              shortLabel: "Details",
+              label: t("stepper.step2"),
+              shortLabel: t("stepper.step2"),
               icon: RiInformation2Line,
             },
-            { step: 3, label: "Launch Date", icon: RiCalendarLine },
-            { step: 4, label: "Review", icon: RiFileCheckLine },
+            { step: 3, label: t("stepper.step3"), icon: RiCalendarLine },
+            { step: 4, label: t("stepper.step4"), icon: RiFileCheckLine },
           ].map(({ step, label, shortLabel, icon: Icon }) => {
             const canJump = step < currentStep
             return (
@@ -813,7 +816,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   type="button"
                   onClick={() => goToStep(step)}
                   disabled={!canJump}
-                  aria-label={canJump ? `Jump back to ${label}` : `${label} step`}
+                  aria-label={
+                    canJump ? t("stepper.ariaJump", { label }) : t("stepper.ariaCurrent", { label })
+                  }
                   className={`focus-visible:ring-primary/40 relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 focus-visible:ring-4 focus-visible:outline-none sm:h-12 sm:w-12 ${
                     currentStep > step
                       ? "bg-primary ring-primary/10 hover:ring-primary/30 cursor-pointer text-white ring-4"
@@ -899,21 +904,21 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           <div className="space-y-6">
             <div>
               <Label htmlFor="name">
-                Project Name <span className="text-red-500">*</span>
+                {t("step1.name.label")} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="My Awesome Project"
+                placeholder={t("step1.name.placeholder")}
                 required
               />
               {renderFieldError("name")}
             </div>
             <div>
               <Label htmlFor="websiteUrl">
-                Website URL <span className="text-red-500">*</span>
+                {t("step1.websiteUrl.label")} <span className="text-red-500">*</span>
               </Label>
               <div className="flex gap-2">
                 <Input
@@ -922,7 +927,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   type="url"
                   value={formData.websiteUrl}
                   onChange={handleInputChange}
-                  placeholder="https://myawesomeproject.com"
+                  placeholder={t("step1.websiteUrl.placeholder")}
                   required
                   className="flex-1"
                 />
@@ -939,28 +944,22 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   ) : (
                     <RiMagicLine className="mr-1.5 h-4 w-4" />
                   )}
-                  {isAutoFilling ? "Analyzing..." : "Auto Fill"}
+                  {isAutoFilling ? t("step1.autoFill.loading") : t("step1.autoFill.button")}
                 </Button>
               </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Enter your website URL and click Auto Fill to automatically populate the form.
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{t("step1.websiteUrl.help")}</p>
               {urlDuplicateWarning && !isCheckingUrl && !fieldErrors.websiteUrl && (
                 <p className="mt-1.5 text-xs text-red-600">
-                  ⚠️ This URL has already been submitted. The final step will block this — please
-                  use a different URL.
+                  {t("step1.websiteUrl.duplicateWarning")}
                 </p>
               )}
               {renderFieldError("websiteUrl")}
             </div>
             <div>
               <Label htmlFor="sourceLocale">
-                Description language <span className="text-red-500">*</span>
+                {t("step1.sourceLocale.label")} <span className="text-red-500">*</span>
               </Label>
-              <p className="text-muted-foreground mb-2 text-xs">
-                Pick the language you&apos;re writing the description in. Other languages will be
-                auto-translated.
-              </p>
+              <p className="text-muted-foreground mb-2 text-xs">{t("step1.sourceLocale.help")}</p>
               <Select
                 value={formData.sourceLocale}
                 onValueChange={(value) =>
@@ -984,28 +983,26 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
             </div>
             <div id="description">
               <Label htmlFor="description">
-                Description <span className="text-red-500">*</span>
+                {t("step1.description.label")} <span className="text-red-500">*</span>
               </Label>
               <RichTextEditor
                 content={formData.description}
                 onChange={(content) => setFormData((prev) => ({ ...prev, description: content }))}
-                placeholder="Describe your project"
+                placeholder={t("step1.description.placeholder")}
                 className="max-h-[300px] overflow-y-auto"
               />
               {renderFieldError("description")}
             </div>
             <div id="logoUrl" className="space-y-2">
               <Label htmlFor="logoUrl">
-                Logo (Max 1MB) <span className="text-red-500">*</span>
+                {t("step1.logo.label")} <span className="text-red-500">*</span>
               </Label>
-              <p className="text-muted-foreground text-xs">
-                Recommended: 1:1 square image (e.g., 256x256px).
-              </p>
+              <p className="text-muted-foreground text-xs">{t("step1.logo.help")}</p>
               {uploadedLogoUrl ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
                   <Image
                     src={uploadedLogoUrl}
-                    alt="Logo preview"
+                    alt={t("step1.logo.preview")}
                     width={64}
                     height={64}
                     className="rounded object-contain"
@@ -1016,7 +1013,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     size="icon"
                     className="text-muted-foreground hover:text-foreground absolute top-1 right-1 h-6 w-6"
                     onClick={() => setUploadedLogoUrl(null)}
-                    aria-label="Remove logo"
+                    aria-label={t("step1.logo.remove")}
                   >
                     <RiCloseCircleLine className="h-5 w-5" />
                   </Button>
@@ -1041,7 +1038,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         console.error("Logo upload failed: No URL", res)
                         setFieldErrors((prev) => ({
                           ...prev,
-                          logoUrl: "Logo upload failed: No URL returned.",
+                          logoUrl: t("errors.fields.logoUploadFailedNoUrl"),
                         }))
                       }
                     }}
@@ -1050,7 +1047,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       setIsUploadingLogo(false)
                       setFieldErrors((prev) => ({
                         ...prev,
-                        logoUrl: `Logo upload failed: ${error.message}`,
+                        logoUrl: t("errors.fields.logoUploadFailed", { message: error.message }),
                       }))
                     }}
                     appearance={{
@@ -1063,15 +1060,17 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         if (ready)
                           return (
                             <>
-                              <RiImageAddLine className="h-4 w-4" /> Upload Logo
+                              <RiImageAddLine className="h-4 w-4" /> {t("step1.logo.upload")}
                             </>
                           )
-                        return "Getting ready..."
+                        return t("step1.logo.preparing")
                       },
                     }}
                   />
                   {isUploadingLogo && (
-                    <span className="text-muted-foreground text-xs">Uploading...</span>
+                    <span className="text-muted-foreground text-xs">
+                      {t("step1.logo.uploading")}
+                    </span>
                   )}
                 </div>
               )}
@@ -1079,16 +1078,14 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
             </div>
             <div className="space-y-2">
               <Label htmlFor="productImage">
-                Product Image <span>(Optional)</span>
+                {t("step1.productImage.label")} <span>{t("step1.productImage.optional")}</span>
               </Label>
-              <p className="text-muted-foreground text-xs">
-                Add a product image. Recommended: 16:9 aspect ratio (e.g., 800x450px).
-              </p>
+              <p className="text-muted-foreground text-xs">{t("step1.productImage.help")}</p>
               {formData.productImage ? (
                 <div className="bg-muted/30 relative w-fit rounded-md border p-3">
                   <Image
                     src={formData.productImage}
-                    alt="Product image preview"
+                    alt={t("step1.productImage.preview")}
                     width={256}
                     height={256}
                     className="rounded object-contain"
@@ -1099,7 +1096,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     size="icon"
                     className="text-muted-foreground hover:text-foreground absolute top-1 right-1 h-6 w-6"
                     onClick={() => setFormData((prev) => ({ ...prev, productImage: null }))}
-                    aria-label="Remove product image"
+                    aria-label={t("step1.productImage.remove")}
                   >
                     <RiCloseCircleLine className="h-5 w-5" />
                   </Button>
@@ -1124,13 +1121,15 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         console.log("Product Image URL set:", res[0].serverData.fileUrl)
                       } else {
                         console.error("Product image upload failed: No URL", res)
-                        setFormError("Product image upload failed: No URL returned.")
+                        setFormError(t("errors.form.productImageUploadFailedNoUrl"))
                       }
                     }}
                     onUploadError={(error: Error) => {
                       console.error("Upload Error (Product Image):", error)
                       setIsUploadingProductImage(false)
-                      setFormError(`Product image upload failed: ${error.message}`)
+                      setFormError(
+                        t("errors.form.productImageUploadFailed", { message: error.message }),
+                      )
                     }}
                     appearance={{
                       button: `ut-button flex items-center w-fit gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 rounded-md ${isUploadingProductImage ? "opacity-50 pointer-events-none" : ""}`,
@@ -1142,15 +1141,17 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         if (ready)
                           return (
                             <>
-                              <RiImageAddLine className="h-4 w-4" /> Add Product Image
+                              <RiImageAddLine className="h-4 w-4" /> {t("step1.productImage.add")}
                             </>
                           )
-                        return "Getting ready..."
+                        return t("step1.logo.preparing")
                       },
                     }}
                   />
                   {isUploadingProductImage && (
-                    <span className="text-muted-foreground text-xs">Uploading...</span>
+                    <span className="text-muted-foreground text-xs">
+                      {t("step1.logo.uploading")}
+                    </span>
                   )}
                 </div>
               )}
@@ -1162,14 +1163,14 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           <div className="space-y-8">
             <div id="categories">
               <Label className="mb-2 block">
-                Categories <span className="text-red-500">*</span>
+                {t("step2.categories.label")} <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
-                  ({formData.categories.length}/3 selected)
+                  {t("step2.categories.counter", { count: formData.categories.length })}
                 </span>
               </Label>
               {isLoadingCategories ? (
                 <div className="text-muted-foreground flex items-center gap-2">
-                  <RiLoader4Line className="h-4 w-4 animate-spin" /> Loading...
+                  <RiLoader4Line className="h-4 w-4 animate-spin" /> {t("step2.categories.loading")}
                 </div>
               ) : categories.length > 0 ? (
                 <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-4">
@@ -1182,7 +1183,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                           if (checked && formData.categories.length >= 3) {
                             setFieldErrors((prev) => ({
                               ...prev,
-                              categories: "Maximum 3 categories",
+                              categories: t("errors.fields.categoriesMax"),
                             }))
                             return
                           }
@@ -1197,19 +1198,17 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">No categories available.</p>
+                <p className="text-muted-foreground text-sm">{t("step2.categories.empty")}</p>
               )}
-              <p className="text-muted-foreground mt-1 text-xs">
-                Select up to 3 relevant categories.
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{t("step2.categories.help")}</p>
               {renderFieldError("categories")}
             </div>
 
             <div id="techStack">
               <Label htmlFor={tagInputId}>
-                Product Tags <span className="text-red-500">*</span>
+                {t("step2.tags.label")} <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
-                  ({formData.techStack.length}/10 tags)
+                  {t("step2.tags.counter", { count: formData.techStack.length })}
                 </span>
               </Label>
               <TagInput
@@ -1217,13 +1216,16 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 tags={techStackTags}
                 setTags={(newTags) => {
                   if (newTags.length > 10) {
-                    setFieldErrors((prev) => ({ ...prev, techStack: "Maximum 10 tags" }))
+                    setFieldErrors((prev) => ({
+                      ...prev,
+                      techStack: t("errors.fields.techStackMax"),
+                    }))
                     return
                   }
                   setFieldErrors((prev) => ({ ...prev, techStack: "" }))
                   setTechStackTags(newTags)
                 }}
-                placeholder="e.g. ai, saas, open-source, developer-tools..."
+                placeholder={t("step2.tags.placeholder")}
                 enableAutocomplete={autocompleteTags.length > 0}
                 autocompleteOptions={autocompleteTags}
                 styleClasses={{
@@ -1239,15 +1241,13 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 activeTagIndex={activeTechTagIndex}
                 setActiveTagIndex={setActiveTechTagIndex}
               />
-              <p className="text-muted-foreground mt-1 text-xs">
-                Add up to 10 tags to help users discover your project. Press Enter or comma to add.
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{t("step2.tags.help")}</p>
               {renderFieldError("techStack")}
             </div>
 
             <div id="platforms">
               <Label className="mb-2 block">
-                Platforms <span className="text-red-500">*</span>
+                {t("step2.platforms.label")} <span className="text-red-500">*</span>
               </Label>
               <div className="space-y-3 rounded-md border p-4">
                 {Object.entries(platformType).map(([key, value]) => (
@@ -1263,20 +1263,18 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       htmlFor={`platform-${value}`}
                       className="cursor-pointer font-normal capitalize"
                     >
-                      {key.toLowerCase()}
+                      {t(`step2.platforms.options.${key.toLowerCase() as "web"}`)}
                     </Label>
                   </div>
                 ))}
               </div>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Select all platforms your project supports.
-              </p>
+              <p className="text-muted-foreground mt-1 text-xs">{t("step2.platforms.help")}</p>
               {renderFieldError("platforms")}
             </div>
 
             <div id="pricing">
               <Label className="mb-2 block">
-                Pricing Model <span className="text-red-500">*</span>
+                {t("step2.pricing.label")} <span className="text-red-500">*</span>
               </Label>
               <RadioGroup
                 value={formData.pricing}
@@ -1290,7 +1288,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       className="hover:bg-muted/50 flex h-full cursor-pointer items-center space-x-2 rounded-md border p-3 transition-colors"
                     >
                       <RadioGroupItem value={value} id={`pricing-${value}`} />
-                      <span className="font-normal capitalize">{key.toLowerCase()}</span>
+                      <span className="font-normal capitalize">
+                        {t(`step2.pricing.options.${key.toLowerCase() as "free"}`)}
+                      </span>
                     </Label>
                   </div>
                 ))}
@@ -1300,25 +1300,25 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <Label htmlFor="githubUrl">GitHub URL (Optional)</Label>
+                <Label htmlFor="githubUrl">{t("step2.githubUrl.label")}</Label>
                 <Input
                   id="githubUrl"
                   name="githubUrl"
                   type="url"
                   value={formData.githubUrl}
                   onChange={handleInputChange}
-                  placeholder="https://github.com/user/repo"
+                  placeholder={t("step2.githubUrl.placeholder")}
                 />
               </div>
               <div>
-                <Label htmlFor="twitterUrl">Twitter URL (Optional)</Label>
+                <Label htmlFor="twitterUrl">{t("step2.twitterUrl.label")}</Label>
                 <Input
                   id="twitterUrl"
                   name="twitterUrl"
                   type="url"
                   value={formData.twitterUrl}
                   onChange={handleInputChange}
-                  placeholder="https://twitter.com/username"
+                  placeholder={t("step2.twitterUrl.placeholder")}
                 />
               </div>
             </div>
@@ -1329,16 +1329,15 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           <div className="space-y-8">
             <div className="flex items-center gap-2">
               <RiCalendarLine className="h-5 w-5" />
-              <h3 className="text-lg font-medium">Choose Launch Type & Date</h3>
+              <h3 className="text-lg font-medium">{t("step3.title")}</h3>
             </div>
 
             <div className="bg-muted/30 border-muted flex items-start gap-2 rounded-lg border p-3 sm:p-4">
               <RiInformationLine className="mt-0.5 h-5 w-5 flex-shrink-0" />
               <div className="text-xs sm:text-sm">
-                <p className="font-medium">Select your launch type and date</p>
+                <p className="font-medium">{t("step3.infoBanner.heading")}</p>
                 <p className="text-muted-foreground mt-1">
-                  All launches happen at {LAUNCH_SETTINGS.LAUNCH_HOUR_UTC}:00 UTC. We launch a
-                  limited number of projects each day.
+                  {t("step3.infoBanner.body", { hour: LAUNCH_SETTINGS.LAUNCH_HOUR_UTC })}
                 </p>
               </div>
             </div>
@@ -1349,10 +1348,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 <div className="mb-3 flex items-start gap-2">
                   <RiStarLine className="text-primary mt-0.5 h-5 w-5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-semibold">🚀 Want to Launch Tomorrow?</h4>
+                    <h4 className="font-semibold">{t("step3.badgeCard.heading")}</h4>
                     <p className="text-muted-foreground mt-1 text-sm">
-                      Skip the queue! Add our badge to your website and launch the next day instead
-                      of waiting weeks or months.
+                      {t("step3.badgeCard.body")}
                     </p>
                   </div>
                 </div>
@@ -1364,7 +1362,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     onClick={() => window.open("/badge", "_blank")}
                   >
                     <RiInformationLine className="mr-1.5 h-4 w-4" />
-                    Get Badge Code
+                    {t("step3.badgeCard.getCode")}
                   </Button>
                   <Button
                     type="button"
@@ -1376,12 +1374,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     {isVerifyingBadge ? (
                       <>
                         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Verifying...
+                        {t("step3.badgeCard.verifying")}
                       </>
                     ) : (
                       <>
                         <RiCheckboxCircleFill className="mr-1.5 h-4 w-4" />
-                        Verify Badge
+                        {t("step3.badgeCard.verify")}
                       </>
                     )}
                   </Button>
@@ -1405,17 +1403,17 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     <RiCheckboxCircleFill className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
                     <div>
                       <h4 className="font-semibold text-green-900 dark:text-green-100">
-                        ✅ Badge Verified!
+                        {t("step3.badgeVerified.heading")}
                       </h4>
                       <p className="mt-1 text-sm text-green-700 dark:text-green-300">
-                        You now have access to the Badge Fast Track! Choose your launch quota below.
+                        {t("step3.badgeVerified.body")}
                       </p>
                     </div>
                   </div>
 
                   {/* Quota Selection */}
                   <div>
-                    <h4 className="mb-3 text-sm font-medium">Select Launch Quota</h4>
+                    <h4 className="mb-3 text-sm font-medium">{t("step3.quota.heading")}</h4>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div
                         className={`cursor-pointer rounded-lg border p-3 transition-all ${
@@ -1427,12 +1425,14 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       >
                         <h5 className="mb-1 flex items-center gap-1.5 text-sm font-medium">
                           <RiRocketLine className="h-4 w-4" />
-                          Free Quota
+                          {t("step3.quota.free.name")}
                         </h5>
                         <ul className="text-muted-foreground space-y-0.5 text-xs">
-                          <li>• {LAUNCH_LIMITS.FREE_DAILY_LIMIT} slots/day</li>
-                          <li>• Standard queue</li>
-                          <li>• Dofollow if Top 3 or badge</li>
+                          <li>
+                            • {t("step3.quota.free.slots", { n: LAUNCH_LIMITS.FREE_DAILY_LIMIT })}
+                          </li>
+                          <li>• {t("step3.quota.free.queue")}</li>
+                          <li>• {t("step3.quota.free.dofollow")}</li>
                         </ul>
                       </div>
 
@@ -1447,18 +1447,20 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         <div className="mb-1 flex items-center justify-between">
                           <h5 className="flex items-center gap-1.5 text-sm font-medium">
                             <RiStarLine className="h-4 w-4 text-amber-500" />
-                            Badge Fast Track
+                            {t("step3.quota.badge.name")}
                           </h5>
                           <Badge variant="secondary" className="text-[10px]">
-                            🚀 Fast
+                            {t("step3.quota.badge.tag")}
                           </Badge>
                         </div>
                         <ul className="text-muted-foreground space-y-0.5 text-xs">
-                          <li>• {LAUNCH_LIMITS.BADGE_DAILY_LIMIT} slots/day</li>
-                          <li className="font-medium text-green-600 dark:text-green-400">
-                            • Launch tomorrow!
+                          <li>
+                            • {t("step3.quota.badge.slots", { n: LAUNCH_LIMITS.BADGE_DAILY_LIMIT })}
                           </li>
-                          <li>• Guaranteed dofollow link</li>
+                          <li className="font-medium text-green-600 dark:text-green-400">
+                            • {t("step3.quota.badge.tomorrow")}
+                          </li>
+                          <li>• {t("step3.quota.badge.dofollow")}</li>
                         </ul>
                       </div>
                     </div>
@@ -1470,8 +1472,8 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       <RiInformation2Line className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                       <div>
                         <p className="text-xs text-amber-800 dark:text-amber-200">
-                          <strong>Important:</strong> aat.ee will automatically check for the badge
-                          on your website monthly. Projects without the badge will be removed.
+                          <strong>{t("step3.quota.warningPrefix")}</strong>{" "}
+                          {t("step3.quota.warningBody")}
                         </p>
                       </div>
                     </div>
@@ -1480,7 +1482,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               )}
 
             <div>
-              <h4 className="mb-4 text-sm font-medium">Launch Type</h4>
+              <h4 className="mb-4 text-sm font-medium">{t("step3.launchType.heading")}</h4>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.FREE ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1" : "hover:border-foreground/20 hover:bg-muted/50"}`}
@@ -1491,34 +1493,44 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       variant="default"
                       className="bg-primary text-primary-foreground absolute -top-2 -right-2 text-xs"
                     >
-                      Selected
+                      {t("step3.launchType.selected")}
                     </Badge>
                   )}
                   <h5 className="mb-2 flex items-center gap-1.5 font-medium">
                     <RiRocketLine className="h-4 w-4" />
-                    Free Launch
+                    {t("step3.launchType.free.name")}
                   </h5>
                   <p className="mb-3 text-2xl font-bold">$0</p>
                   <ul className="text-muted-foreground space-y-1 text-sm">
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{LAUNCH_LIMITS.FREE_DAILY_LIMIT} slots/day</span>
+                      <span>
+                        {t("step3.launchType.free.slotsLabel", {
+                          n: LAUNCH_LIMITS.FREE_DAILY_LIMIT,
+                        })}
+                      </span>
                     </li>
 
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Up to {LAUNCH_SETTINGS.MAX_DAYS_AHEAD} days scheduling</span>
+                      <span>
+                        {t("step3.launchType.free.scheduling", {
+                          n: LAUNCH_SETTINGS.MAX_DAYS_AHEAD,
+                        })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-foreground/60 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Dofollow Backlink only if:</span>
-                    </li>
-                    <li className="flex items-start gap-1.5 pl-5">
-                      <span className="text-muted-foreground text-xs">1. Top 3 daily ranking</span>
+                      <span>{t("step3.launchType.free.dofollowConditional")}</span>
                     </li>
                     <li className="flex items-start gap-1.5 pl-5">
                       <span className="text-muted-foreground text-xs">
-                        2. Display our badge on your site
+                        {t("step3.launchType.free.topRanking")}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-1.5 pl-5">
+                      <span className="text-muted-foreground text-xs">
+                        {t("step3.launchType.free.displayBadge")}
                       </span>
                     </li>
                   </ul>
@@ -1533,32 +1545,42 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       variant="default"
                       className="bg-primary text-primary-foreground absolute -top-2 -right-2 text-xs"
                     >
-                      Selected
+                      {t("step3.launchType.selected")}
                     </Badge>
                   )}
                   <h5 className="mb-2 flex items-center gap-1.5 font-medium">
                     <RiStarLine className="text-primary h-4 w-4" />
-                    Premium Launch
+                    {t("step3.launchType.premium.name")}
                   </h5>
                   <p className="mb-3 text-2xl font-bold">${LAUNCH_SETTINGS.PREMIUM_PRICE}</p>
                   <ul className="space-y-1 text-sm">
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="font-semibold">Skip the Free Queue</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
                       <span className="font-semibold">
-                        Guaranteed Dofollow Backlink (DR {DOMAIN_AUTHORITY})
+                        {t("step3.launchType.premium.skipQueue")}
                       </span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT} premium slots/day</span>
+                      <span className="font-semibold">
+                        {t("step3.launchType.premium.guaranteedDofollow", { dr: DOMAIN_AUTHORITY })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>Up to {LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD} days scheduling</span>
+                      <span>
+                        {t("step3.launchType.premium.slotsLabel", {
+                          n: LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT,
+                        })}
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
+                      <span>
+                        {t("step3.launchType.premium.scheduling", {
+                          n: LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD,
+                        })}
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -1616,15 +1638,15 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
             <div>
               <h4 className="mb-3 text-sm font-medium">
-                Launch Date <span className="text-red-500">*</span>
+                {t("step3.date.label")} <span className="text-red-500">*</span>
               </h4>
               {isLoadingDates ? (
                 <div className="text-muted-foreground flex items-center justify-center gap-2 py-4">
-                  <RiLoader4Line className="h-5 w-5 animate-spin" /> Loading available dates...
+                  <RiLoader4Line className="h-5 w-5 animate-spin" /> {t("step3.date.loading")}
                 </div>
               ) : availableDates.length === 0 && !isLoadingDates ? (
                 <p className="text-muted-foreground rounded-md border p-4 text-center text-sm">
-                  No available launch dates found for the selected type in the allowed range.
+                  {t("step3.date.empty")}
                 </p>
               ) : (
                 <div id="scheduledDate">
@@ -1635,7 +1657,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     value={formData.scheduledDate || ""}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a launch date" />
+                      <SelectValue placeholder={t("step3.date.placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {groupDatesByMonth(availableDates).map((group) => (
@@ -1658,7 +1680,16 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
                             if (date.totalSlots <= 0) isDisabled = true
 
-                            const slotsText = `${slotsAvailable} ${formData.launchType === LAUNCH_TYPES.FREE ? "free" : formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE ? "badge" : formData.launchType === LAUNCH_TYPES.PREMIUM ? "premium" : "premium+"} slot(s)`
+                            const slotTypeLabel =
+                              formData.launchType === LAUNCH_TYPES.FREE
+                                ? t("step3.date.slotTypeFree")
+                                : formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE
+                                  ? t("step3.date.slotTypeBadge")
+                                  : t("step3.date.slotTypePremium")
+                            const slotsText = t("step3.date.slotsAvailable", {
+                              n: slotsAvailable,
+                              type: slotTypeLabel,
+                            })
 
                             // Crowdedness signal: how many other projects
                             // are already scheduled on this day. Helps
@@ -1691,7 +1722,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                                   <span className="flex items-center gap-2 text-xs">
                                     <span
                                       className={`${isDisabled ? "text-muted-foreground/50" : crowdedness.color}`}
-                                      title={`${date.scheduledCount} project(s) already scheduled`}
+                                      title={t("step3.date.crowdednessTooltip", {
+                                        n: date.scheduledCount,
+                                      })}
                                     >
                                       {crowdedness.icon} {date.scheduledCount}
                                     </span>
@@ -1737,7 +1770,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         <RiCalendarLine className="text-primary/80 h-4 w-4 flex-shrink-0" />
                         <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
                           <div className="flex items-center gap-1">
-                            <span className="text-muted-foreground">Scheduled for</span>
+                            <span className="text-muted-foreground">
+                              {t("step3.date.scheduledFor")}
+                            </span>
                             <span className="text-foreground font-medium">
                               {format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)}
                             </span>
@@ -1767,12 +1802,13 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                                 <div className="flex items-start gap-2">
                                   <div className="flex-1 space-y-2">
                                     <p className="text-primary text-sm font-medium">
-                                      Launch {daysSaved} day{daysSaved > 1 ? "s" : ""} earlier with
-                                      Premium!
+                                      {t("step3.premiumUpsell.heading", { days: daysSaved })}
                                     </p>
                                     <p className="text-muted-foreground text-xs">
-                                      Available from {format(premiumEarliestDate, "MMM d")} •
-                                      Guaranteed DR{DOMAIN_AUTHORITY} backlink • Skip the queue
+                                      {t("step3.premiumUpsell.body", {
+                                        date: format(premiumEarliestDate, "MMM d"),
+                                        dr: DOMAIN_AUTHORITY,
+                                      })}
                                     </p>
                                     <button
                                       type="button"
@@ -1819,7 +1855,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                                       className="bg-primary hover:bg-primary/90 text-primary-foreground inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
                                     >
                                       <RiStarLine className="h-3 w-3" />
-                                      Upgrade to Premium ${LAUNCH_SETTINGS.PREMIUM_PRICE}
+                                      {t("step3.premiumUpsell.button", {
+                                        price: LAUNCH_SETTINGS.PREMIUM_PRICE,
+                                      })}
                                     </button>
                                   </div>
                                 </div>
@@ -1839,21 +1877,21 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           <div className="space-y-8">
             <div className="flex items-center gap-2">
               <RiCheckLine className="h-5 w-5" />
-              <h3 className="text-lg font-medium">Review and Submit</h3>
+              <h3 className="text-lg font-medium">{t("step4.title")}</h3>
             </div>
 
             <div className="bg-card overflow-hidden rounded-lg border">
               <div className="space-y-6 p-6">
                 <div>
                   <h4 className="mb-3 border-b pb-2 text-base font-semibold">
-                    Project Information
+                    {t("step4.projectInfo")}
                   </h4>
                   <div className="space-y-2 text-sm">
                     <p>
-                      <strong>Name:</strong> {formData.name}
+                      <strong>{t("step4.fields.name")}</strong> {formData.name}
                     </p>
                     <p>
-                      <strong>Website:</strong>{" "}
+                      <strong>{t("step4.fields.website")}</strong>{" "}
                       <a
                         href={formData.websiteUrl}
                         target="_blank"
@@ -1864,7 +1902,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       </a>
                     </p>
                     <p>
-                      <strong>Description:</strong>
+                      <strong>{t("step4.fields.description")}</strong>
                     </p>
                     <RichTextDisplay
                       content={formData.description}
@@ -1872,10 +1910,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     />
                     {uploadedLogoUrl && (
                       <p className="flex flex-col items-start gap-2">
-                        <strong>Logo:</strong>
+                        <strong>{t("step4.fields.logo")}</strong>
                         <Image
                           src={uploadedLogoUrl}
-                          alt="Uploaded logo"
+                          alt={t("step4.logoAlt")}
                           width={48}
                           height={48}
                           className="rounded border"
@@ -1884,10 +1922,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     )}
                     {formData.productImage && (
                       <p className="flex flex-col items-start gap-2">
-                        <strong>Product Image:</strong>
+                        <strong>{t("step4.fields.productImage")}</strong>
                         <Image
                           src={formData.productImage}
-                          alt="Product image"
+                          alt={t("step4.productImageAlt")}
                           width={128}
                           height={128}
                           className="rounded border object-cover"
@@ -1898,10 +1936,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 </div>
 
                 <div>
-                  <h4 className="mb-3 border-b pb-2 text-base font-semibold">Details</h4>
+                  <h4 className="mb-3 border-b pb-2 text-base font-semibold">
+                    {t("step4.details")}
+                  </h4>
                   <div className="space-y-3 text-sm">
                     <div>
-                      <strong>Categories:</strong>
+                      <strong>{t("step4.fields.categories")}</strong>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {formData.categories.map((catId) => (
                           <Badge key={catId} variant="secondary">
@@ -1911,7 +1951,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       </div>
                     </div>
                     <div>
-                      <strong>Product Tags:</strong>
+                      <strong>{t("step4.fields.tags")}</strong>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {formData.techStack.map((tech) => (
                           <Badge key={tech} variant="outline">
@@ -1921,7 +1961,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       </div>
                     </div>
                     <div>
-                      <strong>Platforms:</strong>
+                      <strong>{t("step4.fields.platforms")}</strong>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {formData.platforms.map((plat) => (
                           <Badge key={plat} variant="secondary" className="capitalize">
@@ -1931,14 +1971,14 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       </div>
                     </div>
                     <p>
-                      <strong>Pricing:</strong>{" "}
+                      <strong>{t("step4.fields.pricing")}</strong>{" "}
                       <span className="capitalize">
                         <Badge variant="outline">{getPricingLabel(formData.pricing)}</Badge>
                       </span>
                     </p>
                     {formData.githubUrl && (
                       <p>
-                        <strong>GitHub:</strong>{" "}
+                        <strong>{t("step4.fields.github")}</strong>{" "}
                         <a
                           href={formData.githubUrl}
                           target="_blank"
@@ -1951,7 +1991,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     )}
                     {formData.twitterUrl && (
                       <p>
-                        <strong>Twitter:</strong>{" "}
+                        <strong>{t("step4.fields.twitter")}</strong>{" "}
                         <a
                           href={formData.twitterUrl}
                           target="_blank"
@@ -1966,7 +2006,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 </div>
 
                 <div>
-                  <h4 className="mb-3 border-b pb-2 text-base font-semibold">Launch Plan</h4>
+                  <h4 className="mb-3 border-b pb-2 text-base font-semibold">
+                    {t("step4.launchPlan")}
+                  </h4>
                   <div className="flex flex-col gap-4 text-sm sm:flex-row">
                     <div
                       className={`flex w-fit items-center gap-2 rounded-md border px-3 py-2 ${
@@ -1980,14 +2022,16 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       {formData.launchType === LAUNCH_TYPES.FREE && (
                         <>
                           <RiRocketLine className="text-foreground/70 h-4 w-4" />{" "}
-                          <span className="text-foreground/70 font-medium">Free Launch</span>
+                          <span className="text-foreground/70 font-medium">
+                            {t("step3.launchType.free.name")}
+                          </span>
                         </>
                       )}
                       {formData.launchType === LAUNCH_TYPES.PREMIUM && (
                         <>
                           <RiStarLine className="text-primary h-4 w-4" />{" "}
                           <span className="text-primary font-medium">
-                            Premium Launch (${LAUNCH_SETTINGS.PREMIUM_PRICE})
+                            {t("step4.premiumPriceLabel", { price: LAUNCH_SETTINGS.PREMIUM_PRICE })}
                           </span>
                         </>
                       )}
@@ -1998,7 +2042,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         <span>
                           {formData.scheduledDate
                             ? format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY)
-                            : "No date selected"}
+                            : t("step3.date.noDate")}
                         </span>
                       </div>
                       {formData.scheduledDate && (
@@ -2015,13 +2059,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 <div className="flex items-start gap-3">
                   <RiInformationLine className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
                   <div className="space-y-1 text-sm">
-                    <p className="font-medium">Ready to submit?</p>
+                    <p className="font-medium">{t("step4.readyToSubmit.heading")}</p>
                     <p className="text-muted-foreground text-xs">
-                      Please review all information carefully. Once submitted, your project will be
-                      scheduled for launch.
+                      {t("step4.readyToSubmit.body")}
                       {formData.launchType !== LAUNCH_TYPES.FREE && (
                         <span className="mt-1 block">
-                          You will be redirected to the payment page after submission.
+                          {t("step4.readyToSubmit.paymentRedirect")}
                         </span>
                       )}
                     </p>
@@ -2056,7 +2099,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           disabled={currentStep === 1 || isPending || isUploadingLogo || isUploadingProductImage}
         >
           <RiArrowLeftLine className="mr-2 h-4 w-4" />
-          Previous
+          {t("buttons.previous")}
         </Button>
 
         {currentStep < 4 ? (
@@ -2073,7 +2116,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
             {currentStep === 3 && isLoadingDateCheck && (
               <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Next
+            {t("buttons.next")}
             <RiArrowRightLine className="ml-2 h-4 w-4" />
           </Button>
         ) : (
@@ -2087,7 +2130,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
             ) : (
               <RiRocketLine className="mr-2 h-4 w-4" />
             )}
-            Submit Project
+            {t("buttons.submit")}
           </Button>
         )}
       </div>

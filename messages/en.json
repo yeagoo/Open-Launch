@@ -323,5 +323,240 @@
     "minWaitSeconds": "Anti-Spam Squad here: {seconds}-second wait required for vote changes",
     "projectNotFound": "Project not found",
     "notOngoing": "Voting is only open while the project is launching today"
+  },
+  "submitProject": {
+    "page": {
+      "title": "Submit a Project",
+      "subtitle": "Share your project with the community. Fill in the details below."
+    },
+    "stepper": {
+      "step1": "Project Info",
+      "step2": "Details",
+      "step3": "Launch Date",
+      "step4": "Review",
+      "ariaJump": "Jump back to {label}",
+      "ariaCurrent": "{label} step"
+    },
+    "step1": {
+      "name": {
+        "label": "Project Name",
+        "placeholder": "My Awesome Project"
+      },
+      "websiteUrl": {
+        "label": "Website URL",
+        "placeholder": "https://myawesomeproject.com",
+        "help": "Enter your website URL and click Auto Fill to automatically populate the form.",
+        "duplicateWarning": "⚠️ This URL has already been submitted. The final step will block this — please use a different URL."
+      },
+      "autoFill": {
+        "button": "Auto Fill",
+        "loading": "Analyzing..."
+      },
+      "sourceLocale": {
+        "label": "Description language",
+        "help": "Pick the language you're writing the description in. Other languages will be auto-translated."
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe your project"
+      },
+      "logo": {
+        "label": "Logo (Max 1MB)",
+        "help": "Recommended: 1:1 square image (e.g., 256x256px).",
+        "upload": "Upload Logo",
+        "uploading": "Uploading...",
+        "preparing": "Getting ready...",
+        "preview": "Logo preview",
+        "remove": "Remove logo"
+      },
+      "productImage": {
+        "label": "Product Image",
+        "optional": "(Optional)",
+        "help": "Add a product image. Recommended: 16:9 aspect ratio (e.g., 800x450px).",
+        "add": "Add Product Image",
+        "preview": "Product image preview",
+        "remove": "Remove product image"
+      }
+    },
+    "step2": {
+      "categories": {
+        "label": "Categories",
+        "counter": "({count}/3 selected)",
+        "help": "Select up to 3 relevant categories.",
+        "empty": "No categories available.",
+        "loading": "Loading..."
+      },
+      "tags": {
+        "label": "Product Tags",
+        "counter": "({count}/10 tags)",
+        "placeholder": "e.g. ai, saas, open-source, developer-tools...",
+        "help": "Add up to 10 tags to help users discover your project. Press Enter or comma to add."
+      },
+      "platforms": {
+        "label": "Platforms",
+        "help": "Select all platforms your project supports.",
+        "options": {
+          "web": "web",
+          "mobile": "mobile",
+          "desktop": "desktop",
+          "api": "api",
+          "other": "other"
+        }
+      },
+      "pricing": {
+        "label": "Pricing Model",
+        "options": {
+          "free": "free",
+          "freemium": "freemium",
+          "paid": "paid"
+        }
+      },
+      "githubUrl": {
+        "label": "GitHub URL (Optional)",
+        "placeholder": "https://github.com/user/repo"
+      },
+      "twitterUrl": {
+        "label": "Twitter URL (Optional)",
+        "placeholder": "https://twitter.com/username"
+      }
+    },
+    "step3": {
+      "title": "Choose Launch Type & Date",
+      "infoBanner": {
+        "heading": "Select your launch type and date",
+        "body": "All launches happen at {hour}:00 UTC. We launch a limited number of projects each day."
+      },
+      "badgeCard": {
+        "heading": "🚀 Want to Launch Tomorrow?",
+        "body": "Skip the queue! Add our badge to your website and launch the next day instead of waiting weeks or months.",
+        "getCode": "Get Badge Code",
+        "verify": "Verify Badge",
+        "verifying": "Verifying..."
+      },
+      "badgeVerified": {
+        "heading": "✅ Badge Verified!",
+        "body": "You now have access to the Badge Fast Track! Choose your launch quota below."
+      },
+      "quota": {
+        "heading": "Select Launch Quota",
+        "free": {
+          "name": "Free Quota",
+          "slots": "{n} slots/day",
+          "queue": "Standard queue",
+          "dofollow": "Dofollow if Top 3 or badge"
+        },
+        "badge": {
+          "name": "Badge Fast Track",
+          "tag": "🚀 Fast",
+          "slots": "{n} slots/day",
+          "tomorrow": "Launch tomorrow!",
+          "dofollow": "Guaranteed dofollow link"
+        },
+        "warningPrefix": "Important:",
+        "warningBody": "aat.ee will automatically check for the badge on your website monthly. Projects without the badge will be removed."
+      },
+      "launchType": {
+        "heading": "Launch Type",
+        "selected": "Selected",
+        "free": {
+          "name": "Free Launch",
+          "slotsLabel": "{n} slots/day",
+          "scheduling": "Up to {n} days scheduling",
+          "dofollowConditional": "Dofollow Backlink only if:",
+          "topRanking": "1. Top 3 daily ranking",
+          "displayBadge": "2. Display our badge on your site"
+        },
+        "premium": {
+          "name": "Premium Launch",
+          "skipQueue": "Skip the Free Queue",
+          "guaranteedDofollow": "Guaranteed Dofollow Backlink (DR {dr})",
+          "slotsLabel": "{n} premium slots/day",
+          "scheduling": "Up to {n} days scheduling"
+        }
+      },
+      "date": {
+        "label": "Launch Date",
+        "loading": "Loading available dates...",
+        "empty": "No available launch dates found for the selected type in the allowed range.",
+        "placeholder": "Select a launch date",
+        "slotsAvailable": "{n} {type} slot(s)",
+        "slotTypeFree": "free",
+        "slotTypeBadge": "badge",
+        "slotTypePremium": "premium",
+        "crowdednessTooltip": "{n} project(s) already scheduled",
+        "scheduledFor": "Scheduled for",
+        "noDate": "No date selected"
+      },
+      "premiumUpsell": {
+        "heading": "Launch {days, plural, one {# day} other {# days}} earlier with Premium!",
+        "body": "Available from {date} • Guaranteed DR{dr} backlink • Skip the queue",
+        "button": "Upgrade to Premium ${price}"
+      }
+    },
+    "step4": {
+      "title": "Review and Submit",
+      "projectInfo": "Project Information",
+      "details": "Details",
+      "launchPlan": "Launch Plan",
+      "fields": {
+        "name": "Name:",
+        "website": "Website:",
+        "description": "Description:",
+        "logo": "Logo:",
+        "productImage": "Product Image:",
+        "categories": "Categories:",
+        "tags": "Product Tags:",
+        "platforms": "Platforms:",
+        "pricing": "Pricing:",
+        "github": "GitHub:",
+        "twitter": "Twitter:"
+      },
+      "logoAlt": "Uploaded logo",
+      "productImageAlt": "Product image",
+      "premiumPriceLabel": "Premium Launch (${price})",
+      "readyToSubmit": {
+        "heading": "Ready to submit?",
+        "body": "Please review all information carefully. Once submitted, your project will be scheduled for launch.",
+        "paymentRedirect": "You will be redirected to the payment page after submission."
+      }
+    },
+    "buttons": {
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit Project"
+    },
+    "errors": {
+      "fields": {
+        "nameRequired": "Project name is required",
+        "websiteUrlRequired": "Website URL is required",
+        "websiteUrlInvalid": "Please enter a valid URL (https://...)",
+        "websiteUrlInvalidQuick": "Please enter a valid URL first",
+        "websiteUrlDuplicate": "This URL has already been submitted",
+        "descriptionRequired": "Description is required",
+        "logoRequired": "Logo is required",
+        "logoUploadFailedNoUrl": "Logo upload failed: No URL returned.",
+        "logoUploadFailed": "Logo upload failed: {message}",
+        "categoriesMin": "Pick at least one category",
+        "categoriesMax": "Maximum 3 categories",
+        "techStackMin": "Add at least one tag",
+        "techStackMax": "Maximum 10 tags",
+        "platformsMin": "Select at least one platform",
+        "pricingRequired": "Select a pricing model",
+        "scheduledDateRequired": "Pick a launch date",
+        "scheduledDateOverLimit": "This date exceeds your daily launch limit"
+      },
+      "form": {
+        "loadCategoriesFailed": "Failed to load categories",
+        "loadDatesFailed": "Failed to load available dates",
+        "productImageUploadFailedNoUrl": "Product image upload failed: No URL returned.",
+        "productImageUploadFailed": "Product image upload failed: {message}",
+        "autoFillFailed": "Failed to auto-fill. Please try again.",
+        "submitFailed": "An unexpected error occurred.",
+        "scheduleFailed": "An error occurred during scheduling."
+      }
+    },
+    "toast": {
+      "draftRestored": "Restored your unsaved draft"
+    }
   }
 }
