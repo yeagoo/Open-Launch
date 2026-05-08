@@ -197,7 +197,12 @@
       "platform": "Platvorm",
       "pricing": "Hinnakujundus",
       "socials": "Sotsiaalmeedia",
-      "productKeywords": "Toote märksõnad"
+      "productKeywords": "Toote märksõnad",
+      "maker": "Looja",
+      "visitWebsite": "Külasta veebisaiti",
+      "projectInfo": "Projekti info",
+      "compareWith": "Võrdle",
+      "alternatives": "Alternatiivid"
     },
     "comments": {
       "heading": "Kommentaarid",

@@ -5,18 +5,13 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import {
-  RiGithubFill,
-  RiGlobalLine,
-  RiHashtag,
-  RiTwitterFill,
-  RiVipCrownLine,
-} from "@remixicon/react"
+import { RiGlobalLine, RiHashtag, RiVipCrownLine } from "@remixicon/react"
 import { format } from "date-fns"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { getRelatedProjects } from "@/lib/get-project-related"
+import { getProjectSidebarLinks } from "@/lib/get-project-sidebar-links"
 import {
   getLocalizedLongDescription,
   getLocalizedProjectDescription,
@@ -31,6 +26,10 @@ import { LongDescription } from "@/components/project/long-description"
 import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
 import { RelatedProducts } from "@/components/project/related-products"
 import { ShareButton } from "@/components/project/share-button"
+import { MakerCard } from "@/components/project/sidebar/maker-card"
+import { ProjectMetaCard } from "@/components/project/sidebar/project-meta-card"
+import { RelatedPagesCard } from "@/components/project/sidebar/related-pages-card"
+import { VisitWebsiteCard } from "@/components/project/sidebar/visit-website-card"
 import { TranslatedComments } from "@/components/project/translated-comments"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { BreadcrumbSchema, ProductSchema } from "@/components/seo/structured-data"
@@ -121,9 +120,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const tDetail = await getTranslations("project.detail")
   const tBreadcrumb = await getTranslations("breadcrumb")
-  const [longDescriptionMarkdown, relatedProjects] = await Promise.all([
+  const [longDescriptionMarkdown, relatedProjects, sidebarLinks] = await Promise.all([
     getLocalizedLongDescription(projectData.id, locale),
     getRelatedProjects(projectData.id, locale, 4),
+    getProjectSidebarLinks(projectData.id),
   ])
 
   const session = await auth.api.getSession({
@@ -440,17 +440,58 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </div>
           </div>
 
-          {/* Sidebar - 1 colonne sur toute la hauteur */}
+          {/* Sidebar — single sticky column.
+              Order is intentional:
+                1. Maker (who made it)
+                2. Visit website (primary CTA)
+                3. Project info (at-a-glance metadata)
+                4. Compare with (AI-generated comparison pages)
+                5. Alternatives (AI-generated alternatives pages)
+                6. Achievement (top-3 badge if won)
+                7. Share (utility, lowest priority) */}
           <div className="lg:sticky lg:top-14 lg:h-fit">
-            <div className="space-y-6 py-6">
-              {/* Achievement Badge */}
+            <div className="space-y-4 py-6">
+              <MakerCard creator={projectData.creator ?? null} />
+
+              <VisitWebsiteCard
+                websiteUrl={projectData.websiteUrl}
+                launchStatus={projectData.launchStatus}
+                launchType={projectData.launchType}
+                dailyRanking={projectData.dailyRanking}
+                hasBadgeVerified={projectData.hasBadgeVerified ?? false}
+                isLowQuality={projectData.isLowQuality ?? false}
+              />
+
+              <ProjectMetaCard
+                scheduledDate={scheduledDate}
+                platforms={projectData.platforms ?? []}
+                pricing={projectData.pricing ?? null}
+                techStack={projectData.techStack ?? []}
+                githubUrl={projectData.githubUrl}
+                twitterUrl={projectData.twitterUrl}
+              />
+
+              <RelatedPagesCard
+                heading={tSidebar("compareWith")}
+                pathPrefix="/compare/"
+                links={sidebarLinks.comparisons}
+              />
+
+              <RelatedPagesCard
+                heading={tSidebar("alternatives")}
+                pathPrefix="/alternatives/"
+                links={sidebarLinks.alternatives}
+              />
+
+              {/* Achievement badge — placed last but kept around for
+                  parity with the previous design. */}
               {projectData.launchStatus === "launched" &&
                 projectData.dailyRanking &&
                 projectData.dailyRanking <= 3 && (
-                  <div className="space-y-3">
-                    <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+                  <div className="bg-card rounded-lg border p-4">
+                    <p className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
                       {tSidebar("achievement")}
-                    </h3>
+                    </p>
                     <div className="flex">
                       <img
                         src={`/images/badges/top${projectData.dailyRanking}-light.svg`}
@@ -466,143 +507,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   </div>
                 )}
 
-              {/* Publisher */}
-              <div className="space-y-3">
-                <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                  {tSidebar("publisher")}
-                </h3>
-                <div className="flex items-center gap-3">
-                  {projectData.creator ? (
-                    <>
-                      {projectData.creator.image ? (
-                        <img
-                          src={projectData.creator.image}
-                          alt={projectData.creator.name || "Creator avatar"}
-                          className="h-10 w-10 rounded-full"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-600">
-                          {projectData.creator.name?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-foreground text-sm font-medium">
-                          {projectData.creator.name}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">
-                      {tSidebar("unknownCreator")}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Launch Date */}
-              {scheduledDate && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      {tSidebar("launchDate")}
-                    </span>
-                    <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
-                    <span className="text-foreground text-sm font-medium">
-                      {format(scheduledDate, "yyyy-MM-dd")}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Platform */}
-              {projectData.platforms && projectData.platforms.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      {tSidebar("platform")}
-                    </span>
-                    <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
-                    <span className="text-foreground text-sm font-medium capitalize">
-                      {projectData.platforms[0]}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Pricing */}
-              {projectData.pricing && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      {tSidebar("pricing")}
-                    </span>
-                    <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
-                    <span className="text-foreground text-sm font-medium capitalize">
-                      {projectData.pricing}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Social Links */}
-              {(projectData.githubUrl || projectData.twitterUrl) && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                      {tSidebar("socials")}
-                    </span>
-                    <div className="border-muted-foreground/30 mx-3 flex-1 border-b border-dotted"></div>
-                    <div className="flex items-center gap-2">
-                      {projectData.githubUrl && (
-                        <a
-                          href={projectData.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label="GitHub"
-                        >
-                          <RiGithubFill className="h-4 w-4" />
-                        </a>
-                      )}
-                      {projectData.twitterUrl && (
-                        <a
-                          href={projectData.twitterUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label="Twitter"
-                        >
-                          <RiTwitterFill className="h-4 w-4" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Product Keywords */}
-              {projectData.techStack && projectData.techStack.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-                    {tSidebar("productKeywords")}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {projectData.techStack.slice(0, 6).map((tech) => (
-                      <span
-                        key={tech}
-                        className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2 py-1 text-xs"
-                      >
-                        #{tech}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Share */}
-              <div className="border-border border-t pt-4">
-                <ShareButton name={projectData.name} slug={projectData.slug} variant="fullWidth" />
-              </div>
+              <ShareButton name={projectData.name} slug={projectData.slug} variant="fullWidth" />
             </div>
           </div>
         </div>

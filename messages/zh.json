@@ -197,7 +197,12 @@
       "platform": "平台",
       "pricing": "定价",
       "socials": "社交",
-      "productKeywords": "产品关键词"
+      "productKeywords": "产品关键词",
+      "maker": "制作者",
+      "visitWebsite": "访问网站",
+      "projectInfo": "项目信息",
+      "compareWith": "对比",
+      "alternatives": "替代方案"
     },
     "comments": {
       "heading": "评论",
