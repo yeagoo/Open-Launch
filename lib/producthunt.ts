@@ -79,15 +79,21 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
   const postedAfter = todayStart.toISOString()
   const postedBefore = todayEnd.toISOString()
 
+  // Randomize the daily import count so the catalogue doesn't grow at a
+  // suspiciously fixed cadence. 7-10 inclusive — small enough to stay
+  // within PH API limits, large enough to keep the feed lively.
+  const dailyImportCount = 7 + Math.floor(Math.random() * 4)
+
   console.log(`📅 Fetching ProductHunt posts (Pacific Time)`)
-  console.log(`   From: ${postedAfter}`)
-  console.log(`   To:   ${postedBefore}`)
+  console.log(`   From:  ${postedAfter}`)
+  console.log(`   To:    ${postedBefore}`)
+  console.log(`   Count: ${dailyImportCount}`)
 
   const query = `
     query {
       posts(
         order: VOTES
-        first: 5
+        first: ${dailyImportCount}
         postedAfter: "${postedAfter}"
         postedBefore: "${postedBefore}"
       ) {
