@@ -21,10 +21,14 @@ const REWRITES_PER_RUN = 3
 // fires on time. AMP_CAP caps how many bot votes a single project can earn
 // per tick so a HN-spike doesn't trigger a 100-vote bot avalanche.
 const AMP_LOOKBACK_HOURS = 2
-const AMP_CAP_PER_PROJECT = 20
+const AMP_CAP_PER_PROJECT = 32
 // Base cadence: pick a few ongoing projects and seed bot upvotes regardless
 // of real-user activity. Keeps cold-start projects feeling alive.
 const BASE_CADENCE_MAX_PROJECTS = 6
+// Global multiplier on bot-upvote counts (both the base cadence per-project
+// roll and the amp ratio). 1.6 = ~60% more bot upvotes overall vs the
+// pre-multiplier baseline. Tune here, no code-path edits.
+const BOT_UPVOTE_MULTIPLIER = 1.6
 
 export const dynamic = "force-dynamic"
 
@@ -135,7 +139,9 @@ export async function GET(request: Request) {
       console.log(`👍 Base cadence: ${projectsToUpvote.length} projects`)
 
       for (const proj of projectsToUpvote) {
-        const baseCount = Math.floor(Math.random() * 3) + 1 // 1..3
+        // 1..3 baseline, scaled by BOT_UPVOTE_MULTIPLIER. With 1.6 this
+        // becomes 2..5 (ceil(1*1.6)=2, ceil(2*1.6)=4, ceil(3*1.6)=5).
+        const baseCount = Math.ceil((Math.floor(Math.random() * 3) + 1) * BOT_UPVOTE_MULTIPLIER)
         const selected = await pickAvailableBots(proj.id, baseCount)
         for (const bot of selected) {
           const ok = await castBotUpvote(bot.id, proj.id)
@@ -184,7 +190,13 @@ export async function GET(request: Request) {
       for (const proj of ongoingProjects) {
         const realCount = realCounts.get(proj.id) ?? 0
         if (realCount === 0) continue
-        const ampTarget = Math.min(realCount, AMP_CAP_PER_PROJECT)
+        // Amp ratio scaled by the same multiplier as the base cadence so
+        // tuning happens in one place. Still capped per project to avoid
+        // a viral spike triggering a hundreds-of-votes bot avalanche.
+        const ampTarget = Math.min(
+          Math.ceil(realCount * BOT_UPVOTE_MULTIPLIER),
+          AMP_CAP_PER_PROJECT,
+        )
         const selected = await pickAvailableBots(proj.id, ampTarget)
         let amped = 0
         for (const bot of selected) {
