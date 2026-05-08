@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { fumaComments, project, upvote, user } from "@/drizzle/db/schema"
-import { and, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm"
+import { and, eq, gte, inArray, isNull, or, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { verifyCronAuth } from "@/lib/cron-auth"
@@ -50,45 +50,24 @@ export async function GET(request: Request) {
 
     console.log(`✅ Found ${bots.length} bot users`)
 
-    // 2a. Today's active launches — the only projects bot upvotes are
-    // allowed to touch. Comments still allow yesterday's launched projects
-    // (queried below) since people do comment on closed launches.
+    // Both bot upvotes and bot comments now scope to today's active
+    // launches only. Real users may comment on closed launches, but bot
+    // chatter on yesterday's threads doesn't add credibility — it just
+    // moves the spam clock forward, and the new diversity prompt makes
+    // ongoing-day comments plenty rich on their own.
     const ongoingProjects = await db
       .select()
       .from(project)
       .where(eq(project.launchStatus, "ongoing"))
 
-    // 2b. Comment scope kept on the original window so threads on yesterday's
-    // launches keep getting fresh discussion.
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    yesterday.setHours(0, 0, 0, 0)
-
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    tomorrow.setHours(0, 0, 0, 0)
-
-    const recentProjects = await db
-      .select()
-      .from(project)
-      .where(
-        and(
-          inArray(project.launchStatus, ["ongoing", "launched"]),
-          gte(project.scheduledLaunchDate, yesterday),
-          lt(project.scheduledLaunchDate, tomorrow),
-        ),
-      )
-
-    if (ongoingProjects.length === 0 && recentProjects.length === 0) {
+    if (ongoingProjects.length === 0) {
       return NextResponse.json(
-        { message: "No active or recent projects found to engage with" },
+        { message: "No ongoing projects found to engage with" },
         { status: 200 },
       )
     }
 
-    console.log(
-      `📦 ${ongoingProjects.length} ongoing (vote scope), ${recentProjects.length} recent (comment scope)`,
-    )
+    console.log(`📦 ${ongoingProjects.length} ongoing projects (vote + comment scope)`)
 
     const results = {
       upvotesAdded: 0,
@@ -224,10 +203,10 @@ export async function GET(request: Request) {
     const botsForComments = shuffledBotsForComments.slice(0, Math.min(5, bots.length))
 
     const commentCount = Math.floor(Math.random() * 4) + 2 // 2..5
-    const shuffledForComments = [...recentProjects].sort(() => 0.5 - Math.random())
+    const shuffledForComments = [...ongoingProjects].sort(() => 0.5 - Math.random())
     const projectsToComment = shuffledForComments.slice(
       0,
-      Math.min(commentCount, recentProjects.length),
+      Math.min(commentCount, ongoingProjects.length),
     )
 
     for (let i = 0; i < projectsToComment.length; i++) {
@@ -392,7 +371,6 @@ export async function GET(request: Request) {
         data: {
           botsAvailable: bots.length,
           ongoingProjects: ongoingProjects.length,
-          recentProjects: recentProjects.length,
           upvotesAdded: results.upvotesAdded,
           upvotesAmplified: results.upvotesAmplified,
           commentsPosted: results.commentsPosted,

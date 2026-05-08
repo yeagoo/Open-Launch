@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
   images: {
     // 设置高质量图片压缩（默认是 75）
     formats: ["image/webp", "image/avif"],
+    // Default 75 covers most usage; 95 is what the project's premium
+    // logo / cover-image renders pass explicitly. Next.js 16 will require
+    // every quality value used by <Image quality={…}> to be listed here
+    // up-front; declaring both now silences the dev-time warning and
+    // future-proofs the build.
+    qualities: [75, 95],
     minimumCacheTTL: 3600,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
