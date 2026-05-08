@@ -123,16 +123,22 @@ describe("tinyfishCrawl", () => {
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/fetch failed/)
   })
 
-  it("queues fetches via the shared limiter (observed via inFlightCount)", async () => {
+  it("wraps malformed JSON (HTTP 200 with non-JSON body) in CrawlError", async () => {
+    mockFetch(() => new Response("<html>cdn error page</html>", { status: 200 }))
+    await expect(tinyfishCrawl("https://example.com")).rejects.toBeInstanceOf(CrawlError)
+    await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/invalid JSON/)
+  })
+
+  it("queues fetches via the shared limiter (observed via slotsInWindow)", async () => {
     // Sanity check that tinyfishCrawl actually goes through fetchLimiter.
     // We don't drive 25 concurrent calls (would be brittle in a unit suite),
     // we just verify a successful call increments the limiter's slot count.
     const { tinyfishFetchLimiter } = await import("./tinyfish")
-    const before = tinyfishFetchLimiter.inFlightCount()
+    const before = tinyfishFetchLimiter.slotsInWindow()
     mockFetch(
       () => new Response(JSON.stringify({ results: [{ url: "x", text: "ok" }] }), { status: 200 }),
     )
     await tinyfishCrawl("https://example.com")
-    expect(tinyfishFetchLimiter.inFlightCount()).toBe(before + 1)
+    expect(tinyfishFetchLimiter.slotsInWindow()).toBe(before + 1)
   })
 })

@@ -53,6 +53,12 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   //     burst (~60s after first window expires) without rejecting tail
   //     calls, but bounded so a runaway producer doesn't pile up forever.
   //   - Network (fetch):       caller's `timeout`, default 60s.
+  //
+  // The slot is consumed before the fetch and not refunded on failure.
+  // Tinyfish's docs say failed URLs don't count against their quota, so
+  // our limiter is slightly more conservative than the real cap. With
+  // current load (~8/min vs 25/min cap) the over-conservatism is fine and
+  // it removes a whole class of release/race bugs.
   await fetchLimiter.acquire(2 * 60_000)
 
   let response: Response
@@ -82,7 +88,15 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     throw new CrawlError(url, `Tinyfish HTTP ${response.status}: ${body.slice(0, 500)}`)
   }
 
-  const data = (await response.json()) as TinyfishResponse
+  let data: TinyfishResponse
+  try {
+    data = (await response.json()) as TinyfishResponse
+  } catch (err) {
+    throw new CrawlError(
+      url,
+      `Tinyfish returned 200 with invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
 
   // We always send exactly one URL, so a non-empty errors[] means our URL failed.
   const perUrlError = data.errors?.[0]
