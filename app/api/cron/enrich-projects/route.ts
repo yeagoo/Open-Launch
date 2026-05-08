@@ -91,11 +91,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    candidates: candidates.length,
-    generated,
-    stale,
-    failed,
-    errors: errors.slice(0, 10),
-  })
+  const status = errors.length > 0 && generated === 0 ? 500 : 200
+  return NextResponse.json(
+    {
+      candidates: candidates.length,
+      generated,
+      stale,
+      failed,
+      errors: errors.slice(0, 10),
+    },
+    { status },
+  )
 }

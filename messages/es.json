@@ -316,5 +316,12 @@
     "pricing": "Precios",
     "blog": "Blog",
     "badge": "Insignias"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "Inicia sesión para votar",
+    "rateLimited": "Anti-Spam: {count} votos en {minutes} minutos al máximo. Reintenta en {seconds} segundos.",
+    "minWaitSeconds": "Anti-Spam: necesitas esperar {seconds} segundos entre cambios de voto",
+    "projectNotFound": "Proyecto no encontrado",
+    "notOngoing": "Solo puedes votar mientras el proyecto se lanza hoy"
   }
 }

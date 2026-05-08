@@ -316,5 +316,12 @@
     "pricing": "Preços",
     "blog": "Blog",
     "badge": "Selos"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "Faça login para votar",
+    "rateLimited": "Anti-Spam: {count} votos em {minutes} minutos atingidos. Tente novamente em {seconds} segundos.",
+    "minWaitSeconds": "Anti-Spam: aguarde {seconds} segundos entre alterações de voto",
+    "projectNotFound": "Projeto não encontrado",
+    "notOngoing": "O voto só está aberto enquanto o projeto está sendo lançado hoje"
   }
 }

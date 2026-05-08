@@ -316,5 +316,12 @@
     "pricing": "Pricing",
     "blog": "Blog",
     "badge": "Featured Badges"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "You must be logged in to upvote",
+    "rateLimited": "Anti-Spam Squad here: {count} upvotes in {minutes} minutes maxed out! Retry in {seconds} seconds.",
+    "minWaitSeconds": "Anti-Spam Squad here: {seconds}-second wait required for vote changes",
+    "projectNotFound": "Project not found",
+    "notOngoing": "Voting is only open while the project is launching today"
   }
 }

@@ -316,5 +316,12 @@
     "pricing": "定价",
     "blog": "博客",
     "badge": "精选徽章"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "请先登录再点赞",
+    "rateLimited": "防刷队在此：{minutes} 分钟内最多 {count} 次点赞，请 {seconds} 秒后再试。",
+    "minWaitSeconds": "防刷队在此：投票切换需间隔 {seconds} 秒",
+    "projectNotFound": "项目不存在",
+    "notOngoing": "只有在项目当日发布期间才能投票"
   }
 }
