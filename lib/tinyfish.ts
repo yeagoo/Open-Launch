@@ -10,6 +10,14 @@
  */
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
+import { RateLimiter } from "./rate-limiter"
+
+// Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
+// in FIFO order so callers wait for a slot instead of hitting 429.
+// Module-level singleton; shared across all callers in this process.
+const fetchLimiter = new RateLimiter(25, 60_000)
+
+export const tinyfishFetchLimiter = fetchLimiter // exported for /admin observability
 
 // Read at call time so tests can swap env via vi.stubEnv and ops can flip
 // keys without a redeploy.
@@ -39,6 +47,12 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   }
 
   const timeout = options?.timeout ?? 60_000
+
+  // Wait for an in-process rate-limit slot before issuing the request.
+  // The limiter wait counts against the same per-call timeout — a caller
+  // willing to wait `timeout` ms total shouldn't have its budget consumed
+  // entirely by queue time, but at our load this is a safe simplification.
+  await fetchLimiter.acquire(timeout)
 
   let response: Response
   try {
