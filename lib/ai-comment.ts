@@ -8,6 +8,7 @@
  */
 
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
+import { logAiUsage } from "@/lib/ai-usage"
 
 const PERSONAS = [
   {
@@ -271,6 +272,8 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string): Promise<s
   }
 
   const data = await response.json()
+  // Fire-and-forget: a failed log row must never take down comment gen.
+  void logAiUsage("ai-comment", model, data?.usage)
   const raw = data.choices?.[0]?.message?.content?.trim()
   if (!raw) throw new Error("No comment generated from DeepSeek API")
 

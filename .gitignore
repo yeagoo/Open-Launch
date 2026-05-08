@@ -52,3 +52,6 @@ mitm_mcp_traffic.db
 
 # Cron script log output
 logs/
+
+# Pool avatars are regenerated at build time (scripts/generate-avatar-pool.ts)
+/public/avatars/pool/

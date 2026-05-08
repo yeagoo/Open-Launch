@@ -5,6 +5,7 @@
  */
 
 import { INPUT_SAFETY_BLOCK, stripHtml as stripHtmlShared, wrapInput } from "@/lib/ai-input"
+import { logAiUsage } from "@/lib/ai-usage"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ export interface AlternativesPageContent {
 async function callDeepSeek(
   systemPrompt: string,
   userPrompt: string,
-  options?: { temperature?: number; maxTokens?: number },
+  options?: { temperature?: number; maxTokens?: number; functionName?: string },
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
@@ -82,6 +83,8 @@ async function callDeepSeek(
   }
 
   const data = await response.json()
+  // Fire-and-forget; failures inside logAiUsage are swallowed.
+  void logAiUsage(options?.functionName ?? "ai-content", model, data?.usage)
   const content = data.choices?.[0]?.message?.content?.trim()
 
   if (!content) {
@@ -138,6 +141,7 @@ Return ONLY the JSON array, no other text.`
 
   try {
     const raw = await callDeepSeek(systemPrompt, userPrompt, {
+      functionName: "moderate-tags",
       temperature: 0.1,
       maxTokens: tagNames.length * 80,
     })
@@ -214,6 +218,7 @@ ${wrapInput("productB-description", stripHtmlShared(projectB.description, 800))}
 ${wrapInput("productB-website", truncateContent(projectB.crawledMarkdown))}`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "generate-comparison",
     temperature: 0.3,
     maxTokens: 4000,
   })
@@ -290,6 +295,7 @@ ${wrapInput("candidates", candidateList)}`
 
   try {
     const raw = await callDeepSeek(systemPrompt, userPrompt, {
+      functionName: "prescreen-alternatives",
       temperature: 0.1,
       maxTokens: 200,
     })
@@ -344,6 +350,7 @@ ${wrapInput("candidate-description", stripHtmlShared(candidateProject.descriptio
 ${wrapInput("candidate-website", truncateContent(candidateProject.crawledMarkdown, 4000))}`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "analyze-alternative",
     temperature: 0.2,
     maxTokens: 500,
   })
@@ -399,6 +406,7 @@ Alternatives found:
 ${wrapInput("alternatives", altList)}`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "generate-alternatives-page",
     temperature: 0.3,
     maxTokens: 3000,
   })
@@ -467,6 +475,7 @@ ${wrapInput("website-content", truncateContent(crawledMarkdown, 6000))}`
 
   try {
     const raw = await callDeepSeek(systemPrompt, userPrompt, {
+      functionName: "extract-project-info",
       temperature: 0.2,
       maxTokens: 1500,
     })

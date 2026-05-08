@@ -559,6 +559,28 @@ export const alternativePageToProject = pgTable(
   },
 )
 
+// ─── AI usage log ────────────────────────────────────────────────────────────
+// One row per successful DeepSeek call so the admin dashboard can show
+// token spend over time, broken down by which library function made the call.
+export const aiUsageLog = pgTable(
+  "ai_usage_log",
+  {
+    id: serial("id").primaryKey(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    functionName: text("function_name").notNull(),
+    model: text("model").notNull(),
+    promptTokens: integer("prompt_tokens").notNull().default(0),
+    completionTokens: integer("completion_tokens").notNull().default(0),
+    totalTokens: integer("total_tokens").notNull().default(0),
+  },
+  (table) => {
+    return {
+      createdAtIdx: index("ai_usage_created_at_idx").on(table.createdAt),
+      functionNameIdx: index("ai_usage_function_name_idx").on(table.functionName),
+    }
+  },
+)
+
 // ─── Admin audit log ─────────────────────────────────────────────────────────
 export const adminAuditLog = pgTable(
   "admin_audit_log",
