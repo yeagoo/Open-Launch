@@ -67,7 +67,10 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        // Tinyfish uses X-API-Key (raw key, no Bearer prefix). Verified
+        // against https://docs.tinyfish.ai/authentication and the OpenAPI
+        // spec at https://docs.tinyfish.ai/openapi/fetch.json.
+        "X-API-Key": apiKey,
       },
       body: JSON.stringify({ urls: [url], format: "markdown" }),
       signal: AbortSignal.timeout(timeout),

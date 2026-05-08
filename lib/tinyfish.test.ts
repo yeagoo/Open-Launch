@@ -30,13 +30,13 @@ function mockFetch(impl: (input: string, init: RequestInit) => Response | Promis
 }
 
 describe("tinyfishCrawl", () => {
-  it("posts the URL with markdown format and bearer auth", async () => {
-    const calls: Array<{ url: string; body: unknown; auth: string | null }> = []
+  it("posts the URL with markdown format and X-API-Key auth", async () => {
+    const calls: Array<{ url: string; body: unknown; apiKey: string | null }> = []
     mockFetch((url, init) => {
       calls.push({
         url,
         body: JSON.parse(init.body as string),
-        auth: new Headers(init.headers).get("authorization"),
+        apiKey: new Headers(init.headers).get("x-api-key"),
       })
       return new Response(
         JSON.stringify({
@@ -52,7 +52,7 @@ describe("tinyfishCrawl", () => {
 
     expect(calls).toHaveLength(1)
     expect(calls[0].url).toBe(ENDPOINT)
-    expect(calls[0].auth).toBe("Bearer test-key-123")
+    expect(calls[0].apiKey).toBe("test-key-123") // raw key, no Bearer prefix
     expect(calls[0].body).toEqual({ urls: ["https://example.com"], format: "markdown" })
     expect(result.markdown).toBe("# Example")
     expect(result.url).toBe("https://example.com/") // final_url wins
