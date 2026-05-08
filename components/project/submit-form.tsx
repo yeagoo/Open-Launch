@@ -27,6 +27,7 @@ import {
 import { addDays, format, parseISO } from "date-fns"
 import { Tag, TagInput } from "emblor"
 import { useLocale } from "next-intl"
+import { toast } from "sonner"
 
 import {
   DATE_FORMAT,
@@ -36,6 +37,7 @@ import {
   LAUNCH_TYPES,
   PREMIUM_PAYMENT_LINK,
 } from "@/lib/constants"
+import { useFormDraft } from "@/lib/hooks/use-form-draft"
 import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -144,11 +146,46 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
   const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [isVerifyingBadge, setIsVerifyingBadge] = useState(false)
   const [badgeVerificationMessage, setBadgeVerificationMessage] = useState<string | null>(null)
+  // Inline warning shown under the websiteUrl field as the user types.
+  // Non-blocking — the final submit still has its own check, this is just
+  // an early heads-up so users don't fill in a 4-step form for a URL
+  // that's already taken.
+  const [urlDuplicateWarning, setUrlDuplicateWarning] = useState(false)
+  const [isCheckingUrl, setIsCheckingUrl] = useState(false)
 
   const tagInputId = useId()
 
   const [techStackTags, setTechStackTags] = useState<Tag[]>([])
   const [activeTechTagIndex, setActiveTechTagIndex] = useState<number | null>(null)
+
+  // Persist form-in-progress to localStorage so a refresh / accidental
+  // tab close doesn't lose typed content. Logo + product image URLs are
+  // already stored on R2, safe to persist their URLs. Badge verification
+  // is intentionally NOT restored — the user must re-prove ownership of
+  // the website each session.
+  interface DraftPayload {
+    formData: ProjectFormData
+    uploadedLogoUrl: string | null
+  }
+  const draft = useFormDraft<DraftPayload>(
+    `submit-form-draft:${userId}`,
+    { formData, uploadedLogoUrl },
+    (saved) => {
+      // Only restore if the draft is meaningfully populated. An empty
+      // shell would just trigger a confusing toast on first visit.
+      const hasContent =
+        !!saved.formData.name ||
+        !!saved.formData.websiteUrl ||
+        !!saved.formData.description ||
+        !!saved.uploadedLogoUrl ||
+        saved.formData.categories?.length > 0 ||
+        saved.formData.techStack?.length > 0
+      if (!hasContent) return
+      setFormData({ ...saved.formData, hasBadgeVerified: false })
+      setUploadedLogoUrl(saved.uploadedLogoUrl)
+      toast.info("Restored your unsaved draft")
+    },
+  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -422,6 +459,42 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     }
   }, [formData.scheduledDate, currentStep, validateLaunchDateLimit])
 
+  // Debounced inline duplicate-URL check — runs as the user types so they
+  // get the heads-up at Step 1 instead of after filling out the entire
+  // 4-step form. Cleared on each keystroke + when URL becomes invalid.
+  useEffect(() => {
+    setUrlDuplicateWarning(false)
+    const url = formData.websiteUrl.trim()
+    if (!url) {
+      setIsCheckingUrl(false)
+      return
+    }
+    try {
+      new URL(url)
+    } catch {
+      setIsCheckingUrl(false)
+      return
+    }
+    setIsCheckingUrl(true)
+    const handle = setTimeout(async () => {
+      const exists = await checkWebsiteUrl(url)
+      // Only apply the result if the URL hasn't changed since we fired.
+      // Without this, fast typers would see warnings flicker for stale
+      // URLs that no longer match the current input.
+      setFormData((prev) => {
+        if (prev.websiteUrl.trim() === url) {
+          setUrlDuplicateWarning(exists)
+          setIsCheckingUrl(false)
+        }
+        return prev
+      })
+    }, 800)
+    return () => {
+      clearTimeout(handle)
+      setIsCheckingUrl(false)
+    }
+  }, [formData.websiteUrl])
+
   const nextStep = () => {
     setError(null)
     setLaunchDateLimitError(null)
@@ -617,6 +690,12 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         }
       }
 
+      // Clear the draft only after we've made it past every async step
+      // — server submit, schedule launch, discord notify. If any of
+      // those threw, the user can come back and resume from where they
+      // were instead of re-typing.
+      draft.clear()
+
       if (
         formData.launchType === LAUNCH_TYPES.FREE ||
         formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE
@@ -645,6 +724,17 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
     handleFinalSubmit()
   }
 
+  // Allow back-navigation to any step the user has already passed; future
+  // steps stay locked (validation happens forward in nextStep). Skips
+  // forward in two clicks make it easy to fix mistakes after Review.
+  const goToStep = (step: number) => {
+    if (step >= currentStep) return
+    setError(null)
+    setLaunchDateLimitError(null)
+    setCurrentStep(step)
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0)
+  }
+
   const renderStepper = () => (
     <div className="mb-8 sm:mb-10">
       <div className="container mx-auto max-w-3xl">
@@ -659,53 +749,60 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
             },
             { step: 3, label: "Launch Date", icon: RiCalendarLine },
             { step: 4, label: "Review", icon: RiFileCheckLine },
-          ].map(({ step, label, shortLabel, icon: Icon }) => (
-            <div
-              key={`step-${step}`}
-              className="relative flex w-[120px] flex-col items-center sm:w-[140px]"
-            >
-              {step < 3 && (
-                <div className="absolute top-5 left-[calc(50%+1.5rem)] -z-10 hidden h-[2px] w-[calc(100%-1rem)] sm:block">
-                  <div
-                    className={`h-full ${
-                      currentStep > step ? "bg-primary" : "bg-muted"
-                    } transition-all duration-300`}
-                  />
-                </div>
-              )}
-
+          ].map(({ step, label, shortLabel, icon: Icon }) => {
+            const canJump = step < currentStep
+            return (
               <div
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 sm:h-12 sm:w-12 ${
-                  currentStep > step
-                    ? "bg-primary ring-primary/10 text-white ring-4"
-                    : currentStep === step
-                      ? "bg-primary ring-primary/20 text-white ring-4"
-                      : "bg-muted/50 text-muted-foreground"
-                }`}
+                key={`step-${step}`}
+                className="relative flex w-[120px] flex-col items-center sm:w-[140px]"
               >
-                {currentStep > step ? (
-                  <RiCheckLine className="h-5 w-5 sm:h-6 sm:w-6" />
-                ) : (
-                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                {step < 3 && (
+                  <div className="absolute top-5 left-[calc(50%+1.5rem)] -z-10 hidden h-[2px] w-[calc(100%-1rem)] sm:block">
+                    <div
+                      className={`h-full ${
+                        currentStep > step ? "bg-primary" : "bg-muted"
+                      } transition-all duration-300`}
+                    />
+                  </div>
                 )}
 
-                {currentStep === step && (
-                  <span className="border-primary absolute inset-0 animate-pulse rounded-full border-2" />
-                )}
-              </div>
-
-              <div className="mt-3 w-full text-center sm:mt-4">
-                <span
-                  className={`mb-0.5 block text-xs font-medium sm:text-sm ${
-                    currentStep >= step ? "text-primary" : "text-muted-foreground"
+                <button
+                  type="button"
+                  onClick={() => goToStep(step)}
+                  disabled={!canJump}
+                  aria-label={canJump ? `Jump back to ${label}` : `${label} step`}
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 sm:h-12 sm:w-12 ${
+                    currentStep > step
+                      ? "bg-primary ring-primary/10 hover:ring-primary/30 cursor-pointer text-white ring-4"
+                      : currentStep === step
+                        ? "bg-primary ring-primary/20 cursor-default text-white ring-4"
+                        : "bg-muted/50 text-muted-foreground cursor-not-allowed"
                   }`}
                 >
-                  <span className="hidden sm:inline">{label}</span>
-                  <span className="inline sm:hidden">{shortLabel || label}</span>
-                </span>
+                  {currentStep > step ? (
+                    <RiCheckLine className="h-5 w-5 sm:h-6 sm:w-6" />
+                  ) : (
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  )}
+
+                  {currentStep === step && (
+                    <span className="border-primary absolute inset-0 animate-pulse rounded-full border-2" />
+                  )}
+                </button>
+
+                <div className="mt-3 w-full text-center sm:mt-4">
+                  <span
+                    className={`mb-0.5 block text-xs font-medium sm:text-sm ${
+                      currentStep >= step ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    <span className="hidden sm:inline">{label}</span>
+                    <span className="inline sm:hidden">{shortLabel || label}</span>
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -804,6 +901,12 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
               <p className="text-muted-foreground mt-1 text-xs">
                 Enter your website URL and click Auto Fill to automatically populate the form.
               </p>
+              {urlDuplicateWarning && !isCheckingUrl && (
+                <p className="mt-1.5 text-xs text-red-600">
+                  ⚠️ This URL has already been submitted. The final step will block this — please
+                  use a different URL.
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="sourceLocale">
