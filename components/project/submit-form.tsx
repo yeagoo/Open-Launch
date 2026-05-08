@@ -296,7 +296,13 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       const response = await fetch("/api/projects/auto-fill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ websiteUrl: formData.websiteUrl }),
+        body: JSON.stringify({
+          websiteUrl: formData.websiteUrl,
+          // Tells the AI to write the description in the user's chosen
+          // description language. Brand name / tags / categories stay
+          // language-neutral; only the description is localized.
+          sourceLocale: formData.sourceLocale,
+        }),
         signal: AbortSignal.timeout(90000),
       })
 

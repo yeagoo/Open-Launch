@@ -434,11 +434,27 @@ export interface ProjectAutoFillResult {
   platforms: string[]
 }
 
+// English-language names of each supported locale for embedding in LLM
+// prompts. Keep in sync with i18n/routing.ts.
+const LOCALE_TO_LANGUAGE_NAME: Record<string, string> = {
+  en: "English",
+  zh: "Simplified Chinese",
+  es: "Spanish",
+  pt: "Portuguese",
+  fr: "French",
+  ja: "Japanese",
+  ko: "Korean",
+  et: "Estonian",
+}
+
 export async function extractProjectInfo(
   crawledMarkdown: string,
   crawledTitle: string | undefined,
   availableCategories: string[],
+  outputLocale: string = "en",
 ): Promise<ProjectAutoFillResult> {
+  const targetLanguage = LOCALE_TO_LANGUAGE_NAME[outputLocale] ?? "English"
+
   const systemPrompt = `You are a product analyst. Given the crawled content of a website, extract structured information about the product/project.
 
 Available categories to choose from (pick 1-3 that best match):
@@ -458,9 +474,16 @@ Return a JSON object:
   "platforms": ["web", ...]
 }
 
-Rules:
+Output language rules:
+- Write the "description" field IN ${targetLanguage}. If the source content is not in ${targetLanguage}, translate it.
+- "name" should stay in its original brand form (do NOT translate brand names — "Notion" stays "Notion", not 概念 or 概念应用; "Vercel" stays "Vercel").
+- "tags" must remain in lowercase English kebab-case regardless of output language (e.g. "ai", "developer-tools").
+- "categoryNames" must be exact strings from the provided category list — do not translate.
+- "pricing" and "platforms" are enum values, do not translate.
+
+Field rules:
 - For name: use the product/brand name, not the full HTML title tag
-- For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for 300-500 characters of visible text.
+- For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for 300-500 characters of visible text (count visible characters in ${targetLanguage}, not bytes).
 - For logoUrl: look for og:image, apple-touch-icon, or favicon references. Return the full absolute URL. Prefer og:image, then apple-touch-icon, then favicon.
 - For tags: suggest 3-8 lowercase kebab-case tags relevant to the product (e.g. "ai", "developer-tools", "open-source")
 - For categoryNames: ONLY use names from the provided list above, pick 1-3
