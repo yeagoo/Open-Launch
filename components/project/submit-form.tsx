@@ -151,8 +151,51 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
   const [availableDates, setAvailableDates] = useState<LaunchAvailability[]>([])
   const [isLoadingDates, setIsLoadingDates] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  // Two-tier error model:
+  //   - fieldErrors: per-field validation messages rendered inline below
+  //     the relevant input. Populated by nextStep / handleFinalSubmit.
+  //   - formError: cross-cutting messages with no obvious field anchor
+  //     (network failures, server submit errors, upload failures).
+  //     Rendered as a top banner.
+  // Field IDs in this map double as DOM ids — see scrollToFirstError.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [formError, setFormError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
+
+  function clearAllErrors() {
+    setFieldErrors({})
+    setFormError(null)
+    setLaunchDateLimitError(null)
+  }
+
+  // Inline error renderer — falsy / empty string = render nothing.
+  const FieldError = ({ field }: { field: string }) =>
+    fieldErrors[field] ? (
+      <p className="mt-1 text-xs text-red-600" role="alert">
+        {fieldErrors[field]}
+      </p>
+    ) : null
+
+  // Scroll the first errored field into view and focus it if focusable.
+  // The order of fields in the returned object matters — the iteration
+  // order matches insertion order, so callers should add errors in the
+  // visual top-to-bottom order they appear on the form.
+  function scrollToFirstError(errors: Record<string, string>) {
+    const firstField = Object.keys(errors)[0]
+    if (!firstField) return
+    setTimeout(() => {
+      const el = document.getElementById(firstField)
+      if (!el) return
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      if (
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        el instanceof HTMLSelectElement
+      ) {
+        el.focus({ preventScroll: true })
+      }
+    }, 0)
+  }
 
   const [isLaunchDateOverLimit, setIsLaunchDateOverLimit] = useState(false)
   const [launchDateLimitError, setLaunchDateLimitError] = useState<string | null>(null)
@@ -298,7 +341,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       setAvailableDates(availability)
     } catch (err) {
       console.error("Error loading dates:", err)
-      setError("Failed to load available dates")
+      setFormError("Failed to load available dates")
     } finally {
       setIsLoadingDates(false)
     }
@@ -338,7 +381,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       setCategories(data)
     } catch (err) {
       console.error("Error fetching categories:", err)
-      setError("Failed to load categories")
+      setFormError("Failed to load categories")
     } finally {
       setIsLoadingCategories(false)
     }
@@ -350,12 +393,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     try {
       new URL(formData.websiteUrl)
     } catch {
-      setError("Please enter a valid URL before using Auto Fill.")
+      setFieldErrors((prev) => ({ ...prev, websiteUrl: "Please enter a valid URL first" }))
       return
     }
 
     setIsAutoFilling(true)
-    setError(null)
+    clearAllErrors()
 
     try {
       const response = await fetch("/api/projects/auto-fill", {
@@ -403,7 +446,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       }
     } catch (err) {
       console.error("Auto-fill error:", err)
-      setError(err instanceof Error ? err.message : "Failed to auto-fill. Please try again.")
+      setFormError(err instanceof Error ? err.message : "Failed to auto-fill. Please try again.")
     } finally {
       setIsAutoFilling(false)
     }
@@ -520,58 +563,58 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     }
   }, [formData.websiteUrl])
 
-  const nextStep = () => {
-    setError(null)
-    setLaunchDateLimitError(null)
-    if (currentStep === 1) {
-      if (
-        !formData.name ||
-        !formData.websiteUrl ||
-        !formData.description ||
-        (process.env.NODE_ENV !== "development" && !uploadedLogoUrl)
-      ) {
-        setError("Please fill in all required project information and upload the logo.")
-        return
+  // Validate the visible step. Collect ALL field errors at once (insertion
+  // order matches visual top-to-bottom) so the user can see every problem
+  // and the scroll target lands on the topmost one.
+  const validateStep = (step: number): Record<string, string> => {
+    const errs: Record<string, string> = {}
+    if (step === 1) {
+      if (!formData.name) errs.name = "Project name is required"
+      if (!formData.websiteUrl) {
+        errs.websiteUrl = "Website URL is required"
+      } else {
+        try {
+          new URL(formData.websiteUrl)
+        } catch {
+          errs.websiteUrl = "Please enter a valid URL (https://...)"
+        }
       }
-      try {
-        new URL(formData.websiteUrl)
-      } catch {
-        setError("Please enter a valid website URL.")
-        return
+      if (!formData.description) errs.description = "Description is required"
+      if (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) {
+        errs.logoUrl = "Logo is required"
       }
-    }
-
-    if (currentStep === 2) {
-      if (
-        formData.categories.length === 0 ||
-        formData.techStack.length === 0 ||
-        formData.platforms.length === 0 ||
-        !formData.pricing
-      ) {
-        setError("Please complete the technical details and categorization.")
-        return
+    } else if (step === 2) {
+      if (formData.categories.length === 0) {
+        errs.categories = "Pick at least one category"
+      } else if (formData.categories.length > 3) {
+        errs.categories = "Maximum 3 categories"
       }
-
-      if (formData.categories.length > 3) {
-        setError("You can select a maximum of 3 categories.")
-        return
+      if (formData.techStack.length === 0) {
+        errs.techStack = "Add at least one tag"
+      } else if (formData.techStack.length > 10) {
+        errs.techStack = "Maximum 10 tags"
       }
-
-      if (formData.techStack.length > 10) {
-        setError("You can add a maximum of 10 tags.")
-        return
+      if (formData.platforms.length === 0) {
+        errs.platforms = "Select at least one platform"
       }
-    }
-
-    if (currentStep === 3) {
+      if (!formData.pricing) errs.pricing = "Select a pricing model"
+    } else if (step === 3) {
       if (!formData.scheduledDate) {
-        setError("Please select a launch date.")
-        return
+        errs.scheduledDate = "Pick a launch date"
+      } else if (isLaunchDateOverLimit) {
+        errs.scheduledDate = launchDateLimitError || "This date exceeds your daily launch limit"
       }
-      if (isLaunchDateOverLimit) {
-        setError(launchDateLimitError || "This launch date is not available due to daily limit.")
-        return
-      }
+    }
+    return errs
+  }
+
+  const nextStep = () => {
+    clearAllErrors()
+    const errs = validateStep(currentStep)
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs)
+      scrollToFirstError(errs)
+      return
     }
 
     setCurrentStep((prev) => Math.min(prev + 1, 4))
@@ -582,8 +625,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   }
 
   const prevStep = () => {
-    setError(null)
-    setLaunchDateLimitError(null)
+    clearAllErrors()
     setCurrentStep((prev) => Math.max(prev - 1, 1))
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -591,55 +633,28 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   }
 
   const handleFinalSubmit = async () => {
-    if (
-      !formData.name ||
-      !formData.websiteUrl ||
-      !formData.description ||
-      (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) ||
-      formData.categories.length === 0 ||
-      formData.platforms.length === 0 ||
-      !formData.pricing
-    ) {
-      setError(
-        "Some required information or the logo is missing. Please go back and complete all fields.",
-      )
-      setIsPending(false)
-      return
+    clearAllErrors()
+
+    // Re-validate every step from scratch — the user may have jumped
+    // back and edited Step 1 fields after Review.
+    const allErrs: Record<string, string> = {
+      ...validateStep(1),
+      ...validateStep(2),
+      ...validateStep(3),
     }
 
-    const urlExists = await checkWebsiteUrl(formData.websiteUrl)
-    if (urlExists) {
-      setError("This website URL has already been submitted. Please use a different URL.")
-      setIsPending(false)
-      return
-    }
-
-    if (isLaunchDateOverLimit && formData.scheduledDate) {
-      setError(
-        launchDateLimitError || "Cannot submit: The selected launch date exceeds your daily limit.",
-      )
-      setIsPending(false)
+    if (Object.keys(allErrs).length > 0) {
+      setFieldErrors(allErrs)
+      scrollToFirstError(allErrs)
       return
     }
 
     setIsPending(true)
-    setError(null)
-    setLaunchDateLimitError(null)
 
-    if (formData.techStack.length === 0) {
-      setError("Please enter at least one tag in Product Tags.")
-      setIsPending(false)
-      return
-    }
-
-    if (formData.categories.length > 3) {
-      setError("You can select a maximum of 3 categories.")
-      setIsPending(false)
-      return
-    }
-
-    if (formData.techStack.length > 10) {
-      setError("You can add a maximum of 10 tags.")
+    const urlExists = await checkWebsiteUrl(formData.websiteUrl)
+    if (urlExists) {
+      setFieldErrors({ websiteUrl: "This URL has already been submitted" })
+      scrollToFirstError({ websiteUrl: "" })
       setIsPending(false)
       return
     }
@@ -705,7 +720,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           await deleteMyDraftProject(projectId).catch((e) =>
             console.error("Failed to clean up draft project:", e),
           )
-          setError(
+          setFormError(
             scheduleError instanceof Error
               ? scheduleError.message
               : "An error occurred during scheduling.",
@@ -735,7 +750,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       }
     } catch (submissionError: unknown) {
       console.error("Error during final submission:", submissionError)
-      setError(
+      setFormError(
         submissionError instanceof Error
           ? submissionError.message
           : "An unexpected error occurred.",
@@ -754,8 +769,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   // forward in two clicks make it easy to fix mistakes after Review.
   const goToStep = (step: number) => {
     if (step >= currentStep) return
-    setError(null)
-    setLaunchDateLimitError(null)
+    clearAllErrors()
     setCurrentStep(step)
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0)
   }
@@ -891,6 +905,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 placeholder="My Awesome Project"
                 required
               />
+              <FieldError field="name" />
             </div>
             <div>
               <Label htmlFor="websiteUrl">
@@ -926,12 +941,13 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Enter your website URL and click Auto Fill to automatically populate the form.
               </p>
-              {urlDuplicateWarning && !isCheckingUrl && (
+              {urlDuplicateWarning && !isCheckingUrl && !fieldErrors.websiteUrl && (
                 <p className="mt-1.5 text-xs text-red-600">
                   ⚠️ This URL has already been submitted. The final step will block this — please
                   use a different URL.
                 </p>
               )}
+              <FieldError field="websiteUrl" />
             </div>
             <div>
               <Label htmlFor="sourceLocale">
@@ -962,7 +978,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div id="description">
               <Label htmlFor="description">
                 Description <span className="text-red-500">*</span>
               </Label>
@@ -972,8 +988,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 placeholder="Describe your project"
                 className="max-h-[300px] overflow-y-auto"
               />
+              <FieldError field="description" />
             </div>
-            <div className="space-y-2">
+            <div id="logoUrl" className="space-y-2">
               <Label htmlFor="logoUrl">
                 Logo (Max 1MB) <span className="text-red-500">*</span>
               </Label>
@@ -1007,7 +1024,8 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     onUploadBegin={() => {
                       console.log("Upload Begin (Logo)")
                       setIsUploadingLogo(true)
-                      setError(null)
+                      setFieldErrors((prev) => ({ ...prev, logoUrl: "" }))
+                      setFormError(null)
                     }}
                     onClientUploadComplete={(res) => {
                       console.log("Upload Response (Logo):", res)
@@ -1017,13 +1035,19 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         console.log("Logo URL set:", res[0].serverData.fileUrl)
                       } else {
                         console.error("Logo upload failed: No URL", res)
-                        setError("Logo upload failed: No URL returned.")
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          logoUrl: "Logo upload failed: No URL returned.",
+                        }))
                       }
                     }}
                     onUploadError={(error: Error) => {
                       console.error("Upload Error (Logo):", error)
                       setIsUploadingLogo(false)
-                      setError(`Logo upload failed: ${error.message}`)
+                      setFieldErrors((prev) => ({
+                        ...prev,
+                        logoUrl: `Logo upload failed: ${error.message}`,
+                      }))
                     }}
                     appearance={{
                       button: `ut-button border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 inline-flex items-center justify-center gap-2 rounded-md ${isUploadingLogo ? "opacity-50 pointer-events-none" : ""}`,
@@ -1047,6 +1071,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   )}
                 </div>
               )}
+              <FieldError field="logoUrl" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="productImage">
@@ -1082,7 +1107,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     onUploadBegin={() => {
                       console.log("Upload Begin (Product Image)")
                       setIsUploadingProductImage(true)
-                      setError(null)
+                      setFormError(null)
                     }}
                     onClientUploadComplete={(res) => {
                       console.log("Upload Response (Product Image):", res)
@@ -1095,13 +1120,13 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         console.log("Product Image URL set:", res[0].serverData.fileUrl)
                       } else {
                         console.error("Product image upload failed: No URL", res)
-                        setError("Product image upload failed: No URL returned.")
+                        setFormError("Product image upload failed: No URL returned.")
                       }
                     }}
                     onUploadError={(error: Error) => {
                       console.error("Upload Error (Product Image):", error)
                       setIsUploadingProductImage(false)
-                      setError(`Product image upload failed: ${error.message}`)
+                      setFormError(`Product image upload failed: ${error.message}`)
                     }}
                     appearance={{
                       button: `ut-button flex items-center w-fit gap-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm h-9 px-3 rounded-md ${isUploadingProductImage ? "opacity-50 pointer-events-none" : ""}`,
@@ -1131,7 +1156,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       case 2:
         return (
           <div className="space-y-8">
-            <div>
+            <div id="categories">
               <Label className="mb-2 block">
                 Categories <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
@@ -1151,9 +1176,13 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                         checked={formData.categories.includes(cat.id)}
                         onCheckedChange={(checked) => {
                           if (checked && formData.categories.length >= 3) {
-                            setError("You can select a maximum of 3 categories.")
+                            setFieldErrors((prev) => ({
+                              ...prev,
+                              categories: "Maximum 3 categories",
+                            }))
                             return
                           }
+                          setFieldErrors((prev) => ({ ...prev, categories: "" }))
                           handleCheckboxChange("categories", cat.id, !!checked)
                         }}
                       />
@@ -1169,9 +1198,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Select up to 3 relevant categories.
               </p>
+              <FieldError field="categories" />
             </div>
 
-            <div>
+            <div id="techStack">
               <Label htmlFor={tagInputId}>
                 Product Tags <span className="text-red-500">*</span>
                 <span className="text-muted-foreground ml-2 text-xs">
@@ -1183,9 +1213,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 tags={techStackTags}
                 setTags={(newTags) => {
                   if (newTags.length > 10) {
-                    setError("You can add a maximum of 10 tags.")
+                    setFieldErrors((prev) => ({ ...prev, techStack: "Maximum 10 tags" }))
                     return
                   }
+                  setFieldErrors((prev) => ({ ...prev, techStack: "" }))
                   setTechStackTags(newTags)
                 }}
                 placeholder="e.g. ai, saas, open-source, developer-tools..."
@@ -1207,9 +1238,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Add up to 10 tags to help users discover your project. Press Enter or comma to add.
               </p>
+              <FieldError field="techStack" />
             </div>
 
-            <div>
+            <div id="platforms">
               <Label className="mb-2 block">
                 Platforms <span className="text-red-500">*</span>
               </Label>
@@ -1235,9 +1267,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Select all platforms your project supports.
               </p>
+              <FieldError field="platforms" />
             </div>
 
-            <div>
+            <div id="pricing">
               <Label className="mb-2 block">
                 Pricing Model <span className="text-red-500">*</span>
               </Label>
@@ -1258,6 +1291,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   </div>
                 ))}
               </RadioGroup>
+              <FieldError field="pricing" />
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -1589,7 +1623,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   No available launch dates found for the selected type in the allowed range.
                 </p>
               ) : (
-                <div>
+                <div id="scheduledDate">
                   <Select
                     onValueChange={(value) =>
                       setFormData((prev) => ({ ...prev, scheduledDate: value }))
@@ -1672,11 +1706,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     </SelectContent>
                   </Select>
 
-                  {launchDateLimitError && (
+                  {launchDateLimitError && !fieldErrors.scheduledDate && (
                     <p className="text-destructive mt-2 text-xs sm:text-sm">
                       {launchDateLimitError}
                     </p>
                   )}
+                  <FieldError field="scheduledDate" />
 
                   {formData.scheduledDate && !isLaunchDateOverLimit && (
                     <div className="bg-primary/5 border-primary/10 mt-3 rounded-md border p-3 text-sm">
@@ -2003,9 +2038,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
       {renderStepContent()}
 
-      {error && (
+      {formError && (
         <div className="bg-destructive/10 border-destructive/30 text-destructive rounded-md border p-3 text-sm">
-          {error}
+          {formError}
         </div>
       )}
 
