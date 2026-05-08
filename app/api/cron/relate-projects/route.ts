@@ -8,7 +8,7 @@ import {
   projectToTag,
   tag as tagTable,
 } from "@/drizzle/db/schema"
-import { eq, inArray, sql } from "drizzle-orm"
+import { and, eq, inArray, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
@@ -48,7 +48,8 @@ export async function GET(request: NextRequest) {
     .from(project)
     .where(
       sql`NOT EXISTS (SELECT 1 FROM ${projectRelated} WHERE ${projectRelated.projectId} = ${project.id})
-          AND (${project.relatedAttemptedAt} IS NULL OR ${project.relatedAttemptedAt} < ${reattemptCutoff})`,
+          AND (${project.relatedAttemptedAt} IS NULL OR ${project.relatedAttemptedAt} < ${reattemptCutoff})
+          AND ${project.isLowQuality} = false`,
     )
     .limit(MAX_PROJECTS_PER_RUN)
 
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
           description: project.description,
         })
         .from(project)
-        .where(inArray(project.id, candidateIds))
+        .where(and(inArray(project.id, candidateIds), eq(project.isLowQuality, false)))
         .limit(CANDIDATE_LIMIT)
 
       const candidateTagsRows = await db

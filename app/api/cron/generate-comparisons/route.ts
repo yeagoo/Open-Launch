@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
               eq(projectTable.launchStatus, launchStatus.ONGOING),
               eq(projectTable.launchStatus, launchStatus.LAUNCHED),
             ),
+            eq(projectTable.isLowQuality, false),
           ),
         )
         .groupBy(

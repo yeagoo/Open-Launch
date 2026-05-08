@@ -153,10 +153,24 @@ export async function updateProject(
     const descriptionChanged = currentSourceRow?.description !== sanitized
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(project)
-        .set({ description: sanitized, updatedAt: new Date() })
-        .where(eq(project.id, projectId))
+      const projectUpdates: {
+        description: string
+        updatedAt: Date
+        qualityCheckedAt?: Date | null
+      } = { description: sanitized, updatedAt: new Date() }
+      if (descriptionChanged) {
+        // Description was edited — the previous quality verdict was based on
+        // stale copy, so clear the timestamp so quality-check-projects cron
+        // re-classifies on its next tick.
+        // We deliberately keep `is_low_quality` as-is in the meantime: if
+        // the project was previously flagged, leaving it un-flagged for the
+        // few minutes until the cron re-runs would let a bad-faith owner
+        // briefly grab bot engagement and AI-generated SEO content by
+        // submitting an edit. The cron will flip the flag if the new copy
+        // genuinely earns a higher score.
+        projectUpdates.qualityCheckedAt = null
+      }
+      await tx.update(project).set(projectUpdates).where(eq(project.id, projectId))
 
       if (!descriptionChanged) {
         // No-op as far as translations go — keep the existing source row,

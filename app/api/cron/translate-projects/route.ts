@@ -37,21 +37,22 @@ export async function GET(request: NextRequest) {
     })
     .from(project)
     .where(
-      sql`(
-        SELECT COUNT(*) FROM ${projectTranslation}
-        WHERE ${projectTranslation.projectId} = ${project.id}
-      ) < ${ALL_LOCALES.length}
-      OR EXISTS (
-        SELECT 1
-        FROM ${projectTranslation} en_t
-        JOIN ${projectTranslation} other_t
-          ON other_t.project_id = en_t.project_id
-        WHERE en_t.project_id = ${project.id}
-          AND en_t.locale = 'en'
-          AND en_t.long_description IS NOT NULL
-          AND other_t.locale <> 'en'
-          AND other_t.long_description IS NULL
-      )`,
+      sql`${project.isLowQuality} = false
+        AND ((
+          SELECT COUNT(*) FROM ${projectTranslation}
+          WHERE ${projectTranslation.projectId} = ${project.id}
+        ) < ${ALL_LOCALES.length}
+        OR EXISTS (
+          SELECT 1
+          FROM ${projectTranslation} en_t
+          JOIN ${projectTranslation} other_t
+            ON other_t.project_id = en_t.project_id
+          WHERE en_t.project_id = ${project.id}
+            AND en_t.locale = 'en'
+            AND en_t.long_description IS NOT NULL
+            AND other_t.locale <> 'en'
+            AND other_t.long_description IS NULL
+        ))`,
     )
     .limit(MAX_PROJECTS_PER_RUN)
 

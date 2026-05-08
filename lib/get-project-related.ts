@@ -33,6 +33,9 @@ export async function getRelatedProjects(
 
   const ids = relations.map((r) => r.relatedId)
 
+  // Drop any related entries pointing at a now-flagged project. The cron
+  // filters at write time, but historical `project_related` rows may still
+  // reference projects that have since been marked low-quality.
   const projects = await db
     .select({
       id: project.id,
@@ -42,7 +45,7 @@ export async function getRelatedProjects(
       logoUrl: project.logoUrl,
     })
     .from(project)
-    .where(inArray(project.id, ids))
+    .where(and(inArray(project.id, ids), eq(project.isLowQuality, false)))
 
   const projectsById = new Map(projects.map((p) => [p.id, p]))
 
