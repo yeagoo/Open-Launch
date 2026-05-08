@@ -34,6 +34,10 @@ export interface LaunchAvailability {
   badgeSlots: number // Badge 验证用户配额
   premiumSlots: number // Premium Launch 配额（保留但不再区分）
   totalSlots: number
+  // Total projects already scheduled for this date (across all launch
+  // types). Drives the "crowdedness" badge in the submit form date
+  // picker — distinct from `*Slots` which are *remaining* capacity.
+  scheduledCount: number
 }
 
 // Fonction pour obtenir la disponibilité des lancements pour une date spécifique
@@ -81,6 +85,7 @@ export async function getLaunchAvailability(date: string): Promise<LaunchAvailab
     badgeSlots,
     premiumSlots,
     totalSlots,
+    scheduledCount: totalCount,
   }
 }
 

@@ -6,6 +6,17 @@ export const LAUNCH_LIMITS = {
   TOTAL_DAILY_LIMIT: 10, // 总配额：5 基础 + 5 Badge
 } as const
 
+// Tiering for the "crowdedness" badge shown next to each launch date in
+// the submit form. Helps users pick less-competitive days to maximize
+// their launch's exposure on the homepage.
+//   <= LOW   → green ("plenty of room")
+//   <= MEDIUM → yellow ("getting busy")
+//   >  MEDIUM → red ("crowded")
+export const LAUNCH_CROWDEDNESS_THRESHOLDS = {
+  LOW: 3,
+  MEDIUM: 6,
+} as const
+
 // 用户每日发布限制（不再区分 Premium）
 export const USER_DAILY_LAUNCH_LIMIT = 5 // 所有用户每天最多 5 个项目
 
