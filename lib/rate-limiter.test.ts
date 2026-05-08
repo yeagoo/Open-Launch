@@ -22,7 +22,7 @@ describe("RateLimiter", () => {
       limiter.acquire(),
     ])
     expect(Date.now() - start).toBeLessThan(50)
-    expect(limiter.inFlightCount()).toBe(5)
+    expect(limiter.slotsInWindow()).toBe(5)
   })
 
   it("queues the (max+1)th call until the oldest slot ages out", async () => {

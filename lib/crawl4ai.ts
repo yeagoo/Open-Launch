@@ -65,6 +65,7 @@ export async function getCachedOrCrawl(
   const result = await crawlUrl(url, options)
   const id = crypto.randomUUID()
   const expiresAt = addDays(now, ttlDays)
+  const contentHash = await hashContent(result.markdown)
 
   await db
     .insert(crawledData)
@@ -73,7 +74,7 @@ export async function getCachedOrCrawl(
       url,
       projectId,
       content: result.markdown,
-      contentHash: await hashContent(result.markdown),
+      contentHash,
       crawledAt: result.crawledAt,
       expiresAt,
       createdAt: now,
@@ -83,7 +84,7 @@ export async function getCachedOrCrawl(
       target: crawledData.url,
       set: {
         content: result.markdown,
-        contentHash: await hashContent(result.markdown),
+        contentHash,
         crawledAt: result.crawledAt,
         expiresAt,
         projectId,
@@ -106,20 +107,22 @@ async function hashContent(content: string): Promise<string> {
 // Kept inline for the rollout window. After Tinyfish is validated in prod we
 // can delete this block plus the CRAWL4AI_URL / CRAWL4AI_API_TOKEN env vars.
 
-const CRAWL4AI_BASE_URL = process.env.CRAWL4AI_URL
-const CRAWL4AI_API_TOKEN = process.env.CRAWL4AI_API_TOKEN
-
 export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promise<CrawlResult> {
-  if (!CRAWL4AI_BASE_URL) {
+  // Read env at call time so ops can flip keys without a redeploy and tests
+  // can swap with vi.stubEnv.
+  const baseUrl = process.env.CRAWL4AI_URL
+  const apiToken = process.env.CRAWL4AI_API_TOKEN
+
+  if (!baseUrl) {
     throw new CrawlError(url, "CRAWL4AI_URL environment variable is not set")
   }
 
   const timeout = options?.timeout ?? 60_000
   const headers: Record<string, string> = { "Content-Type": "application/json" }
-  if (CRAWL4AI_API_TOKEN) headers["Authorization"] = `Bearer ${CRAWL4AI_API_TOKEN}`
+  if (apiToken) headers["Authorization"] = `Bearer ${apiToken}`
 
   try {
-    const submitResponse = await fetch(`${CRAWL4AI_BASE_URL}/crawl`, {
+    const submitResponse = await fetch(`${baseUrl}/crawl`, {
       method: "POST",
       headers,
       body: JSON.stringify({ urls: [url], word_count_threshold: 10, bypass_cache: false }),
@@ -151,7 +154,7 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
     const pollInterval = 2_000
     while (Date.now() - startTime < timeout) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval))
-      const statusResponse = await fetch(`${CRAWL4AI_BASE_URL}/task/${taskId}`, {
+      const statusResponse = await fetch(`${baseUrl}/task/${taskId}`, {
         headers,
         signal: AbortSignal.timeout(10_000),
       })

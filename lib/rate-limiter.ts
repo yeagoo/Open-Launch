@@ -50,8 +50,13 @@ export class RateLimiter {
     return this.queue.length
   }
 
-  /** Slots used in the current window — useful for monitoring. */
-  inFlightCount(): number {
+  /**
+   * Number of `acquire()` grants made in the past `windowMs` — useful for
+   * monitoring. Note: this counts *issued* requests, not currently-running
+   * ones. A slot stays counted until it ages out, even if the caller's
+   * downstream work has already finished or failed.
+   */
+  slotsInWindow(): number {
     this.evictExpired()
     return this.slots.length
   }
