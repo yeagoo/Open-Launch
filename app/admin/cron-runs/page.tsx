@@ -2,8 +2,8 @@ import Link from "next/link"
 
 import { db } from "@/drizzle/db"
 import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
-import { format, formatDistanceToNow } from "date-fns"
-import { asc, desc, gte, sql } from "drizzle-orm"
+import { formatDistanceToNow } from "date-fns"
+import { asc, gte, sql } from "drizzle-orm"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
