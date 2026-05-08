@@ -1,6 +1,7 @@
 import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
+import { routing } from "@/i18n/routing"
 import sharp from "sharp"
 
 import { extractProjectInfo } from "@/lib/ai-content"
@@ -35,11 +36,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { websiteUrl } = body as { websiteUrl?: string }
+    const { websiteUrl, sourceLocale } = body as { websiteUrl?: string; sourceLocale?: string }
 
     if (!websiteUrl) {
       return NextResponse.json({ error: "websiteUrl is required" }, { status: 400 })
     }
+
+    // Whitelist sourceLocale against routing.locales — anything else falls
+    // back to English so a malformed body never reaches the LLM as raw input.
+    const outputLocale = (routing.locales as readonly string[]).includes(sourceLocale ?? "")
+      ? (sourceLocale as string)
+      : "en"
 
     // Validate URL
     let parsedUrl: URL
@@ -77,7 +84,12 @@ export async function POST(request: NextRequest) {
     // AI extraction
     let aiResult
     try {
-      aiResult = await extractProjectInfo(crawlResult.markdown, crawlResult.title, categoryNames)
+      aiResult = await extractProjectInfo(
+        crawlResult.markdown,
+        crawlResult.title,
+        categoryNames,
+        outputLocale,
+      )
     } catch (error) {
       console.error("Auto-fill AI extraction error:", error)
       return NextResponse.json(
