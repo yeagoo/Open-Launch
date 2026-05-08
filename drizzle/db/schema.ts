@@ -513,6 +513,24 @@ export const comparisonPage = pgTable(
   },
 )
 
+// Cooldown tracker so the comparison cron doesn't retry the same broken
+// pair every 30 min when the underlying crawl / AI call fails. See
+// app/api/cron/generate-comparisons/route.ts for the 24h skip window.
+export const comparisonAttempt = pgTable(
+  "comparison_attempt",
+  {
+    slug: text("slug").primaryKey(),
+    lastFailedAt: timestamp("last_failed_at").notNull().defaultNow(),
+    attemptCount: integer("attempt_count").notNull().default(1),
+    error: text("error"),
+  },
+  (table) => {
+    return {
+      lastFailedAtIdx: index("comparison_attempt_last_failed_at_idx").on(table.lastFailedAt),
+    }
+  },
+)
+
 // ─── Alternative pages ───────────────────────────────────────────────────────
 export const alternativePage = pgTable(
   "alternative_page",

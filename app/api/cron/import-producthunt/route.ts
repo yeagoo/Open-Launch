@@ -119,6 +119,19 @@ export async function GET(request: Request) {
         // 获取真实网站地址（跟随 ProductHunt 重定向）
         console.log(`🌐 Getting real website URL for "${post.name}"...`)
         const realWebsiteUrl = await getRealWebsiteUrl(post.website, post.url)
+        if (!realWebsiteUrl) {
+          // Resolution failed (PH bot challenge, dead link, etc.) — skip
+          // import. Storing the /r/ URL leads to permanent crawl failures
+          // for every downstream AI feature (translate, enrich, compare,
+          // alternatives), so it's better to drop the project entirely.
+          console.warn(`⏭️  Skipping "${post.name}": could not resolve website URL`)
+          results.push({
+            name: post.name,
+            status: "skipped",
+            reason: "URL resolve failed",
+          })
+          continue
+        }
         console.log(`✅ Website URL: ${realWebsiteUrl}`)
 
         // 下载并上传 logo 到 R2

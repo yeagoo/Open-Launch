@@ -356,40 +356,115 @@ function cleanTrackingParams(url: string): string {
  * @param websiteUrl ProductHunt 返回的 website URL
  * @param fallbackUrl 失败时的回退 URL（通常是 ProductHunt 页面）
  */
-export async function getRealWebsiteUrl(websiteUrl: string, fallbackUrl: string): Promise<string> {
-  // 如果不是 ProductHunt 重定向链接，直接返回（但也清理参数）
+// Browser UA — alone not enough to bypass PH's Cloudflare, but required
+// to avoid the obvious-bot rejection.
+const BROWSER_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+const RESOLVE_TIMEOUT_MS = 15_000
+const MAX_REDIRECT_HOPS = 3
+
+/**
+ * Resolve a ProductHunt /r/ outbound-tracker URL to its real destination.
+ *
+ * PH's /r/ endpoint is behind Cloudflare's managed challenge which
+ * fingerprints HTTP/2 frame ordering and TLS handshake — not just UA.
+ * Bun's fetch, Node's undici, and even Tinyfish's real-browser fetch
+ * all get a 403 / bot_blocked. The one tool that consistently passes
+ * is curl, which speaks HTTP/2 with a different fingerprint. So we
+ * shell out to it.
+ *
+ * Returns the cleaned destination URL on success, or `null` if curl
+ * fails, the response isn't a 3xx, or the chain ends back on
+ * producthunt.com (broken /r/ link). Callers should treat null as
+ * "skip this project" — storing the /r/ URL caused 195 broken records
+ * that no downstream crawler could reach.
+ *
+ * Non-/r/ URLs are returned as-is (with tracking params stripped).
+ */
+export async function getRealWebsiteUrl(
+  websiteUrl: string,
+  // Kept in the signature for backwards compatibility — was used as the
+  // fallback on failure. Now we return null instead and the caller
+  // decides. Suppress unused-arg lint via an explicit no-op reference.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _fallbackUrl: string,
+): Promise<string | null> {
+  // Not a PH wrapper URL — strip tracking params and return.
   if (!websiteUrl.includes("producthunt.com/r/")) {
     return cleanTrackingParams(websiteUrl)
   }
 
-  try {
-    console.log(`🔗 Following redirect: ${websiteUrl}`)
-
-    // 使用 HEAD 请求跟随重定向
-    const response = await fetch(websiteUrl, {
-      method: "HEAD",
-      redirect: "manual", // 不自动跟随重定向
-      headers: {
-        "User-Agent": "aat.ee/1.0",
-      },
-      signal: AbortSignal.timeout(5000), // 5 秒超时
-    })
-
-    // 检查是否有重定向
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location")
-      if (location) {
-        const cleanedUrl = cleanTrackingParams(location)
-        console.log(`✅ Real website: ${cleanedUrl}`)
-        return cleanedUrl
-      }
+  let current = websiteUrl
+  for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop++) {
+    const result = await curlHead(current)
+    if (!result) return null
+    if (result.status < 300 || result.status >= 400) {
+      console.warn(`🔗 PH resolve: ${current} → HTTP ${result.status}, giving up at hop ${hop}`)
+      return null
     }
+    if (!result.location) {
+      console.warn(`🔗 PH resolve: ${current} → 3xx with no Location header`)
+      return null
+    }
+    if (!result.location.includes("producthunt.com")) {
+      return cleanTrackingParams(result.location)
+    }
+    current = result.location
+  }
+  console.warn(`🔗 PH resolve: ${websiteUrl} → too many redirects (max ${MAX_REDIRECT_HOPS})`)
+  return null
+}
 
-    // 如果没有重定向，返回原始 URL
-    return cleanTrackingParams(websiteUrl)
-  } catch (error) {
-    console.error(`⚠️  Failed to get real website URL:`, error)
-    // 失败时使用 fallback URL（ProductHunt 页面）
-    return fallbackUrl
+/**
+ * One HEAD request via the `curl` CLI. Bun's fetch and Node's undici
+ * both get fingerprinted by Cloudflare on PH's /r/ endpoint, but curl
+ * passes — its HTTP/2 frame patterns are recognised as a real browser.
+ * We parse status + Location out of curl's `-I` output.
+ */
+async function curlHead(url: string): Promise<{ status: number; location: string | null } | null> {
+  const { execFile } = await import("node:child_process")
+  const { promisify } = await import("node:util")
+  const exec = promisify(execFile)
+  try {
+    const { stdout } = await exec(
+      "curl",
+      [
+        "-s",
+        "-I",
+        "--max-time",
+        String(Math.floor(RESOLVE_TIMEOUT_MS / 1000)),
+        "-H",
+        `User-Agent: ${BROWSER_UA}`,
+        "-H",
+        "Accept: text/html,application/xhtml+xml",
+        "-H",
+        "Accept-Language: en-US,en;q=0.9",
+        url,
+      ],
+      { timeout: RESOLVE_TIMEOUT_MS + 2_000 },
+    )
+    const lines = stdout.split(/\r?\n/)
+    let status = 0
+    let location: string | null = null
+    for (const line of lines) {
+      const httpMatch = line.match(/^HTTP\/[\d.]+\s+(\d+)/)
+      if (httpMatch) {
+        status = Number(httpMatch[1])
+        // Defensive: reset location on each new status line in case
+        // curl ever prints multiple (it shouldn't here — we don't pass
+        // -L).
+        location = null
+        continue
+      }
+      const locMatch = line.match(/^location:\s*(.+)$/i)
+      if (locMatch) location = locMatch[1].trim()
+    }
+    return { status, location }
+  } catch (err) {
+    console.warn(
+      `🔗 curl spawn failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
+    )
+    return null
   }
 }
