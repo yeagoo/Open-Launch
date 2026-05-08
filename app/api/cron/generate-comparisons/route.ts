@@ -4,13 +4,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import {
   category as categoryTable,
+  comparisonAttempt,
   comparisonPage,
   launchStatus,
   project as projectTable,
   projectToCategory,
   upvote,
 } from "@/drizzle/db/schema"
-import { and, count, desc, eq, or, sql } from "drizzle-orm"
+import { and, count, desc, eq, gte, or, sql } from "drizzle-orm"
 
 import { generateComparisonContent } from "@/lib/ai-content"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
@@ -22,6 +23,10 @@ export const maxDuration = 90
 
 const MAX_NEW_COMPARISONS_PER_RUN = 1
 const CRAWL_TIMEOUT = 15000 // 15s per crawl in cron context
+// How long to skip a comparison pair after a failed attempt. Without
+// this the cron retries the same broken pair every 30 min, burning
+// Tinyfish slots on URLs we already know are dead.
+const FAILURE_COOLDOWN_HOURS = 24
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,6 +130,25 @@ export async function GET(request: NextRequest) {
               continue
             }
 
+            // Skip if this pair failed recently — no point burning a
+            // Tinyfish slot every 30 min on URLs we already know are
+            // dead.
+            const cooldownCutoff = new Date(Date.now() - FAILURE_COOLDOWN_HOURS * 60 * 60 * 1000)
+            const [recentFailure] = await db
+              .select({ slug: comparisonAttempt.slug })
+              .from(comparisonAttempt)
+              .where(
+                and(
+                  eq(comparisonAttempt.slug, slug),
+                  gte(comparisonAttempt.lastFailedAt, cooldownCutoff),
+                ),
+              )
+              .limit(1)
+            if (recentFailure) {
+              skipped++
+              continue
+            }
+
             // Crawl both websites
             const [crawlA, crawlB] = await Promise.all([
               getCachedOrCrawl(projA.id, projA.websiteUrl, 7, { timeout: CRAWL_TIMEOUT }),
@@ -174,6 +198,30 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             console.error(`Error generating comparison ${projA.name} vs ${projB.name}:`, error)
             errors++
+            // Record the failure so we skip this pair for the next 24h.
+            // Postgres upsert: bump attempt_count + lastFailedAt on
+            // re-failure (e.g. once every 24h after cooldown expires).
+            const errMsg = error instanceof Error ? error.message : String(error)
+            try {
+              await db
+                .insert(comparisonAttempt)
+                .values({
+                  slug,
+                  lastFailedAt: new Date(),
+                  attemptCount: 1,
+                  error: errMsg.slice(0, 500),
+                })
+                .onConflictDoUpdate({
+                  target: comparisonAttempt.slug,
+                  set: {
+                    lastFailedAt: new Date(),
+                    attemptCount: sql`${comparisonAttempt.attemptCount} + 1`,
+                    error: errMsg.slice(0, 500),
+                  },
+                })
+            } catch (recordErr) {
+              console.error(`Failed to record comparison_attempt for ${slug}:`, recordErr)
+            }
           }
         }
       }
