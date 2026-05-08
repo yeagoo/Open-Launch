@@ -1,5 +1,9 @@
-import Image from "next/image"
-
+/* eslint-disable @next/next/no-img-element */
+// Avatars come from arbitrary OAuth providers (GitHub / Google / Microsoft
+// / Apple / Discord / etc.). Using next/image would require every host
+// to be in next.config.ts remotePatterns; an unknown host would throw at
+// runtime. A 40px <img> tag is the right tool here — small, plenty of
+// browser cache, no optimization win to gain.
 import { useTranslations } from "next-intl"
 
 interface MakerCardProps {
@@ -38,7 +42,7 @@ export function MakerCard({ creator }: MakerCardProps) {
       </p>
       <div className="flex items-center gap-3">
         {creator.image ? (
-          <Image
+          <img
             src={creator.image}
             alt={creator.name || "Maker"}
             width={40}

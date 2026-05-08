@@ -1,16 +1,20 @@
+import { project as projectSchema } from "@/drizzle/db/schema"
 import { RiExternalLinkLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 
 import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 
+type ProjectRow = typeof projectSchema.$inferSelect
+
 interface VisitWebsiteCardProps {
   websiteUrl: string
-  // Pass-through to getProjectWebsiteRelAttribute so detail-page dofollow
-  // rules apply (top-3 rank or badge verified → dofollow, otherwise
-  // nofollow). The helper handles all the policy.
-  launchStatus: string
-  launchType: string | null
-  dailyRanking: number | null
+  // Pulled from the schema so the types line up with
+  // getProjectWebsiteRelAttribute without `as never` escape hatches.
+  // The helper applies detail-page dofollow rules (top-3 rank or badge
+  // verified → dofollow, otherwise nofollow).
+  launchStatus: ProjectRow["launchStatus"]
+  launchType: ProjectRow["launchType"]
+  dailyRanking: ProjectRow["dailyRanking"]
   hasBadgeVerified: boolean
   isLowQuality: boolean
 }
@@ -33,13 +37,7 @@ export function VisitWebsiteCard({
 }: VisitWebsiteCardProps) {
   const t = useTranslations("project.sidebar")
   const rel = getProjectWebsiteRelAttribute(
-    {
-      launchStatus: launchStatus as never,
-      launchType: launchType as never,
-      dailyRanking,
-      hasBadgeVerified,
-      isLowQuality,
-    },
+    { launchStatus, launchType, dailyRanking, hasBadgeVerified, isLowQuality },
     { isDetailPage: true },
   )
 
