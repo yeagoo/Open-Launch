@@ -48,11 +48,12 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
 
   const timeout = options?.timeout ?? 60_000
 
-  // Wait for an in-process rate-limit slot before issuing the request.
-  // The limiter wait counts against the same per-call timeout — a caller
-  // willing to wait `timeout` ms total shouldn't have its budget consumed
-  // entirely by queue time, but at our load this is a safe simplification.
-  await fetchLimiter.acquire(timeout)
+  // Two-phase budget:
+  //   - Queue wait (acquire): up to 2 min — long enough to drain a 30-call
+  //     burst (~60s after first window expires) without rejecting tail
+  //     calls, but bounded so a runaway producer doesn't pile up forever.
+  //   - Network (fetch):       caller's `timeout`, default 60s.
+  await fetchLimiter.acquire(2 * 60_000)
 
   let response: Response
   try {
