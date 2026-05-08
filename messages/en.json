@@ -192,12 +192,17 @@
     "sidebar": {
       "achievement": "Achievement",
       "publisher": "Publisher",
+      "maker": "Maker",
       "unknownCreator": "Unknown creator",
       "launchDate": "Launch Date",
       "platform": "Platform",
       "pricing": "Pricing",
       "socials": "Socials",
-      "productKeywords": "Product Keywords"
+      "productKeywords": "Product Keywords",
+      "visitWebsite": "Visit Website",
+      "projectInfo": "Project Info",
+      "compareWith": "Compare with",
+      "alternatives": "Alternatives"
     },
     "comments": {
       "heading": "Comments",

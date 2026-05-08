@@ -197,7 +197,12 @@
       "platform": "Plataforma",
       "pricing": "Preço",
       "socials": "Redes sociais",
-      "productKeywords": "Palavras-chave do produto"
+      "productKeywords": "Palavras-chave do produto",
+      "maker": "Criador",
+      "visitWebsite": "Visitar site",
+      "projectInfo": "Informações do projeto",
+      "compareWith": "Comparar com",
+      "alternatives": "Alternativas"
     },
     "comments": {
       "heading": "Comentários",

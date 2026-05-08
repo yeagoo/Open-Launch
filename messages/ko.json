@@ -197,7 +197,12 @@
       "platform": "플랫폼",
       "pricing": "가격",
       "socials": "소셜",
-      "productKeywords": "제품 키워드"
+      "productKeywords": "제품 키워드",
+      "maker": "제작자",
+      "visitWebsite": "웹사이트 방문",
+      "projectInfo": "프로젝트 정보",
+      "compareWith": "비교",
+      "alternatives": "대안"
     },
     "comments": {
       "heading": "댓글",
