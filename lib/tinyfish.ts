@@ -76,7 +76,10 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
       signal: AbortSignal.timeout(timeout),
     })
   } catch (err) {
-    throw new CrawlError(url, err instanceof Error ? err.message : String(err))
+    // undici wraps low-level errors in TypeError("fetch failed") with the
+    // real cause (ETIMEDOUT / ENOTFOUND / SSL / abort) on `err.cause`.
+    // Surface both so the cron logs tell us *why*, not just "fetch failed".
+    throw new CrawlError(url, formatFetchError(err))
   }
 
   // Loud, distinct messages for the two operationally-meaningful failures.
@@ -118,4 +121,23 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     title: result.title,
     crawledAt: new Date(),
   }
+}
+
+function formatFetchError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err)
+  // Walk the cause chain, collecting `code` (Node sets ETIMEDOUT etc.) and
+  // each error's message. Stop at depth 5 to avoid pathological loops.
+  const parts: string[] = [`${err.name}: ${err.message}`]
+  let cause: unknown = (err as Error & { cause?: unknown }).cause
+  for (let depth = 0; depth < 5 && cause; depth++) {
+    if (cause instanceof Error) {
+      const code = (cause as NodeJS.ErrnoException).code
+      parts.push(`cause: ${code ? `${code} ` : ""}${cause.name}: ${cause.message}`)
+      cause = (cause as Error & { cause?: unknown }).cause
+    } else {
+      parts.push(`cause: ${String(cause)}`)
+      break
+    }
+  }
+  return parts.join(" | ")
 }
