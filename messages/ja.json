@@ -191,13 +191,17 @@
     },
     "sidebar": {
       "achievement": "実績",
-      "publisher": "公開者",
       "unknownCreator": "作成者不明",
       "launchDate": "公開日",
       "platform": "プラットフォーム",
       "pricing": "価格",
       "socials": "ソーシャル",
-      "productKeywords": "製品キーワード"
+      "productKeywords": "製品キーワード",
+      "maker": "作者",
+      "visitWebsite": "ウェブサイトを訪問",
+      "projectInfo": "プロジェクト情報",
+      "compareWith": "比較",
+      "alternatives": "代替手段"
     },
     "comments": {
       "heading": "コメント",
