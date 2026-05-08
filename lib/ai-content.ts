@@ -435,7 +435,14 @@ export interface ProjectAutoFillResult {
 }
 
 // English-language names of each supported locale for embedding in LLM
-// prompts. Keep in sync with i18n/routing.ts.
+// prompts.
+//
+// NOTE: When adding a locale, update three places:
+//   1. i18n/routing.ts (locales array)
+//   2. components/project/submit-form.tsx (SOURCE_LOCALE_LABELS — native
+//      name for the UI dropdown)
+//   3. this file (English name in LOCALE_TO_LANGUAGE_NAME + char-count
+//      target in CHAR_TARGETS_BY_LOCALE for the LLM prompt)
 const LOCALE_TO_LANGUAGE_NAME: Record<string, string> = {
   en: "English",
   zh: "Simplified Chinese",
@@ -447,6 +454,22 @@ const LOCALE_TO_LANGUAGE_NAME: Record<string, string> = {
   et: "Estonian",
 }
 
+// Visible-character targets for the description, tuned per script. CJK
+// characters carry ~2x the information density of Latin letters — using
+// the same numeric range produces a giant wall of text that breaks the
+// project page layout. Roughly: Latin scripts 300-500, CJK 150-250
+// (Korean is in between).
+const CHAR_TARGETS_BY_LOCALE: Record<string, string> = {
+  en: "300-500",
+  es: "300-500",
+  pt: "300-500",
+  fr: "300-500",
+  et: "300-500",
+  zh: "150-250",
+  ja: "150-250",
+  ko: "200-300",
+}
+
 export async function extractProjectInfo(
   crawledMarkdown: string,
   crawledTitle: string | undefined,
@@ -454,6 +477,7 @@ export async function extractProjectInfo(
   outputLocale: string = "en",
 ): Promise<ProjectAutoFillResult> {
   const targetLanguage = LOCALE_TO_LANGUAGE_NAME[outputLocale] ?? "English"
+  const charTarget = CHAR_TARGETS_BY_LOCALE[outputLocale] ?? "300-500"
 
   const systemPrompt = `You are a product analyst. Given the crawled content of a website, extract structured information about the product/project.
 
@@ -466,7 +490,7 @@ Available pricing types: free, freemium, paid
 Return a JSON object:
 {
   "name": "Product/brand name (not the full page title)",
-  "description": "A rich HTML description of the product. 3-5 sentences. Use <strong> for key features, <blockquote> for a compelling quote or tagline, and optionally a simple <table> to compare plans or features. NO hyperlinks (<a> tags). 300-500 characters of visible text.",
+  "description": "A rich HTML description of the product. 3-5 sentences. Use <strong> for key features, <blockquote> for a compelling quote or tagline, and optionally a simple <table> to compare plans or features. NO hyperlinks (<a> tags). ${charTarget} characters of visible text in ${targetLanguage}.",
   "logoUrl": "The og:image URL, or apple-touch-icon URL, or highest-resolution favicon URL found in the page content. Full absolute URL. null if not found.",
   "tags": ["tag1", "tag2", ...],
   "categoryNames": ["Category Name 1", "Category Name 2"],
@@ -483,7 +507,7 @@ Output language rules:
 
 Field rules:
 - For name: use the product/brand name, not the full HTML title tag
-- For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for 300-500 characters of visible text (count visible characters in ${targetLanguage}, not bytes).
+- For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for ${charTarget} visible characters in ${targetLanguage}.
 - For logoUrl: look for og:image, apple-touch-icon, or favicon references. Return the full absolute URL. Prefer og:image, then apple-touch-icon, then favicon.
 - For tags: suggest 3-8 lowercase kebab-case tags relevant to the product (e.g. "ai", "developer-tools", "open-source")
 - For categoryNames: ONLY use names from the provided list above, pick 1-3
