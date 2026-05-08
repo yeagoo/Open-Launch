@@ -12,6 +12,8 @@
     "lint": "next lint",
     "prepare": "npx simple-git-hooks",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "update-launches": "bash ./scripts/update-launches.sh"
   },
   "simple-git-hooks": {
@@ -107,6 +109,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "cron-parser": "^5.5.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.40.1",
@@ -162,6 +165,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "drizzle-kit": "^0.30.6",
     "eslint": "^9.39.2",
     "eslint-config-next": "15.1.7",
@@ -171,6 +175,7 @@
     "simple-git-hooks": "^2.13.1",
     "sort-package-json": "^3.6.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
   }
 }

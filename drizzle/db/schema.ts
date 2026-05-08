@@ -563,6 +563,40 @@ export const alternativePageToProject = pgTable(
   },
 )
 
+// ─── Cron schedule + run log ─────────────────────────────────────────────────
+// Schedule rows are read by /api/cron/dispatch every minute to decide which
+// tasks to fire. Editable from /admin/cron-runs without redeploying.
+export const cronSchedule = pgTable("cron_schedule", {
+  id: serial("id").primaryKey(),
+  path: text("path").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  cronExpression: text("cron_expression").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  expectedDurationMs: integer("expected_duration_ms"),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+// One row per task per dispatcher tick where the task was due.
+export const cronRunLog = pgTable(
+  "cron_run_log",
+  {
+    id: serial("id").primaryKey(),
+    dispatchedAt: timestamp("dispatched_at").notNull().defaultNow(),
+    taskPath: text("task_path").notNull(),
+    statusCode: integer("status_code").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    error: text("error"),
+  },
+  (table) => {
+    return {
+      dispatchedIdx: index("cron_run_log_dispatched_idx").on(table.dispatchedAt),
+      taskIdx: index("cron_run_log_task_idx").on(table.taskPath, table.dispatchedAt),
+    }
+  },
+)
+
 // ─── AI usage log ────────────────────────────────────────────────────────────
 // One row per successful DeepSeek call so the admin dashboard can show
 // token spend over time, broken down by which library function made the call.
