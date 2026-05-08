@@ -66,11 +66,11 @@
   "home": {
     "metadata": {
       "today": "Lanzamientos de hoy en aat.ee",
-      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee: startups, herramientas de IA y SaaS"
+      "todayDesc": "Descubre los últimos lanzamientos de productos hoy en aat.ee - startups, herramientas de IA y productos SaaS"
     },
     "banner": {
       "title": "Plataforma de lanzamiento para tus productos",
-      "subtitle": "Envía, obtén una insignia y un enlace de retroceso"
+      "subtitle": "Envía, obtén una insignia y un enlace"
     },
     "sections": {
       "todayTitle": "Principales proyectos lanzados hoy",
@@ -79,14 +79,14 @@
       "topCategories": "Categorías principales",
       "quickAccess": "Acceso rápido",
       "linuxAlliance": "Alianza de Documentación de Linux",
-      "linuxAllianceFooter": "Consulta el ciclo de vida del soporte de software en:",
+      "linuxAllianceFooter": "Consulta el ciclo de vida del software en:",
       "recommended": "Recomendado",
-      "webcasaDesc": "Panel de control de servidor nativo de IA y código abierto",
+      "webcasaDesc": "Panel de control de servidor de código abierto nativo de IA",
       "litehttpdDesc": "Servidor web ligero, altamente compatible con Apache HTTPD",
-      "trendingNow": "Tendencias ahora",
+      "trendingNow": "Tendencia ahora",
       "dailyWinners": "Ganadores del día",
-      "bestOfMonth": "Lo mejor del mes",
-      "dashboard": "Panel",
+      "bestOfMonth": "Mejor del mes",
+      "dashboard": "Panel de control",
       "projectsCount": "{count} proyectos"
     }
   },
@@ -109,7 +109,7 @@
       "genericError": "Ocurrió un error",
       "successToast": "Sesión iniciada correctamente",
       "termsAgreement": "Al hacer clic en continuar, aceptas nuestros",
-      "termsOfService": "Términos del servicio",
+      "termsOfService": "Términos de servicio",
       "and": "y",
       "privacyPolicy": "Política de privacidad"
     },
@@ -148,7 +148,7 @@
     },
     "verifyEmail": {
       "sentTitle": "Revisa tu correo",
-      "sentMessage": "Enviamos un enlace de verificación a tu bandeja de entrada.",
+      "sentMessage": "Te enviamos un enlace de verificación a tu bandeja de entrada.",
       "successTitle": "¡Correo verificado!",
       "successMessage": "Tu cuenta está lista. Redirigiendo al panel..."
     }
@@ -160,7 +160,7 @@
       "empty": "Aún no hay proyectos."
     },
     "detail": {
-      "upvote": "Votar a favor",
+      "upvote": "Votar",
       "upvoted": "Votado",
       "visit": "Visitar",
       "share": "Compartir",
@@ -187,7 +187,7 @@
       "tags": "Etiquetas",
       "logo": "Logotipo",
       "submitButton": "Enviar proyecto",
-      "autoFill": "Rellenar automáticamente desde URL"
+      "autoFill": "Rellenar automáticamente desde la URL"
     },
     "sidebar": {
       "achievement": "Logro",
@@ -201,7 +201,7 @@
     },
     "comments": {
       "heading": "Comentarios",
-      "notLaunchedYet": "Los comentarios estarán disponibles una vez que se lance el proyecto.",
+      "notLaunchedYet": "Los comentarios estarán disponibles una vez que el proyecto sea lanzado.",
       "placeholder": "Añade un comentario...",
       "noComments": "Aún no hay comentarios. ¡Sé el primero!",
       "loading": "Cargando comentarios...",
@@ -218,13 +218,13 @@
       "replyingTo": "Respondiendo a {name}",
       "deleteConfirm": "¿Eliminar este comentario?",
       "deleteSuccess": "Comentario eliminado",
-      "deleteError": "Error al eliminar comentario",
+      "deleteError": "Error al eliminar el comentario",
       "editSuccess": "Comentario actualizado",
-      "editError": "Error al actualizar comentario",
-      "rateError": "Error al valorar comentario",
+      "editError": "Error al actualizar el comentario",
+      "rateError": "Error al valorar el comentario",
       "showReplies": "Mostrar {count, plural, one {# respuesta} other {# respuestas}}",
       "hideReplies": "Ocultar respuestas",
-      "justNow": "ahora mismo",
+      "justNow": "justo ahora",
       "minutesAgo": "hace {count, plural, one {# minuto} other {# minutos}}",
       "hoursAgo": "hace {count, plural, one {# hora} other {# horas}}",
       "daysAgo": "hace {count, plural, one {# día} other {# días}}"
@@ -233,13 +233,13 @@
   "pricing": {
     "title": "Precios",
     "subtitle": "Elige el plan que se ajuste a tu lanzamiento",
-    "free": "Gratuito",
+    "free": "Gratis",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
     "perLaunch": "por lanzamiento",
     "getStarted": "Comenzar",
     "subscribe": "Suscribirse",
-    "compareFeatures": "Comparar funciones"
+    "compareFeatures": "Comparar características"
   },
   "search": {
     "placeholder": "Buscar proyectos...",
@@ -250,7 +250,7 @@
     "generic": "Algo salió mal. Inténtalo de nuevo.",
     "unauthorized": "No autorizado",
     "notFound": "Página no encontrada",
-    "rateLimited": "Demasiadas solicitudes. Espera un momento.",
+    "rateLimited": "Demasiadas solicitudes. Por favor espera.",
     "serverError": "Error del servidor. Inténtalo más tarde."
   },
   "friends": {
@@ -259,15 +259,15 @@
     "backToHome": "Volver al inicio",
     "groups": {
       "linuxCommunities": "Comunidades Linux",
-      "toolsServices": "Herramientas y servicios",
-      "directories": "Directorios y descubrimiento",
-      "knowledgeReference": "Conocimiento y referencia"
+      "toolsServices": "Herramientas y Servicios",
+      "directories": "Directorios y Descubrimiento",
+      "knowledgeReference": "Conocimiento y Referencia"
     }
   },
   "metadata": {
     "projects": {
       "title": "Proyectos — Lanzamientos de este mes | aat.ee",
-      "description": "Explora los proyectos lanzados este mes en aat.ee: startups, herramientas de IA y SaaS."
+      "description": "Explora proyectos lanzados este mes en aat.ee — startups, herramientas de IA y productos SaaS."
     },
     "trending": {
       "title": "Tendencias — aat.ee",
@@ -275,7 +275,7 @@
     },
     "categories": {
       "title": "Categorías — aat.ee",
-      "description": "Explora productos tecnológicos por categoría en aat.ee: encuentra startups, herramientas de IA y aplicaciones SaaS."
+      "description": "Explora productos tecnológicos por categoría en aat.ee — encuentra startups, herramientas de IA y aplicaciones SaaS."
     },
     "winners": {
       "title": "Ganadores del día — aat.ee",
@@ -283,19 +283,19 @@
     },
     "tags": {
       "title": "Etiquetas — aat.ee",
-      "description": "Explora productos por etiqueta en aat.ee: IA, herramientas para desarrolladores, productividad y más."
+      "description": "Explora productos por etiqueta en aat.ee — IA, herramientas para desarrolladores, productividad y más."
     },
     "pricing": {
       "title": "Precios — aat.ee",
-      "description": "Compara paquetes de lanzamiento en aat.ee: niveles Gratuito, Premium y Premium Plus."
+      "description": "Compara paquetes de lanzamiento en aat.ee — niveles Gratis, Premium y Premium Plus."
     },
     "blog": {
       "title": "Blog — aat.ee",
-      "description": "Artículos, guías de lanzamiento y actualizaciones del equipo de aat.ee."
+      "description": "Artículos, guías de lanzamiento y actualizaciones de productos del equipo de aat.ee."
     },
     "badge": {
       "title": "Insignias destacadas — aat.ee",
-      "description": "Obtén una insignia de aat.ee para tu sitio y presume tu lanzamiento con un enlace de retroceso SEO."
+      "description": "Obtén una insignia de aat.ee para tu sitio y muestra tu lanzamiento, además de ganar un enlace SEO."
     },
     "sponsors": {
       "title": "Patrocinadores — aat.ee",
@@ -303,7 +303,7 @@
     },
     "reviews": {
       "title": "Reseñas de productos — aat.ee",
-      "description": "Reseñas y análisis detallados de los últimos productos y herramientas tecnológicas en aat.ee."
+      "description": "Reseñas y análisis en profundidad de los últimos productos y herramientas tecnológicas en aat.ee."
     }
   },
   "breadcrumb": {
@@ -315,65 +315,65 @@
     "winners": "Ganadores",
     "pricing": "Precios",
     "blog": "Blog",
-    "badge": "Insignias destacadas"
+    "badge": "Insignias Destacadas"
   },
   "upvote": {
-    "mustBeLoggedIn": "Debes iniciar sesión para votar a favor",
-    "rateLimited": "El equipo antispam dice: ¡{count} votos en {minutes} minutos es el máximo! Reintenta en {seconds} segundos.",
-    "minWaitSeconds": "El equipo antispam dice: espera {seconds} segundos para cambiar el voto",
+    "mustBeLoggedIn": "Debes iniciar sesión para votar",
+    "rateLimited": "Escuadrón Anti-Spam aquí: {count} votos en {minutes} minutos es el máximo. Reintenta en {seconds} segundos.",
+    "minWaitSeconds": "Escuadrón Anti-Spam aquí: espera de {seconds} segundos para cambiar el voto",
     "projectNotFound": "Proyecto no encontrado",
     "notOngoing": "La votación solo está abierta mientras el proyecto se lanza hoy"
   },
   "submitProject": {
     "page": {
-      "title": "Enviar un proyecto",
+      "title": "Enviar un Proyecto",
       "subtitle": "Comparte tu proyecto con la comunidad. Completa los detalles a continuación."
     },
     "stepper": {
-      "step1": "Información del proyecto",
+      "step1": "Información del Proyecto",
       "step2": "Detalles",
-      "step3": "Fecha de lanzamiento",
+      "step3": "Fecha de Lanzamiento",
       "step4": "Revisión",
       "ariaJump": "Volver a {label}",
       "ariaCurrent": "Paso {label}"
     },
     "step1": {
       "name": {
-        "label": "Nombre del proyecto",
-        "placeholder": "Mi proyecto increíble"
+        "label": "Nombre del Proyecto",
+        "placeholder": "Mi Proyecto Increíble"
       },
       "websiteUrl": {
-        "label": "URL del sitio web",
-        "placeholder": "https://miproyectoincreible.com",
-        "help": "Ingresa la URL de tu sitio web y haz clic en Rellenar automáticamente para completar el formulario.",
-        "duplicateWarning": "⚠️ Esta URL ya ha sido enviada. El paso final lo bloqueará; usa una URL diferente."
+        "label": "URL del Sitio Web",
+        "placeholder": "https://miawesomeproject.com",
+        "help": "Ingresa la URL de tu sitio web y haz clic en Auto Rellenar para completar el formulario automáticamente.",
+        "duplicateWarning": "⚠️ Esta URL ya ha sido enviada. El paso final lo bloqueará; por favor usa una URL diferente."
       },
       "autoFill": {
-        "button": "Rellenar automáticamente",
+        "button": "Auto Rellenar",
         "loading": "Analizando..."
       },
       "sourceLocale": {
         "label": "Idioma de la descripción",
-        "help": "Elige el idioma en el que escribes la descripción. Otros idiomas se traducirán automáticamente."
+        "help": "Elige el idioma en el que estás escribiendo la descripción. Otros idiomas se traducirán automáticamente."
       },
       "description": {
         "label": "Descripción",
         "placeholder": "Describe tu proyecto"
       },
       "logo": {
-        "label": "Logotipo (máx. 1 MB)",
-        "help": "Recomendado: imagen cuadrada 1:1 (ej. 256x256 px).",
-        "upload": "Subir logotipo",
+        "label": "Logotipo (Máx. 1 MB)",
+        "help": "Recomendado: imagen cuadrada 1:1 (ej. 256x256px).",
+        "upload": "Subir Logotipo",
         "uploading": "Subiendo...",
         "preparing": "Preparando...",
         "preview": "Vista previa del logotipo",
         "remove": "Eliminar logotipo"
       },
       "productImage": {
-        "label": "Imagen del producto",
+        "label": "Imagen del Producto",
         "optional": "(Opcional)",
-        "help": "Añade una imagen del producto. Recomendado: relación 16:9 (ej. 800x450 px).",
-        "add": "Añadir imagen del producto",
+        "help": "Añade una imagen del producto. Recomendado: relación de aspecto 16:9 (ej. 800x450px).",
+        "add": "Añadir Imagen del Producto",
         "preview": "Vista previa de la imagen del producto",
         "remove": "Eliminar imagen del producto"
       }
@@ -387,9 +387,9 @@
         "loading": "Cargando..."
       },
       "tags": {
-        "label": "Etiquetas del producto",
+        "label": "Etiquetas del Producto",
         "counter": "({count}/10 etiquetas)",
-        "placeholder": "ej. ia, saas, codigo-abierto, herramientas-desarrollador...",
+        "placeholder": "ej. ia, saas, código-abierto, herramientas-desarrollador...",
         "help": "Añade hasta 10 etiquetas para ayudar a los usuarios a descubrir tu proyecto. Presiona Enter o coma para añadir."
       },
       "platforms": {
@@ -400,11 +400,11 @@
           "mobile": "móvil",
           "desktop": "escritorio",
           "api": "api",
-          "other": "otra"
+          "other": "otro"
         }
       },
       "pricing": {
-        "label": "Modelo de precio",
+        "label": "Modelo de Precios",
         "options": {
           "free": "gratuito",
           "freemium": "freemium",
@@ -412,16 +412,16 @@
         }
       },
       "githubUrl": {
-        "label": "URL de GitHub (opcional)",
+        "label": "URL de GitHub (Opcional)",
         "placeholder": "https://github.com/usuario/repo"
       },
       "twitterUrl": {
-        "label": "URL de Twitter (opcional)",
+        "label": "URL de Twitter (Opcional)",
         "placeholder": "https://twitter.com/usuario"
       }
     },
     "step3": {
-      "title": "Elige tipo y fecha de lanzamiento",
+      "title": "Elige el tipo y la fecha de lanzamiento",
       "infoBanner": {
         "heading": "Selecciona tu tipo y fecha de lanzamiento",
         "body": "Todos los lanzamientos ocurren a las {hour}:00 UTC. Lanzamos un número limitado de proyectos cada día."
@@ -431,22 +431,25 @@
         "body": "¡Salta la cola! Añade nuestra insignia a tu sitio web y lanza al día siguiente en lugar de esperar semanas o meses.",
         "getCode": "Obtener código de insignia",
         "verify": "Verificar insignia",
-        "verifying": "Verificando..."
+        "verifying": "Verificando...",
+        "urlRequired": "Primero ingresa la URL de tu sitio web",
+        "notFound": "Insignia no encontrada en tu sitio web",
+        "verifyFailed": "Error al verificar la insignia. Inténtalo de nuevo."
       },
       "badgeVerified": {
         "heading": "✅ ¡Insignia verificada!",
-        "body": "Ahora tienes acceso a la Vía rápida con insignia. Elige tu cupo de lanzamiento a continuación."
+        "body": "¡Ahora tienes acceso al Carril Rápido por Insignia! Elige tu cuota de lanzamiento a continuación."
       },
       "quota": {
-        "heading": "Seleccionar cupo de lanzamiento",
+        "heading": "Seleccionar cuota de lanzamiento",
         "free": {
-          "name": "Cupo gratuito",
+          "name": "Cuota gratuita",
           "slots": "{n} espacios/día",
           "queue": "Cola estándar",
           "dofollow": "Dofollow si Top 3 o insignia"
         },
         "badge": {
-          "name": "Vía rápida con insignia",
+          "name": "Carril Rápido por Insignia",
           "tag": "🚀 Rápido",
           "slots": "{n} espacios/día",
           "tomorrow": "¡Lanza mañana!",
@@ -461,17 +464,17 @@
         "free": {
           "name": "Lanzamiento gratuito",
           "slotsLabel": "{n} espacios/día",
-          "scheduling": "Programación hasta {n} días",
-          "dofollowConditional": "Enlace dofollow solo si:",
+          "scheduling": "Programación de hasta {n} días",
+          "dofollowConditional": "Backlink Dofollow solo si:",
           "topRanking": "1. Top 3 del ranking diario",
           "displayBadge": "2. Muestras nuestra insignia en tu sitio"
         },
         "premium": {
           "name": "Lanzamiento premium",
           "skipQueue": "Salta la cola gratuita",
-          "guaranteedDofollow": "Enlace dofollow garantizado (DR {dr})",
+          "guaranteedDofollow": "Backlink Dofollow garantizado (DR {dr})",
           "slotsLabel": "{n} espacios premium/día",
-          "scheduling": "Programación hasta {n} días"
+          "scheduling": "Programación de hasta {n} días"
         }
       },
       "date": {
@@ -485,12 +488,12 @@
         "slotTypePremium": "premium",
         "crowdednessTooltip": "{n} proyecto(s) ya programados",
         "scheduledFor": "Programado para",
-        "noDate": "Sin fecha seleccionada"
+        "noDate": "Ninguna fecha seleccionada"
       },
       "premiumUpsell": {
         "heading": "¡Lanza {days, plural, one {# día} other {# días}} antes con Premium!",
-        "body": "Disponible desde {date} • Enlace dofollow DR{dr} garantizado • Salta la cola",
-        "button": "Mejorar a Premium ${price}"
+        "body": "Disponible desde {date} • Backlink DR{dr} garantizado • Salta la cola",
+        "button": "Actualizar a Premium ${price}"
       }
     },
     "step4": {
@@ -516,8 +519,8 @@
       "premiumPriceLabel": "Lanzamiento premium (${price})",
       "readyToSubmit": {
         "heading": "¿Listo para enviar?",
-        "body": "Revisa toda la información cuidadosamente. Una vez enviado, tu proyecto se programará para lanzamiento.",
-        "paymentRedirect": "Serás redirigido a la página de pago después del envío."
+        "body": "Revise toda la información cuidadosamente. Una vez enviado, su proyecto se programará para su lanzamiento.",
+        "paymentRedirect": "Será redirigido a la página de pago después del envío."
       }
     },
     "buttons": {
@@ -529,34 +532,36 @@
       "fields": {
         "nameRequired": "El nombre del proyecto es obligatorio",
         "websiteUrlRequired": "La URL del sitio web es obligatoria",
-        "websiteUrlInvalid": "Ingresa una URL válida (https://...)",
-        "websiteUrlInvalidQuick": "Ingresa primero una URL válida",
+        "websiteUrlInvalid": "Ingrese una URL válida (https://...)",
+        "websiteUrlInvalidQuick": "Ingrese primero una URL válida",
         "websiteUrlDuplicate": "Esta URL ya ha sido enviada",
         "descriptionRequired": "La descripción es obligatoria",
         "logoRequired": "El logotipo es obligatorio",
         "logoUploadFailedNoUrl": "Error al subir el logotipo: no se devolvió ninguna URL.",
         "logoUploadFailed": "Error al subir el logotipo: {message}",
-        "categoriesMin": "Selecciona al menos una categoría",
+        "categoriesMin": "Seleccione al menos una categoría",
         "categoriesMax": "Máximo 3 categorías",
-        "techStackMin": "Añade al menos una etiqueta",
+        "techStackMin": "Agregue al menos una etiqueta",
         "techStackMax": "Máximo 10 etiquetas",
-        "platformsMin": "Selecciona al menos una plataforma",
-        "pricingRequired": "Selecciona un modelo de precio",
-        "scheduledDateRequired": "Elige una fecha de lanzamiento",
-        "scheduledDateOverLimit": "Esta fecha supera tu límite diario de lanzamiento"
+        "platformsMin": "Seleccione al menos una plataforma",
+        "pricingRequired": "Seleccione un modelo de precios",
+        "scheduledDateRequired": "Elija una fecha de lanzamiento",
+        "scheduledDateOverLimit": "Esta fecha supera su límite de lanzamientos diarios",
+        "scheduledDateOverLimitDetail": "Ya ha programado {count}/{limit} proyecto(s) para esta fecha. Por favor, seleccione otra fecha.",
+        "scheduledDateCheckFailed": "No se pudo verificar el límite de fecha de lanzamiento. Inténtelo de nuevo."
       },
       "form": {
-        "loadCategoriesFailed": "Error al cargar categorías",
-        "loadDatesFailed": "Error al cargar fechas disponibles",
+        "loadCategoriesFailed": "Error al cargar las categorías",
+        "loadDatesFailed": "Error al cargar las fechas disponibles",
         "productImageUploadFailedNoUrl": "Error al subir la imagen del producto: no se devolvió ninguna URL.",
         "productImageUploadFailed": "Error al subir la imagen del producto: {message}",
-        "autoFillFailed": "Error al rellenar automáticamente. Inténtalo de nuevo.",
+        "autoFillFailed": "Error al autocompletar. Inténtelo de nuevo.",
         "submitFailed": "Ocurrió un error inesperado.",
         "scheduleFailed": "Ocurrió un error durante la programación."
       }
     },
     "toast": {
-      "draftRestored": "Se restauró tu borrador no guardado"
+      "draftRestored": "Se restauró su borrador no guardado"
     }
   }
 }

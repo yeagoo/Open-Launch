@@ -32,7 +32,7 @@
     "dashboard": "Tableau de bord",
     "submitProject": "Soumettre un projet",
     "pricing": "Tarifs",
-    "fastTrack": "Accès rapide 🚀",
+    "fastTrack": "Accéléré 🚀",
     "sponsors": "Sponsors",
     "signIn": "Connexion",
     "signUp": "Inscription",
@@ -66,7 +66,7 @@
   "home": {
     "metadata": {
       "today": "Lancements du jour sur aat.ee",
-      "todayDesc": "Découvrez les derniers lancements de produits du jour sur aat.ee — startups, outils IA et SaaS"
+      "todayDesc": "Découvrez les derniers lancements de produits du jour sur aat.ee - startups, outils IA et SaaS"
     },
     "banner": {
       "title": "Plateforme de lancement pour vos produits",
@@ -75,17 +75,17 @@
     "sections": {
       "todayTitle": "Meilleurs projets lancés aujourd'hui",
       "yesterdayTitle": "Lancements d'hier",
-      "monthTitle": "Meilleurs du mois",
+      "monthTitle": "Le meilleur du mois",
       "topCategories": "Catégories populaires",
       "quickAccess": "Accès rapide",
       "linuxAlliance": "Alliance des docs Linux",
-      "linuxAllianceFooter": "Consultez le cycle de vie des logiciels sur :",
+      "linuxAllianceFooter": "Vérifiez le cycle de vie des logiciels sur :",
       "recommended": "Recommandé",
       "webcasaDesc": "Panneau de contrôle serveur open-source natif IA",
       "litehttpdDesc": "Serveur web léger, hautement compatible avec Apache HTTPD",
-      "trendingNow": "Tendances du moment",
+      "trendingNow": "Tendances actuelles",
       "dailyWinners": "Gagnants du jour",
-      "bestOfMonth": "Meilleurs du mois",
+      "bestOfMonth": "Meilleur du mois",
       "dashboard": "Tableau de bord",
       "projectsCount": "{count} projets"
     }
@@ -94,7 +94,7 @@
     "signIn": {
       "title": "Bon retour",
       "subtitle": "Connectez-vous à votre compte pour continuer",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Mot de passe",
       "submit": "Connexion",
       "submitting": "Connexion en cours...",
@@ -117,7 +117,7 @@
       "title": "Créez votre compte",
       "subtitle": "Rejoignez aat.ee pour lancer et découvrir des produits",
       "nameLabel": "Nom",
-      "emailLabel": "Email",
+      "emailLabel": "E-mail",
       "passwordLabel": "Mot de passe",
       "submit": "Créer un compte",
       "submitting": "Création du compte...",
@@ -132,11 +132,11 @@
     },
     "forgotPassword": {
       "title": "Réinitialisez votre mot de passe",
-      "subtitle": "Entrez votre email et nous vous enverrons un lien de réinitialisation",
-      "emailLabel": "Email",
+      "subtitle": "Entrez votre e-mail et nous vous enverrons un lien de réinitialisation",
+      "emailLabel": "E-mail",
       "submit": "Envoyer le lien de réinitialisation",
       "backToSignIn": "Retour à la connexion",
-      "successMessage": "Si cet email existe, nous avons envoyé un lien de réinitialisation."
+      "successMessage": "Si cet e-mail existe, nous avons envoyé un lien de réinitialisation."
     },
     "resetPassword": {
       "title": "Définir un nouveau mot de passe",
@@ -147,9 +147,9 @@
       "mismatchError": "Les mots de passe ne correspondent pas"
     },
     "verifyEmail": {
-      "sentTitle": "Vérifiez votre email",
+      "sentTitle": "Vérifiez votre e-mail",
       "sentMessage": "Nous avons envoyé un lien de vérification dans votre boîte de réception.",
-      "successTitle": "Email vérifié !",
+      "successTitle": "E-mail vérifié !",
       "successMessage": "Votre compte est prêt. Redirection vers le tableau de bord..."
     }
   },
@@ -171,11 +171,11 @@
       "scheduledFor": "Prévu pour",
       "ongoing": "En cours",
       "launched": "Lancé",
-      "scheduled": "Planifié",
+      "scheduled": "Prévu",
       "byMaker": "par",
       "aboutHeading": "À propos de {name}",
       "relatedHeading": "Produits associés",
-      "relatedSubtitle": "Autres outils que vous pourriez considérer"
+      "relatedSubtitle": "D'autres outils que vous pourriez envisager"
     },
     "submit": {
       "title": "Soumettre votre projet",
@@ -187,7 +187,7 @@
       "tags": "Tags",
       "logo": "Logo",
       "submitButton": "Soumettre le projet",
-      "autoFill": "Remplissage automatique depuis l'URL"
+      "autoFill": "Remplir automatiquement depuis l'URL"
     },
     "sidebar": {
       "achievement": "Récompense",
@@ -215,7 +215,7 @@
       "cancel": "Annuler",
       "save": "Enregistrer",
       "send": "Envoyer",
-      "replyingTo": "Réponse à {name}",
+      "replyingTo": "Répondre à {name}",
       "deleteConfirm": "Supprimer ce commentaire ?",
       "deleteSuccess": "Commentaire supprimé",
       "deleteError": "Échec de la suppression du commentaire",
@@ -232,7 +232,7 @@
   },
   "pricing": {
     "title": "Tarifs",
-    "subtitle": "Choisissez le plan qui correspond à votre lancement",
+    "subtitle": "Choisissez le plan adapté à votre lancement",
     "free": "Gratuit",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
@@ -275,7 +275,7 @@
     },
     "categories": {
       "title": "Catégories — aat.ee",
-      "description": "Parcourez les produits tech par catégorie sur aat.ee — trouvez startups, outils IA et apps SaaS."
+      "description": "Parcourez les produits tech par catégorie sur aat.ee — startups, outils IA et apps SaaS."
     },
     "winners": {
       "title": "Gagnants du jour — aat.ee",
@@ -299,7 +299,7 @@
     },
     "sponsors": {
       "title": "Sponsors — aat.ee",
-      "description": "Sponsorisez aat.ee et atteignez une audience choisie de créateurs, fondateurs et passionnés de tech."
+      "description": "Sponsorisez aat.ee et atteignez un public ciblé de créateurs, fondateurs et passionnés de tech."
     },
     "reviews": {
       "title": "Avis produits — aat.ee",
@@ -318,10 +318,10 @@
     "badge": "Badges en vedette"
   },
   "upvote": {
-    "mustBeLoggedIn": "Vous devez être connecté pour soutenir",
-    "rateLimited": "Anti-spam : {count} soutiens en {minutes} minutes maximum ! Réessayez dans {seconds} secondes.",
-    "minWaitSeconds": "Anti-spam : attente de {seconds} secondes requise pour les changements de vote",
-    "projectNotFound": "Projet non trouvé",
+    "mustBeLoggedIn": "Vous devez être connecté pour voter",
+    "rateLimited": "Équipe anti-spam ici : {count} votes en {minutes} minutes maximum ! Réessayez dans {seconds} secondes.",
+    "minWaitSeconds": "Équipe anti-spam ici : attente de {seconds} secondes requise pour les changements de vote",
+    "projectNotFound": "Projet introuvable",
     "notOngoing": "Le vote n'est ouvert que pendant le lancement du projet aujourd'hui"
   },
   "submitProject": {
@@ -330,7 +330,7 @@
       "subtitle": "Partagez votre projet avec la communauté. Remplissez les détails ci-dessous."
     },
     "stepper": {
-      "step1": "Infos projet",
+      "step1": "Infos du projet",
       "step2": "Détails",
       "step3": "Date de lancement",
       "step4": "Révision",
@@ -345,8 +345,8 @@
       "websiteUrl": {
         "label": "URL du site web",
         "placeholder": "https://monsuperprojet.com",
-        "help": "Entrez l'URL de votre site et cliquez sur Remplissage automatique pour remplir le formulaire automatiquement.",
-        "duplicateWarning": "⚠️ Cette URL a déjà été soumise. La dernière étape bloquera cela — veuillez utiliser une URL différente."
+        "help": "Entrez l'URL de votre site web et cliquez sur Remplissage automatique pour remplir le formulaire automatiquement.",
+        "duplicateWarning": "⚠️ Cette URL a déjà été soumise. La dernière étape bloquera cette soumission — veuillez utiliser une URL différente."
       },
       "autoFill": {
         "button": "Remplissage automatique",
@@ -364,7 +364,7 @@
         "label": "Logo (Max 1 Mo)",
         "help": "Recommandé : image carrée 1:1 (ex. 256x256 px).",
         "upload": "Télécharger le logo",
-        "uploading": "Téléchargement...",
+        "uploading": "Téléchargement en cours...",
         "preparing": "Préparation...",
         "preview": "Aperçu du logo",
         "remove": "Supprimer le logo"
@@ -387,10 +387,10 @@
         "loading": "Chargement..."
       },
       "tags": {
-        "label": "Tags du produit",
-        "counter": "({count}/10 tags)",
-        "placeholder": "ex. ia, saas, open-source, outils-developpement...",
-        "help": "Ajoutez jusqu'à 10 tags pour aider les utilisateurs à découvrir votre projet. Appuyez sur Entrée ou virgule pour ajouter."
+        "label": "Étiquettes du produit",
+        "counter": "({count}/10 étiquettes)",
+        "placeholder": "ex. ia, saas, open-source, outils-développeur...",
+        "help": "Ajoutez jusqu'à 10 étiquettes pour aider les utilisateurs à découvrir votre projet. Appuyez sur Entrée ou virgule pour ajouter."
       },
       "platforms": {
         "label": "Plateformes",
@@ -413,7 +413,7 @@
       },
       "githubUrl": {
         "label": "URL GitHub (Optionnel)",
-        "placeholder": "https://github.com/utilisateur/repo"
+        "placeholder": "https://github.com/utilisateur/depot"
       },
       "twitterUrl": {
         "label": "URL Twitter (Optionnel)",
@@ -431,7 +431,10 @@
         "body": "Sautez la file d'attente ! Ajoutez notre badge à votre site web et lancez le lendemain au lieu d'attendre des semaines ou des mois.",
         "getCode": "Obtenir le code du badge",
         "verify": "Vérifier le badge",
-        "verifying": "Vérification..."
+        "verifying": "Vérification...",
+        "urlRequired": "Veuillez d'abord saisir l'URL de votre site web",
+        "notFound": "Badge introuvable sur votre site web",
+        "verifyFailed": "Échec de la vérification du badge. Veuillez réessayer."
       },
       "badgeVerified": {
         "heading": "✅ Badge vérifié !",
@@ -484,7 +487,7 @@
         "slotTypeBadge": "badge",
         "slotTypePremium": "premium",
         "crowdednessTooltip": "{n} projet(s) déjà planifié(s)",
-        "scheduledFor": "Prévu pour",
+        "scheduledFor": "Planifié pour le",
         "noDate": "Aucune date sélectionnée"
       },
       "premiumUpsell": {
@@ -494,8 +497,8 @@
       }
     },
     "step4": {
-      "title": "Réviser et soumettre",
-      "projectInfo": "Informations du projet",
+      "title": "Vérifier et soumettre",
+      "projectInfo": "Informations sur le projet",
       "details": "Détails",
       "launchPlan": "Plan de lancement",
       "fields": {
@@ -505,7 +508,7 @@
         "logo": "Logo :",
         "productImage": "Image du produit :",
         "categories": "Catégories :",
-        "tags": "Tags du produit :",
+        "tags": "Étiquettes du produit :",
         "platforms": "Plateformes :",
         "pricing": "Tarification :",
         "github": "GitHub :",
@@ -516,7 +519,7 @@
       "premiumPriceLabel": "Lancement Premium (${price})",
       "readyToSubmit": {
         "heading": "Prêt à soumettre ?",
-        "body": "Veuillez vérifier attentivement toutes les informations. Une fois soumis, votre projet sera planifié pour le lancement.",
+        "body": "Veuillez vérifier attentivement toutes les informations. Une fois soumis, votre projet sera programmé pour le lancement.",
         "paymentRedirect": "Vous serez redirigé vers la page de paiement après la soumission."
       }
     },
@@ -529,8 +532,8 @@
       "fields": {
         "nameRequired": "Le nom du projet est requis",
         "websiteUrlRequired": "L'URL du site web est requise",
-        "websiteUrlInvalid": "Veuillez entrer une URL valide (https://...)",
-        "websiteUrlInvalidQuick": "Veuillez d'abord entrer une URL valide",
+        "websiteUrlInvalid": "Veuillez saisir une URL valide (https://...)",
+        "websiteUrlInvalidQuick": "Veuillez d'abord saisir une URL valide",
         "websiteUrlDuplicate": "Cette URL a déjà été soumise",
         "descriptionRequired": "La description est requise",
         "logoRequired": "Le logo est requis",
@@ -538,12 +541,14 @@
         "logoUploadFailed": "Échec du téléchargement du logo : {message}",
         "categoriesMin": "Choisissez au moins une catégorie",
         "categoriesMax": "Maximum 3 catégories",
-        "techStackMin": "Ajoutez au moins un tag",
-        "techStackMax": "Maximum 10 tags",
+        "techStackMin": "Ajoutez au moins une étiquette",
+        "techStackMax": "Maximum 10 étiquettes",
         "platformsMin": "Sélectionnez au moins une plateforme",
         "pricingRequired": "Sélectionnez un modèle de tarification",
         "scheduledDateRequired": "Choisissez une date de lancement",
-        "scheduledDateOverLimit": "Cette date dépasse votre limite de lancement quotidienne"
+        "scheduledDateOverLimit": "Cette date dépasse votre limite de lancement quotidienne",
+        "scheduledDateOverLimitDetail": "Vous avez déjà programmé {count}/{limit} projet(s) pour cette date. Veuillez choisir une autre date.",
+        "scheduledDateCheckFailed": "Impossible de vérifier la limite de date de lancement. Veuillez réessayer."
       },
       "form": {
         "loadCategoriesFailed": "Échec du chargement des catégories",
@@ -551,12 +556,12 @@
         "productImageUploadFailedNoUrl": "Échec du téléchargement de l'image du produit : aucune URL retournée.",
         "productImageUploadFailed": "Échec du téléchargement de l'image du produit : {message}",
         "autoFillFailed": "Échec du remplissage automatique. Veuillez réessayer.",
-        "submitFailed": "Une erreur inattendue est survenue.",
-        "scheduleFailed": "Une erreur est survenue lors de la planification."
+        "submitFailed": "Une erreur inattendue s'est produite.",
+        "scheduleFailed": "Une erreur s'est produite lors de la planification."
       }
     },
     "toast": {
-      "draftRestored": "Brouillon non enregistré restauré"
+      "draftRestored": "Brouillon non sauvegardé restauré"
     }
   }
 }

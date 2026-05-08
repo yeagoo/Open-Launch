@@ -32,7 +32,7 @@
     "dashboard": "Painel",
     "submitProject": "Enviar Projeto",
     "pricing": "Preços",
-    "fastTrack": "Fast Track 🚀",
+    "fastTrack": "Acelerado 🚀",
     "sponsors": "Patrocinadores",
     "signIn": "Entrar",
     "signUp": "Cadastrar",
@@ -66,14 +66,14 @@
   "home": {
     "metadata": {
       "today": "Lançamentos de Hoje no aat.ee",
-      "todayDesc": "Descubra os lançamentos de produtos mais recentes hoje no aat.ee - startups, ferramentas de IA e SaaS"
+      "todayDesc": "Descubra os últimos lançamentos de produtos hoje no aat.ee - startups, ferramentas de IA e produtos SaaS"
     },
     "banner": {
       "title": "Plataforma de lançamento para seus produtos",
       "subtitle": "Envie, ganhe um selo e backlink"
     },
     "sections": {
-      "todayTitle": "Principais Projetos Lançando Hoje",
+      "todayTitle": "Principais Projetos Lançados Hoje",
       "yesterdayTitle": "Lançamentos de Ontem",
       "monthTitle": "Melhores do Mês",
       "topCategories": "Principais Categorias",
@@ -93,7 +93,7 @@
   "auth": {
     "signIn": {
       "title": "Bem-vindo de volta",
-      "subtitle": "Entre na sua conta para continuar",
+      "subtitle": "Faça login na sua conta para continuar",
       "emailLabel": "E-mail",
       "passwordLabel": "Senha",
       "submit": "Entrar",
@@ -122,16 +122,16 @@
       "submit": "Criar conta",
       "submitting": "Criando conta...",
       "loading": "Carregando...",
-      "withGoogle": "Cadastrar com Google",
-      "withGithub": "Cadastrar com GitHub",
+      "withGoogle": "Cadastre-se com Google",
+      "withGithub": "Cadastre-se com GitHub",
       "haveAccount": "Já tem uma conta?",
-      "signInLink": "Entrar",
+      "signInLink": "Faça login",
       "orContinueWith": "Ou continue com",
       "captchaRequired": "Por favor, complete a verificação de segurança",
       "genericError": "Ocorreu um erro"
     },
     "forgotPassword": {
-      "title": "Redefinir sua senha",
+      "title": "Redefina sua senha",
       "subtitle": "Digite seu e-mail e enviaremos um link de redefinição",
       "emailLabel": "E-mail",
       "submit": "Enviar link de redefinição",
@@ -139,7 +139,7 @@
       "successMessage": "Se esse e-mail existir, enviamos um link de redefinição."
     },
     "resetPassword": {
-      "title": "Definir nova senha",
+      "title": "Defina uma nova senha",
       "passwordLabel": "Nova senha",
       "confirmLabel": "Confirmar senha",
       "submit": "Redefinir senha",
@@ -187,17 +187,17 @@
       "tags": "Tags",
       "logo": "Logotipo",
       "submitButton": "Enviar projeto",
-      "autoFill": "Preenchimento automático a partir da URL"
+      "autoFill": "Preencher automaticamente a partir da URL"
     },
     "sidebar": {
       "achievement": "Conquista",
       "publisher": "Publicador",
       "unknownCreator": "Criador desconhecido",
-      "launchDate": "Data de Lançamento",
+      "launchDate": "Data de lançamento",
       "platform": "Plataforma",
       "pricing": "Preço",
-      "socials": "Redes Sociais",
-      "productKeywords": "Palavras-chave do Produto"
+      "socials": "Redes sociais",
+      "productKeywords": "Palavras-chave do produto"
     },
     "comments": {
       "heading": "Comentários",
@@ -206,7 +206,7 @@
       "noComments": "Nenhum comentário ainda. Seja o primeiro!",
       "loading": "Carregando comentários...",
       "loadFailed": "Falha ao carregar comentários. Tente novamente.",
-      "signInPrompt": "Entre para comentar",
+      "signInPrompt": "Faça login para comentar",
       "reply": "Responder",
       "like": "Curtir",
       "dislike": "Não curtir",
@@ -267,7 +267,7 @@
   "metadata": {
     "projects": {
       "title": "Projetos — Lançamentos deste Mês | aat.ee",
-      "description": "Navegue pelos projetos lançados este mês no aat.ee — startups, ferramentas de IA e SaaS."
+      "description": "Navegue pelos projetos lançados este mês no aat.ee — startups, ferramentas de IA e produtos SaaS."
     },
     "trending": {
       "title": "Em Alta — aat.ee",
@@ -275,10 +275,10 @@
     },
     "categories": {
       "title": "Categorias — aat.ee",
-      "description": "Navegue por produtos de tecnologia por categoria no aat.ee — encontre startups, ferramentas de IA e aplicativos SaaS."
+      "description": "Navegue por produtos de tecnologia por categoria no aat.ee — encontre startups, ferramentas de IA e apps SaaS."
     },
     "winners": {
-      "title": "Vencedores do Dia — aat.ee",
+      "title": "Vencedores Diários — aat.ee",
       "description": "Produtos mais bem classificados lançados no aat.ee, dia a dia."
     },
     "tags": {
@@ -294,8 +294,8 @@
       "description": "Artigos, guias de lançamento e atualizações de produtos da equipe aat.ee."
     },
     "badge": {
-      "title": "Selos em Destaque — aat.ee",
-      "description": "Obtenha um selo aat.ee para seu site para exibir seu lançamento e ganhar um backlink de SEO."
+      "title": "Distintivos em Destaque — aat.ee",
+      "description": "Obtenha um distintivo aat.ee para seu site e mostre seu lançamento, ganhando um backlink de SEO."
     },
     "sponsors": {
       "title": "Patrocinadores — aat.ee",
@@ -315,12 +315,12 @@
     "winners": "Vencedores",
     "pricing": "Preços",
     "blog": "Blog",
-    "badge": "Selos em Destaque"
+    "badge": "Distintivos em Destaque"
   },
   "upvote": {
-    "mustBeLoggedIn": "Você precisa estar logado para apoiar",
-    "rateLimited": "Esquadrão Anti-Spam aqui: {count} apoios em {minutes} minutos é o máximo! Tente novamente em {seconds} segundos.",
-    "minWaitSeconds": "Esquadrão Anti-Spam aqui: aguarde {seconds} segundos para alterar o voto",
+    "mustBeLoggedIn": "Você precisa estar logado para votar",
+    "rateLimited": "Esquadrão Antispam aqui: {count} votos em {minutes} minutos é o máximo! Tente novamente em {seconds} segundos.",
+    "minWaitSeconds": "Esquadrão Antispam aqui: é necessário aguardar {seconds} segundos para alterar o voto",
     "projectNotFound": "Projeto não encontrado",
     "notOngoing": "A votação está aberta apenas enquanto o projeto está sendo lançado hoje"
   },
@@ -361,20 +361,20 @@
         "placeholder": "Descreva seu projeto"
       },
       "logo": {
-        "label": "Logotipo (Máx. 1MB)",
-        "help": "Recomendado: imagem quadrada 1:1 (ex.: 256x256px).",
+        "label": "Logotipo (Máx. 1 MB)",
+        "help": "Recomendado: imagem quadrada 1:1 (ex.: 256x256 px).",
         "upload": "Enviar Logotipo",
         "uploading": "Enviando...",
         "preparing": "Preparando...",
-        "preview": "Prévia do logotipo",
+        "preview": "Visualização do logotipo",
         "remove": "Remover logotipo"
       },
       "productImage": {
         "label": "Imagem do Produto",
         "optional": "(Opcional)",
-        "help": "Adicione uma imagem do produto. Recomendado: proporção 16:9 (ex.: 800x450px).",
+        "help": "Adicione uma imagem do produto. Recomendado: proporção 16:9 (ex.: 800x450 px).",
         "add": "Adicionar Imagem do Produto",
-        "preview": "Prévia da imagem do produto",
+        "preview": "Visualização da imagem do produto",
         "remove": "Remover imagem do produto"
       }
     },
@@ -389,7 +389,7 @@
       "tags": {
         "label": "Tags do Produto",
         "counter": "({count}/10 tags)",
-        "placeholder": "ex.: ia, saas, open-source, ferramentas-para-desenvolvedores...",
+        "placeholder": "ex.: ia, saas, código-aberto, ferramentas-para-desenvolvedores...",
         "help": "Adicione até 10 tags para ajudar os usuários a descobrir seu projeto. Pressione Enter ou vírgula para adicionar."
       },
       "platforms": {
@@ -406,24 +406,24 @@
       "pricing": {
         "label": "Modelo de Preço",
         "options": {
-          "free": "grátis",
+          "free": "gratuito",
           "freemium": "freemium",
           "paid": "pago"
         }
       },
       "githubUrl": {
         "label": "URL do GitHub (Opcional)",
-        "placeholder": "https://github.com/usuario/repo"
+        "placeholder": "https://github.com/usuario/repositorio"
       },
       "twitterUrl": {
         "label": "URL do Twitter (Opcional)",
-        "placeholder": "https://twitter.com/usuario"
+        "placeholder": "https://twitter.com/nomeusuario"
       }
     },
     "step3": {
       "title": "Escolha o Tipo e Data de Lançamento",
       "infoBanner": {
-        "heading": "Selecione o tipo e a data do seu lançamento",
+        "heading": "Selecione o tipo e a data de lançamento",
         "body": "Todos os lançamentos ocorrem às {hour}:00 UTC. Lançamos um número limitado de projetos por dia."
       },
       "badgeCard": {
@@ -431,44 +431,47 @@
         "body": "Pule a fila! Adicione nosso selo ao seu site e lance no dia seguinte, em vez de esperar semanas ou meses.",
         "getCode": "Obter Código do Selo",
         "verify": "Verificar Selo",
-        "verifying": "Verificando..."
+        "verifying": "Verificando...",
+        "urlRequired": "Insira primeiro a URL do seu site",
+        "notFound": "Selo não encontrado no seu site",
+        "verifyFailed": "Falha ao verificar o selo. Tente novamente."
       },
       "badgeVerified": {
         "heading": "✅ Selo Verificado!",
-        "body": "Agora você tem acesso ao Fast Track do Selo! Escolha sua cota de lançamento abaixo."
+        "body": "Agora você tem acesso ao Badge Fast Track! Escolha sua cota de lançamento abaixo."
       },
       "quota": {
         "heading": "Selecionar Cota de Lançamento",
         "free": {
-          "name": "Cota Grátis",
+          "name": "Cota Gratuita",
           "slots": "{n} vagas/dia",
           "queue": "Fila padrão",
           "dofollow": "Dofollow se Top 3 ou selo"
         },
         "badge": {
-          "name": "Fast Track do Selo",
+          "name": "Badge Fast Track",
           "tag": "🚀 Rápido",
           "slots": "{n} vagas/dia",
           "tomorrow": "Lance amanhã!",
           "dofollow": "Link dofollow garantido"
         },
         "warningPrefix": "Importante:",
-        "warningBody": "O aat.ee verificará automaticamente o selo em seu site mensalmente. Projetos sem o selo serão removidos."
+        "warningBody": "O aat.ee verificará automaticamente o selo no seu site mensalmente. Projetos sem o selo serão removidos."
       },
       "launchType": {
         "heading": "Tipo de Lançamento",
         "selected": "Selecionado",
         "free": {
-          "name": "Lançamento Grátis",
+          "name": "Lançamento Gratuito",
           "slotsLabel": "{n} vagas/dia",
           "scheduling": "Agendamento de até {n} dias",
           "dofollowConditional": "Backlink Dofollow apenas se:",
           "topRanking": "1. Top 3 no ranking diário",
-          "displayBadge": "2. Exibir nosso selo em seu site"
+          "displayBadge": "2. Exibir nosso selo no seu site"
         },
         "premium": {
           "name": "Lançamento Premium",
-          "skipQueue": "Pule a Fila Grátis",
+          "skipQueue": "Pule a Fila Gratuita",
           "guaranteedDofollow": "Backlink Dofollow Garantido (DR {dr})",
           "slotsLabel": "{n} vagas premium/dia",
           "scheduling": "Agendamento de até {n} dias"
@@ -477,10 +480,10 @@
       "date": {
         "label": "Data de Lançamento",
         "loading": "Carregando datas disponíveis...",
-        "empty": "Nenhuma data de lançamento disponível para o tipo selecionado no período permitido.",
+        "empty": "Nenhuma data de lançamento disponível para o tipo selecionado no intervalo permitido.",
         "placeholder": "Selecione uma data de lançamento",
-        "slotsAvailable": "{n} {type} vaga(s)",
-        "slotTypeFree": "grátis",
+        "slotsAvailable": "{n} vaga(s) {type}",
+        "slotTypeFree": "gratuita",
         "slotTypeBadge": "selo",
         "slotTypePremium": "premium",
         "crowdednessTooltip": "{n} projeto(s) já agendado(s)",
@@ -488,9 +491,9 @@
         "noDate": "Nenhuma data selecionada"
       },
       "premiumUpsell": {
-        "heading": "Lance {days, plural, one {# dia} other {# dias}} antes com Premium!",
+        "heading": "Lance {days, plural, one {# dia} other {# dias}} mais cedo com o Premium!",
         "body": "Disponível a partir de {date} • Backlink DR{dr} garantido • Pule a fila",
-        "button": "Upgrade para Premium ${price}"
+        "button": "Atualizar para Premium ${price}"
       }
     },
     "step4": {
@@ -543,7 +546,9 @@
         "platformsMin": "Selecione pelo menos uma plataforma",
         "pricingRequired": "Selecione um modelo de preço",
         "scheduledDateRequired": "Escolha uma data de lançamento",
-        "scheduledDateOverLimit": "Esta data excede seu limite diário de lançamento"
+        "scheduledDateOverLimit": "Esta data excede seu limite diário de lançamentos",
+        "scheduledDateOverLimitDetail": "Você já agendou {count}/{limit} projeto(s) para esta data. Por favor, selecione outra data.",
+        "scheduledDateCheckFailed": "Não foi possível verificar o limite de data de lançamento. Tente novamente."
       },
       "form": {
         "loadCategoriesFailed": "Falha ao carregar categorias",

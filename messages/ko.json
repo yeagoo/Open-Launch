@@ -21,7 +21,7 @@
     "explore": "탐색",
     "exploreDesc": {
       "trendingTitle": "현재 인기",
-      "trendingDesc": "가장 인기 있는 프로젝트를 만나보세요",
+      "trendingDesc": "가장 인기 있는 프로젝트를 발견하세요",
       "winnersTitle": "일간 우승자",
       "winnersDesc": "오늘의 최고 프로젝트를 확인하세요",
       "monthTitle": "이달의 베스트",
@@ -36,7 +36,7 @@
     "sponsors": "스폰서",
     "signIn": "로그인",
     "signUp": "회원가입",
-    "navigation": "내비게이션",
+    "navigation": "네비게이션",
     "actions": "액션",
     "home": "홈",
     "trending": "인기",
@@ -66,24 +66,24 @@
   "home": {
     "metadata": {
       "today": "오늘 aat.ee에 출시된 제품",
-      "todayDesc": "aat.ee에서 오늘 출시된 최신 제품(스타트업, AI 도구, SaaS)을 만나보세요"
+      "todayDesc": "aat.ee에서 오늘 출시된 최신 제품(스타트업, AI 도구, SaaS 제품)을 발견하세요"
     },
     "banner": {
-      "title": "당신의 제품을 위한 출시 플랫폼",
+      "title": "제품 출시 플랫폼",
       "subtitle": "제출하고 배지와 백링크를 받으세요"
     },
     "sections": {
       "todayTitle": "오늘 출시된 주요 프로젝트",
       "yesterdayTitle": "어제의 출시",
       "monthTitle": "이달의 베스트",
-      "topCategories": "주요 카테고리",
+      "topCategories": "인기 카테고리",
       "quickAccess": "빠른 접근",
       "linuxAlliance": "Linux 문서 얼라이언스",
       "linuxAllianceFooter": "소프트웨어 지원 수명 주기 확인:",
       "recommended": "추천",
       "webcasaDesc": "AI 네이티브 오픈소스 서버 제어판",
       "litehttpdDesc": "경량 웹 서버, Apache HTTPD와 높은 호환성",
-      "trendingNow": "지금 인기",
+      "trendingNow": "지금 트렌딩",
       "dailyWinners": "일간 우승자",
       "bestOfMonth": "이달의 베스트",
       "dashboard": "대시보드",
@@ -109,9 +109,9 @@
       "genericError": "오류가 발생했습니다",
       "successToast": "로그인 성공",
       "termsAgreement": "계속을 클릭하면 다음에 동의하는 것입니다.",
-      "termsOfService": "이용약관",
+      "termsOfService": "서비스 이용약관",
       "and": "및",
-      "privacyPolicy": "개인정보처리방침"
+      "privacyPolicy": "개인정보 처리방침"
     },
     "signUp": {
       "title": "계정 만들기",
@@ -132,7 +132,7 @@
     },
     "forgotPassword": {
       "title": "비밀번호 재설정",
-      "subtitle": "이메일을 입력하면 재설정 링크를 보내드립니다",
+      "subtitle": "이메일을 입력하시면 재설정 링크를 보내드립니다",
       "emailLabel": "이메일",
       "submit": "재설정 링크 보내기",
       "backToSignIn": "로그인으로 돌아가기",
@@ -148,7 +148,7 @@
     },
     "verifyEmail": {
       "sentTitle": "이메일을 확인하세요",
-      "sentMessage": "받은 편지함으로 인증 링크를 보냈습니다.",
+      "sentMessage": "인증 링크를 받은 편지함으로 보냈습니다.",
       "successTitle": "이메일 인증 완료!",
       "successMessage": "계정이 준비되었습니다. 대시보드로 이동합니다..."
     }
@@ -218,84 +218,84 @@
       "replyingTo": "{name}님에게 답글",
       "deleteConfirm": "이 댓글을 삭제하시겠습니까?",
       "deleteSuccess": "댓글이 삭제되었습니다",
-      "deleteError": "댓글 삭제 실패",
+      "deleteError": "댓글 삭제에 실패했습니다",
       "editSuccess": "댓글이 수정되었습니다",
-      "editError": "댓글 수정 실패",
-      "rateError": "댓글 평가 실패",
-      "showReplies": "답글 {count}개 보기",
+      "editError": "댓글 수정에 실패했습니다",
+      "rateError": "댓글 평가에 실패했습니다",
+      "showReplies": "답글 {count, plural, one {#개} other {#개}} 보기",
       "hideReplies": "답글 숨기기",
-      "justNow": "방금",
-      "minutesAgo": "{count}분 전",
-      "hoursAgo": "{count}시간 전",
-      "daysAgo": "{count}일 전"
+      "justNow": "방금 전",
+      "minutesAgo": "{count, plural, one {#분} other {#분}} 전",
+      "hoursAgo": "{count, plural, one {#시간} other {#시간}} 전",
+      "daysAgo": "{count, plural, one {#일} other {#일}} 전"
     }
   },
   "pricing": {
-    "title": "가격",
-    "subtitle": "출시에 맞는 요금제를 선택하세요",
+    "title": "가격 정책",
+    "subtitle": "런칭에 맞는 요금제를 선택하세요",
     "free": "무료",
     "premium": "프리미엄",
     "premiumPlus": "프리미엄 플러스",
-    "perLaunch": "출시당",
+    "perLaunch": "런칭당",
     "getStarted": "시작하기",
-    "subscribe": "구독",
+    "subscribe": "구독하기",
     "compareFeatures": "기능 비교"
   },
   "search": {
     "placeholder": "프로젝트 검색...",
     "noResults": "검색 결과가 없습니다",
-    "recentSearches": "최근 검색"
+    "recentSearches": "최근 검색어"
   },
   "errors": {
-    "generic": "문제가 발생했습니다. 다시 시도해주세요.",
-    "unauthorized": "권한 없음",
+    "generic": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "unauthorized": "인증되지 않음",
     "notFound": "페이지를 찾을 수 없습니다",
-    "rateLimited": "요청이 너무 많습니다. 잠시 기다려주세요.",
-    "serverError": "서버 오류입니다. 나중에 다시 시도해주세요."
+    "rateLimited": "요청이 너무 많습니다. 잠시 기다려 주세요.",
+    "serverError": "서버 오류입니다. 나중에 다시 시도해 주세요."
   },
   "friends": {
-    "title": "친구",
-    "subtitle": "웹 곳곳에 있는 친구 및 파트너입니다.",
+    "title": "친구들",
+    "subtitle": "웹 곳곳에 있는 친구와 파트너입니다.",
     "backToHome": "홈으로 돌아가기",
     "groups": {
-      "linuxCommunities": "Linux 커뮤니티",
+      "linuxCommunities": "리눅스 커뮤니티",
       "toolsServices": "도구 및 서비스",
       "directories": "디렉토리 및 발견",
-      "knowledgeReference": "지식 및 참고"
+      "knowledgeReference": "지식 및 참고 자료"
     }
   },
   "metadata": {
     "projects": {
-      "title": "프로젝트 — 이달의 출시 | aat.ee",
-      "description": "aat.ee에서 이달에 출시된 프로젝트(스타트업, AI 도구, SaaS)를 둘러보세요."
+      "title": "프로젝트 — 이번 달 런칭 | aat.ee",
+      "description": "aat.ee에서 이번 달에 런칭된 프로젝트 — 스타트업, AI 도구, SaaS 제품을 둘러보세요."
     },
     "trending": {
-      "title": "인기 — aat.ee",
-      "description": "aat.ee에서 인기 있는 기술 제품, AI 도구, SaaS 출시를 만나보세요."
+      "title": "트렌딩 — aat.ee",
+      "description": "aat.ee에서 인기 있는 기술 제품, AI 도구, SaaS 런칭을 발견하세요."
     },
     "categories": {
       "title": "카테고리 — aat.ee",
-      "description": "aat.ee에서 카테고리별로 기술 제품을 둘러보세요 — 스타트업, AI 도구, SaaS 앱을 찾아보세요."
+      "description": "aat.ee에서 카테고리별 기술 제품을 둘러보세요 — 스타트업, AI 도구, SaaS 앱을 찾아보세요."
     },
     "winners": {
-      "title": "일간 우승자 — aat.ee",
-      "description": "aat.ee에서 매일 최고 순위의 제품을 확인하세요."
+      "title": "일일 우승자 — aat.ee",
+      "description": "aat.ee에서 런칭된 최고 순위 제품, 날짜별로 확인하세요."
     },
     "tags": {
       "title": "태그 — aat.ee",
       "description": "aat.ee에서 태그별로 제품을 탐색하세요 — AI, 개발자 도구, 생산성 등."
     },
     "pricing": {
-      "title": "가격 — aat.ee",
-      "description": "aat.ee의 출시 패키지를 비교하세요 — 무료, 프리미엄, 프리미엄 플러스."
+      "title": "가격 정책 — aat.ee",
+      "description": "aat.ee의 런칭 패키지를 비교하세요 — 무료, 프리미엄, 프리미엄 플러스 등급."
     },
     "blog": {
       "title": "블로그 — aat.ee",
-      "description": "aat.ee 팀의 기사, 출시 플레이북, 제품 업데이트."
+      "description": "aat.ee 팀의 기사, 런칭 플레이북, 제품 업데이트."
     },
     "badge": {
       "title": "특별 배지 — aat.ee",
-      "description": "사이트에 aat.ee 배지를 추가하여 출시를 자랑하고 SEO 백링크를 얻으세요."
+      "description": "사이트에 aat.ee 배지를 추가하여 런칭을 자랑하고 SEO 백링크를 얻으세요."
     },
     "sponsors": {
       "title": "스폰서 — aat.ee",
@@ -303,31 +303,31 @@
     },
     "reviews": {
       "title": "제품 리뷰 — aat.ee",
-      "description": "aat.ee에서 최신 기술 제품 및 도구에 대한 심층 리뷰와 분석."
+      "description": "aat.ee에서 최신 기술 제품과 도구에 대한 심층 리뷰 및 분석."
     }
   },
   "breadcrumb": {
     "home": "홈",
     "projects": "프로젝트",
-    "trending": "인기",
+    "trending": "트렌딩",
     "tags": "태그",
     "categories": "카테고리",
     "winners": "우승자",
-    "pricing": "가격",
+    "pricing": "가격 정책",
     "blog": "블로그",
     "badge": "특별 배지"
   },
   "upvote": {
-    "mustBeLoggedIn": "추천하려면 로그인해야 합니다",
-    "rateLimited": "스팸 방지팀입니다: {count}분 동안 최대 {minutes}회 추천 가능합니다! {seconds}초 후에 다시 시도하세요.",
-    "minWaitSeconds": "스팸 방지팀입니다: 투표 변경을 위해 {seconds}초 대기가 필요합니다",
-    "projectNotFound": "프로젝트를 찾을 수 없습니다",
-    "notOngoing": "투표는 프로젝트가 오늘 출시 중일 때만 가능합니다"
+    "mustBeLoggedIn": "추천하려면 로그인해야 합니다.",
+    "rateLimited": "안티 스팸팀입니다: {count}개의 추천이 {minutes}분 내에 최대치에 도달했습니다! {seconds}초 후에 다시 시도해주세요.",
+    "minWaitSeconds": "안티 스팸팀입니다: 투표 변경을 위해 {seconds}초를 기다려야 합니다.",
+    "projectNotFound": "프로젝트를 찾을 수 없습니다.",
+    "notOngoing": "투표는 프로젝트가 오늘 출시되는 동안에만 가능합니다."
   },
   "submitProject": {
     "page": {
       "title": "프로젝트 제출",
-      "subtitle": "커뮤니티와 프로젝트를 공유하세요. 아래에 세부 정보를 입력해주세요."
+      "subtitle": "커뮤니티와 프로젝트를 공유하세요. 아래 세부 정보를 입력해주세요."
     },
     "stepper": {
       "step1": "프로젝트 정보",
@@ -340,13 +340,13 @@
     "step1": {
       "name": {
         "label": "프로젝트 이름",
-        "placeholder": "멋진 프로젝트"
+        "placeholder": "나의 멋진 프로젝트"
       },
       "websiteUrl": {
         "label": "웹사이트 URL",
         "placeholder": "https://myawesomeproject.com",
-        "help": "웹사이트 URL을 입력하고 자동 채우기를 클릭하여 양식을 자동으로 채우세요.",
-        "duplicateWarning": "⚠️ 이 URL은 이미 제출되었습니다. 마지막 단계에서 차단됩니다 — 다른 URL을 사용해주세요."
+        "help": "웹사이트 URL을 입력하고 자동 채우기를 클릭하여 양식을 자동으로 작성하세요.",
+        "duplicateWarning": "⚠️ 이 URL은 이미 제출되었습니다. 마지막 단계에서 차단되므로 다른 URL을 사용해주세요."
       },
       "autoFill": {
         "button": "자동 채우기",
@@ -354,11 +354,11 @@
       },
       "sourceLocale": {
         "label": "설명 언어",
-        "help": "설명을 작성하는 언어를 선택하세요. 다른 언어는 자동 번역됩니다."
+        "help": "설명을 작성할 언어를 선택하세요. 다른 언어는 자동 번역됩니다."
       },
       "description": {
         "label": "설명",
-        "placeholder": "프로젝트 설명"
+        "placeholder": "프로젝트를 설명해주세요"
       },
       "logo": {
         "label": "로고 (최대 1MB)",
@@ -382,14 +382,14 @@
       "categories": {
         "label": "카테고리",
         "counter": "({count}/3 선택됨)",
-        "help": "최대 3개의 관련 카테고리를 선택하세요.",
+        "help": "관련 카테고리를 최대 3개까지 선택하세요.",
         "empty": "사용 가능한 카테고리가 없습니다.",
         "loading": "로딩 중..."
       },
       "tags": {
         "label": "제품 태그",
         "counter": "({count}/10 태그)",
-        "placeholder": "예: ai, saas, 오픈소스, 개발자도구...",
+        "placeholder": "예: ai, saas, 오픈소스, 개발자 도구...",
         "help": "최대 10개의 태그를 추가하여 사용자가 프로젝트를 찾을 수 있도록 도와주세요. Enter 또는 쉼표로 추가합니다."
       },
       "platforms": {
@@ -398,7 +398,7 @@
         "options": {
           "web": "웹",
           "mobile": "모바일",
-          "desktop": "데스크톱",
+          "desktop": "데스크탑",
           "api": "API",
           "other": "기타"
         }
@@ -412,11 +412,11 @@
         }
       },
       "githubUrl": {
-        "label": "GitHub URL (선택 사항)",
+        "label": "GitHub URL (선택사항)",
         "placeholder": "https://github.com/user/repo"
       },
       "twitterUrl": {
-        "label": "Twitter URL (선택 사항)",
+        "label": "Twitter URL (선택사항)",
         "placeholder": "https://twitter.com/username"
       }
     },
@@ -424,33 +424,36 @@
       "title": "출시 유형 및 날짜 선택",
       "infoBanner": {
         "heading": "출시 유형과 날짜를 선택하세요",
-        "body": "모든 출시는 {hour}:00 UTC에 진행됩니다. 매일 제한된 수의 프로젝트가 출시됩니다."
+        "body": "모든 출시는 {hour}:00 UTC에 진행됩니다. 하루에 출시되는 프로젝트 수는 제한되어 있습니다."
       },
       "badgeCard": {
         "heading": "🚀 내일 출시하고 싶으신가요?",
-        "body": "대기열을 건너뛰세요! 웹사이트에 배지를 추가하고 몇 주 또는 몇 달을 기다리지 않고 다음 날 출시하세요.",
+        "body": "대기열을 건너뛰세요! 웹사이트에 배지를 추가하면 몇 주 또는 몇 달을 기다리지 않고 다음 날 출시할 수 있습니다.",
         "getCode": "배지 코드 받기",
         "verify": "배지 확인",
-        "verifying": "확인 중..."
+        "verifying": "확인 중...",
+        "urlRequired": "먼저 웹사이트 URL을 입력해주세요",
+        "notFound": "웹사이트에서 배지를 찾을 수 없습니다",
+        "verifyFailed": "배지 확인에 실패했습니다. 다시 시도해주세요."
       },
       "badgeVerified": {
         "heading": "✅ 배지 확인 완료!",
-        "body": "이제 배지 패스트 트랙에 액세스할 수 있습니다! 아래에서 출시 할당량을 선택하세요."
+        "body": "이제 배지 패스트트랙을 이용할 수 있습니다! 아래에서 출시 할당량을 선택하세요."
       },
       "quota": {
         "heading": "출시 할당량 선택",
         "free": {
           "name": "무료 할당량",
-          "slots": "일일 {n}개 슬롯",
+          "slots": "하루 {n}개 슬롯",
           "queue": "일반 대기열",
           "dofollow": "상위 3위 또는 배지 시 Dofollow"
         },
         "badge": {
-          "name": "배지 패스트 트랙",
+          "name": "배지 패스트트랙",
           "tag": "🚀 빠름",
-          "slots": "일일 {n}개 슬롯",
+          "slots": "하루 {n}개 슬롯",
           "tomorrow": "내일 출시!",
-          "dofollow": "보장된 Dofollow 링크"
+          "dofollow": "Dofollow 링크 보장"
         },
         "warningPrefix": "중요:",
         "warningBody": "aat.ee는 매월 웹사이트에서 배지를 자동으로 확인합니다. 배지가 없는 프로젝트는 제거됩니다."
@@ -460,7 +463,7 @@
         "selected": "선택됨",
         "free": {
           "name": "무료 출시",
-          "slotsLabel": "일일 {n}개 슬롯",
+          "slotsLabel": "하루 {n}개 슬롯",
           "scheduling": "최대 {n}일 예약 가능",
           "dofollowConditional": "Dofollow 백링크 조건:",
           "topRanking": "1. 일일 순위 상위 3위",
@@ -469,27 +472,27 @@
         "premium": {
           "name": "프리미엄 출시",
           "skipQueue": "무료 대기열 건너뛰기",
-          "guaranteedDofollow": "보장된 Dofollow 백링크 (DR {dr})",
-          "slotsLabel": "일일 프리미엄 슬롯 {n}개",
+          "guaranteedDofollow": "Dofollow 백링크 보장 (DR {dr})",
+          "slotsLabel": "하루 {n}개 프리미엄 슬롯",
           "scheduling": "최대 {n}일 예약 가능"
         }
       },
       "date": {
-        "label": "출시일",
-        "loading": "사용 가능한 날짜 로딩 중...",
-        "empty": "선택한 유형에 대해 허용 범위 내에서 사용 가능한 출시일이 없습니다.",
-        "placeholder": "출시일 선택",
-        "slotsAvailable": "{type} 슬롯 {n}개",
+        "label": "출시 날짜",
+        "loading": "가능한 날짜를 불러오는 중...",
+        "empty": "선택한 유형에 대해 허용 범위 내에서 사용 가능한 출시 날짜가 없습니다.",
+        "placeholder": "출시 날짜 선택",
+        "slotsAvailable": "{n}개 {type} 슬롯",
         "slotTypeFree": "무료",
         "slotTypeBadge": "배지",
         "slotTypePremium": "프리미엄",
         "crowdednessTooltip": "이미 {n}개 프로젝트가 예약됨",
-        "scheduledFor": "예정일",
+        "scheduledFor": "예약 날짜",
         "noDate": "선택된 날짜 없음"
       },
       "premiumUpsell": {
-        "heading": "프리미엄으로 {days}일 더 일찍 출시하세요!",
-        "body": "{date}부터 가능 • 보장된 DR{dr} 백링크 • 대기열 건너뛰기",
+        "heading": "프리미엄으로 {days, plural, one {#일} other {#일}} 더 일찍 출시하세요!",
+        "body": "{date}부터 이용 가능 • DR{dr} 백링크 보장 • 대기열 건너뛰기",
         "button": "프리미엄으로 업그레이드 ${price}"
       }
     },
@@ -507,17 +510,17 @@
         "categories": "카테고리:",
         "tags": "제품 태그:",
         "platforms": "플랫폼:",
-        "pricing": "가격:",
+        "pricing": "가격 정책:",
         "github": "GitHub:",
         "twitter": "Twitter:"
       },
       "logoAlt": "업로드된 로고",
       "productImageAlt": "제품 이미지",
-      "premiumPriceLabel": "프리미엄 출시 (${price})",
+      "premiumPriceLabel": "프리미엄 런칭 (${price})",
       "readyToSubmit": {
         "heading": "제출할 준비가 되셨나요?",
-        "body": "모든 정보를 주의 깊게 검토해주세요. 제출 후 프로젝트는 출시 일정에 등록됩니다.",
-        "paymentRedirect": "제출 후 결제 페이지로 리디렉션됩니다."
+        "body": "모든 정보를 신중히 검토해 주세요. 제출 후 프로젝트는 런칭 일정에 등록됩니다.",
+        "paymentRedirect": "제출 후 결제 페이지로 이동합니다."
       }
     },
     "buttons": {
@@ -527,36 +530,38 @@
     },
     "errors": {
       "fields": {
-        "nameRequired": "프로젝트 이름은 필수입니다",
-        "websiteUrlRequired": "웹사이트 URL은 필수입니다",
-        "websiteUrlInvalid": "유효한 URL을 입력해주세요 (https://...)",
-        "websiteUrlInvalidQuick": "먼저 유효한 URL을 입력해주세요",
-        "websiteUrlDuplicate": "이 URL은 이미 제출되었습니다",
-        "descriptionRequired": "설명은 필수입니다",
-        "logoRequired": "로고는 필수입니다",
+        "nameRequired": "프로젝트 이름은 필수입니다.",
+        "websiteUrlRequired": "웹사이트 URL은 필수입니다.",
+        "websiteUrlInvalid": "올바른 URL을 입력해 주세요 (https://...)",
+        "websiteUrlInvalidQuick": "먼저 올바른 URL을 입력해 주세요",
+        "websiteUrlDuplicate": "이 URL은 이미 제출되었습니다.",
+        "descriptionRequired": "설명은 필수입니다.",
+        "logoRequired": "로고는 필수입니다.",
         "logoUploadFailedNoUrl": "로고 업로드 실패: URL이 반환되지 않았습니다.",
         "logoUploadFailed": "로고 업로드 실패: {message}",
-        "categoriesMin": "최소 하나의 카테고리를 선택하세요",
-        "categoriesMax": "최대 3개의 카테고리",
-        "techStackMin": "최소 하나의 태그를 추가하세요",
-        "techStackMax": "최대 10개의 태그",
-        "platformsMin": "최소 하나의 플랫폼을 선택하세요",
-        "pricingRequired": "가격 모델을 선택하세요",
-        "scheduledDateRequired": "출시일을 선택하세요",
-        "scheduledDateOverLimit": "이 날짜는 일일 출시 한도를 초과합니다"
+        "categoriesMin": "최소 하나의 카테고리를 선택해 주세요.",
+        "categoriesMax": "최대 3개의 카테고리까지 선택 가능합니다.",
+        "techStackMin": "최소 하나의 태그를 추가해 주세요.",
+        "techStackMax": "최대 10개의 태그까지 추가 가능합니다.",
+        "platformsMin": "최소 하나의 플랫폼을 선택해 주세요.",
+        "pricingRequired": "가격 정책을 선택해 주세요.",
+        "scheduledDateRequired": "런칭 날짜를 선택해 주세요.",
+        "scheduledDateOverLimit": "이 날짜는 일일 런칭 한도를 초과합니다.",
+        "scheduledDateOverLimitDetail": "이 날짜에 이미 {count}/{limit}개의 프로젝트가 예약되어 있습니다. 다른 날짜를 선택해 주세요.",
+        "scheduledDateCheckFailed": "런칭 날짜 한도를 확인할 수 없습니다. 다시 시도해 주세요."
       },
       "form": {
-        "loadCategoriesFailed": "카테고리 로딩 실패",
-        "loadDatesFailed": "사용 가능한 날짜 로딩 실패",
+        "loadCategoriesFailed": "카테고리를 불러오지 못했습니다.",
+        "loadDatesFailed": "사용 가능한 날짜를 불러오지 못했습니다.",
         "productImageUploadFailedNoUrl": "제품 이미지 업로드 실패: URL이 반환되지 않았습니다.",
         "productImageUploadFailed": "제품 이미지 업로드 실패: {message}",
-        "autoFillFailed": "자동 채우기에 실패했습니다. 다시 시도해주세요.",
+        "autoFillFailed": "자동 채우기에 실패했습니다. 다시 시도해 주세요.",
         "submitFailed": "예상치 못한 오류가 발생했습니다.",
         "scheduleFailed": "일정 등록 중 오류가 발생했습니다."
       }
     },
     "toast": {
-      "draftRestored": "저장되지 않은 임시 저장 내용을 복원했습니다"
+      "draftRestored": "저장되지 않은 임시 저장본을 복구했습니다."
     }
   }
 }
