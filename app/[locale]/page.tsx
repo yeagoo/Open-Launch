@@ -138,7 +138,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                     kicker={todayKicker}
                   />
                   {restToday.length > 0 && (
-                    <DenseList projects={restToday} heading={tSections("todayTitle")} />
+                    // Continuation of the hero — no heading bar, ranks
+                    // pick up at 04 so the numbering stays consistent.
+                    <DenseList projects={restToday} startRank={4} />
                   )}
                 </>
               )

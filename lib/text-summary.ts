@@ -25,9 +25,15 @@ export function oneLineSummary(html: string | null | undefined, maxLen = 160): s
     .trim()
   if (!text) return ""
 
-  // 2. Find the first sentence end. We accept ., !, ?, 。, !, ? (CJK
-  //    punctuation) followed by a space or end-of-string.
-  const sentenceEnd = text.search(/[.!?。！？](?=\s|$)/)
+  // 2. Find the first sentence end. CJK punctuation (。！？) closes a
+  //    sentence outright — Chinese / Japanese rarely add a space after.
+  //    Latin punctuation (.!?) only counts when followed by whitespace
+  //    or end-of-string, otherwise we'd clip on "v2.0", "U.S.", URLs.
+  const cjkEnd = text.search(/[。！？]/)
+  const latinEnd = text.search(/[.!?](?=\s|$)/)
+  // Pick the earliest hit (ignoring -1 misses).
+  const candidates = [cjkEnd, latinEnd].filter((i) => i > 0)
+  const sentenceEnd = candidates.length > 0 ? Math.min(...candidates) : -1
   let summary = sentenceEnd > 0 ? text.slice(0, sentenceEnd + 1) : text
 
   // 3. Hard clip if still too long.

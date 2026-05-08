@@ -1,6 +1,6 @@
 import Image from "next/image"
-import Link from "next/link"
 
+import { Link } from "@/i18n/navigation"
 import { RiChat3Line, RiThumbUpLine } from "@remixicon/react"
 
 import { oneLineSummary } from "@/lib/text-summary"
