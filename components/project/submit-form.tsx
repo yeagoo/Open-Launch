@@ -168,8 +168,11 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     setLaunchDateLimitError(null)
   }
 
-  // Inline error renderer — falsy / empty string = render nothing.
-  const FieldError = ({ field }: { field: string }) =>
+  // Inline error renderer. Returned as a JSX fragment from a plain helper
+  // (NOT a component) so React doesn't see a new component identity on
+  // every parent render — that would unmount + remount the <p> and make
+  // screen readers re-announce the alert on every keystroke.
+  const renderFieldError = (field: string) =>
     fieldErrors[field] ? (
       <p className="mt-1 text-xs text-red-600" role="alert">
         {fieldErrors[field]}
@@ -653,8 +656,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
     const urlExists = await checkWebsiteUrl(formData.websiteUrl)
     if (urlExists) {
-      setFieldErrors({ websiteUrl: "This URL has already been submitted" })
-      scrollToFirstError({ websiteUrl: "" })
+      const dupErrs = { websiteUrl: "This URL has already been submitted" }
+      setFieldErrors(dupErrs)
+      scrollToFirstError(dupErrs)
       setIsPending(false)
       return
     }
@@ -905,7 +909,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 placeholder="My Awesome Project"
                 required
               />
-              <FieldError field="name" />
+              {renderFieldError("name")}
             </div>
             <div>
               <Label htmlFor="websiteUrl">
@@ -947,7 +951,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   use a different URL.
                 </p>
               )}
-              <FieldError field="websiteUrl" />
+              {renderFieldError("websiteUrl")}
             </div>
             <div>
               <Label htmlFor="sourceLocale">
@@ -988,7 +992,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 placeholder="Describe your project"
                 className="max-h-[300px] overflow-y-auto"
               />
-              <FieldError field="description" />
+              {renderFieldError("description")}
             </div>
             <div id="logoUrl" className="space-y-2">
               <Label htmlFor="logoUrl">
@@ -1071,7 +1075,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   )}
                 </div>
               )}
-              <FieldError field="logoUrl" />
+              {renderFieldError("logoUrl")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="productImage">
@@ -1198,7 +1202,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Select up to 3 relevant categories.
               </p>
-              <FieldError field="categories" />
+              {renderFieldError("categories")}
             </div>
 
             <div id="techStack">
@@ -1238,7 +1242,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Add up to 10 tags to help users discover your project. Press Enter or comma to add.
               </p>
-              <FieldError field="techStack" />
+              {renderFieldError("techStack")}
             </div>
 
             <div id="platforms">
@@ -1267,7 +1271,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
               <p className="text-muted-foreground mt-1 text-xs">
                 Select all platforms your project supports.
               </p>
-              <FieldError field="platforms" />
+              {renderFieldError("platforms")}
             </div>
 
             <div id="pricing">
@@ -1291,7 +1295,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   </div>
                 ))}
               </RadioGroup>
-              <FieldError field="pricing" />
+              {renderFieldError("pricing")}
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -1711,7 +1715,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                       {launchDateLimitError}
                     </p>
                   )}
-                  <FieldError field="scheduledDate" />
+                  {renderFieldError("scheduledDate")}
 
                   {formData.scheduledDate && !isLaunchDateOverLimit && (
                     <div className="bg-primary/5 border-primary/10 mt-3 rounded-md border p-3 text-sm">
