@@ -9,6 +9,7 @@ import type { JSONContent } from "@tiptap/react"
 import { useFormatter, useNow, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
+import { poolAvatarUrl } from "@/lib/avatar-pool"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -332,19 +333,14 @@ function CommentRowView({
   return (
     <div className="border-border/40 bg-background rounded-lg border p-4">
       <div className="flex items-start gap-3">
-        {/* Avatar */}
-        {comment.author.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={comment.author.image}
-            alt={comment.author.name}
-            className="h-8 w-8 shrink-0 rounded-full"
-          />
-        ) : (
-          <div className="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium">
-            {comment.author.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        {/* Avatar — falls back to a pre-generated boring-avatar from the
+            shared pool when the user has no stored image. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={comment.author.image ?? poolAvatarUrl(comment.author.id)}
+          alt={comment.author.name}
+          className="h-8 w-8 shrink-0 rounded-full"
+        />
 
         <div className="min-w-0 flex-1">
           {/* Header: name + time */}

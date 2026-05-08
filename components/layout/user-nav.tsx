@@ -13,6 +13,7 @@ import { User } from "better-auth"
 import { ChevronDownIcon } from "lucide-react"
 
 import { signOut } from "@/lib/auth-client"
+import { poolAvatarUrl } from "@/lib/avatar-pool"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -51,16 +52,13 @@ export function UserNav({ user }: UserNavProps) {
           className="h-8 cursor-pointer px-2 hover:bg-transparent hover:text-black focus-visible:ring-0 focus-visible:ring-offset-0 dark:hover:text-white"
         >
           <Avatar className="h-6 w-6">
-            {user.image ? (
-              <AvatarImage
-                src={user.image}
-                alt={user.name || "User avatar"}
-                loading="eager"
-                fetchPriority="high"
-              />
-            ) : (
-              <AvatarFallback className="">{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
-            )}
+            <AvatarImage
+              src={user.image ?? poolAvatarUrl(user.id)}
+              alt={user.name || "User avatar"}
+              loading="eager"
+              fetchPriority="high"
+            />
+            <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <ChevronDownIcon size={14} className="hidden opacity-60 md:block" aria-hidden="true" />
         </Button>
