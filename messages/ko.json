@@ -316,5 +316,12 @@
     "pricing": "가격",
     "blog": "블로그",
     "badge": "배지"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "투표하려면 로그인이 필요합니다",
+    "rateLimited": "스팸 방지: {minutes}분 내 {count}회 한도 초과. {seconds}초 후 다시 시도하세요.",
+    "minWaitSeconds": "스팸 방지: 투표 변경 사이 {seconds}초 대기 필요",
+    "projectNotFound": "프로젝트를 찾을 수 없습니다",
+    "notOngoing": "프로젝트가 오늘 출시되는 동안에만 투표할 수 있습니다"
   }
 }

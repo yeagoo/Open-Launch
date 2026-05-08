@@ -316,5 +316,12 @@
     "pricing": "Hinnad",
     "blog": "Blogi",
     "badge": "Märgid"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "Hääletamiseks pead sisse logima",
+    "rateLimited": "Spämmivastane: {count} häält {minutes} minuti jooksul on täis. Proovi uuesti {seconds} sekundi pärast.",
+    "minWaitSeconds": "Spämmivastane: hääle muutmiseks vaja {seconds} sekundit oodata",
+    "projectNotFound": "Projekti ei leitud",
+    "notOngoing": "Hääletada saab ainult projekti tänase lansseerimise ajal"
   }
 }

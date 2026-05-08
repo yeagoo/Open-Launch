@@ -316,5 +316,12 @@
     "pricing": "料金",
     "blog": "ブログ",
     "badge": "バッジ"
+  },
+  "upvote": {
+    "mustBeLoggedIn": "投票するにはログインが必要です",
+    "rateLimited": "スパム防止：{minutes} 分以内に {count} 回まで。{seconds} 秒後に再試行してください。",
+    "minWaitSeconds": "スパム防止：投票変更には {seconds} 秒の間隔が必要です",
+    "projectNotFound": "プロジェクトが見つかりません",
+    "notOngoing": "プロジェクトの当日ローンチ中のみ投票できます"
   }
 }

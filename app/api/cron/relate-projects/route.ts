@@ -210,12 +210,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    subjects: subjects.length,
-    written,
-    skipped,
-    failed,
-    reattemptDays: REATTEMPT_DAYS,
-    errors: errors.slice(0, 10),
-  })
+  // 5xx if every attempted subject errored (partial errors stay 200).
+  const status = errors.length > 0 && written === 0 ? 500 : 200
+  return NextResponse.json(
+    {
+      subjects: subjects.length,
+      written,
+      skipped,
+      failed,
+      reattemptDays: REATTEMPT_DAYS,
+      errors: errors.slice(0, 10),
+    },
+    { status },
+  )
 }

@@ -210,11 +210,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    candidates: candidates.length,
-    translated,
-    longTranslated,
-    failed,
-    errors: errors.slice(0, 10),
-  })
+  // 5xx if all writes failed but errors were recorded — surfaces a DeepSeek
+  // outage to cron-job.org's email alerts.
+  const status = failed > 0 && translated === 0 && longTranslated === 0 ? 500 : 200
+  return NextResponse.json(
+    {
+      candidates: candidates.length,
+      translated,
+      longTranslated,
+      failed,
+      errors: errors.slice(0, 10),
+    },
+    { status },
+  )
 }

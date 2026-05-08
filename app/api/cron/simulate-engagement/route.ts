@@ -374,20 +374,34 @@ export async function GET(request: Request) {
 
     console.log("🎉 Virtual engagement simulation completed!")
 
-    return NextResponse.json({
-      success: true,
-      message: "Virtual engagement simulation completed",
-      data: {
-        botsAvailable: bots.length,
-        ongoingProjects: ongoingProjects.length,
-        recentProjects: recentProjects.length,
-        upvotesAdded: results.upvotesAdded,
-        upvotesAmplified: results.upvotesAmplified,
-        commentsPosted: results.commentsPosted,
-        commentsRewritten: results.commentsRewritten,
-        errors: results.errors,
+    // Surface complete-failure runs as HTTP 5xx so cron-job.org's failure
+    // alerting actually fires when DeepSeek/Crawl4AI is down. Partial runs
+    // (some work succeeded, some errored) stay 200 — those are usually
+    // transient and not worth a page.
+    const totalWork =
+      results.upvotesAdded +
+      results.upvotesAmplified +
+      results.commentsPosted +
+      results.commentsRewritten
+    const status = results.errors.length > 0 && totalWork === 0 ? 500 : 200
+
+    return NextResponse.json(
+      {
+        success: status === 200,
+        message: "Virtual engagement simulation completed",
+        data: {
+          botsAvailable: bots.length,
+          ongoingProjects: ongoingProjects.length,
+          recentProjects: recentProjects.length,
+          upvotesAdded: results.upvotesAdded,
+          upvotesAmplified: results.upvotesAmplified,
+          commentsPosted: results.commentsPosted,
+          commentsRewritten: results.commentsRewritten,
+          errors: results.errors,
+        },
       },
-    })
+      { status },
+    )
   } catch (error) {
     console.error("❌ Simulation error:", error)
     return NextResponse.json(

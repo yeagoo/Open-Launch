@@ -14,6 +14,7 @@ import {
   upvote,
 } from "@/drizzle/db/schema"
 import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
+import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
@@ -120,12 +121,12 @@ export async function getUserCreatedProjects() {
 // Toggle upvote on a project
 export async function toggleUpvote(projectId: string) {
   const session = await getSession()
+  // Server actions inherit locale from the originating request, so
+  // getTranslations gives the same locale the user is browsing in.
+  const t = await getTranslations("upvote")
 
   if (!session?.user?.id) {
-    return {
-      success: false,
-      message: "You must be logged in to upvote",
-    }
+    return { success: false, message: t("mustBeLoggedIn") }
   }
 
   // Lock voting to the active launch window. The UI typically hides the
@@ -140,14 +141,11 @@ export async function toggleUpvote(projectId: string) {
     .limit(1)
 
   if (!proj) {
-    return { success: false, message: "Project not found" }
+    return { success: false, message: t("projectNotFound") }
   }
 
   if (proj.launchStatus !== "ongoing") {
-    return {
-      success: false,
-      message: "Voting is only open while the project is launching today",
-    }
+    return { success: false, message: t("notOngoing") }
   }
 
   // Importer les constantes et le module de rate limiting
@@ -164,7 +162,11 @@ export async function toggleUpvote(projectId: string) {
   if (!success) {
     return {
       success: false,
-      message: `Anti-Spam Squad here: ${UPVOTE_LIMITS.ACTIONS_PER_WINDOW} upvotes in ${UPVOTE_LIMITS.TIME_WINDOW_MINUTES} minutes maxed out! Retry in ${reset} seconds.`,
+      message: t("rateLimited", {
+        count: UPVOTE_LIMITS.ACTIONS_PER_WINDOW,
+        minutes: UPVOTE_LIMITS.TIME_WINDOW_MINUTES,
+        seconds: reset,
+      }),
     }
   }
 
@@ -180,7 +182,9 @@ export async function toggleUpvote(projectId: string) {
     if (timeSinceLastAction < UPVOTE_LIMITS.MIN_TIME_BETWEEN_ACTIONS_MS) {
       return {
         success: false,
-        message: `Anti-Spam Squad here: ${UPVOTE_LIMITS.MIN_TIME_BETWEEN_ACTIONS_SECONDS}-second wait required for vote changes`,
+        message: t("minWaitSeconds", {
+          seconds: UPVOTE_LIMITS.MIN_TIME_BETWEEN_ACTIONS_SECONDS,
+        }),
       }
     }
   }
