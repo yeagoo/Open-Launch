@@ -128,6 +128,28 @@ export async function toggleUpvote(projectId: string) {
     }
   }
 
+  // Lock voting to the active launch window. The UI typically hides the
+  // upvote button for non-ongoing projects, but the server has to enforce
+  // this too — without it, a crafted request could vote on scheduled,
+  // payment-pending, or already-launched projects, which would also bypass
+  // the daily ranking logic that only counts active-window votes.
+  const [proj] = await db
+    .select({ launchStatus: project.launchStatus })
+    .from(project)
+    .where(eq(project.id, projectId))
+    .limit(1)
+
+  if (!proj) {
+    return { success: false, message: "Project not found" }
+  }
+
+  if (proj.launchStatus !== "ongoing") {
+    return {
+      success: false,
+      message: "Voting is only open while the project is launching today",
+    }
+  }
+
   // Importer les constantes et le module de rate limiting
   const { UPVOTE_LIMITS } = await import("@/lib/constants")
   const rateLimit = await import("@/lib/rate-limit")
