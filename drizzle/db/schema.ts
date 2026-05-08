@@ -131,6 +131,10 @@ export const project = pgTable(
     sourceLocale: text("source_locale").notNull().default("en"),
     relatedAttemptedAt: timestamp("related_attempted_at"),
     alternativesAttemptedAt: timestamp("alternatives_attempted_at"),
+    isLowQuality: boolean("is_low_quality").notNull().default(false),
+    qualityCheckedAt: timestamp("quality_checked_at"),
+    qualityScore: integer("quality_score"),
+    qualityReason: text("quality_reason"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     createdBy: text("created_by").references(() => user.id, {

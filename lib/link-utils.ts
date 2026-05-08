@@ -9,6 +9,7 @@ interface ProjectLinkInfo {
   launchStatus?: ProjectSchemaSelect["launchStatus"]
   dailyRanking?: ProjectSchemaSelect["dailyRanking"]
   hasBadgeVerified?: boolean
+  isLowQuality?: boolean
 }
 
 interface LinkOptions {
@@ -23,6 +24,12 @@ export function getProjectWebsiteRelAttribute(
   let rel = "noopener"
 
   const { isDetailPage = false } = options
+
+  // Low-quality projects always get nofollow regardless of launch type or
+  // ranking — paired with the /go/ redirect, this denies them SEO juice.
+  if (projectInfo.isLowQuality) {
+    return rel + " nofollow noreferrer"
+  }
 
   // 首页/列表页链接一律不给 dofollow
   if (!isDetailPage) {
@@ -52,4 +59,22 @@ export function getProjectWebsiteRelAttribute(
   }
 
   return rel
+}
+
+/**
+ * Resolve the href to use for a project's outbound website link.
+ *
+ * Quality projects: direct URL (search engines see and may follow it
+ * depending on rel attributes from getProjectWebsiteRelAttribute).
+ *
+ * Low-quality projects: /go/<encoded-url> — handled by app/go/[...url]
+ * with X-Robots-Tag: noindex,nofollow so search engines never index the
+ * redirect or pass juice through it.
+ */
+export function getProjectOutboundHref(
+  websiteUrl: string,
+  projectInfo: { isLowQuality?: boolean },
+): string {
+  if (!projectInfo.isLowQuality) return websiteUrl
+  return `/go/${encodeURIComponent(websiteUrl)}`
 }

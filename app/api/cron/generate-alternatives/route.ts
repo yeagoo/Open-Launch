@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
             eq(projectTable.launchStatus, launchStatus.ONGOING),
             eq(projectTable.launchStatus, launchStatus.LAUNCHED),
           ),
+          eq(projectTable.isLowQuality, false),
           sql`${projectTable.id} NOT IN (SELECT subject_project_id FROM alternative_page)`,
           sql`${sameCategoryCountSql} >= ${MIN_ALTERNATIVES}`,
           sql`(${projectTable.alternativesAttemptedAt} IS NULL OR ${projectTable.alternativesAttemptedAt} < ${reattemptCutoff})`,
@@ -128,6 +129,7 @@ export async function GET(request: NextRequest) {
                 eq(projectTable.launchStatus, launchStatus.ONGOING),
                 eq(projectTable.launchStatus, launchStatus.LAUNCHED),
               ),
+              eq(projectTable.isLowQuality, false),
             ),
           )
           .groupBy(

@@ -56,10 +56,13 @@ export async function GET(request: Request) {
     // chatter on yesterday's threads doesn't add credibility — it just
     // moves the spam clock forward, and the new diversity prompt makes
     // ongoing-day comments plenty rich on their own.
+    // Exclude projects flagged by the AI quality classifier — they're
+    // intentionally cut off from every AI feature, including the bot
+    // engagement and rewrite phases below.
     const ongoingProjects = await db
       .select()
       .from(project)
-      .where(eq(project.launchStatus, "ongoing"))
+      .where(and(eq(project.launchStatus, "ongoing"), eq(project.isLowQuality, false)))
 
     if (ongoingProjects.length === 0) {
       return NextResponse.json(
@@ -284,7 +287,9 @@ export async function GET(request: Request) {
         c.content->'content'->0->'content'->0->>'text' AS text
       FROM ${fumaComments} c
       JOIN ${user} u ON u.id = c.author
+      JOIN ${project} p ON p.id = c.page
       WHERE u.is_bot = true
+        AND p.is_low_quality = false
         AND NOT EXISTS (
           SELECT 1 FROM ${fumaComments} r WHERE r.thread = c.id
         )

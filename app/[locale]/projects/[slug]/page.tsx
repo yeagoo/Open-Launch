@@ -22,7 +22,7 @@ import {
   getLocalizedProjectDescription,
 } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
-import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
+import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-editor"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -148,9 +148,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       launchType: projectData.launchType,
       dailyRanking: projectData.dailyRanking,
       hasBadgeVerified: projectData.hasBadgeVerified ?? false,
+      isLowQuality: projectData.isLowQuality,
     },
     { isDetailPage: true },
   )
+
+  // Low-quality projects route through /go/ so search engines see a
+  // noindex,nofollow redirect instead of a direct backlink.
+  const websiteHref = projectData.websiteUrl
+    ? getProjectOutboundHref(projectData.websiteUrl, {
+        isLowQuality: projectData.isLowQuality,
+      })
+    : null
 
   // Function to strip HTML for Schema
   function stripHtml(html: string): string {
@@ -242,7 +251,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   {projectData.websiteUrl && (
                     <Button variant="outline" size="sm" asChild className="h-9 px-3">
                       <a
-                        href={projectData.websiteUrl}
+                        href={websiteHref ?? "#"}
                         target="_blank"
                         rel={websiteRelAttribute}
                         className="flex items-center gap-2"
@@ -305,7 +314,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   {projectData.websiteUrl && (
                     <Button variant="outline" size="sm" asChild className="h-9 px-3">
                       <a
-                        href={projectData.websiteUrl}
+                        href={websiteHref ?? "#"}
                         target="_blank"
                         rel={websiteRelAttribute}
                         className="flex items-center justify-center gap-2"

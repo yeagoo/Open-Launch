@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
         isNull(projectTranslation.longDescription),
       ),
     )
-    .where(sql`${project.websiteUrl} IS NOT NULL AND length(${project.websiteUrl}) > 0`)
+    .where(
+      and(
+        sql`${project.websiteUrl} IS NOT NULL AND length(${project.websiteUrl}) > 0`,
+        eq(project.isLowQuality, false),
+      ),
+    )
     .limit(MAX_PROJECTS_PER_RUN)
 
   let generated = 0
