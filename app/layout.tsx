@@ -1,5 +1,9 @@
 import type { Metadata } from "next"
-import { Outfit as FontHeading, Inter as FontSans } from "next/font/google"
+import {
+  IBM_Plex_Serif as FontEditorial,
+  Outfit as FontHeading,
+  Inter as FontSans,
+} from "next/font/google"
 import Script from "next/script"
 
 import { NextIntlClientProvider } from "next-intl"
@@ -21,6 +25,15 @@ const fontSans = FontSans({
 const fontHeading = FontHeading({
   subsets: ["latin"],
   variable: "--font-heading",
+})
+
+// Editorial-feel serif used for the editorial home feed's hero titles
+// and section labels. Loaded with restricted weights to keep the bundle
+// small.
+const fontEditorial = FontEditorial({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-editorial",
 })
 
 export const metadata: Metadata = {
@@ -116,7 +129,7 @@ export default async function RootLayout({
         <OrganizationSchema />
       </head>
       <body
-        className={`font-sans antialiased ${fontSans.variable} ${fontHeading.variable} sm:overflow-y-scroll`}
+        className={`font-sans antialiased ${fontSans.variable} ${fontHeading.variable} ${fontEditorial.variable} sm:overflow-y-scroll`}
         suppressHydrationWarning
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
