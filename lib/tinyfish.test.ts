@@ -122,4 +122,17 @@ describe("tinyfishCrawl", () => {
     })
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/fetch failed/)
   })
+
+  it("queues fetches via the shared limiter (observed via inFlightCount)", async () => {
+    // Sanity check that tinyfishCrawl actually goes through fetchLimiter.
+    // We don't drive 25 concurrent calls (would be brittle in a unit suite),
+    // we just verify a successful call increments the limiter's slot count.
+    const { tinyfishFetchLimiter } = await import("./tinyfish")
+    const before = tinyfishFetchLimiter.inFlightCount()
+    mockFetch(
+      () => new Response(JSON.stringify({ results: [{ url: "x", text: "ok" }] }), { status: 200 }),
+    )
+    await tinyfishCrawl("https://example.com")
+    expect(tinyfishFetchLimiter.inFlightCount()).toBe(before + 1)
+  })
 })
