@@ -5,6 +5,7 @@
  *   - pickRelatedProjects: shortlist of candidates -> ordered list of related project IDs
  */
 
+import { logAiUsage } from "@/lib/ai-usage"
 import { sanitizeMarkdown } from "@/lib/sanitize-markdown"
 import { type ProjectLocale } from "@/lib/translate-project"
 
@@ -39,7 +40,7 @@ const BRAND_ALLOWLIST = [
 async function callDeepSeek(
   systemPrompt: string,
   userPrompt: string,
-  options: { temperature?: number; maxTokens?: number } = {},
+  options: { temperature?: number; maxTokens?: number; functionName?: string } = {},
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
@@ -65,6 +66,7 @@ async function callDeepSeek(
   }
 
   const data = await response.json()
+  void logAiUsage(options.functionName ?? "enrich-project", model, data?.usage)
   const content = data?.choices?.[0]?.message?.content
   if (typeof content !== "string" || content.length === 0) {
     throw new Error("DeepSeek returned empty content")
@@ -121,6 +123,7 @@ Website content (markdown, possibly truncated):
 ${truncate(input.crawledMarkdown)}`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "generate-long-description",
     temperature: 0.3,
     maxTokens: 1400,
   })
@@ -159,6 +162,7 @@ Rules:
   const userPrompt = `<CONTENT>\n${englishMarkdown}\n</CONTENT>`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "translate-long-description",
     temperature: 0.2,
     maxTokens: 2000,
   })
@@ -215,6 +219,7 @@ Candidates:
 ${candidateList}`
 
   const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "pick-related-projects",
     temperature: 0.1,
     maxTokens: 200,
   })

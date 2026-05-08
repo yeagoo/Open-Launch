@@ -9,7 +9,7 @@
  * (boring-avatars at request time) doesn't work in Next.js's RSC bundle.
  */
 
-export const POOL_SIZE = 5000
+export const POOL_SIZE = 20000
 
 // DJB2 — small deterministic hash that gives the same bucket on server and
 // client without needing Web Crypto / node:crypto. Same algorithm as

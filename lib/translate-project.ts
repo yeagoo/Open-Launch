@@ -1,3 +1,4 @@
+import { logAiUsage } from "@/lib/ai-usage"
 import { sanitizeRichText } from "@/lib/sanitize"
 
 export type ProjectLocale = "en" | "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
@@ -104,6 +105,7 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
   }
 
   const data = await response.json()
+  void logAiUsage("translate-project-description", model, data?.usage)
   const content = data?.choices?.[0]?.message?.content
   if (typeof content !== "string" || content.length === 0) {
     throw new Error("DeepSeek returned empty content")
