@@ -181,7 +181,20 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
         saved.formData.categories?.length > 0 ||
         saved.formData.techStack?.length > 0
       if (!hasContent) return
-      setFormData({ ...saved.formData, hasBadgeVerified: false })
+      // Defend against stale drafts from before a routing change.
+      // If the saved sourceLocale was removed from the locale list, fall
+      // back to the user's current UI locale so the Select doesn't show
+      // an empty value.
+      const restoredLocale = (routing.locales as readonly string[]).includes(
+        saved.formData.sourceLocale,
+      )
+        ? saved.formData.sourceLocale
+        : (defaultSourceLocale as (typeof routing.locales)[number])
+      setFormData({
+        ...saved.formData,
+        sourceLocale: restoredLocale,
+        hasBadgeVerified: false,
+      })
       setUploadedLogoUrl(saved.uploadedLogoUrl)
       toast.info("Restored your unsaved draft")
     },
@@ -475,23 +488,20 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
       setIsCheckingUrl(false)
       return
     }
+    // `aborted` guards against in-flight fetches resolving after the user
+    // has already typed something else. Without it, slow networks would
+    // briefly flash stale warnings on the new URL.
+    let aborted = false
     setIsCheckingUrl(true)
     const handle = setTimeout(async () => {
       const exists = await checkWebsiteUrl(url)
-      // Only apply the result if the URL hasn't changed since we fired.
-      // Without this, fast typers would see warnings flicker for stale
-      // URLs that no longer match the current input.
-      setFormData((prev) => {
-        if (prev.websiteUrl.trim() === url) {
-          setUrlDuplicateWarning(exists)
-          setIsCheckingUrl(false)
-        }
-        return prev
-      })
+      if (aborted) return
+      setUrlDuplicateWarning(exists)
+      setIsCheckingUrl(false)
     }, 800)
     return () => {
+      aborted = true
       clearTimeout(handle)
-      setIsCheckingUrl(false)
     }
   }, [formData.websiteUrl])
 
@@ -771,7 +781,7 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                   onClick={() => goToStep(step)}
                   disabled={!canJump}
                   aria-label={canJump ? `Jump back to ${label}` : `${label} step`}
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 sm:h-12 sm:w-12 ${
+                  className={`focus-visible:ring-primary/40 relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 focus-visible:ring-4 focus-visible:outline-none sm:h-12 sm:w-12 ${
                     currentStep > step
                       ? "bg-primary ring-primary/10 hover:ring-primary/30 cursor-pointer text-white ring-4"
                       : currentStep === step
