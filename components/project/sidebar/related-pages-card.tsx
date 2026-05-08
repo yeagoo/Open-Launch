@@ -1,4 +1,9 @@
-import { Link } from "@/i18n/navigation"
+// /compare/* and /alternatives/* are intentionally non-localized routes
+// (see middleware NON_LOCALIZED_PREFIXES). Using next-intl's Link would
+// inject a locale prefix and the URL would 404 / extra-redirect. Plain
+// next/link matches the convention in app/compare/page.tsx and
+// app/alternatives/page.tsx.
+import Link from "next/link"
 
 interface RelatedPagesCardProps {
   // Card heading (e.g. "Compare with", "Alternatives").

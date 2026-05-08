@@ -1,10 +1,5 @@
 import { db } from "@/drizzle/db"
-import {
-  alternativePage,
-  alternativePageToProject,
-  comparisonPage,
-  project,
-} from "@/drizzle/db/schema"
+import { alternativePage, alternativePageToProject, comparisonPage } from "@/drizzle/db/schema"
 import { desc, eq, or } from "drizzle-orm"
 
 export interface SidebarComparisonLink {
@@ -63,12 +58,11 @@ export async function getProjectSidebarLinks(projectId: string): Promise<Project
         alternativePage,
         eq(alternativePageToProject.alternativePageId, alternativePage.id),
       )
-      // Avoid double-counting the page where this project is itself the
-      // subject — that case is in `asSubject` above.
-      .innerJoin(project, eq(alternativePage.subjectProjectId, project.id))
       .where(eq(alternativePageToProject.projectId, projectId))
       .orderBy(desc(alternativePage.generatedAt))
       .limit(5),
+    // De-duplication against `asSubject` happens below in JS so we don't
+    // need a SQL anti-join here.
   ])
 
   // Merge the two alternative buckets, subject-first, deduped by slug.
