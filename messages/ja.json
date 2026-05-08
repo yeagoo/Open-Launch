@@ -8,7 +8,7 @@
     "delete": "削除",
     "edit": "編集",
     "search": "検索",
-    "viewAll": "すべて見る",
+    "viewAll": "すべて表示",
     "back": "戻る",
     "next": "次へ",
     "previous": "前へ",
@@ -21,16 +21,16 @@
     "explore": "探索",
     "exploreDesc": {
       "trendingTitle": "トレンド",
-      "trendingDesc": "最も人気のあるプロジェクトを発見",
+      "trendingDesc": "人気のプロジェクトを見つけよう",
       "winnersTitle": "デイリーウィナー",
-      "winnersDesc": "今日のベストプロジェクトを見る",
+      "winnersDesc": "その日のベストプロジェクト",
       "monthTitle": "今月のベスト",
-      "monthDesc": "今月のベストプロジェクトを見る",
-      "categoriesTitle": "カテゴリ",
-      "categoriesDesc": "カテゴリ別にプロジェクトを閲覧"
+      "monthDesc": "今月のベストプロジェクト",
+      "categoriesTitle": "カテゴリー",
+      "categoriesDesc": "カテゴリー別にプロジェクトを閲覧"
     },
     "dashboard": "ダッシュボード",
-    "submitProject": "プロジェクトを提出",
+    "submitProject": "プロジェクトを投稿",
     "pricing": "料金",
     "fastTrack": "Fast Track 🚀",
     "sponsors": "スポンサー",
@@ -40,7 +40,7 @@
     "actions": "アクション",
     "home": "ホーム",
     "trending": "トレンド",
-    "categories": "カテゴリ",
+    "categories": "カテゴリー",
     "winners": "ウィナー"
   },
   "footer": {
@@ -51,10 +51,10 @@
     "friends": "フレンド",
     "links": {
       "trending": "トレンド",
-      "categories": "カテゴリ",
+      "categories": "カテゴリー",
       "compareTools": "ツール比較",
-      "alternatives": "代替品",
-      "submitProject": "プロジェクトを提出",
+      "alternatives": "代替ツール",
+      "submitProject": "プロジェクトを投稿",
       "pricing": "料金",
       "sponsors": "スポンサー",
       "blog": "ブログ",
@@ -65,25 +65,25 @@
   },
   "home": {
     "metadata": {
-      "today": "今日 aat.ee で公開された製品",
-      "todayDesc": "aat.ee で今日公開された最新製品（スタートアップ、AIツール、SaaS製品）を発見"
+      "today": "本日 aat.ee で公開されたプロダクト",
+      "todayDesc": "aat.ee で本日公開された最新のプロダクト（スタートアップ、AIツール、SaaS）を発見"
     },
     "banner": {
-      "title": "製品向けローンチプラットフォーム",
-      "subtitle": "提出、バッジとバックリンクを獲得"
+      "title": "あなたのプロダクトのローンチプラットフォーム",
+      "subtitle": "投稿して、バッジとバックリンクを獲得"
     },
     "sections": {
-      "todayTitle": "本日公開中のトッププロジェクト",
+      "todayTitle": "本日公開のトッププロジェクト",
       "yesterdayTitle": "昨日のローンチ",
       "monthTitle": "今月のベスト",
-      "topCategories": "トップカテゴリ",
+      "topCategories": "トップカテゴリー",
       "quickAccess": "クイックアクセス",
       "linuxAlliance": "Linux Docs Alliance",
-      "linuxAllianceFooter": "ソフトウェアサポートのライフサイクルを確認:",
+      "linuxAllianceFooter": "ソフトウェアサポートライフサイクルを確認:",
       "recommended": "おすすめ",
       "webcasaDesc": "AIネイティブなオープンソースサーバーコントロールパネル",
-      "litehttpdDesc": "軽量Webサーバー、Apache HTTPDと高い互換性",
-      "trendingNow": "現在トレンド",
+      "litehttpdDesc": "軽量ウェブサーバー、Apache HTTPD との高い互換性",
+      "trendingNow": "トレンド",
       "dailyWinners": "デイリーウィナー",
       "bestOfMonth": "今月のベスト",
       "dashboard": "ダッシュボード",
@@ -99,31 +99,31 @@
       "submit": "ログイン",
       "submitting": "ログイン中...",
       "loading": "読み込み中...",
-      "withGoogle": "Googleでログイン",
-      "withGithub": "GitHubでログイン",
+      "withGoogle": "Google でログイン",
+      "withGithub": "GitHub でログイン",
       "forgotPassword": "パスワードをお忘れですか？",
-      "noAccount": "アカウントをお持ちでない場合",
+      "noAccount": "アカウントをお持ちでないですか？",
       "signUpLink": "新規登録",
       "orContinueWith": "または次で続行",
       "captchaRequired": "セキュリティ認証を完了してください",
       "genericError": "エラーが発生しました",
       "successToast": "ログインに成功しました",
-      "termsAgreement": "続行することで、以下の内容に同意したことになります",
+      "termsAgreement": "続行することで、以下に同意したことになります",
       "termsOfService": "利用規約",
       "and": "および",
       "privacyPolicy": "プライバシーポリシー"
     },
     "signUp": {
-      "title": "アカウント作成",
-      "subtitle": "aat.eeに参加して製品を公開・発見",
+      "title": "アカウントを作成",
+      "subtitle": "aat.ee に参加してプロダクトをローンチ・発見",
       "nameLabel": "名前",
       "emailLabel": "メールアドレス",
       "passwordLabel": "パスワード",
       "submit": "アカウント作成",
       "submitting": "アカウント作成中...",
       "loading": "読み込み中...",
-      "withGoogle": "Googleで新規登録",
-      "withGithub": "GitHubで新規登録",
+      "withGoogle": "Google で新規登録",
+      "withGithub": "GitHub で新規登録",
       "haveAccount": "すでにアカウントをお持ちですか？",
       "signInLink": "ログイン",
       "orContinueWith": "または次で続行",
@@ -132,7 +132,7 @@
     },
     "forgotPassword": {
       "title": "パスワードをリセット",
-      "subtitle": "メールアドレスを入力するとリセットリンクを送信します",
+      "subtitle": "メールアドレスを入力すると、リセットリンクを送信します",
       "emailLabel": "メールアドレス",
       "submit": "リセットリンクを送信",
       "backToSignIn": "ログインに戻る",
@@ -150,66 +150,66 @@
       "sentTitle": "メールを確認してください",
       "sentMessage": "確認リンクを受信トレイに送信しました。",
       "successTitle": "メール確認完了！",
-      "successMessage": "アカウントの準備ができました。ダッシュボードにリダイレクトします..."
+      "successMessage": "アカウントの準備ができました。ダッシュボードにリダイレクト中..."
     }
   },
   "project": {
     "list": {
       "title": "プロジェクト",
-      "submitButton": "プロジェクトを提出",
+      "submitButton": "プロジェクトを投稿",
       "empty": "まだプロジェクトはありません。"
     },
     "detail": {
-      "upvote": "いいね！",
-      "upvoted": "いいね！済み",
+      "upvote": "いいね",
+      "upvoted": "いいね済み",
       "visit": "訪問",
-      "share": "共有",
+      "share": "シェア",
       "comments": "コメント",
-      "categories": "カテゴリ",
+      "categories": "カテゴリー",
       "tags": "タグ",
       "launchedOn": "公開日",
       "scheduledFor": "予定日",
       "ongoing": "進行中",
       "launched": "公開済み",
       "scheduled": "予定",
-      "byMaker": "作成者:",
+      "byMaker": "by",
       "aboutHeading": "{name} について",
       "relatedHeading": "関連プロダクト",
-      "relatedSubtitle": "検討に値する他のツール"
+      "relatedSubtitle": "検討すべき他のツール"
     },
     "submit": {
-      "title": "プロジェクトを提出",
-      "subtitle": "数千人のユーザーに製品を紹介しましょう",
+      "title": "プロジェクトを投稿",
+      "subtitle": "あなたのプロダクトを何千人ものユーザーにシェア",
       "websiteUrl": "ウェブサイトURL",
       "name": "プロジェクト名",
       "description": "説明",
-      "category": "カテゴリ",
+      "category": "カテゴリー",
       "tags": "タグ",
       "logo": "ロゴ",
-      "submitButton": "プロジェクトを提出",
+      "submitButton": "プロジェクトを投稿",
       "autoFill": "URLから自動入力"
     },
     "sidebar": {
       "achievement": "実績",
-      "publisher": "パブリッシャー",
-      "unknownCreator": "不明な作成者",
+      "publisher": "公開者",
+      "unknownCreator": "作成者不明",
       "launchDate": "公開日",
       "platform": "プラットフォーム",
-      "pricing": "価格",
+      "pricing": "料金",
       "socials": "ソーシャル",
-      "productKeywords": "製品キーワード"
+      "productKeywords": "プロダクトキーワード"
     },
     "comments": {
       "heading": "コメント",
-      "notLaunchedYet": "プロジェクトが公開されるまでコメントは利用できません。",
+      "notLaunchedYet": "プロジェクトが公開されるとコメントが利用可能になります。",
       "placeholder": "コメントを追加...",
-      "noComments": "まだコメントはありません。最初に投稿しましょう！",
+      "noComments": "まだコメントはありません。最初にコメントしよう！",
       "loading": "コメントを読み込み中...",
       "loadFailed": "コメントの読み込みに失敗しました。もう一度お試しください。",
       "signInPrompt": "コメントするにはログイン",
       "reply": "返信",
       "like": "いいね",
-      "dislike": "よくない",
+      "dislike": "よくないね",
       "edit": "編集",
       "delete": "削除",
       "cancel": "キャンセル",
@@ -222,7 +222,7 @@
       "editSuccess": "コメントを更新しました",
       "editError": "コメントの更新に失敗しました",
       "rateError": "コメントの評価に失敗しました",
-      "showReplies": "返信を表示 ({count, plural, one {# 件} other {# 件}})",
+      "showReplies": "{count, plural, one {# 件の返信} other {# 件の返信}} を表示",
       "hideReplies": "返信を非表示",
       "justNow": "たった今",
       "minutesAgo": "{count, plural, one {# 分前} other {# 分前}}",
@@ -232,12 +232,12 @@
   },
   "pricing": {
     "title": "料金",
-    "subtitle": "ローンチに合ったプランを選んでください",
+    "subtitle": "あなたのローンチに合ったプランを選んでください",
     "free": "無料",
     "premium": "プレミアム",
     "premiumPlus": "プレミアムプラス",
-    "perLaunch": "ローンチごと",
-    "getStarted": "はじめる",
+    "perLaunch": "1回のローンチあたり",
+    "getStarted": "始める",
     "subscribe": "購読",
     "compareFeatures": "機能を比較"
   },
@@ -259,51 +259,51 @@
     "backToHome": "ホームに戻る",
     "groups": {
       "linuxCommunities": "Linux コミュニティ",
-      "toolsServices": "ツールとサービス",
-      "directories": "ディレクトリと発見",
-      "knowledgeReference": "知識とリファレンス"
+      "toolsServices": "ツール & サービス",
+      "directories": "ディレクトリ & 発見",
+      "knowledgeReference": "知識 & リファレンス"
     }
   },
   "metadata": {
     "projects": {
       "title": "プロジェクト — 今月のローンチ | aat.ee",
-      "description": "aat.ee で今月公開されたプロジェクト ─ スタートアップ、AI ツール、SaaS をチェック。"
+      "description": "aat.ee で今月公開されたプロジェクト（スタートアップ、AIツール、SaaS）を閲覧。"
     },
     "trending": {
       "title": "トレンド — aat.ee",
-      "description": "aat.ee でいま話題のテックプロダクト、AI ツール、SaaS ローンチを見つけよう。"
+      "description": "aat.ee でトレンドのテックプロダクト、AIツール、SaaSローンチを発見。"
     },
     "categories": {
       "title": "カテゴリー — aat.ee",
-      "description": "aat.ee のテックプロダクトをカテゴリーから探す ─ スタートアップ、AI、SaaS アプリ。"
+      "description": "aat.ee でカテゴリー別にテックプロダクトを閲覧 — スタートアップ、AIツール、SaaSアプリ。"
     },
     "winners": {
-      "title": "デイリー受賞作 — aat.ee",
-      "description": "aat.ee で日ごとに発表される注目のローンチ作品。"
+      "title": "デイリーウィナー — aat.ee",
+      "description": "aat.ee で公開されたトップランクのプロダクトを日ごとに。"
     },
     "tags": {
       "title": "タグ — aat.ee",
-      "description": "タグから探す aat.ee の製品 ─ AI、開発者ツール、生産性ツールなど。"
+      "description": "aat.ee でタグ別にプロダクトを探索 — AI、開発者ツール、生産性など。"
     },
     "pricing": {
       "title": "料金 — aat.ee",
-      "description": "aat.ee のローンチプランを比較 ─ 無料、Premium、Premium Plus。"
+      "description": "aat.ee のローンチパッケージを比較 — 無料、プレミアム、プレミアムプラス。"
     },
     "blog": {
       "title": "ブログ — aat.ee",
-      "description": "aat.ee チームによる記事、ローンチ攻略、プロダクト更新情報。"
+      "description": "aat.ee チームからの記事、ローンチプレイブック、プロダクトアップデート。"
     },
     "badge": {
       "title": "フィーチャーバッジ — aat.ee",
-      "description": "サイトに貼れる aat.ee バッジでローンチをアピール。SEO 被リンクも獲得。"
+      "description": "サイトに aat.ee バッジを取得してローンチをアピールし、SEOバックリンクを獲得。"
     },
     "sponsors": {
       "title": "スポンサー — aat.ee",
-      "description": "aat.ee を支援し、厳選されたメイカー・創業者・テック愛好家のオーディエンスにリーチ。"
+      "description": "aat.ee をスポンサーして、メーカー、創業者、テック愛好家の厳選されたオーディエンスにリーチ。"
     },
     "reviews": {
       "title": "プロダクトレビュー — aat.ee",
-      "description": "aat.ee における最新のテックプロダクト・ツールの詳細レビューと分析。"
+      "description": "aat.ee の最新テックプロダクトとツールの詳細なレビューと分析。"
     }
   },
   "breadcrumb": {
@@ -312,16 +312,251 @@
     "trending": "トレンド",
     "tags": "タグ",
     "categories": "カテゴリー",
-    "winners": "受賞作",
+    "winners": "ウィナー",
     "pricing": "料金",
     "blog": "ブログ",
-    "badge": "バッジ"
+    "badge": "フィーチャーバッジ"
   },
   "upvote": {
-    "mustBeLoggedIn": "投票するにはログインが必要です",
-    "rateLimited": "スパム防止：{minutes} 分以内に {count} 回まで。{seconds} 秒後に再試行してください。",
-    "minWaitSeconds": "スパム防止：投票変更には {seconds} 秒の間隔が必要です",
+    "mustBeLoggedIn": "いいねするにはログインが必要です",
+    "rateLimited": "アンチスパム隊です: {count} いいね / {minutes} 分の上限に達しました！{seconds} 秒後に再試行してください。",
+    "minWaitSeconds": "アンチスパム隊です: 投票変更には {seconds} 秒の待機が必要です",
     "projectNotFound": "プロジェクトが見つかりません",
-    "notOngoing": "プロジェクトの当日ローンチ中のみ投票できます"
+    "notOngoing": "投票はプロジェクトが本日公開中の間のみ有効です"
+  },
+  "submitProject": {
+    "page": {
+      "title": "プロジェクトを投稿",
+      "subtitle": "コミュニティとプロジェクトを共有。以下の詳細を入力してください。"
+    },
+    "stepper": {
+      "step1": "プロジェクト情報",
+      "step2": "詳細",
+      "step3": "公開日",
+      "step4": "確認",
+      "ariaJump": "{label} に戻る",
+      "ariaCurrent": "{label} ステップ"
+    },
+    "step1": {
+      "name": {
+        "label": "プロジェクト名",
+        "placeholder": "My Awesome Project"
+      },
+      "websiteUrl": {
+        "label": "ウェブサイトURL",
+        "placeholder": "https://myawesomeproject.com",
+        "help": "ウェブサイトURLを入力し、自動入力をクリックするとフォームが自動入力されます。",
+        "duplicateWarning": "⚠️ このURLはすでに投稿されています。最終ステップでブロックされます — 別のURLを使用してください。"
+      },
+      "autoFill": {
+        "button": "自動入力",
+        "loading": "分析中..."
+      },
+      "sourceLocale": {
+        "label": "説明の言語",
+        "help": "説明を書く言語を選択してください。他の言語は自動翻訳されます。"
+      },
+      "description": {
+        "label": "説明",
+        "placeholder": "プロジェクトの説明"
+      },
+      "logo": {
+        "label": "ロゴ（最大1MB）",
+        "help": "推奨: 1:1 の正方形画像（例: 256x256px）。",
+        "upload": "ロゴをアップロード",
+        "uploading": "アップロード中...",
+        "preparing": "準備中...",
+        "preview": "ロゴプレビュー",
+        "remove": "ロゴを削除"
+      },
+      "productImage": {
+        "label": "プロダクト画像",
+        "optional": "（任意）",
+        "help": "プロダクト画像を追加。推奨: 16:9 のアスペクト比（例: 800x450px）。",
+        "add": "プロダクト画像を追加",
+        "preview": "プロダクト画像プレビュー",
+        "remove": "プロダクト画像を削除"
+      }
+    },
+    "step2": {
+      "categories": {
+        "label": "カテゴリー",
+        "counter": "（{count}/3 選択済み）",
+        "help": "関連するカテゴリーを最大3つ選択してください。",
+        "empty": "利用可能なカテゴリーがありません。",
+        "loading": "読み込み中..."
+      },
+      "tags": {
+        "label": "プロダクトタグ",
+        "counter": "（{count}/10 タグ）",
+        "placeholder": "例: ai, saas, open-source, developer-tools...",
+        "help": "最大10個のタグを追加して、ユーザーがプロジェクトを発見しやすくします。Enterキーまたはカンマで追加。"
+      },
+      "platforms": {
+        "label": "プラットフォーム",
+        "help": "プロジェクトがサポートするすべてのプラットフォームを選択。",
+        "options": {
+          "web": "ウェブ",
+          "mobile": "モバイル",
+          "desktop": "デスクトップ",
+          "api": "API",
+          "other": "その他"
+        }
+      },
+      "pricing": {
+        "label": "料金モデル",
+        "options": {
+          "free": "無料",
+          "freemium": "フリーミアム",
+          "paid": "有料"
+        }
+      },
+      "githubUrl": {
+        "label": "GitHub URL（任意）",
+        "placeholder": "https://github.com/user/repo"
+      },
+      "twitterUrl": {
+        "label": "Twitter URL（任意）",
+        "placeholder": "https://twitter.com/username"
+      }
+    },
+    "step3": {
+      "title": "ローンチタイプと日付を選択",
+      "infoBanner": {
+        "heading": "ローンチタイプと日付を選択",
+        "body": "すべてのローンチは {hour}:00 UTC に行われます。1日あたりのプロジェクト数には制限があります。"
+      },
+      "badgeCard": {
+        "heading": "🚀 明日ローンチしたい？",
+        "body": "列に並ばずに！ウェブサイトにバッジを追加すると、数週間や数ヶ月待たずに翌日ローンチできます。",
+        "getCode": "バッジコードを取得",
+        "verify": "バッジを確認",
+        "verifying": "確認中..."
+      },
+      "badgeVerified": {
+        "heading": "✅ バッジ確認完了！",
+        "body": "バッジ Fast Track にアクセスできるようになりました！以下のローンチ枠を選択してください。"
+      },
+      "quota": {
+        "heading": "ローンチ枠を選択",
+        "free": {
+          "name": "無料枠",
+          "slots": "1日 {n} 枠",
+          "queue": "標準キュー",
+          "dofollow": "トップ3またはバッジでDofollow"
+        },
+        "badge": {
+          "name": "バッジ Fast Track",
+          "tag": "🚀 高速",
+          "slots": "1日 {n} 枠",
+          "tomorrow": "明日ローンチ！",
+          "dofollow": "Dofollowリンク保証"
+        },
+        "warningPrefix": "重要:",
+        "warningBody": "aat.ee は毎月自動的にウェブサイト上のバッジを確認します。バッジがないプロジェクトは削除されます。"
+      },
+      "launchType": {
+        "heading": "ローンチタイプ",
+        "selected": "選択済み",
+        "free": {
+          "name": "無料ローンチ",
+          "slotsLabel": "1日 {n} 枠",
+          "scheduling": "最大 {n} 日先まで予約可能",
+          "dofollowConditional": "Dofollowバックリンクは以下の場合のみ:",
+          "topRanking": "1. デイリーランキングトップ3",
+          "displayBadge": "2. サイトにバッジを表示"
+        },
+        "premium": {
+          "name": "プレミアムローンチ",
+          "skipQueue": "無料キューをスキップ",
+          "guaranteedDofollow": "Dofollowバックリンク保証（DR {dr}）",
+          "slotsLabel": "1日 {n} プレミアム枠",
+          "scheduling": "最大 {n} 日先まで予約可能"
+        }
+      },
+      "date": {
+        "label": "公開日",
+        "loading": "利用可能な日付を読み込み中...",
+        "empty": "選択したタイプで利用可能な公開日が見つかりませんでした。",
+        "placeholder": "公開日を選択",
+        "slotsAvailable": "{n} {type} 枠",
+        "slotTypeFree": "無料",
+        "slotTypeBadge": "バッジ",
+        "slotTypePremium": "プレミアム",
+        "crowdednessTooltip": "すでに {n} 件のプロジェクトが予定されています",
+        "scheduledFor": "予定日",
+        "noDate": "日付未選択"
+      },
+      "premiumUpsell": {
+        "heading": "プレミアムで {days, plural, one {# 日} other {# 日}} 早くローンチ！",
+        "body": "{date} から利用可能 • DR{dr} バックリンク保証 • キューをスキップ",
+        "button": "プレミアムにアップグレード ${price}"
+      }
+    },
+    "step4": {
+      "title": "確認して送信",
+      "projectInfo": "プロジェクト情報",
+      "details": "詳細",
+      "launchPlan": "ローンチ計画",
+      "fields": {
+        "name": "名前:",
+        "website": "ウェブサイト:",
+        "description": "説明:",
+        "logo": "ロゴ:",
+        "productImage": "プロダクト画像:",
+        "categories": "カテゴリー:",
+        "tags": "プロダクトタグ:",
+        "platforms": "プラットフォーム:",
+        "pricing": "料金:",
+        "github": "GitHub:",
+        "twitter": "Twitter:"
+      },
+      "logoAlt": "アップロードされたロゴ",
+      "productImageAlt": "プロダクト画像",
+      "premiumPriceLabel": "プレミアムローンチ（${price}）",
+      "readyToSubmit": {
+        "heading": "送信の準備はできましたか？",
+        "body": "すべての情報を慎重に確認してください。送信後、プロジェクトは公開予定に組み込まれます。",
+        "paymentRedirect": "送信後、支払いページにリダイレクトされます。"
+      }
+    },
+    "buttons": {
+      "previous": "前へ",
+      "next": "次へ",
+      "submit": "プロジェクトを送信"
+    },
+    "errors": {
+      "fields": {
+        "nameRequired": "プロジェクト名は必須です",
+        "websiteUrlRequired": "ウェブサイトURLは必須です",
+        "websiteUrlInvalid": "有効なURLを入力してください（https://...）",
+        "websiteUrlInvalidQuick": "最初に有効なURLを入力してください",
+        "websiteUrlDuplicate": "このURLはすでに投稿されています",
+        "descriptionRequired": "説明は必須です",
+        "logoRequired": "ロゴは必須です",
+        "logoUploadFailedNoUrl": "ロゴのアップロードに失敗しました: URLが返されませんでした。",
+        "logoUploadFailed": "ロゴのアップロードに失敗しました: {message}",
+        "categoriesMin": "少なくとも1つのカテゴリーを選択してください",
+        "categoriesMax": "最大3つのカテゴリー",
+        "techStackMin": "少なくとも1つのタグを追加してください",
+        "techStackMax": "最大10個のタグ",
+        "platformsMin": "少なくとも1つのプラットフォームを選択してください",
+        "pricingRequired": "料金モデルを選択してください",
+        "scheduledDateRequired": "公開日を選択してください",
+        "scheduledDateOverLimit": "この日付は1日のローンチ上限を超えています"
+      },
+      "form": {
+        "loadCategoriesFailed": "カテゴリーの読み込みに失敗しました",
+        "loadDatesFailed": "利用可能な日付の読み込みに失敗しました",
+        "productImageUploadFailedNoUrl": "プロダクト画像のアップロードに失敗しました: URLが返されませんでした。",
+        "productImageUploadFailed": "プロダクト画像のアップロードに失敗しました: {message}",
+        "autoFillFailed": "自動入力に失敗しました。もう一度お試しください。",
+        "submitFailed": "予期しないエラーが発生しました。",
+        "scheduleFailed": "スケジュール中にエラーが発生しました。"
+      }
+    },
+    "toast": {
+      "draftRestored": "未保存の下書きを復元しました"
+    }
   }
 }

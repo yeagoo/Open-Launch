@@ -151,6 +151,12 @@ Output ONLY a valid JSON object. No prose, no markdown fences.`
         { role: "user", content: userPrompt },
       ],
       temperature: 0.2,
+      // DeepSeek's default output cap is ~4096 tokens. With ~270 keys
+      // (the full message catalog) translated to a verbose script like
+      // Estonian or Japanese, the JSON response can exceed that and get
+      // silently truncated mid-string — JSON.parse then throws and the
+      // locale ends up untranslated. 8000 leaves comfortable headroom.
+      max_tokens: 8000,
       response_format: { type: "json_object" },
     }),
   })
@@ -182,15 +188,27 @@ Output ONLY a valid JSON object. No prose, no markdown fences.`
   return parsed
 }
 
+// Keys per DeepSeek call. The full catalog (~270 keys × verbose locales like
+// Estonian) overflows the model's output cap and gets truncated mid-JSON.
+// 60-key chunks comfortably stay under 4-8k output tokens per request.
+const CHUNK_SIZE = 60
+
 async function translateLocale(targetLocale: LocaleCode, enFlat: FlatEntry[]): Promise<void> {
   console.log(`\n→ Translating to ${LOCALE_NAMES[targetLocale]} (${targetLocale})...`)
   const startTime = Date.now()
 
-  const translated = await translateBatch(enFlat, targetLocale)
+  // Chunk the catalog so each DeepSeek response stays under the output
+  // token cap. Merge the partial maps back into one.
+  const merged: Record<string, string> = {}
+  for (let i = 0; i < enFlat.length; i += CHUNK_SIZE) {
+    const chunk = enFlat.slice(i, i + CHUNK_SIZE)
+    const partial = await translateBatch(chunk, targetLocale)
+    Object.assign(merged, partial)
+  }
 
   const translatedEntries: FlatEntry[] = enFlat.map((e) => ({
     path: e.path,
-    value: translated[e.path] ?? e.value,
+    value: merged[e.path] ?? e.value,
   }))
 
   const out = unflatten(translatedEntries)

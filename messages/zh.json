@@ -18,18 +18,18 @@
     "tryAgain": "重试"
   },
   "nav": {
-    "explore": "探索",
+    "explore": "发现",
     "exploreDesc": {
-      "trendingTitle": "当前热门",
+      "trendingTitle": "热门趋势",
       "trendingDesc": "发现最受欢迎的项目",
       "winnersTitle": "每日优胜者",
-      "winnersDesc": "查看今日最佳项目",
+      "winnersDesc": "查看当日最佳项目",
       "monthTitle": "本月最佳",
       "monthDesc": "查看本月最佳项目",
       "categoriesTitle": "分类",
       "categoriesDesc": "按分类浏览项目"
     },
-    "dashboard": "仪表盘",
+    "dashboard": "控制台",
     "submitProject": "提交项目",
     "pricing": "定价",
     "fastTrack": "快速通道 🚀",
@@ -48,7 +48,7 @@
     "discover": "发现",
     "resources": "资源",
     "legal": "法律",
-    "friends": "友站",
+    "friends": "友情链接",
     "links": {
       "trending": "热门",
       "categories": "分类",
@@ -58,18 +58,18 @@
       "pricing": "定价",
       "sponsors": "赞助商",
       "blog": "博客",
-      "friendsPage": "友站",
+      "friendsPage": "友情链接",
       "termsOfService": "服务条款",
       "privacyPolicy": "隐私政策"
     }
   },
   "home": {
     "metadata": {
-      "today": "今天在 aat.ee 上发布的产品",
-      "todayDesc": "在 aat.ee 上发现今天最新发布的产品——创业项目、AI 工具和 SaaS 产品"
+      "today": "今日在 aat.ee 上发布的产品",
+      "todayDesc": "在 aat.ee 上发现今日最新产品发布——初创公司、AI 工具和 SaaS 产品"
     },
     "banner": {
-      "title": "你的产品发布平台",
+      "title": "您的产品发布平台",
       "subtitle": "提交，获取徽章和反向链接"
     },
     "sections": {
@@ -82,11 +82,11 @@
       "linuxAllianceFooter": "查看软件支持生命周期：",
       "recommended": "推荐",
       "webcasaDesc": "AI 原生开源服务器控制面板",
-      "litehttpdDesc": "轻量级 Web 服务器，高度兼容 Apache HTTPD",
-      "trendingNow": "当前热门",
+      "litehttpdDesc": "轻量级 Web 服务器，与 Apache HTTPD 高度兼容",
+      "trendingNow": "正在流行",
       "dailyWinners": "每日优胜者",
       "bestOfMonth": "本月最佳",
-      "dashboard": "仪表盘",
+      "dashboard": "控制台",
       "projectsCount": "{count} 个项目"
     }
   },
@@ -102,9 +102,9 @@
       "withGoogle": "使用 Google 登录",
       "withGithub": "使用 GitHub 登录",
       "forgotPassword": "忘记密码？",
-      "noAccount": "没有账户？",
+      "noAccount": "还没有账户？",
       "signUpLink": "注册",
-      "orContinueWith": "或继续使用",
+      "orContinueWith": "或者继续使用",
       "captchaRequired": "请完成安全验证",
       "genericError": "发生错误",
       "successToast": "登录成功",
@@ -126,7 +126,7 @@
       "withGithub": "使用 GitHub 注册",
       "haveAccount": "已有账户？",
       "signInLink": "登录",
-      "orContinueWith": "或继续使用",
+      "orContinueWith": "或者继续使用",
       "captchaRequired": "请完成安全验证",
       "genericError": "发生错误"
     },
@@ -147,10 +147,10 @@
       "mismatchError": "密码不匹配"
     },
     "verifyEmail": {
-      "sentTitle": "检查您的邮箱",
+      "sentTitle": "查看您的邮箱",
       "sentMessage": "我们已向您的收件箱发送了验证链接。",
       "successTitle": "邮箱已验证！",
-      "successMessage": "您的账户已就绪。正在重定向到仪表盘..."
+      "successMessage": "您的账户已就绪。正在重定向到控制台..."
     }
   },
   "project": {
@@ -175,17 +175,17 @@
       "byMaker": "由",
       "aboutHeading": "关于 {name}",
       "relatedHeading": "相关产品",
-      "relatedSubtitle": "你可能也会考虑的其他工具"
+      "relatedSubtitle": "其他您可能考虑的工具"
     },
     "submit": {
       "title": "提交您的项目",
-      "subtitle": "与成千上万的用户分享您的产品",
+      "subtitle": "向成千上万的用户分享您的产品",
       "websiteUrl": "网站 URL",
       "name": "项目名称",
       "description": "描述",
       "category": "分类",
       "tags": "标签",
-      "logo": "标志",
+      "logo": "Logo",
       "submitButton": "提交项目",
       "autoFill": "从 URL 自动填充"
     },
@@ -201,9 +201,9 @@
     },
     "comments": {
       "heading": "评论",
-      "notLaunchedYet": "项目发布后即可查看评论。",
+      "notLaunchedYet": "项目发布后即可评论。",
       "placeholder": "添加评论...",
-      "noComments": "暂无评论。成为第一个评论者！",
+      "noComments": "暂无评论。成为第一个！",
       "loading": "加载评论中...",
       "loadFailed": "加载评论失败。请重试。",
       "signInPrompt": "登录后评论",
@@ -222,24 +222,24 @@
       "editSuccess": "评论已更新",
       "editError": "更新评论失败",
       "rateError": "评价评论失败",
-      "showReplies": "显示 {count, plural, one {# reply} other {# replies}}",
+      "showReplies": "显示 {count, plural, one {# 条回复} other {# 条回复}}",
       "hideReplies": "隐藏回复",
       "justNow": "刚刚",
-      "minutesAgo": "{count, plural, one {# minute} other {# minutes}} 前",
-      "hoursAgo": "{count, plural, one {# hour} other {# hours}} 前",
-      "daysAgo": "{count, plural, one {# day} other {# days}} 前"
+      "minutesAgo": "{count, plural, one {# 分钟} other {# 分钟}}前",
+      "hoursAgo": "{count, plural, one {# 小时} other {# 小时}}前",
+      "daysAgo": "{count, plural, one {# 天} other {# 天}}前"
     }
   },
   "pricing": {
     "title": "定价",
-    "subtitle": "选择适合您发布的方案",
+    "subtitle": "选择适合您发布的套餐",
     "free": "免费",
     "premium": "高级",
     "premiumPlus": "高级增强版",
     "perLaunch": "每次发布",
-    "getStarted": "开始",
+    "getStarted": "开始使用",
     "subscribe": "订阅",
-    "compareFeatures": "功能对比"
+    "compareFeatures": "比较功能"
   },
   "search": {
     "placeholder": "搜索项目...",
@@ -251,11 +251,11 @@
     "unauthorized": "未授权",
     "notFound": "页面未找到",
     "rateLimited": "请求过多。请稍候。",
-    "serverError": "服务器错误。请稍后重试。"
+    "serverError": "服务器错误。请稍后再试。"
   },
   "friends": {
-    "title": "友站",
-    "subtitle": "我们遍布网络的友站和合作伙伴。",
+    "title": "友情链接",
+    "subtitle": "我们在网络上的朋友和合作伙伴。",
     "backToHome": "返回首页",
     "groups": {
       "linuxCommunities": "Linux 社区",
@@ -266,44 +266,44 @@
   },
   "metadata": {
     "projects": {
-      "title": "本月发布 — aat.ee 项目",
-      "description": "浏览 aat.ee 上本月发布的项目 —— 创业公司、AI 工具与 SaaS 产品。"
+      "title": "项目 — 本月发布 | aat.ee",
+      "description": "浏览本月在 aat.ee 上发布的项目——初创公司、AI 工具和 SaaS 产品。"
     },
     "trending": {
-      "title": "热门趋势 — aat.ee",
-      "description": "在 aat.ee 上发现热门科技产品、AI 工具和 SaaS。"
+      "title": "热门 — aat.ee",
+      "description": "在 aat.ee 上发现热门科技产品、AI 工具和 SaaS 发布。"
     },
     "categories": {
-      "title": "分类浏览 — aat.ee",
-      "description": "按分类浏览 aat.ee 上的科技产品 —— 找到创业公司、AI 工具和 SaaS 应用。"
+      "title": "分类 — aat.ee",
+      "description": "在 aat.ee 上按分类浏览科技产品——寻找初创公司、AI 工具和 SaaS 应用。"
     },
     "winners": {
-      "title": "每日胜出者 — aat.ee",
-      "description": "aat.ee 上每日发布的最高排名产品。"
+      "title": "每日优胜者 — aat.ee",
+      "description": "在 aat.ee 上每日排名最高的产品。"
     },
     "tags": {
       "title": "标签 — aat.ee",
-      "description": "按标签探索 aat.ee 上的产品 —— AI、开发者工具、效率工具等。"
+      "description": "在 aat.ee 上按标签探索产品——AI、开发者工具、生产力等。"
     },
     "pricing": {
       "title": "定价 — aat.ee",
-      "description": "在 aat.ee 上对比发布套餐 —— 免费版、高级版和旗舰版。"
+      "description": "比较 aat.ee 上的发布套餐——免费、高级和高级增强版。"
     },
     "blog": {
       "title": "博客 — aat.ee",
-      "description": "aat.ee 团队的文章、发布攻略和产品更新。"
+      "description": "来自 aat.ee 团队的文章、发布指南和产品更新。"
     },
     "badge": {
-      "title": "精选徽章 — aat.ee",
-      "description": "为你的网站获取 aat.ee 徽章，展示你的发布并获得 SEO 反向链接。"
+      "title": "特色徽章 — aat.ee",
+      "description": "为您的网站获取 aat.ee 徽章，展示您的发布并获得 SEO 反向链接。"
     },
     "sponsors": {
-      "title": "赞助 — aat.ee",
-      "description": "赞助 aat.ee，触达精挑细选的创业者、工程师与科技爱好者群体。"
+      "title": "赞助商 — aat.ee",
+      "description": "赞助 aat.ee，触达由创客、创始人和科技爱好者组成的精选受众。"
     },
     "reviews": {
       "title": "产品评测 — aat.ee",
-      "description": "aat.ee 上对最新科技产品与工具的深度评测与分析。"
+      "description": "在 aat.ee 上对最新科技产品和工具的深度评测与分析。"
     }
   },
   "breadcrumb": {
@@ -312,16 +312,251 @@
     "trending": "热门",
     "tags": "标签",
     "categories": "分类",
-    "winners": "胜出者",
+    "winners": "优胜者",
     "pricing": "定价",
     "blog": "博客",
-    "badge": "精选徽章"
+    "badge": "特色徽章"
   },
   "upvote": {
-    "mustBeLoggedIn": "请先登录再点赞",
-    "rateLimited": "防刷队在此：{minutes} 分钟内最多 {count} 次点赞，请 {seconds} 秒后再试。",
-    "minWaitSeconds": "防刷队在此：投票切换需间隔 {seconds} 秒",
-    "projectNotFound": "项目不存在",
-    "notOngoing": "只有在项目当日发布期间才能投票"
+    "mustBeLoggedIn": "您必须登录才能点赞",
+    "rateLimited": "反垃圾小队在此：{count} 次点赞在 {minutes} 分钟内已达上限！请在 {seconds} 秒后重试。",
+    "minWaitSeconds": "反垃圾小队在此：更改投票需等待 {seconds} 秒",
+    "projectNotFound": "项目未找到",
+    "notOngoing": "仅当项目今日发布时开放投票"
+  },
+  "submitProject": {
+    "page": {
+      "title": "提交项目",
+      "subtitle": "与社区分享您的项目。请在下方填写详细信息。"
+    },
+    "stepper": {
+      "step1": "项目信息",
+      "step2": "详细信息",
+      "step3": "发布日期",
+      "step4": "审核",
+      "ariaJump": "跳回 {label}",
+      "ariaCurrent": "{label} 步骤"
+    },
+    "step1": {
+      "name": {
+        "label": "项目名称",
+        "placeholder": "我的精彩项目"
+      },
+      "websiteUrl": {
+        "label": "网站 URL",
+        "placeholder": "https://myawesomeproject.com",
+        "help": "输入您的网站 URL，然后点击自动填充以自动填写表单。",
+        "duplicateWarning": "⚠️ 此 URL 已被提交。最后一步将阻止此操作——请使用不同的 URL。"
+      },
+      "autoFill": {
+        "button": "自动填充",
+        "loading": "分析中..."
+      },
+      "sourceLocale": {
+        "label": "描述语言",
+        "help": "选择您撰写描述的语言。其他语言将自动翻译。"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "描述您的项目"
+      },
+      "logo": {
+        "label": "Logo（最大 1MB）",
+        "help": "推荐：1:1 方形图片（例如 256x256px）。",
+        "upload": "上传 Logo",
+        "uploading": "上传中...",
+        "preparing": "准备中...",
+        "preview": "Logo 预览",
+        "remove": "移除 Logo"
+      },
+      "productImage": {
+        "label": "产品图片",
+        "optional": "（可选）",
+        "help": "添加产品图片。推荐：16:9 宽高比（例如 800x450px）。",
+        "add": "添加产品图片",
+        "preview": "产品图片预览",
+        "remove": "移除产品图片"
+      }
+    },
+    "step2": {
+      "categories": {
+        "label": "分类",
+        "counter": "（{count}/3 已选）",
+        "help": "最多选择 3 个相关分类。",
+        "empty": "暂无可用分类。",
+        "loading": "加载中..."
+      },
+      "tags": {
+        "label": "产品标签",
+        "counter": "（{count}/10 个标签）",
+        "placeholder": "例如 ai, saas, open-source, developer-tools...",
+        "help": "最多添加 10 个标签，帮助用户发现您的项目。按回车或逗号添加。"
+      },
+      "platforms": {
+        "label": "平台",
+        "help": "选择您的项目支持的所有平台。",
+        "options": {
+          "web": "网页",
+          "mobile": "移动端",
+          "desktop": "桌面端",
+          "api": "API",
+          "other": "其他"
+        }
+      },
+      "pricing": {
+        "label": "定价模式",
+        "options": {
+          "free": "免费",
+          "freemium": "免费增值",
+          "paid": "付费"
+        }
+      },
+      "githubUrl": {
+        "label": "GitHub URL（可选）",
+        "placeholder": "https://github.com/user/repo"
+      },
+      "twitterUrl": {
+        "label": "Twitter URL（可选）",
+        "placeholder": "https://twitter.com/username"
+      }
+    },
+    "step3": {
+      "title": "选择发布类型和日期",
+      "infoBanner": {
+        "heading": "选择您的发布类型和日期",
+        "body": "所有发布均在 {hour}:00 UTC 进行。我们每天发布有限数量的项目。"
+      },
+      "badgeCard": {
+        "heading": "🚀 想明天发布？",
+        "body": "跳过排队！将我们的徽章添加到您的网站，即可在第二天发布，无需等待数周或数月。",
+        "getCode": "获取徽章代码",
+        "verify": "验证徽章",
+        "verifying": "验证中..."
+      },
+      "badgeVerified": {
+        "heading": "✅ 徽章已验证！",
+        "body": "您现在可以访问徽章快速通道！请在下方选择您的发布配额。"
+      },
+      "quota": {
+        "heading": "选择发布配额",
+        "free": {
+          "name": "免费配额",
+          "slots": "每天 {n} 个名额",
+          "queue": "标准排队",
+          "dofollow": "进入前三或拥有徽章则获得 Dofollow"
+        },
+        "badge": {
+          "name": "徽章快速通道",
+          "tag": "🚀 快速",
+          "slots": "每天 {n} 个名额",
+          "tomorrow": "明天发布！",
+          "dofollow": "保证 Dofollow 链接"
+        },
+        "warningPrefix": "重要提示：",
+        "warningBody": "aat.ee 将每月自动检查您网站上的徽章。没有徽章的项目将被移除。"
+      },
+      "launchType": {
+        "heading": "发布类型",
+        "selected": "已选",
+        "free": {
+          "name": "免费发布",
+          "slotsLabel": "每天 {n} 个名额",
+          "scheduling": "最多可提前 {n} 天安排",
+          "dofollowConditional": "Dofollow 反向链接仅当：",
+          "topRanking": "1. 每日排名前三",
+          "displayBadge": "2. 在您的网站上展示我们的徽章"
+        },
+        "premium": {
+          "name": "高级发布",
+          "skipQueue": "跳过免费排队",
+          "guaranteedDofollow": "保证 Dofollow 反向链接（DR {dr}）",
+          "slotsLabel": "每天 {n} 个高级名额",
+          "scheduling": "最多可提前 {n} 天安排"
+        }
+      },
+      "date": {
+        "label": "发布日期",
+        "loading": "加载可用日期中...",
+        "empty": "在允许范围内未找到所选类型的可用发布日期。",
+        "placeholder": "选择发布日期",
+        "slotsAvailable": "{n} 个{type}名额",
+        "slotTypeFree": "免费",
+        "slotTypeBadge": "徽章",
+        "slotTypePremium": "高级",
+        "crowdednessTooltip": "已有 {n} 个项目安排",
+        "scheduledFor": "计划于",
+        "noDate": "未选择日期"
+      },
+      "premiumUpsell": {
+        "heading": "使用高级版提前 {days, plural, one {# 天} other {# 天}}发布！",
+        "body": "从 {date} 起可用 • 保证 DR{dr} 反向链接 • 跳过排队",
+        "button": "升级到高级版 ${price}"
+      }
+    },
+    "step4": {
+      "title": "审核并提交",
+      "projectInfo": "项目信息",
+      "details": "详细信息",
+      "launchPlan": "发布计划",
+      "fields": {
+        "name": "名称：",
+        "website": "网站：",
+        "description": "描述：",
+        "logo": "Logo：",
+        "productImage": "产品图片：",
+        "categories": "分类：",
+        "tags": "产品标签：",
+        "platforms": "平台：",
+        "pricing": "定价：",
+        "github": "GitHub：",
+        "twitter": "Twitter："
+      },
+      "logoAlt": "已上传的 Logo",
+      "productImageAlt": "产品图片",
+      "premiumPriceLabel": "高级发布（${price}）",
+      "readyToSubmit": {
+        "heading": "准备提交？",
+        "body": "请仔细检查所有信息。提交后，您的项目将被安排发布。",
+        "paymentRedirect": "提交后您将被重定向到支付页面。"
+      }
+    },
+    "buttons": {
+      "previous": "上一步",
+      "next": "下一步",
+      "submit": "提交项目"
+    },
+    "errors": {
+      "fields": {
+        "nameRequired": "项目名称是必填项",
+        "websiteUrlRequired": "网站 URL 是必填项",
+        "websiteUrlInvalid": "请输入有效的 URL（https://...）",
+        "websiteUrlInvalidQuick": "请先输入有效的 URL",
+        "websiteUrlDuplicate": "此 URL 已被提交",
+        "descriptionRequired": "描述是必填项",
+        "logoRequired": "Logo 是必填项",
+        "logoUploadFailedNoUrl": "Logo 上传失败：未返回 URL。",
+        "logoUploadFailed": "Logo 上传失败：{message}",
+        "categoriesMin": "至少选择一个分类",
+        "categoriesMax": "最多 3 个分类",
+        "techStackMin": "至少添加一个标签",
+        "techStackMax": "最多 10 个标签",
+        "platformsMin": "至少选择一个平台",
+        "pricingRequired": "请选择定价模式",
+        "scheduledDateRequired": "请选择发布日期",
+        "scheduledDateOverLimit": "此日期超出您的每日发布限制"
+      },
+      "form": {
+        "loadCategoriesFailed": "加载分类失败",
+        "loadDatesFailed": "加载可用日期失败",
+        "productImageUploadFailedNoUrl": "产品图片上传失败：未返回 URL。",
+        "productImageUploadFailed": "产品图片上传失败：{message}",
+        "autoFillFailed": "自动填充失败。请重试。",
+        "submitFailed": "发生意外错误。",
+        "scheduleFailed": "安排时发生错误。"
+      }
+    },
+    "toast": {
+      "draftRestored": "已恢复未保存的草稿"
+    }
   }
 }
