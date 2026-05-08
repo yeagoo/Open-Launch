@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 
 import { auth } from "@/lib/auth"
 import { SubmitProjectForm } from "@/components/project/submit-form"
+import { getAllTags } from "@/app/actions/tags"
 
 export default async function SubmitProject() {
   // Verify the user is logged in
@@ -16,6 +17,11 @@ export default async function SubmitProject() {
   }
   const userId = session.user.id
 
+  // Top-200 approved tags by usage. Pre-fetched on the server so the form
+  // can offer autocomplete without an extra client round-trip on render.
+  const popularTagsRaw = await getAllTags(200)
+  const popularTags = popularTagsRaw.map((t) => t.name)
+
   return (
     <div className="from-background to-background/80 min-h-[calc(100vh-5rem)] bg-gradient-to-b">
       <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-12">
@@ -28,7 +34,7 @@ export default async function SubmitProject() {
 
         <div className="bg-card rounded-lg border shadow-sm sm:rounded-xl">
           <div className="p-4 sm:p-6 md:p-8">
-            <SubmitProjectForm userId={userId} />
+            <SubmitProjectForm userId={userId} popularTags={popularTags} />
           </div>
         </div>
       </div>

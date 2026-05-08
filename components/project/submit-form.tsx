@@ -32,6 +32,7 @@ import { toast } from "sonner"
 import {
   DATE_FORMAT,
   DOMAIN_AUTHORITY,
+  LAUNCH_CROWDEDNESS_THRESHOLDS,
   LAUNCH_LIMITS,
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
@@ -101,9 +102,15 @@ interface DateGroup {
 
 interface SubmitProjectFormProps {
   userId: string
+  /**
+   * Top-N approved tag names sorted by usage, fetched server-side. Used
+   * by the Step-2 TagInput autocomplete so users converge on existing
+   * tag spellings instead of inventing fresh duplicates.
+   */
+  popularTags?: string[]
 }
 
-export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
+export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFormProps) {
   const router = useRouter()
   const locale = useLocale() as (typeof routing.locales)[number]
   const defaultSourceLocale = (routing.locales as readonly string[]).includes(locale)
@@ -1174,6 +1181,11 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                   setTechStackTags(newTags)
                 }}
                 placeholder="e.g. ai, saas, open-source, developer-tools..."
+                enableAutocomplete={popularTags.length > 0}
+                autocompleteOptions={popularTags.map((name) => ({
+                  id: `popular-${name}`,
+                  text: name,
+                }))}
                 styleClasses={{
                   inlineTagsContainer:
                     "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
@@ -1605,6 +1617,25 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
 
                             const slotsText = `${slotsAvailable} ${formData.launchType === LAUNCH_TYPES.FREE ? "free" : formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE ? "badge" : formData.launchType === LAUNCH_TYPES.PREMIUM ? "premium" : "premium+"} slot(s)`
 
+                            // Crowdedness signal: how many other projects
+                            // are already scheduled on this day. Helps
+                            // users pick less-competitive days.
+                            const crowdedness =
+                              date.scheduledCount <= LAUNCH_CROWDEDNESS_THRESHOLDS.LOW
+                                ? {
+                                    icon: "🟢",
+                                    color: "text-emerald-600 dark:text-emerald-400",
+                                  }
+                                : date.scheduledCount <= LAUNCH_CROWDEDNESS_THRESHOLDS.MEDIUM
+                                  ? {
+                                      icon: "🟡",
+                                      color: "text-amber-600 dark:text-amber-400",
+                                    }
+                                  : {
+                                      icon: "🔴",
+                                      color: "text-red-600 dark:text-red-400",
+                                    }
+
                             return (
                               <SelectItem
                                 key={date.date}
@@ -1612,12 +1643,20 @@ export function SubmitProjectForm({ userId }: SubmitProjectFormProps) {
                                 disabled={isDisabled}
                                 className="group text-sm"
                               >
-                                <div className="flex w-full items-center justify-between">
+                                <div className="flex w-full items-center justify-between gap-2">
                                   <span>{format(dateObj, "EEE, MMM d")}</span>
-                                  <span
-                                    className={`ml-2 text-xs ${isDisabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-foreground group-data-[highlighted]:text-foreground"}`}
-                                  >
-                                    {slotsText}
+                                  <span className="flex items-center gap-2 text-xs">
+                                    <span
+                                      className={`${isDisabled ? "text-muted-foreground/50" : crowdedness.color}`}
+                                      title={`${date.scheduledCount} project(s) already scheduled`}
+                                    >
+                                      {crowdedness.icon} {date.scheduledCount}
+                                    </span>
+                                    <span
+                                      className={`${isDisabled ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-foreground group-data-[highlighted]:text-foreground"}`}
+                                    >
+                                      {slotsText}
+                                    </span>
                                   </span>
                                 </div>
                               </SelectItem>
