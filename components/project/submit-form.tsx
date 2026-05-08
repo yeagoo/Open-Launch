@@ -336,8 +336,8 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
         startDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD), DATE_FORMAT.API)
       } else if (formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE) {
-        // Badge Fast Track users can launch tomorrow
-        startDate = format(addDays(today, 1), DATE_FORMAT.API)
+        // Badge Fast Track users skip the regular queue.
+        startDate = format(addDays(today, LAUNCH_SETTINGS.BADGE_MIN_DAYS_AHEAD), DATE_FORMAT.API)
         endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
       } else {
         // Regular free launch

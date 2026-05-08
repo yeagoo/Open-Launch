@@ -100,9 +100,9 @@ export async function getLaunchAvailabilityRange(
   let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
   let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
 
-  // Badge verified users using Badge quota get priority: can launch tomorrow
+  // Badge-verified users skip the regular queue.
   if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
-    minDaysAhead = 1
+    minDaysAhead = LAUNCH_SETTINGS.BADGE_MIN_DAYS_AHEAD
   } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
     minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
     maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD
@@ -202,7 +202,7 @@ export async function scheduleLaunch(
   let minDaysAhead: number = LAUNCH_SETTINGS.MIN_DAYS_AHEAD
   let maxDaysAhead: number = LAUNCH_SETTINGS.MAX_DAYS_AHEAD
   if (launchTypeValue === LAUNCH_TYPES.FREE_WITH_BADGE) {
-    minDaysAhead = 1
+    minDaysAhead = LAUNCH_SETTINGS.BADGE_MIN_DAYS_AHEAD
   } else if (launchTypeValue === LAUNCH_TYPES.PREMIUM) {
     minDaysAhead = LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD
     maxDaysAhead = LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD

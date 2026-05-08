@@ -427,8 +427,8 @@
         "body": "Todos los lanzamientos ocurren a las {hour}:00 UTC. Lanzamos un número limitado de proyectos cada día."
       },
       "badgeCard": {
-        "heading": "🚀 ¿Quieres lanzar mañana?",
-        "body": "¡Salta la cola! Añade nuestra insignia a tu sitio web y lanza al día siguiente en lugar de esperar semanas o meses.",
+        "heading": "🚀 ¿Quieres lanzar en 2 días?",
+        "body": "¡Salta la cola! Añade nuestra insignia a tu sitio web y lanza en 2 días en lugar de esperar semanas o meses.",
         "getCode": "Obtener código de insignia",
         "verify": "Verificar insignia",
         "verifying": "Verificando...",
@@ -452,7 +452,7 @@
           "name": "Carril Rápido por Insignia",
           "tag": "🚀 Rápido",
           "slots": "{n} espacios/día",
-          "tomorrow": "¡Lanza mañana!",
+          "tomorrow": "¡Lanza en 2 días!",
           "dofollow": "Enlace dofollow garantizado"
         },
         "warningPrefix": "Importante:",

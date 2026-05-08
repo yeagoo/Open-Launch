@@ -427,8 +427,8 @@
         "body": "Tous les lancements ont lieu à {hour}:00 UTC. Nous lançons un nombre limité de projets chaque jour."
       },
       "badgeCard": {
-        "heading": "🚀 Vous voulez lancer demain ?",
-        "body": "Sautez la file d'attente ! Ajoutez notre badge à votre site web et lancez le lendemain au lieu d'attendre des semaines ou des mois.",
+        "heading": "🚀 Vous voulez lancer dans 2 jours ?",
+        "body": "Sautez la file d’attente ! Ajoutez notre badge à votre site web et lancez dans 2 jours au lieu d’attendre des semaines ou des mois.",
         "getCode": "Obtenir le code du badge",
         "verify": "Vérifier le badge",
         "verifying": "Vérification...",
@@ -452,7 +452,7 @@
           "name": "Badge Fast Track",
           "tag": "🚀 Rapide",
           "slots": "{n} créneaux/jour",
-          "tomorrow": "Lancez-vous demain !",
+          "tomorrow": "Lancez-vous dans 2 jours !",
           "dofollow": "Lien dofollow garanti"
         },
         "warningPrefix": "Important :",
