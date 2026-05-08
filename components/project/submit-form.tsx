@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useCallback, useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useId, useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -111,6 +111,14 @@ interface SubmitProjectFormProps {
 }
 
 export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFormProps) {
+  // Stabilize the autocomplete options across re-renders. Without this,
+  // every keystroke on any field would build a fresh array of 200 new
+  // tag objects and pass it to emblor, which compares by reference and
+  // could reset its dropdown state.
+  const autocompleteTags = useMemo(
+    () => popularTags.map((name) => ({ id: `popular-${name}`, text: name })),
+    [popularTags],
+  )
   const router = useRouter()
   const locale = useLocale() as (typeof routing.locales)[number]
   const defaultSourceLocale = (routing.locales as readonly string[]).includes(locale)
@@ -1181,11 +1189,8 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   setTechStackTags(newTags)
                 }}
                 placeholder="e.g. ai, saas, open-source, developer-tools..."
-                enableAutocomplete={popularTags.length > 0}
-                autocompleteOptions={popularTags.map((name) => ({
-                  id: `popular-${name}`,
-                  text: name,
-                }))}
+                enableAutocomplete={autocompleteTags.length > 0}
+                autocompleteOptions={autocompleteTags}
                 styleClasses={{
                   inlineTagsContainer:
                     "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
