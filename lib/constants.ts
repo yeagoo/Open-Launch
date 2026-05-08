@@ -31,8 +31,9 @@ export const PROJECT_LIMITS_VARIABLES = {
 export const LAUNCH_SETTINGS = {
   PREMIUM_PRICE: 2.99, // USD - Premium Launch 价格
   ARTICLE_PRICE: 50, // USD - SEO Growth Package 价格
-  MIN_DAYS_AHEAD: 8, // Minimum days ahead for scheduling (8 days later for free launch)
+  MIN_DAYS_AHEAD: 21, // Minimum days ahead for free queue scheduling
   MAX_DAYS_AHEAD: 180, // Maximum days ahead for scheduling (6 months)
+  BADGE_MIN_DAYS_AHEAD: 2, // Badge Fast Track 最早发布时间（2 days later）
   PREMIUM_MIN_DAYS_AHEAD: 1, // Premium Launch 最早发布时间
   PREMIUM_MAX_DAYS_AHEAD: 30, // Premium Launch 最晚发布时间
   DAYS_PER_PAGE: 7, // Nombre de jours à afficher par page

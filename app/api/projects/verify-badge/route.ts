@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       verified: true,
-      message: "Badge verified successfully! You can now schedule your launch for tomorrow.",
+      message: "Badge verified successfully! You can now schedule your launch in 2 days.",
     })
   } catch (error) {
     console.error("Error verifying badge:", error)

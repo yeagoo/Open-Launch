@@ -427,8 +427,8 @@
         "body": "All launches happen at {hour}:00 UTC. We launch a limited number of projects each day."
       },
       "badgeCard": {
-        "heading": "🚀 Want to Launch Tomorrow?",
-        "body": "Skip the queue! Add our badge to your website and launch the next day instead of waiting weeks or months.",
+        "heading": "🚀 Want to Launch in 2 Days?",
+        "body": "Skip the queue! Add our badge to your website and launch in 2 days instead of waiting weeks or months.",
         "getCode": "Get Badge Code",
         "verify": "Verify Badge",
         "verifying": "Verifying...",
@@ -452,7 +452,7 @@
           "name": "Badge Fast Track",
           "tag": "🚀 Fast",
           "slots": "{n} slots/day",
-          "tomorrow": "Launch tomorrow!",
+          "tomorrow": "Launch in 2 days!",
           "dofollow": "Guaranteed dofollow link"
         },
         "warningPrefix": "Important:",

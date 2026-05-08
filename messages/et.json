@@ -427,8 +427,8 @@
         "body": "Kõik käivitamised toimuvad kell {hour}:00 UTC. Käivitame iga päev piiratud arvu projekte."
       },
       "badgeCard": {
-        "heading": "🚀 Tahad homme käivitada?",
-        "body": "Jäta järjekord vahele! Lisa oma veebisaidile meie märk ja käivita juba järgmisel päeval, selle asemel et oodata nädalaid või kuid.",
+        "heading": "🚀 Tahad 2 päeva pärast käivitada?",
+        "body": "Jäta järjekord vahele! Lisa oma veebisaidile meie märk ja käivita 2 päeva pärast, selle asemel et oodata nädalaid või kuid.",
         "getCode": "Hangi märgi kood",
         "verify": "Kinnita märk",
         "verifying": "Kinnitan...",
@@ -452,7 +452,7 @@
           "name": "Märgi kiirrada",
           "tag": "🚀 Kiire",
           "slots": "{n} kohta/päev",
-          "tomorrow": "Käivita homme!",
+          "tomorrow": "Käivita 2 päeva pärast!",
           "dofollow": "Garanteeritud dofollow link"
         },
         "warningPrefix": "Oluline:",

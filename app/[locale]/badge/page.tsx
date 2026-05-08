@@ -65,12 +65,12 @@ export default async function BadgePage() {
     {
       icon: RiSpeedLine,
       title: "Priority Launch",
-      description: "Launch your product within 24 hours instead of waiting weeks or months",
+      description: "Launch your product in 2 days instead of waiting weeks or months",
     },
     {
       icon: RiRocketLine,
       title: "Skip the Queue",
-      description: "Bypass the regular free launch queue and get scheduled for the next day",
+      description: "Bypass the regular free launch queue and get scheduled in 2 days",
     },
     {
       icon: RiStarLine,
@@ -106,8 +106,8 @@ export default async function BadgePage() {
             Get Priority Launch with Our Badge
           </h1>
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-            Add our badge to your website and launch your product within 24 hours. No payment
-            required - it&apos;s completely free!
+            Add our badge to your website and launch your product in 2 days. No payment required -
+            it&apos;s completely free!
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export default async function BadgePage() {
               <div>
                 <h3 className="mb-1 font-semibold">Get Verified &amp; Launch Fast</h3>
                 <p className="text-muted-foreground text-sm">
-                  Once verified, your product will be scheduled to launch within 24 hours instead of
+                  Once verified, your product will be scheduled to launch in 2 days instead of
                   waiting in the regular queue.
                 </p>
               </div>

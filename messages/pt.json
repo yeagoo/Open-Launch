@@ -427,8 +427,8 @@
         "body": "Todos os lançamentos ocorrem às {hour}:00 UTC. Lançamos um número limitado de projetos por dia."
       },
       "badgeCard": {
-        "heading": "🚀 Quer Lançar Amanhã?",
-        "body": "Pule a fila! Adicione nosso selo ao seu site e lance no dia seguinte, em vez de esperar semanas ou meses.",
+        "heading": "🚀 Quer Lançar em 2 Dias?",
+        "body": "Pule a fila! Adicione nosso selo ao seu site e lance em 2 dias, em vez de esperar semanas ou meses.",
         "getCode": "Obter Código do Selo",
         "verify": "Verificar Selo",
         "verifying": "Verificando...",
@@ -452,7 +452,7 @@
           "name": "Badge Fast Track",
           "tag": "🚀 Rápido",
           "slots": "{n} vagas/dia",
-          "tomorrow": "Lance amanhã!",
+          "tomorrow": "Lance em 2 dias!",
           "dofollow": "Link dofollow garantido"
         },
         "warningPrefix": "Importante:",
