@@ -118,7 +118,7 @@ export async function GET(request: Request) {
 
         // 获取真实网站地址（跟随 ProductHunt 重定向）
         console.log(`🌐 Getting real website URL for "${post.name}"...`)
-        const realWebsiteUrl = await getRealWebsiteUrl(post.website, post.url)
+        const realWebsiteUrl = await getRealWebsiteUrl(post.website)
         if (!realWebsiteUrl) {
           // Resolution failed (PH bot challenge, dead link, etc.) — skip
           // import. Storing the /r/ URL leads to permanent crawl failures

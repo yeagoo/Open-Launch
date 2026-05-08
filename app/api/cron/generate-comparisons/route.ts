@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
             // Record the failure so we skip this pair for the next 24h.
             // Postgres upsert: bump attempt_count + lastFailedAt on
             // re-failure (e.g. once every 24h after cooldown expires).
-            const errMsg = error instanceof Error ? error.message : String(error)
+            const errMsg = (error instanceof Error ? error.message : String(error)).slice(0, 500)
             try {
               await db
                 .insert(comparisonAttempt)
@@ -209,14 +209,14 @@ export async function GET(request: NextRequest) {
                   slug,
                   lastFailedAt: new Date(),
                   attemptCount: 1,
-                  error: errMsg.slice(0, 500),
+                  error: errMsg,
                 })
                 .onConflictDoUpdate({
                   target: comparisonAttempt.slug,
                   set: {
                     lastFailedAt: new Date(),
                     attemptCount: sql`${comparisonAttempt.attemptCount} + 1`,
-                    error: errMsg.slice(0, 500),
+                    error: errMsg,
                   },
                 })
             } catch (recordErr) {

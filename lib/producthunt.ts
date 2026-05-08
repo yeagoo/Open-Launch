@@ -3,6 +3,13 @@
  * 用于获取每日 Top 5 产品
  */
 
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
+
+// Hoisted out of curlHead so a 195-record backfill doesn't re-allocate
+// the promisified wrapper on every call.
+const execFileAsync = promisify(execFile)
+
 export interface ProductHuntTopic {
   name: string
 }
@@ -350,12 +357,6 @@ function cleanTrackingParams(url: string): string {
   }
 }
 
-/**
- * 获取真实网站地址
- * ProductHunt API 返回的 website 字段是重定向链接，需要跟随重定向获取真实 URL
- * @param websiteUrl ProductHunt 返回的 website URL
- * @param fallbackUrl 失败时的回退 URL（通常是 ProductHunt 页面）
- */
 // Browser UA — alone not enough to bypass PH's Cloudflare, but required
 // to avoid the obvious-bot rejection.
 const BROWSER_UA =
@@ -363,6 +364,29 @@ const BROWSER_UA =
 
 const RESOLVE_TIMEOUT_MS = 15_000
 const MAX_REDIRECT_HOPS = 3
+
+// Probe curl on first use. If the container doesn't ship curl (e.g.
+// alpine without it installed) we want a loud failure on the first
+// import so ops sees it in container start logs, instead of every PH
+// import silently being skipped via the catch in curlHead. Cached so
+// subsequent calls don't re-probe.
+let curlAvailable: boolean | null = null
+async function ensureCurlAvailable(): Promise<boolean> {
+  if (curlAvailable !== null) return curlAvailable
+  try {
+    await execFileAsync("curl", ["--version"], { timeout: 5_000 })
+    curlAvailable = true
+  } catch (err) {
+    curlAvailable = false
+    console.error(
+      "❌ curl is not installed in this container. PH /r/ URL resolution will fail. " +
+        "Install curl in the deploy image (apt-get install curl on Debian, apk add curl on Alpine). " +
+        "Underlying error:",
+      err instanceof Error ? err.message : String(err),
+    )
+  }
+  return curlAvailable
+}
 
 /**
  * Resolve a ProductHunt /r/ outbound-tracker URL to its real destination.
@@ -382,18 +406,13 @@ const MAX_REDIRECT_HOPS = 3
  *
  * Non-/r/ URLs are returned as-is (with tracking params stripped).
  */
-export async function getRealWebsiteUrl(
-  websiteUrl: string,
-  // Kept in the signature for backwards compatibility — was used as the
-  // fallback on failure. Now we return null instead and the caller
-  // decides. Suppress unused-arg lint via an explicit no-op reference.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _fallbackUrl: string,
-): Promise<string | null> {
+export async function getRealWebsiteUrl(websiteUrl: string): Promise<string | null> {
   // Not a PH wrapper URL — strip tracking params and return.
   if (!websiteUrl.includes("producthunt.com/r/")) {
     return cleanTrackingParams(websiteUrl)
   }
+
+  if (!(await ensureCurlAvailable())) return null
 
   let current = websiteUrl
   for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop++) {
@@ -423,11 +442,8 @@ export async function getRealWebsiteUrl(
  * We parse status + Location out of curl's `-I` output.
  */
 async function curlHead(url: string): Promise<{ status: number; location: string | null } | null> {
-  const { execFile } = await import("node:child_process")
-  const { promisify } = await import("node:util")
-  const exec = promisify(execFile)
   try {
-    const { stdout } = await exec(
+    const { stdout } = await execFileAsync(
       "curl",
       [
         "-s",
