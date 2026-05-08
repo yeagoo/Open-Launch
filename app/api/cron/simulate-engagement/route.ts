@@ -7,6 +7,7 @@ import { and, eq, gte, inArray, isNull, or, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 
 // How many stale templated bot comments to rewrite per cron tick. The
 // historical backlog (~2.5k templated comments from the pre-diversity prompt)
@@ -232,6 +233,7 @@ export async function GET(request: Request) {
           proj.name,
           proj.description.substring(0, 200), // Use first 200 chars as tagline
           proj.description,
+          { caller: "new" },
         )
 
         console.log(`  💭 Generated: "${commentText}"`)
@@ -321,6 +323,7 @@ export async function GET(request: Request) {
           proj.name,
           proj.description.substring(0, 200),
           proj.description,
+          { caller: "rewrite" },
         )
 
         // Update only the content; keep timestamp + author so the comment
@@ -353,16 +356,14 @@ export async function GET(request: Request) {
 
     console.log("🎉 Virtual engagement simulation completed!")
 
-    // Surface complete-failure runs as HTTP 5xx so cron-job.org's failure
-    // alerting actually fires when DeepSeek/Crawl4AI is down. Partial runs
-    // (some work succeeded, some errored) stay 200 — those are usually
-    // transient and not worth a page.
-    const totalWork =
-      results.upvotesAdded +
-      results.upvotesAmplified +
-      results.commentsPosted +
-      results.commentsRewritten
-    const status = results.errors.length > 0 && totalWork === 0 ? 500 : 200
+    const status = cronStatusFromResult({
+      errorCount: results.errors.length,
+      successCount:
+        results.upvotesAdded +
+        results.upvotesAmplified +
+        results.commentsPosted +
+        results.commentsRewritten,
+    })
 
     return NextResponse.json(
       {

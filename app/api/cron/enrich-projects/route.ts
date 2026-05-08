@@ -6,6 +6,7 @@ import { and, eq, isNull, sql } from "drizzle-orm"
 
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { generateLongDescription } from "@/lib/enrich-project"
 
 export const dynamic = "force-dynamic"
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const status = errors.length > 0 && generated === 0 ? 500 : 200
+  const status = cronStatusFromResult({ errorCount: errors.length, successCount: generated })
   return NextResponse.json(
     {
       candidates: candidates.length,

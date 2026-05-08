@@ -242,7 +242,11 @@ const EMOJI_REGEX = /\p{Extended_Pictographic}/u
 
 const FALLBACK_EMOJIS = ["🔥", "👀", "🚀", "💡", "🤔", "✨"]
 
-async function callDeepSeek(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callDeepSeek(
+  systemPrompt: string,
+  userPrompt: string,
+  logName: string,
+): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY environment variable is not set")
@@ -272,8 +276,10 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string): Promise<s
   }
 
   const data = await response.json()
-  // Fire-and-forget: a failed log row must never take down comment gen.
-  void logAiUsage("ai-comment", model, data?.usage)
+  // Awaited so the INSERT isn't dropped when a serverless request finishes
+  // mid-flight; logAiUsage swallows its own errors so a failing log row
+  // can never bubble up and take down comment generation.
+  await logAiUsage(logName, model, data?.usage)
   const raw = data.choices?.[0]?.message?.content?.trim()
   if (!raw) throw new Error("No comment generated from DeepSeek API")
 
@@ -291,7 +297,11 @@ export async function generateComment(
   projectTitle: string,
   projectTagline: string,
   projectDescription: string,
+  options: { caller?: "new" | "rewrite" } = {},
 ): Promise<string> {
+  // Tag every DeepSeek call so the admin AI-usage dashboard can split
+  // "new" comment generation vs "rewrite" of stale templated comments.
+  const logName = `ai-comment-${options.caller ?? "new"}`
   const persona = pickRandom(PERSONAS)
   const intent = pickRandom(INTENTS)
   const lang = pickWeighted(LANGUAGE_WEIGHTS)
@@ -324,7 +334,7 @@ ${INPUT_SAFETY_BLOCK}`
 
 Write the comment now in ${lang.name}.`
 
-  let result = await callDeepSeek(systemPrompt, userPrompt)
+  let result = await callDeepSeek(systemPrompt, userPrompt, logName)
 
   // For emoji-react intent, guarantee an emoji actually appears. Retry once
   // with a stronger nudge; if still missing, prepend a fallback so the
@@ -332,7 +342,7 @@ Write the comment now in ${lang.name}.`
   if (intent.id === "emoji-react" && !EMOJI_REGEX.test(result)) {
     try {
       const retryUser = `${userPrompt}\n\nThe previous output was missing the required emoji. Try again — your comment MUST contain exactly one emoji.`
-      const retried = await callDeepSeek(systemPrompt, retryUser)
+      const retried = await callDeepSeek(systemPrompt, retryUser, `${logName}-retry`)
       if (EMOJI_REGEX.test(retried)) {
         result = retried
       } else {

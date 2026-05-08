@@ -66,7 +66,7 @@ async function callDeepSeek(
   }
 
   const data = await response.json()
-  void logAiUsage(options.functionName ?? "enrich-project", model, data?.usage)
+  await logAiUsage(options.functionName ?? "enrich-project", model, data?.usage)
   const content = data?.choices?.[0]?.message?.content
   if (typeof content !== "string" || content.length === 0) {
     throw new Error("DeepSeek returned empty content")

@@ -5,6 +5,7 @@ import { project, projectTranslation } from "@/drizzle/db/schema"
 import { and, eq, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { translateLongDescription } from "@/lib/enrich-project"
 import { translateProjectDescription, type ProjectLocale } from "@/lib/translate-project"
 
@@ -212,7 +213,10 @@ export async function GET(request: NextRequest) {
 
   // 5xx if all writes failed but errors were recorded — surfaces a DeepSeek
   // outage to cron-job.org's email alerts.
-  const status = failed > 0 && translated === 0 && longTranslated === 0 ? 500 : 200
+  const status = cronStatusFromResult({
+    errorCount: errors.length,
+    successCount: translated + longTranslated,
+  })
   return NextResponse.json(
     {
       candidates: candidates.length,

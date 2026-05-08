@@ -22,7 +22,8 @@ function formatTokens(n: number): string {
 }
 
 function formatCost(usd: number): string {
-  if (usd < 0.01) return `<$0.01`
+  if (usd === 0) return "$0.00"
+  if (usd < 0.01) return "<$0.01"
   return `$${usd.toFixed(2)}`
 }
 
@@ -122,9 +123,9 @@ export default async function AdminAiUsagePage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold">AI usage</h1>
           <p className="text-muted-foreground text-sm">
-            DeepSeek call volume + estimated spend. Cost uses {PRICE_PER_M_TOKENS.prompt}/
-            {PRICE_PER_M_TOKENS.completion} USD per 1M prompt/completion tokens; update
-            lib/ai-usage.ts when the provider&apos;s pricing changes.
+            DeepSeek call volume + estimated spend. Cost uses ${PRICE_PER_M_TOKENS.prompt} / $
+            {PRICE_PER_M_TOKENS.completion} per 1M prompt/completion tokens; update lib/ai-usage.ts
+            when the provider&apos;s pricing changes.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
