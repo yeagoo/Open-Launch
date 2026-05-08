@@ -289,7 +289,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
   const verifyBadge = async () => {
     if (!formData.websiteUrl) {
-      setBadgeVerificationMessage("Please enter your website URL first")
+      setBadgeVerificationMessage(t("step3.badgeCard.urlRequired"))
       return
     }
 
@@ -307,17 +307,20 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
       if (data.verified) {
         setFormData((prev) => ({ ...prev, hasBadgeVerified: true }))
+        // Server-side success message stays as-is (English) for now;
+        // out of scope for this PR. The local "not found" / "failed"
+        // fallbacks below are translated.
         setBadgeVerificationMessage(data.message)
         // Reload available dates with new permissions
         if (formData.launchType) {
           await loadAvailableDates()
         }
       } else {
-        setBadgeVerificationMessage(data.message || "Badge not found on your website")
+        setBadgeVerificationMessage(data.message || t("step3.badgeCard.notFound"))
       }
     } catch (error) {
       console.error("Error verifying badge:", error)
-      setBadgeVerificationMessage("Failed to verify badge. Please try again.")
+      setBadgeVerificationMessage(t("step3.badgeCard.verifyFailed"))
     } finally {
       setIsVerifyingBadge(false)
     }
@@ -516,7 +519,10 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
         if (!result.allowed) {
           setIsLaunchDateOverLimit(true)
           setLaunchDateLimitError(
-            `You have already scheduled ${result.count}/${result.limit} project(s) for this date. Please select another date.`,
+            t("errors.fields.scheduledDateOverLimitDetail", {
+              count: result.count,
+              limit: result.limit,
+            }),
           )
         } else {
           setIsLaunchDateOverLimit(false)
@@ -524,7 +530,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       } catch (err) {
         console.error("Error checking launch date limit:", err)
         setIsLaunchDateOverLimit(false)
-        setLaunchDateLimitError("Could not verify launch date limit. Please try again.")
+        setLaunchDateLimitError(t("errors.fields.scheduledDateCheckFailed"))
       } finally {
         setIsLoadingDateCheck(false)
       }
@@ -888,14 +894,15 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   }
 
   const getCategoryName = (id: string) => categories.find((cat) => cat.id === id)?.name || id
-  const getPlatformLabel = (value: string) =>
-    Object.entries(platformType)
-      .find(([, v]) => v === value)?.[0]
-      ?.toLowerCase() || value
-  const getPricingLabel = (value: string) =>
-    Object.entries(pricingType)
-      .find(([, v]) => v === value)?.[0]
-      ?.toLowerCase() || value
+
+  // Both helpers now go through t() so Step 4 review badges match the
+  // Step 2 selection labels in the user's locale. The `as` cast tells
+  // next-intl the path resolves at runtime — since both DB enums are a
+  // closed set (web|mobile|desktop|api|other and free|freemium|paid),
+  // the only failure mode is forgetting to add a new enum value to the
+  // messages catalog, which would render the literal key path.
+  const getPlatformLabel = (value: string) => t(`step2.platforms.options.${value as "web"}`)
+  const getPricingLabel = (value: string) => t(`step2.pricing.options.${value as "free"}`)
 
   const renderStepContent = () => {
     switch (currentStep) {

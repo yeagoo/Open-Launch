@@ -431,7 +431,10 @@
         "body": "Skip the queue! Add our badge to your website and launch the next day instead of waiting weeks or months.",
         "getCode": "Get Badge Code",
         "verify": "Verify Badge",
-        "verifying": "Verifying..."
+        "verifying": "Verifying...",
+        "urlRequired": "Please enter your website URL first",
+        "notFound": "Badge not found on your website",
+        "verifyFailed": "Failed to verify badge. Please try again."
       },
       "badgeVerified": {
         "heading": "✅ Badge Verified!",
@@ -543,7 +546,9 @@
         "platformsMin": "Select at least one platform",
         "pricingRequired": "Select a pricing model",
         "scheduledDateRequired": "Pick a launch date",
-        "scheduledDateOverLimit": "This date exceeds your daily launch limit"
+        "scheduledDateOverLimit": "This date exceeds your daily launch limit",
+        "scheduledDateOverLimitDetail": "You have already scheduled {count}/{limit} project(s) for this date. Please select another date.",
+        "scheduledDateCheckFailed": "Could not verify launch date limit. Please try again."
       },
       "form": {
         "loadCategoriesFailed": "Failed to load categories",
