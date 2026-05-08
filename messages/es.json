@@ -191,13 +191,17 @@
     },
     "sidebar": {
       "achievement": "Logro",
-      "publisher": "Publicador",
       "unknownCreator": "Creador desconocido",
       "launchDate": "Fecha de lanzamiento",
       "platform": "Plataforma",
       "pricing": "Precio",
       "socials": "Redes sociales",
-      "productKeywords": "Palabras clave del producto"
+      "productKeywords": "Palabras clave del producto",
+      "maker": "Creador",
+      "visitWebsite": "Visitar sitio web",
+      "projectInfo": "Información del proyecto",
+      "compareWith": "Comparar con",
+      "alternatives": "Alternativas"
     },
     "comments": {
       "heading": "Comentarios",
