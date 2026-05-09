@@ -677,3 +677,43 @@ export const adminAuditLog = pgTable(
     }
   },
 )
+
+// ─── DR (Ahrefs Domain Rating) cache ─────────────────────────────────────────
+// Refreshed every 3 days by /api/cron/refresh-dr. Pricing pages read
+// straight from this table — never call Ahrefs at request time.
+export const domainDrCache = pgTable(
+  "domain_dr_cache",
+  {
+    domain: text("domain").primaryKey(),
+    dr: integer("dr"),
+    fetchedAt: timestamp("fetched_at"),
+    source: text("source"),
+    httpStatus: integer("http_status"),
+    rawResponse: json("raw_response"),
+    lastAttemptAt: timestamp("last_attempt_at"),
+    lastError: text("last_error"),
+  },
+  (table) => {
+    return {
+      fetchedAtIdx: index("domain_dr_cache_fetched_at_idx").on(table.fetchedAt),
+    }
+  },
+)
+
+// Per-provider monthly call counter. The cron checks this before each
+// call and routes to the next provider once usage crosses 80% of the
+// known limit. PK is (provider, month) so we keep historical buckets
+// for cost analysis.
+export const ahrefsProviderQuota = pgTable(
+  "ahrefs_provider_quota",
+  {
+    provider: text("provider").notNull(),
+    month: text("month").notNull(),
+    callsUsed: integer("calls_used").notNull().default(0),
+    callsLimit: integer("calls_limit"),
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey(table.provider, table.month),
+  }),
+)
