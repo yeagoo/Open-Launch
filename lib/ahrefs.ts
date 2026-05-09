@@ -26,6 +26,12 @@ export const PROVIDER_ORDER: AhrefsProvider[] = ["seodataset", "apivantage"]
 // double-runs.
 const QUOTA_CEILING = 0.8
 
+// Fallback monthly limit assumed when the provider's response doesn't
+// surface x-ratelimit-requests-limit (apivantage doesn't set it, only
+// seodataset does). Both providers' free tier is 250/mo at the time of
+// writing — bump if the quota tier changes.
+const FALLBACK_MONTHLY_LIMIT = 250
+
 interface ProviderConfig {
   host: string
   // Builder for the fetch call. Returns Request init plus a parser
@@ -38,31 +44,34 @@ interface ProviderConfig {
   parseResponse: (raw: unknown) => { dr: number | null; rawForLog: unknown }
 }
 
+// Per-provider endpoint paths and parameter names confirmed against
+// the RapidAPI playground curl snippets. Both expose only one DR
+// endpoint each on the free tier; bumping to a new endpoint name
+// requires updating here.
 const PROVIDERS: Record<AhrefsProvider, ProviderConfig> = {
   // https://rapidapi.com/seodataset/api/ahrefs-domain-research
+  // Endpoint: GET /basic-metrics?url=<domain>
+  // Free tier: 250 req/month. 80% ceiling → 200 effective.
   seodataset: {
     host: "ahrefs-domain-research.p.rapidapi.com",
     buildRequest: (domain) => ({
-      // Endpoint name guessed from the API title; verified at runtime
-      // by scripts/smoke-ahrefs.ts. If the endpoint path differs, fix
-      // here and re-run the smoke test.
-      url: `https://ahrefs-domain-research.p.rapidapi.com/domain-rating?target=${encodeURIComponent(domain)}`,
-      init: { method: "GET" },
+      url: `https://ahrefs-domain-research.p.rapidapi.com/basic-metrics?url=${encodeURIComponent(domain)}`,
+      init: { method: "GET", headers: { "Content-Type": "application/json" } },
     }),
     parseResponse: (raw) => ({
-      // Ahrefs's canonical DR field is `domain_rating`. Also accept a
-      // few common aliases the wrapper might rename to.
       dr: pickDR(raw),
       rawForLog: raw,
     }),
   },
 
   // https://rapidapi.com/apivantage/api/ahrefs-x
+  // Endpoint: GET /check-dr-ar?domain=<domain>  (returns DR + AR)
+  // Free tier: 250 req/month. 80% ceiling → 200 effective.
   apivantage: {
     host: "ahrefs-x.p.rapidapi.com",
     buildRequest: (domain) => ({
-      url: `https://ahrefs-x.p.rapidapi.com/domain-rating?target=${encodeURIComponent(domain)}`,
-      init: { method: "GET" },
+      url: `https://ahrefs-x.p.rapidapi.com/check-dr-ar?domain=${encodeURIComponent(domain)}`,
+      init: { method: "GET", headers: { "Content-Type": "application/json" } },
     }),
     parseResponse: (raw) => ({
       dr: pickDR(raw),
@@ -214,8 +223,11 @@ async function canUseProvider(provider: AhrefsProvider, month: string): Promise<
     .where(and(eq(ahrefsProviderQuota.provider, provider), eq(ahrefsProviderQuota.month, month)))
     .limit(1)
   if (!row) return true
-  if (!row.callsLimit) return true // limit unknown yet — let the call go through
-  return row.callsUsed / row.callsLimit < QUOTA_CEILING
+  // Use the upstream-provided limit if we've learned one; otherwise
+  // assume the documented free-tier limit so a provider that never
+  // returns x-ratelimit headers (apivantage) still gets capped.
+  const limit = row.callsLimit ?? FALLBACK_MONTHLY_LIMIT
+  return row.callsUsed / limit < QUOTA_CEILING
 }
 
 interface BumpInput {
