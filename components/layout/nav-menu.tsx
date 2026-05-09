@@ -125,23 +125,21 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
 
         {/* Primary CTA — placed last so the colored fill anchors the
             right end of the nav, matching the convention used by
-            Vercel / Linear / Resend / etc. (links on the left,
-            actions on the right). NavigationMenuLink with asChild
-            wraps a Slot, which can flake on multiple children — we
-            keep icon + text inside a single <span> wrapper so the
-            Slot has exactly one child. */}
+            Vercel / Linear / Resend / etc.
+            Deliberately NOT wrapped in <NavigationMenuLink asChild>:
+            that injects its own flex-col + p-2 + rounded-sm classes,
+            which collide with our inline-flex / px-3 / rounded-md and
+            cause the icon to wrap onto a clipped second row. The Link
+            sits directly inside NavigationMenuItem so we control 100%
+            of the className. */}
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link
-              href="/projects/submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <RiRocketLine className="h-4 w-4" aria-hidden="true" />
-                {t("submitProject")}
-              </span>
-            </Link>
-          </NavigationMenuLink>
+          <Link
+            href="/projects/submit"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
+          >
+            <RiRocketLine className="h-4 w-4" aria-hidden="true" />
+            {t("submitProject")}
+          </Link>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
