@@ -128,6 +128,25 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
         </p>
       </div>
 
+      {/* Cross-promotion banner: directs visitors to the new
+          directory-network pricing page. The two pages serve different
+          intents (Launch flow vs Directory listing) so we keep them
+          separate but link from here. */}
+      <Link
+        href="/pricing/directories"
+        className="border-primary/30 bg-primary/5 hover:bg-primary/10 mb-6 flex flex-col gap-3 rounded-lg border px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+      >
+        <div className="text-sm">
+          <p className="text-foreground font-medium">
+            Want max visibility across our 12-site directory network?
+          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            Skip the queue, dofollow backlinks, sponsor placements — see Directory Listing tiers.
+          </p>
+        </div>
+        <span className="text-primary flex-shrink-0 text-sm font-medium">View tiers →</span>
+      </Link>
+
       {/* First row: Free and Premium */}
       <div className="mx-auto mb-4">
         <div className="grid grid-cols-1 overflow-hidden rounded-lg border md:grid-cols-10">

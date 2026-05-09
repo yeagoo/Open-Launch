@@ -574,5 +574,161 @@
     "toast": {
       "draftRestored": "已恢复未保存的草稿"
     }
+  },
+  "pricingDirectories": {
+    "metadata": {
+      "title": "导航站推广 — 套餐定价 | aat.ee",
+      "description": "无需排队，立即获得 dofollow 反向链接，把您的产品推广到我们的 12 个独立站点，月流量 70 万+。"
+    },
+    "hero": {
+      "kicker": "导航站推广",
+      "heading": "把您的产品推广到我们的导航网络",
+      "subheading": "免排队。获得 Dofollow 反向链接。在 {n}+ 个精选站点中曝光您的产品，月流量合计 70 万+。",
+      "limited": "限时折扣 — 随着我们 DR 与流量的提升，价格只升不降。"
+    },
+    "tiers": {
+      "basic": {
+        "name": "Basic",
+        "price": "$6.99",
+        "originalPrice": "$9.99",
+        "tagline": "在 aat.ee 上跳过排队。",
+        "description": "在 aat.ee 上获得 dofollow 反向链接。同时您的项目还会出现在相关产品推荐、对比页面和替代方案页面中 — 多个曝光入口。",
+        "cta": "购买 Basic",
+        "features": {
+          "skipQueue": "跳过发布排队（无需 Badge 验证）",
+          "dofollow": "保证获得 Dofollow 反向链接",
+          "site": "在 aat.ee 上发布",
+          "extra": "附加曝光：相关产品 / 对比 / 替代方案页面",
+          "delivery": "1 个工作日内自动上线"
+        }
+      },
+      "plus": {
+        "name": "Plus",
+        "price": "$9.99",
+        "originalPrice": "$29.99",
+        "tagline": "一次覆盖 4 个导航站。",
+        "description": "包含 Basic 全部内容，并额外发布到 HiCyou、MF8.BIZ 和 BigKr。整个网络近 30 天 Google 搜索点击 1 万+，月流量 30 万+。",
+        "cta": "购买 Plus",
+        "features": {
+          "everything": "包含 Basic 全部内容",
+          "fourSites": "在 aat.ee、HiCyou、MF8.BIZ、BigKr 上发布",
+          "dofollowAll": "每个站点都给您 Dofollow 反向链接",
+          "stats": "近 30 天 Google 点击 1 万+ · 月流量 30 万+",
+          "delivery": "aat.ee 1 个工作日内 · 其他站点 3 个工作日内"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$16.99",
+        "originalPrice": "$39.99",
+        "badge": "最受欢迎",
+        "tagline": "再加 8 个高权重文档站友链。",
+        "description": "包含 Plus 全部内容，再加 8 个高权重文档站的友情链接 — 强化 GEO/AIEO 推荐权重，提升域名 DR。整个网络近 30 天 Google 点击 3 万+，月流量 70 万+。",
+        "cta": "购买 Pro",
+        "features": {
+          "everything": "包含 Plus 全部内容",
+          "docsSites": "8 个文档站友链：Debian Club、Ubuntu.fan、AlmaLinux、Run-EnTLinux、EOL.wiki、Rank.fan、LiteHttpd、PortcYou",
+          "geo": "提升 AI 搜索引擎（GEO/AIEO）的引用权威",
+          "stats": "近 30 天 Google 点击 3 万+ · 月流量 70 万+",
+          "delivery": "aat.ee 1 个工作日内 · 其他站点 3 个工作日内"
+        }
+      },
+      "ultra": {
+        "name": "Ultra",
+        "subtitle": "赞助商套餐",
+        "price": "$69.99",
+        "priceSuffix": "/月",
+        "tagline": "每个页面、每次访问的右侧栏品牌曝光。",
+        "description": "订阅制。自动包含 Pro 全部权益，并额外在 aat.ee 与 HiCyou 的每个页面右侧栏展示您的赞助商卡片 — 用户访问任何页面都会看到您的品牌。",
+        "limit": "同一时段最多 5 个赞助商。",
+        "cta": "订阅 Ultra",
+        "features": {
+          "everything": "自动包含 Pro 全部内容",
+          "sidebar": "在 aat.ee + HiCyou 每个页面右侧栏展示赞助商卡片",
+          "exclusive": "全站同时最多仅 5 个赞助商",
+          "cancel": "可随时取消，按比例退款"
+        }
+      }
+    },
+    "stats": {
+      "heading": "您可以触达的资源",
+      "domainRating": "域名权重 (DR)",
+      "trafficLine": "全网月流量",
+      "clicksLine": "近 30 天 Google 搜索点击",
+      "trafficValue": "70 万+",
+      "clicksValue": "3 万+",
+      "trafficNote": "12 个站点合计。每月持续增长 — 这也是折扣价不会保留太久的原因。",
+      "drCardTitle": "实时 DR 数据",
+      "drCardSubtitle": "通过 Ahrefs 接口每 3 天刷新一次。",
+      "drDisclaimer": "DR 数据直接从 Ahrefs 拉取，每 3 天刷新一次。DR 越高的站点通过 Dofollow 链接传递的 SEO 权重越多。"
+    },
+    "comparison": {
+      "heading": "套餐横向对比",
+      "rows": {
+        "sites": "发布站点",
+        "skipQueue": "跳过排队",
+        "dofollow": "Dofollow 链接",
+        "extraPages": "对比 / 替代方案页面曝光",
+        "docsLinks": "文档站友链",
+        "sidebarAd": "侧栏赞助广告",
+        "monthlyTraffic": "全网月流量",
+        "googleClicks": "近 30 天 Google 点击",
+        "delivery": "交付时间",
+        "billing": "付费方式"
+      },
+      "values": {
+        "yes": "是",
+        "no": "—",
+        "basicSites": "1 个站点（aat.ee）",
+        "plusSites": "4 个站点",
+        "proSites": "12 个站点",
+        "ultraSites": "12 个站点 + 侧栏",
+        "basicTraffic": "约 5 万/月",
+        "plusTraffic": "30 万+/月",
+        "proTraffic": "70 万+/月",
+        "ultraTraffic": "70 万+/月",
+        "basicClicks": "约 3 千/30天",
+        "plusClicks": "1 万+/30天",
+        "proClicks": "3 万+/30天",
+        "ultraClicks": "3 万+/30天",
+        "auto1d": "1 个工作日",
+        "manual3d": "最多 3 个工作日",
+        "subscription": "$69.99/月",
+        "oneOff": "一次性付款"
+      }
+    },
+    "faq": {
+      "heading": "常见问题",
+      "items": {
+        "discount": {
+          "q": "为什么有这么大的折扣？",
+          "a": "我们的导航网络权威度仍在快速建设中。随着 DR 上升、月流量增长，每一个 listing 的价值都在变高 — 所以您今天看到的折扣价 3 个月后将不再有。建议尽早锁定。"
+        },
+        "delivery": {
+          "q": "交付速度如何？",
+          "a": "aat.ee 是自动化的 — 付款后 1 个工作日内自动上线。其他 11 个站点由人工添加，3 个工作日内完成。每个站点上线时我们会发邮件通知您。"
+        },
+        "retention": {
+          "q": "链接会保留多久？",
+          "a": "所有链接默认永久保留。一次性套餐不会自动过期。极少数情况下，如果某个站点未来下线，我们会邮件通知您。"
+        },
+        "upgrade": {
+          "q": "之后可以升级套餐吗？",
+          "a": "可以。购买后 30 天内邮件联系我们，已支付费用可抵扣到更高套餐。30 天后则按当时价格购买升级。"
+        },
+        "refund": {
+          "q": "退款政策？",
+          "a": "在我们尚未为您添加链接前，可全额退款 — 邮件联系即可。链接添加完成后我们不再支持退款，因为权重已经传递。Ultra 订阅可随时取消，未使用部分按比例退还。"
+        },
+        "multiple": {
+          "q": "我可以为多个项目购买吗？",
+          "a": "可以 — 每个项目单独购买。当前没有捆绑折扣，但批量购买请直接邮件联系我们。"
+        }
+      }
+    },
+    "footer": {
+      "heading": "准备好跳过排队了吗？",
+      "body": "选择上面的套餐并提交您的项目。手动添加 1 个工作日内开始处理。"
+    }
   }
 }
