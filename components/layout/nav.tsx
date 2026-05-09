@@ -12,6 +12,7 @@ import {
   RiMedalLine,
   RiMenuLine,
   RiMoneyDollarCircleLine,
+  RiRocketLine,
   RiUserAddLine,
 } from "@remixicon/react"
 import { User } from "better-auth"
@@ -105,6 +106,22 @@ export default async function Nav() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
+                  {/* Mobile primary CTA — same role as the desktop nav
+                      Submit Project button. Mobile drawer didn't have
+                      one, so users had no obvious entry point to
+                      submit. */}
+                  <div className="mt-2 mb-4 px-6">
+                    <SheetClose asChild>
+                      <Link
+                        href="/projects/submit"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors"
+                      >
+                        <RiRocketLine className="h-4 w-4" />
+                        {t("submitProject")}
+                      </Link>
+                    </SheetClose>
+                  </div>
+
                   {session && (
                     <>
                       <div className="mt-2 mb-6 px-6">
