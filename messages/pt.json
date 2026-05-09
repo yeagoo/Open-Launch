@@ -574,5 +574,161 @@
     "toast": {
       "draftRestored": "Rascunho não salvo restaurado"
     }
+  },
+  "pricingDirectories": {
+    "metadata": {
+      "title": "Get Listed — Directory Pricing | aat.ee",
+      "description": "Skip the queue, get a guaranteed dofollow link, and feature your project across our directory network: aat.ee + 11 partner sites."
+    },
+    "hero": {
+      "kicker": "Directory listings",
+      "heading": "Get your product seen across our directory network",
+      "subheading": "Skip the queue. Earn dofollow backlinks. Reach makers and early adopters across {n}+ curated sites with combined 700k+ monthly visitors.",
+      "limited": "Launch pricing — discounts shrink as our DR & traffic grow."
+    },
+    "tiers": {
+      "basic": {
+        "name": "Basic",
+        "price": "$6.99",
+        "originalPrice": "$9.99",
+        "tagline": "Skip the queue on aat.ee.",
+        "description": "Get featured on aat.ee with a dofollow link. Your project also surfaces on related-product carousels, comparison pages, and alternatives pages — multiple discoverable touchpoints.",
+        "cta": "Get Basic",
+        "features": {
+          "skipQueue": "Skip the launch queue (no badge required)",
+          "dofollow": "Guaranteed dofollow backlink",
+          "site": "Listed on aat.ee",
+          "extra": "Bonus: appears in similar-product, compare, and alternatives pages",
+          "delivery": "Live within 1 business day (auto-published)"
+        }
+      },
+      "plus": {
+        "name": "Plus",
+        "price": "$9.99",
+        "originalPrice": "$29.99",
+        "tagline": "Reach 4 directories at once.",
+        "description": "Everything in Basic, plus listings on HiCyou, MF8.BIZ, and BigKr. Combined network does 10,000+ Google clicks every 30 days and serves 300k+ monthly visitors.",
+        "cta": "Get Plus",
+        "features": {
+          "everything": "Everything in Basic",
+          "fourSites": "Listed on aat.ee, HiCyou, MF8.BIZ, BigKr",
+          "dofollowAll": "Dofollow backlink from every site",
+          "stats": "10,000+ Google clicks / 30 days · 300k+ monthly traffic",
+          "delivery": "aat.ee live within 1 day · others within 3 business days"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$16.99",
+        "originalPrice": "$39.99",
+        "badge": "Most popular",
+        "tagline": "Authority links from 8 documentation sites.",
+        "description": "Everything in Plus, plus friend-link placements on 8 high-authority documentation sites — strengthens GEO/AIEO recommendations and pushes your domain rating up. Combined network: 30,000+ Google clicks / 30 days, 700k+ monthly traffic.",
+        "cta": "Get Pro",
+        "features": {
+          "everything": "Everything in Plus",
+          "docsSites": "Friend-links on 8 docs sites: Debian Club, Ubuntu.fan, AlmaLinux, Run-EnTLinux, EOL.wiki, Rank.fan, LiteHttpd, PortcYou",
+          "geo": "Boosts GEO/AIEO authority signals for AI-powered search",
+          "stats": "30,000+ Google clicks / 30 days · 700k+ monthly traffic",
+          "delivery": "aat.ee live within 1 day · others within 3 business days"
+        }
+      },
+      "ultra": {
+        "name": "Ultra",
+        "subtitle": "Sponsorship",
+        "price": "$69.99",
+        "priceSuffix": "/month",
+        "tagline": "Permanent sidebar visibility, every page, every visit.",
+        "description": "Subscription. Includes everything in Pro, plus your sponsor card in the right sidebar of every aat.ee and HiCyou page — so every visitor sees your brand, on every project, every comparison, every alternative.",
+        "limit": "Limited to 5 active sponsors at any time.",
+        "cta": "Subscribe to Ultra",
+        "features": {
+          "everything": "Everything in Pro (delivered automatically)",
+          "sidebar": "Sponsor card on every aat.ee + HiCyou page",
+          "exclusive": "Maximum 5 sponsors at any time",
+          "cancel": "Cancel anytime — pro-rated billing"
+        }
+      }
+    },
+    "stats": {
+      "heading": "What you're buying access to",
+      "domainRating": "Domain Rating",
+      "trafficLine": "Combined monthly traffic",
+      "clicksLine": "30-day Google search clicks",
+      "trafficValue": "700k+",
+      "clicksValue": "30,000+",
+      "trafficNote": "Across all 12 sites. Numbers grow each month — that's also why discount prices won't last.",
+      "drCardTitle": "Live Domain Ratings",
+      "drCardSubtitle": "Refreshed every 3 days from Ahrefs.",
+      "drDisclaimer": "Domain Rating values are pulled directly from Ahrefs and updated every 3 days. Higher DR sites pass more SEO authority through their dofollow links."
+    },
+    "comparison": {
+      "heading": "Compare tiers side by side",
+      "rows": {
+        "sites": "Sites listed on",
+        "skipQueue": "Skip the queue",
+        "dofollow": "Dofollow link",
+        "extraPages": "Featured on compare/alternatives pages",
+        "docsLinks": "Friend-links on docs sites",
+        "sidebarAd": "Sponsor sidebar ad",
+        "monthlyTraffic": "Combined monthly traffic",
+        "googleClicks": "30-day Google clicks",
+        "delivery": "Delivery time",
+        "billing": "Billing"
+      },
+      "values": {
+        "yes": "Yes",
+        "no": "—",
+        "basicSites": "1 site (aat.ee)",
+        "plusSites": "4 sites",
+        "proSites": "12 sites",
+        "ultraSites": "12 sites + sidebar",
+        "basicTraffic": "~50k/mo",
+        "plusTraffic": "300k+/mo",
+        "proTraffic": "700k+/mo",
+        "ultraTraffic": "700k+/mo",
+        "basicClicks": "~3k/30d",
+        "plusClicks": "10k+/30d",
+        "proClicks": "30k+/30d",
+        "ultraClicks": "30k+/30d",
+        "auto1d": "1 business day",
+        "manual3d": "Up to 3 business days",
+        "subscription": "$69.99/month",
+        "oneOff": "One-time"
+      }
+    },
+    "faq": {
+      "heading": "Frequently asked questions",
+      "items": {
+        "discount": {
+          "q": "Why are these prices discounted?",
+          "a": "We're scaling our directory network's authority. As our DR rises and traffic grows month over month, the value of a listing increases — so the discount price you see today won't be available in 3 months. Lock in the rate now."
+        },
+        "delivery": {
+          "q": "How fast is delivery?",
+          "a": "aat.ee is automated — your listing goes live within 1 business day after payment. The other 11 sites are added manually within 3 business days. We'll email you when each placement is live."
+        },
+        "retention": {
+          "q": "How long do the links stay up?",
+          "a": "All links and listings are intended to be permanent. We do not auto-expire one-time tier purchases. Sites we no longer operate may go offline in the future, but we'll email you in that rare case."
+        },
+        "upgrade": {
+          "q": "Can I upgrade tiers later?",
+          "a": "Yes. Email us within 30 days of your purchase and we'll credit what you already paid toward the higher tier. After 30 days, you can buy the upgrade at the current rate."
+        },
+        "refund": {
+          "q": "What's the refund policy?",
+          "a": "If we haven't yet placed your listing, full refund — just email us. After placement, we don't offer refunds since the link equity has been transferred. Ultra subscribers can cancel anytime; we pro-rate the unused portion of the current month."
+        },
+        "multiple": {
+          "q": "Can I buy listings for multiple projects?",
+          "a": "Yes — each project is a separate purchase. We don't currently offer bundled discounts, but heavy users should email us directly."
+        }
+      }
+    },
+    "footer": {
+      "heading": "Ready to skip the queue?",
+      "body": "Pick a tier above and submit your project. Manual placements start within 1 business day."
+    }
   }
 }
