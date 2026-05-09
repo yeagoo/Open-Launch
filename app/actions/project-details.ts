@@ -336,33 +336,29 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
       if (taglineChanged) {
         const nextTagline =
           typeof data.tagline === "string" ? data.tagline.trim().slice(0, 60) || null : null
-        // Update source-locale row's tagline. If we just deleted AI rows
-        // above (descriptionChanged path), they're gone — that's fine,
-        // the upsert below targets only the source row.
+        // The source-locale translation row is guaranteed to exist
+        // (created in submitProject), so a plain UPDATE is enough — no
+        // need for an UPSERT path that would have to invent a
+        // description value when the row is missing.
         await tx
-          .insert(projectTranslation)
-          .values({
-            projectId,
-            locale: projectData.sourceLocale,
-            description: sanitizedDescription ?? projectData.description,
-            isSource: true,
-            aiGenerated: false,
+          .update(projectTranslation)
+          .set({
             tagline: nextTagline,
             taglineGeneratedAt: nextTagline ? new Date() : null,
+            updatedAt: new Date(),
           })
-          .onConflictDoUpdate({
-            target: [projectTranslation.projectId, projectTranslation.locale],
-            set: {
-              tagline: nextTagline,
-              taglineGeneratedAt: nextTagline ? new Date() : null,
-              updatedAt: new Date(),
-            },
-          })
-        // Wipe AI-translated taglines on non-source rows so cron
-        // refans out from the new source value. (We only clear
-        // tagline/tagline_generated_at, NOT the description rows
-        // themselves — description didn't change just because tagline
-        // changed.)
+          .where(
+            and(
+              eq(projectTranslation.projectId, projectId),
+              eq(projectTranslation.locale, projectData.sourceLocale),
+            ),
+          )
+
+        // Clear stale AI-translated taglines on non-source rows so the
+        // translate-projects cron re-fans-out from the new source.
+        // Skipped when description also changed: that branch already
+        // deleted every aiGenerated row above, so there's nothing left
+        // to clear here.
         if (!descriptionChanged) {
           await tx
             .update(projectTranslation)

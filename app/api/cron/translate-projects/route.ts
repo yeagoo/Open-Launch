@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
           })
           // CAS: only write if the source tagline still matches what we read
           // (to avoid stomping on a tagline edit that landed mid-flight).
-          await db
+          const result = await db
             .update(projectTranslation)
             .set({
               tagline: translatedTagline,
@@ -228,7 +228,11 @@ export async function GET(request: NextRequest) {
                 )`,
               ),
             )
-          translated++
+          // Only count as translated if the CAS gate let the write through.
+          // Mirrors the description-fan-out logic above and keeps the
+          // candidates-vs-translated ratio honest in the response payload.
+          const affected = (result as unknown as { rowCount?: number }).rowCount
+          if (affected !== 0) translated++
         } catch (err) {
           failed++
           errors.push(
