@@ -163,12 +163,22 @@ export const projectTranslation = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     longDescription: text("long_description"),
     longDescriptionGeneratedAt: timestamp("long_description_generated_at"),
+    // Failure-tracking trio for the enrich-projects cron. Stamped on
+    // every attempt; the candidate query skips rows attempted in the
+    // last 24h, and the auto-low-quality logic kicks in after N
+    // consecutive failures.
+    longDescriptionAttemptedAt: timestamp("long_description_attempted_at"),
+    longDescriptionAttemptCount: integer("long_description_attempt_count").notNull().default(0),
+    longDescriptionLastError: text("long_description_last_error"),
   },
   (table) => {
     return {
       pk: primaryKey(table.projectId, table.locale),
       projectIdIdx: index("project_translation_project_id_idx").on(table.projectId),
       localeIdx: index("project_translation_locale_idx").on(table.locale),
+      longDescAttemptIdx: index("project_translation_long_desc_attempt_idx").on(
+        table.longDescriptionAttemptedAt,
+      ),
     }
   },
 )
