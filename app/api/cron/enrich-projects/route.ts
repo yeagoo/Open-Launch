@@ -26,6 +26,14 @@ const MAX_FAILURES_BEFORE_GIVING_UP = 3
 // Tinyfish per-URL errors that aren't worth retrying for. SPA loaded
 // without text content / malformed URL won't fix themselves on a 24h
 // retry; mark low-quality immediately to free the candidate pool.
+//
+// CONTRACT: detection below relies on the literal string format
+//   `Tinyfish per-URL error: ${code}`
+// that lib/tinyfish.ts produces inside CrawlError.message. If you ever
+// change the throw wording there, update both this list and the
+// `msg.includes(...)` substring in the catch block. A structured
+// `code` field on CrawlError would remove the coupling but isn't
+// worth the refactor for two error types.
 const FATAL_TINYFISH_ERRORS = ["invalid_url", "empty_content"]
 
 /**
