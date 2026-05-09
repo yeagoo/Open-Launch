@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card"
+import { DraftProjectRow } from "@/components/dashboard/draft-project-row"
 import { getUserCreatedProjects, getUserUpvotedProjects } from "@/app/actions/projects"
 
 // Base project type that matches the actual structure from the database
@@ -68,6 +69,14 @@ export default async function Dashboard() {
 
   const upcomingLaunches = createdProjects.filter((project) => project.launchStatus === "scheduled")
 
+  // Pre-launch drafts: editable but not yet on the calendar (or stuck
+  // post-payment-flow). Surfaces them so users can resume editing or
+  // retry the failed payment instead of giving up.
+  const draftProjects = createdProjects.filter(
+    (project) =>
+      project.launchStatus === "payment_pending" || project.launchStatus === "payment_failed",
+  )
+
   const activeLaunches = createdProjects.filter((project) => project.launchStatus === "ongoing")
 
   const previousLaunches = createdProjects.filter((project) => project.launchStatus === "launched")
@@ -103,6 +112,38 @@ export default async function Dashboard() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column - My Projects */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Drafts — payment_pending / payment_failed projects.
+                Hidden when empty so the dashboard doesn't grow an
+                empty section for the common case. */}
+            {draftProjects.length > 0 && (
+              <Card className="border dark:border-zinc-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-xl font-semibold">Drafts</CardTitle>
+                  <CardDescription>
+                    Projects awaiting payment or with a failed payment. Edit, retry payment, or
+                    delete.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {draftProjects.map((project) => (
+                      <DraftProjectRow
+                        key={project.id}
+                        id={project.id}
+                        name={project.name}
+                        slug={project.slug}
+                        logoUrl={project.logoUrl}
+                        description={project.description}
+                        launchStatus={project.launchStatus}
+                        scheduledLaunchDate={project.scheduledLaunchDate}
+                        websiteUrl={project.websiteUrl}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border dark:border-zinc-800">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">

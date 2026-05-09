@@ -15,6 +15,7 @@ import { getProjectSidebarLinks } from "@/lib/get-project-sidebar-links"
 import {
   getLocalizedLongDescription,
   getLocalizedProjectDescription,
+  getLocalizedProjectTagline,
 } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
@@ -120,10 +121,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const tDetail = await getTranslations("project.detail")
   const tBreadcrumb = await getTranslations("breadcrumb")
-  const [longDescriptionMarkdown, relatedProjects, sidebarLinks] = await Promise.all([
+  const [longDescriptionMarkdown, relatedProjects, sidebarLinks, tagline] = await Promise.all([
     getLocalizedLongDescription(projectData.id, locale),
     getRelatedProjects(projectData.id, locale, 4),
     getProjectSidebarLinks(projectData.id),
+    getLocalizedProjectTagline(projectData.id, locale),
   ])
 
   const session = await auth.api.getSession({
@@ -229,6 +231,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                         {projectData.name}
                       </h1>
                     </div>
+                    {tagline && (
+                      <p className="font-editorial text-muted-foreground mb-2 truncate text-sm italic">
+                        {tagline}
+                      </p>
+                    )}
 
                     {/* Categories */}
                     <div className="flex flex-wrap gap-1">
@@ -294,6 +301,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <h1 className="text-foreground text-xl font-bold">{projectData.name}</h1>
+                    {tagline && (
+                      <p className="font-editorial text-muted-foreground text-sm italic">
+                        {tagline}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-1">
                       {projectData.categories.map((category) => (
                         <Link
@@ -405,15 +417,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 />
               )}
 
-              {/* Edit button pour owners */}
+              {/* Edit button pour owners — visible only on the public
+                  detail page when project is scheduled. Pre-launch
+                  states (payment_pending / payment_failed) don't have
+                  a public detail page; their edit entry lives in the
+                  dashboard drafts section. */}
               {isOwner && (
                 <div>
                   <EditButton
                     projectId={projectData.id}
-                    initialDescription={projectData.description}
-                    initialCategories={projectData.categories}
                     isOwner={isOwner}
-                    isScheduled={isScheduled}
+                    canEdit={isScheduled}
                     sourceLocale={projectData.sourceLocale}
                   />
                 </div>

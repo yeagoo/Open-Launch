@@ -380,6 +380,12 @@
         "add": "プロダクト画像を追加",
         "preview": "プロダクト画像プレビュー",
         "remove": "プロダクト画像を削除"
+      },
+      "tagline": {
+        "label": "タグライン",
+        "optional": "（任意、60 文字以内）",
+        "help": "カードとプロジェクトページでプロジェクト名の下に表示される短い紹介文。",
+        "placeholder": "例: AI 画像生成、完璧なテキストレンダリング"
       }
     },
     "step2": {
@@ -552,7 +558,8 @@
         "scheduledDateRequired": "ローンチ日を選択してください",
         "scheduledDateOverLimit": "この日付は1日のローンチ上限を超えています",
         "scheduledDateOverLimitDetail": "この日付にはすでに{count}/{limit}件のプロジェクトが予定されています。別の日付を選択してください。",
-        "scheduledDateCheckFailed": "ローンチ日数の制限を確認できませんでした。もう一度お試しください。"
+        "scheduledDateCheckFailed": "ローンチ日数の制限を確認できませんでした。もう一度お試しください。",
+        "taglineTooLong": "タグラインは 60 文字以内にしてください"
       },
       "form": {
         "loadCategoriesFailed": "カテゴリの読み込みに失敗しました",

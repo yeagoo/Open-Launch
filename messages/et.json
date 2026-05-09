@@ -380,6 +380,12 @@
         "add": "Lisa tootepilt",
         "preview": "Tootepildi eelvaade",
         "remove": "Eemalda tootepilt"
+      },
+      "tagline": {
+        "label": "Tagline",
+        "optional": "(Valikuline, ≤60 tähemärki)",
+        "help": "Lühike turundusrida, mis kuvatakse projekti nime all kaartidel ja projekti lehel.",
+        "placeholder": "nt AI pildigeneratsioon, suurepärane teksti renderdus"
       }
     },
     "step2": {
@@ -552,7 +558,8 @@
         "scheduledDateRequired": "Valige käivitamise kuupäev",
         "scheduledDateOverLimit": "See kuupäev ületab teie igapäevast käivitamise limiiti",
         "scheduledDateOverLimitDetail": "Olete sellele kuupäevale juba planeerinud {count}/{limit} projekti. Palun valige teine kuupäev.",
-        "scheduledDateCheckFailed": "Käivitamise kuupäeva limiidi kontrollimine ebaõnnestus. Palun proovige uuesti."
+        "scheduledDateCheckFailed": "Käivitamise kuupäeva limiidi kontrollimine ebaõnnestus. Palun proovige uuesti.",
+        "taglineTooLong": "Tagline tohib olla kuni 60 tähemärki"
       },
       "form": {
         "loadCategoriesFailed": "Kategooriate laadimine ebaõnnestus",

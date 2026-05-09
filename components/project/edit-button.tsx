@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { RiPencilLine } from "@remixicon/react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { getProjectForEdit } from "@/app/actions/project-details"
 
 import { EditProjectForm } from "./edit-project-form"
 
@@ -22,33 +24,70 @@ const LOCALE_DISPLAY: Record<string, string> = {
 
 interface EditButtonProps {
   projectId: string
-  initialDescription: string
-  initialCategories: { id: string; name: string }[]
   isOwner: boolean
-  isScheduled: boolean
+  // True for any pre-launch state (scheduled / payment_pending /
+  // payment_failed). Caller passes false for ongoing/launched so the
+  // button is hidden.
+  canEdit: boolean
   sourceLocale?: string
 }
 
-export function EditButton({
-  projectId,
-  initialDescription,
-  initialCategories,
-  isOwner,
-  isScheduled,
-  sourceLocale,
-}: EditButtonProps) {
+interface InitialPayload {
+  name: string
+  tagline: string | null
+  description: string
+  websiteUrl: string
+  logoUrl: string
+  productImage: string | null
+  techStack: string[]
+  platforms: string[]
+  pricing: string
+  githubUrl: string | null
+  twitterUrl: string | null
+  categories: { id: string; name: string }[]
+}
+
+export function EditButton({ projectId, isOwner, canEdit, sourceLocale }: EditButtonProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [initial, setInitial] = useState<InitialPayload | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // Ne pas afficher le bouton si l'utilisateur n'est pas propriétaire ou si la chaîne n'est pas scheduled
-  if (!isOwner || !isScheduled) {
-    return null
-  }
+  useEffect(() => {
+    if (!isDialogOpen) return
+    let cancelled = false
+    setLoading(true)
+    getProjectForEdit(projectId)
+      .then((data) => {
+        if (cancelled) return
+        if (!data) {
+          toast.error("Could not load project")
+          setIsDialogOpen(false)
+          return
+        }
+        setInitial({
+          name: data.name,
+          tagline: data.tagline,
+          description: data.description,
+          websiteUrl: data.websiteUrl,
+          logoUrl: data.logoUrl,
+          productImage: data.productImage ?? null,
+          techStack: data.techStack ?? [],
+          platforms: data.platforms ?? [],
+          pricing: data.pricing,
+          githubUrl: data.githubUrl ?? null,
+          twitterUrl: data.twitterUrl ?? null,
+          categories: data.categories,
+        })
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isDialogOpen, projectId])
 
-  const handleUpdate = () => {
-    // Fermer le dialogue et rafraîchir la page pour afficher les changements
-    setIsDialogOpen(false)
-    window.location.reload()
-  }
+  if (!isOwner || !canEdit) return null
 
   const sourceLabel = sourceLocale ? (LOCALE_DISPLAY[sourceLocale] ?? sourceLocale) : null
 
@@ -60,25 +99,31 @@ export function EditButton({
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Project Information</DialogTitle>
+            <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
 
           {sourceLabel && (
             <p className="text-muted-foreground -mt-2 text-xs">
-              You are editing the <strong>{sourceLabel}</strong> source. Other languages are
-              auto-translated and will refresh after you save.
+              You are editing the <strong>{sourceLabel}</strong> source. Other locales are
+              auto-translated and refresh after you save.
             </p>
           )}
 
-          <EditProjectForm
-            projectId={projectId}
-            initialDescription={initialDescription}
-            initialCategories={initialCategories}
-            onUpdate={handleUpdate}
-            onCancel={() => setIsDialogOpen(false)}
-          />
+          {loading || !initial ? (
+            <p className="text-muted-foreground py-8 text-center text-sm">Loading…</p>
+          ) : (
+            <EditProjectForm
+              projectId={projectId}
+              initial={initial}
+              onUpdate={() => {
+                setIsDialogOpen(false)
+                window.location.reload()
+              }}
+              onCancel={() => setIsDialogOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

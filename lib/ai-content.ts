@@ -426,6 +426,7 @@ ${wrapInput("alternatives", altList)}`
 
 export interface ProjectAutoFillResult {
   name: string | null
+  tagline: string | null
   description: string | null
   logoUrl: string | null
   tags: string[]
@@ -490,6 +491,7 @@ Available pricing types: free, freemium, paid
 Return a JSON object:
 {
   "name": "Product/brand name (not the full page title)",
+  "tagline": "Short marketing one-liner in ${targetLanguage}, max 60 visible characters. Punchy and concrete (e.g. 'AI image generation, perfect text rendering'). null if no good candidate.",
   "description": "A rich HTML description of the product. 3-5 sentences. Use <strong> for key features, <blockquote> for a compelling quote or tagline, and optionally a simple <table> to compare plans or features. NO hyperlinks (<a> tags). ${charTarget} characters of visible text in ${targetLanguage}.",
   "logoUrl": "The og:image URL, or apple-touch-icon URL, or highest-resolution favicon URL found in the page content. Full absolute URL. null if not found.",
   "tags": ["tag1", "tag2", ...],
@@ -499,7 +501,7 @@ Return a JSON object:
 }
 
 Output language rules:
-- Write the "description" field IN ${targetLanguage}. If the source content is not in ${targetLanguage}, translate it.
+- Write the "tagline" and "description" fields IN ${targetLanguage}. If the source content is not in ${targetLanguage}, translate them.
 - "name" should stay in its original brand form (do NOT translate brand names — "Notion" stays "Notion", not 概念 or 概念应用; "Vercel" stays "Vercel").
 - "tags" must remain in lowercase English kebab-case regardless of output language (e.g. "ai", "developer-tools").
 - "categoryNames" must be exact strings from the provided category list — do not translate.
@@ -507,6 +509,7 @@ Output language rules:
 
 Field rules:
 - For name: use the product/brand name, not the full HTML title tag
+- For tagline: a single line, no period, no quotes, no markdown. Think hero-section subtitle. ≤ 60 chars in ${targetLanguage} (count visible characters, CJK counts as 1 each). null if the source page has no clear value proposition.
 - For description: write 3-5 sentences in HTML. Use <p> for paragraphs, <strong> to highlight key capabilities, <blockquote> for a tagline or notable quote from the site. Optionally add a small <table> with key features or pricing tiers. Do NOT include any <a href> links. Aim for ${charTarget} visible characters in ${targetLanguage}.
 - For logoUrl: look for og:image, apple-touch-icon, or favicon references. Return the full absolute URL. Prefer og:image, then apple-touch-icon, then favicon.
 - For tags: suggest 3-8 lowercase kebab-case tags relevant to the product (e.g. "ai", "developer-tools", "open-source")
@@ -532,6 +535,7 @@ ${wrapInput("website-content", truncateContent(crawledMarkdown, 6000))}`
 
     return {
       name: parsed.name || null,
+      tagline: trimTagline(parsed.tagline),
       description: parsed.description || null,
       logoUrl: parsed.logoUrl || null,
       tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 10) : [],
@@ -543,6 +547,7 @@ ${wrapInput("website-content", truncateContent(crawledMarkdown, 6000))}`
     console.error("Project info extraction error:", error)
     return {
       name: crawledTitle || null,
+      tagline: null,
       description: null,
       logoUrl: null,
       tags: [],
@@ -551,4 +556,14 @@ ${wrapInput("website-content", truncateContent(crawledMarkdown, 6000))}`
       platforms: [],
     }
   }
+}
+
+// Defensive clip: even with the prompt's 60-char cap, models occasionally
+// produce a slightly longer line. Trim trailing punctuation and clip at
+// 60 chars to keep the project page hero stable.
+function trimTagline(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim().replace(/[.!?。！？]+$/, "")
+  if (!trimmed) return null
+  return trimmed.length > 60 ? trimmed.slice(0, 60).trimEnd() : trimmed
 }

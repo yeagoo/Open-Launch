@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       name: aiResult.name,
+      tagline: aiResult.tagline,
       description: aiResult.description,
       logoUrl: logoR2Url,
       tags: aiResult.tags,
