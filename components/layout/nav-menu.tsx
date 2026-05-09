@@ -1,6 +1,7 @@
 "use client"
 
 import { Link } from "@/i18n/navigation"
+import { RiRocketLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 
 import {
@@ -98,12 +99,17 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
           </NavigationMenuItem>
         )}
 
+        {/* Primary CTA — the one action we want every visitor to take.
+            Filled with --primary to break the visual monotony of the
+            other text-only nav links. Same height/padding as the rest
+            so it sits flush in the row. */}
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
             <Link
               href="/projects/submit"
-              className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
             >
+              <RiRocketLine className="h-4 w-4" />
               {t("submitProject")}
             </Link>
           </NavigationMenuLink>
