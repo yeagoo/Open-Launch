@@ -67,6 +67,7 @@ import { deleteMyDraftProject, getAllCategories, submitProject } from "@/app/act
 
 interface ProjectFormData {
   name: string
+  tagline: string
   websiteUrl: string
   description: string
   sourceLocale: (typeof routing.locales)[number]
@@ -129,6 +130,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<ProjectFormData>({
     name: "",
+    tagline: "",
     websiteUrl: "",
     description: "",
     sourceLocale: defaultSourceLocale as (typeof routing.locales)[number],
@@ -436,6 +438,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       setFormData((prev) => ({
         ...prev,
         name: prev.name || data.name || prev.name,
+        tagline: prev.tagline || data.tagline || prev.tagline,
         description: prev.description || data.description || prev.description,
         categories: prev.categories.length > 0 ? prev.categories : data.categories || [],
         pricing: prev.pricing || data.pricing || prev.pricing,
@@ -593,6 +596,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
           errs.websiteUrl = t("errors.fields.websiteUrlInvalid")
         }
       }
+      if (formData.tagline.length > 60) errs.tagline = t("errors.fields.taglineTooLong")
       if (!formData.description) errs.description = t("errors.fields.descriptionRequired")
       if (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) {
         errs.logoUrl = t("errors.fields.logoRequired")
@@ -682,6 +686,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
       const projectData = {
         name: formData.name,
+        tagline: formData.tagline.trim() || null,
         description: formData.description,
         sourceLocale: formData.sourceLocale,
         websiteUrl: formData.websiteUrl,
@@ -961,6 +966,25 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                 </p>
               )}
               {renderFieldError("websiteUrl")}
+            </div>
+            <div>
+              <Label htmlFor="tagline">
+                {t("step1.tagline.label")}{" "}
+                <span className="text-muted-foreground">{t("step1.tagline.optional")}</span>
+              </Label>
+              <p className="text-muted-foreground mb-2 text-xs">{t("step1.tagline.help")}</p>
+              <Input
+                id="tagline"
+                name="tagline"
+                value={formData.tagline}
+                onChange={handleInputChange}
+                placeholder={t("step1.tagline.placeholder")}
+                maxLength={60}
+              />
+              <div className="text-muted-foreground mt-1 text-right text-xs">
+                {formData.tagline.length}/60
+              </div>
+              {renderFieldError("tagline")}
             </div>
             <div>
               <Label htmlFor="sourceLocale">

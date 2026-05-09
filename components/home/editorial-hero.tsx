@@ -10,6 +10,7 @@ interface HeroProject {
   id: string
   slug: string
   name: string
+  tagline?: string | null
   description: string | null
   logoUrl: string
   upvoteCount: number
@@ -61,7 +62,9 @@ export function EditorialHero({ projects, heading, kicker }: EditorialHeroProps)
 }
 
 function HeroCard({ project, index }: { project: HeroProject; index: number }) {
-  const summary = oneLineSummary(project.description)
+  // Tagline (one-line marketing copy entered by the maker) wins; fall
+  // back to the AI-extracted first sentence of the description.
+  const summary = project.tagline?.trim() || oneLineSummary(project.description)
   return (
     <Link
       href={`/projects/${project.slug}`}

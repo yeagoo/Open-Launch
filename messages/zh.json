@@ -380,6 +380,12 @@
         "add": "添加产品图片",
         "preview": "产品图片预览",
         "remove": "移除产品图片"
+      },
+      "tagline": {
+        "label": "标语",
+        "optional": "（可选，≤60 字符）",
+        "help": "在卡片和项目页项目名下方显示的一句营销简介。",
+        "placeholder": "例：AI 图像生成，完美文本渲染"
       }
     },
     "step2": {
@@ -552,7 +558,8 @@
         "scheduledDateRequired": "请选择发布日期",
         "scheduledDateOverLimit": "该日期已超出您的每日发布限额",
         "scheduledDateOverLimitDetail": "您已在该日期安排了 {count}/{limit} 个项目，请选择其他日期。",
-        "scheduledDateCheckFailed": "无法验证发布日期限额，请重试。"
+        "scheduledDateCheckFailed": "无法验证发布日期限额，请重试。",
+        "taglineTooLong": "标语不能超过 60 个字符"
       },
       "form": {
         "loadCategoriesFailed": "加载分类失败",

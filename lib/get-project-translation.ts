@@ -117,8 +117,33 @@ export async function getLocalizedLongDescription(
  * order as `getLocalizedProjectDescription`: exact locale → source → en →
  * the original `description` already on the project (kept untouched).
  */
+/**
+ * Resolve the tagline to display for a single (projectId, locale) combo.
+ * Same fallback order as description: exact locale → source → en → null.
+ */
+export async function getLocalizedProjectTagline(
+  projectId: string,
+  locale: string,
+): Promise<string | null> {
+  const rows = await db
+    .select({
+      locale: projectTranslation.locale,
+      tagline: projectTranslation.tagline,
+      isSource: projectTranslation.isSource,
+    })
+    .from(projectTranslation)
+    .where(eq(projectTranslation.projectId, projectId))
+
+  const exact = rows.find((r) => r.locale === locale && r.tagline)?.tagline
+  if (exact) return exact
+  const source = rows.find((r) => r.isSource && r.tagline)?.tagline
+  if (source) return source
+  const en = rows.find((r) => r.locale === "en" && r.tagline)?.tagline
+  return en ?? null
+}
+
 export async function localizeProjectDescriptions<
-  T extends { id: string; description: string | null | undefined },
+  T extends { id: string; description: string | null | undefined; tagline?: string | null },
 >(projects: T[], locale: string): Promise<T[]> {
   if (projects.length === 0) return projects
 
@@ -137,24 +162,51 @@ export async function localizeProjectDescriptions<
       projectId: projectTranslation.projectId,
       locale: projectTranslation.locale,
       description: projectTranslation.description,
+      tagline: projectTranslation.tagline,
       isSource: projectTranslation.isSource,
     })
     .from(projectTranslation)
     .where(and(inArray(projectTranslation.projectId, ids), or(...localeFilters)))
 
-  const byProject = new Map<string, { exact?: string; source?: string; en?: string }>()
+  interface Slot {
+    exact?: string
+    source?: string
+    en?: string
+    exactTagline?: string | null
+    sourceTagline?: string | null
+    enTagline?: string | null
+  }
+  const byProject = new Map<string, Slot>()
   for (const r of rows) {
-    const slot = byProject.get(r.projectId) ?? {}
-    if (r.locale === locale) slot.exact = r.description
-    if (r.isSource) slot.source = r.description
-    if (r.locale === "en") slot.en = r.description
+    const slot: Slot = byProject.get(r.projectId) ?? {}
+    if (r.locale === locale) {
+      slot.exact = r.description
+      slot.exactTagline = r.tagline
+    }
+    if (r.isSource) {
+      slot.source = r.description
+      slot.sourceTagline = r.tagline
+    }
+    if (r.locale === "en") {
+      slot.en = r.description
+      slot.enTagline = r.tagline
+    }
     byProject.set(r.projectId, slot)
   }
 
   return projects.map((p) => {
     const slot = byProject.get(p.id)
     if (!slot) return p
-    const localized = slot.exact ?? slot.source ?? slot.en
-    return localized ? { ...p, description: localized } : p
+    const localizedDescription = slot.exact ?? slot.source ?? slot.en
+    // Fallback chain mirrors description: exact locale → source → en.
+    // null/empty in any tier is skipped, treating it as "no value here".
+    const localizedTagline =
+      (slot.exactTagline && slot.exactTagline.trim()) ||
+      (slot.sourceTagline && slot.sourceTagline.trim()) ||
+      (slot.enTagline && slot.enTagline.trim()) ||
+      null
+    const next = localizedDescription ? { ...p, description: localizedDescription } : { ...p }
+    if (localizedTagline) (next as T & { tagline: string | null }).tagline = localizedTagline
+    return next
   })
 }

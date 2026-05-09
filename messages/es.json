@@ -380,6 +380,12 @@
         "add": "Añadir Imagen del Producto",
         "preview": "Vista previa de la imagen del producto",
         "remove": "Eliminar imagen del producto"
+      },
+      "tagline": {
+        "label": "Tagline",
+        "optional": "(Opcional, ≤60 caracteres)",
+        "help": "Una línea breve de marketing que se mostrará bajo el nombre del proyecto en tarjetas y la página del proyecto.",
+        "placeholder": "p. ej. Generación de imágenes con IA, renderizado perfecto de texto"
       }
     },
     "step2": {
@@ -552,7 +558,8 @@
         "scheduledDateRequired": "Elija una fecha de lanzamiento",
         "scheduledDateOverLimit": "Esta fecha supera su límite de lanzamientos diarios",
         "scheduledDateOverLimitDetail": "Ya ha programado {count}/{limit} proyecto(s) para esta fecha. Por favor, seleccione otra fecha.",
-        "scheduledDateCheckFailed": "No se pudo verificar el límite de fecha de lanzamiento. Inténtelo de nuevo."
+        "scheduledDateCheckFailed": "No se pudo verificar el límite de fecha de lanzamiento. Inténtelo de nuevo.",
+        "taglineTooLong": "El tagline debe tener 60 caracteres o menos"
       },
       "form": {
         "loadCategoriesFailed": "Error al cargar las categorías",

@@ -121,3 +121,75 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
   // trusted HTML producer; allowlist enforcement is the only safe boundary.
   return sanitizeRichText(stripped)
 }
+
+interface TranslateTaglineOptions {
+  tagline: string
+  sourceLocale: ProjectLocale
+  targetLocale: ProjectLocale
+}
+
+/**
+ * Translate a tagline (≤60 chars, plain text) between locales.
+ * Tagline is plain text — no HTML, no markdown — so this is a much
+ * lighter call than translateProjectDescription. The output is hard-
+ * clipped to 60 chars to defend against the model returning a slightly
+ * longer line.
+ */
+export async function translateTagline({
+  tagline,
+  sourceLocale,
+  targetLocale,
+}: TranslateTaglineOptions): Promise<string> {
+  const trimmed = tagline.trim()
+  if (!trimmed) return ""
+  if (sourceLocale === targetLocale) return trimmed.slice(0, 60)
+
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
+  const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
+
+  const systemPrompt = `You translate short marketing taglines between languages.
+
+Translate the tagline below from ${LOCALE_NAMES[sourceLocale]} to ${LOCALE_NAMES[targetLocale]}.
+
+Rules:
+- Output ONLY the translated tagline. No quotes, no markdown, no period at the end, no preamble.
+- Maximum 60 visible characters in ${LOCALE_NAMES[targetLocale]} (CJK counts as 1 each).
+- Keep it punchy and concrete. A tagline, not a sentence.
+- Do NOT translate brand names: ${DO_NOT_TRANSLATE.join(", ")}.
+- If the source already reads naturally in ${LOCALE_NAMES[targetLocale]} (e.g. is already a brand name), return it verbatim.`
+
+  const userPrompt = trimmed
+
+  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.2,
+    }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`DeepSeek API error ${response.status}: ${text}`)
+  }
+
+  const data = await response.json()
+  await logAiUsage("translate-tagline", model, data?.usage)
+  const content = data?.choices?.[0]?.message?.content
+  if (typeof content !== "string" || content.length === 0) {
+    throw new Error("DeepSeek returned empty content")
+  }
+  // Strip surrounding quotes / trailing period the model occasionally adds.
+  const cleaned = content
+    .trim()
+    .replace(/^["“”'`]+|["“”'`]+$/g, "")
+    .replace(/[.!?。！？]+$/, "")
+    .trim()
+  return cleaned.slice(0, 60)
+}

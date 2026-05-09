@@ -9,6 +9,7 @@ interface DenseProject {
   id: string
   slug: string
   name: string
+  tagline?: string | null
   description: string | null
   logoUrl: string
   upvoteCount: number
@@ -105,7 +106,7 @@ export function DenseList({
                   {p.name}
                 </span>
                 <span className="text-muted-foreground hidden truncate text-sm sm:inline">
-                  {oneLineSummary(p.description, 90)}
+                  {p.tagline?.trim() || oneLineSummary(p.description, 90)}
                 </span>
               </div>
               <span className="text-muted-foreground flex flex-shrink-0 items-center gap-1 text-xs">

@@ -95,15 +95,84 @@ export async function hasUserUpvoted(projectId: string) {
   return userUpvotes.length > 0
 }
 
-// Update project description and categories
-// Only allowed for project owners and only if project is in "scheduled" status
-export async function updateProject(
-  projectId: string,
-  data: {
-    description: string
-    categories: string[]
-  },
-) {
+/**
+ * Server action used by the Edit dialog to load a full editable
+ * snapshot (project columns + categories + source-locale tagline).
+ * Returns null if the project doesn't exist or the caller isn't the
+ * creator. The caller still gets a permission error on save if the
+ * status flips out of EDITABLE_STATUSES between page load and submit.
+ */
+export async function getProjectForEdit(projectId: string) {
+  const session = await getSession()
+  if (!session?.user?.id) return null
+
+  const [projectData] = await db.select().from(project).where(eq(project.id, projectId)).limit(1)
+  if (!projectData || projectData.createdBy !== session.user.id) return null
+
+  const cats = await db
+    .select({ id: category.id, name: category.name })
+    .from(category)
+    .innerJoin(projectToCategory, eq(category.id, projectToCategory.categoryId))
+    .where(eq(projectToCategory.projectId, projectId))
+
+  const [taglineRow] = await db
+    .select({ tagline: projectTranslation.tagline })
+    .from(projectTranslation)
+    .where(
+      and(
+        eq(projectTranslation.projectId, projectId),
+        eq(projectTranslation.locale, projectData.sourceLocale),
+      ),
+    )
+    .limit(1)
+
+  return {
+    ...projectData,
+    tagline: taglineRow?.tagline ?? null,
+    categories: cats,
+  }
+}
+
+// Statuses where the maker can still edit. ongoing/launched are
+// publicly visible and out of scope; payment_pending/failed are stuck
+// pre-launch states where the user needs editing to unblock themselves.
+const EDITABLE_STATUSES = new Set([
+  launchStatus.PAYMENT_PENDING,
+  launchStatus.PAYMENT_FAILED,
+  launchStatus.SCHEDULED,
+])
+
+export interface UpdateProjectData {
+  name?: string
+  tagline?: string | null
+  description?: string
+  categories?: string[]
+  websiteUrl?: string
+  logoUrl?: string
+  productImage?: string | null
+  techStack?: string[]
+  platforms?: string[]
+  pricing?: string
+  githubUrl?: string | null
+  twitterUrl?: string | null
+}
+
+/**
+ * Update an editable project. Allowed for the creator while the
+ * project is in payment_pending / payment_failed / scheduled status.
+ *
+ * Description / tagline edits cascade an AI invalidation: source-locale
+ * row gets the new copy, all AI-generated translation rows are deleted
+ * so the translate-projects cron re-fans-out, and EN long_description
+ * is cleared so enrich-projects regenerates it. Other fields (name,
+ * urls, logo, categories, tags, etc.) update in place without
+ * re-running AI workloads — they don't change the canonical text the
+ * AI was working from.
+ *
+ * Slug is intentionally never recomputed when name changes — old URLs
+ * keep working.
+ */
+export async function updateProject(projectId: string, data: UpdateProjectData) {
   const session = await getSession()
 
   if (!session?.user?.id) {
@@ -111,146 +180,209 @@ export async function updateProject(
   }
 
   try {
-    // Get project to check ownership and status
     const [projectData] = await db.select().from(project).where(eq(project.id, projectId)).limit(1)
 
     if (!projectData) {
       return { success: false, error: "Project not found" }
     }
-
-    // Check if user is the owner
     if (projectData.createdBy !== session.user.id) {
+      return { success: false, error: "You don't have permission to edit this project" }
+    }
+    if (!EDITABLE_STATUSES.has(projectData.launchStatus as never)) {
       return {
         success: false,
-        error: "You don't have permission to edit this project",
+        error: "You can only edit projects that are pre-launch (scheduled / pending / failed)",
       }
     }
 
-    // Check if project is in scheduled status
-    if (projectData.launchStatus !== "scheduled") {
-      return {
-        success: false,
-        error: "You can only edit projects that are scheduled for launch",
-      }
+    // Sanitize / normalize incoming fields once so the diff logic below is
+    // simpler. `undefined` means "field not in payload, leave as-is";
+    // `null` means "explicit clear" for nullable fields.
+    const updates: Partial<typeof project.$inferInsert> = { updatedAt: new Date() }
+    let descriptionChanged = false
+    let taglineChanged = false
+    let sanitizedDescription: string | null = null
+    let normalizedWebsiteUrl: string | null = null
+
+    if (typeof data.name === "string") {
+      const trimmed = data.name.trim()
+      if (trimmed) updates.name = trimmed
     }
 
-    // Update description (sanitize untrusted HTML for XSS prevention)
-    const sanitized = sanitizeRichText(data.description)
-    // Skip the AI invalidation cascade entirely if the sanitized description
-    // is byte-equal to what's already on the source row. A maker can re-save
-    // an unchanged form (e.g. only categories changed) without forcing a full
-    // re-translate + re-enrich on every cron tick.
-    const [currentSourceRow] = await db
-      .select({ description: projectTranslation.description })
-      .from(projectTranslation)
-      .where(
-        and(
-          eq(projectTranslation.projectId, projectId),
-          eq(projectTranslation.locale, projectData.sourceLocale),
-        ),
-      )
-      .limit(1)
-    const descriptionChanged = currentSourceRow?.description !== sanitized
-
-    await db.transaction(async (tx) => {
-      const projectUpdates: {
-        description: string
-        updatedAt: Date
-        qualityCheckedAt?: Date | null
-      } = { description: sanitized, updatedAt: new Date() }
-      if (descriptionChanged) {
-        // Description was edited — the previous quality verdict was based on
-        // stale copy, so clear the timestamp so quality-check-projects cron
-        // re-classifies on its next tick.
-        // We deliberately keep `is_low_quality` as-is in the meantime: if
-        // the project was previously flagged, leaving it un-flagged for the
-        // few minutes until the cron re-runs would let a bad-faith owner
-        // briefly grab bot engagement and AI-generated SEO content by
-        // submitting an edit. The cron will flip the flag if the new copy
-        // genuinely earns a higher score.
-        projectUpdates.qualityCheckedAt = null
-      }
-      await tx.update(project).set(projectUpdates).where(eq(project.id, projectId))
-
-      if (!descriptionChanged) {
-        // No-op as far as translations go — keep the existing source row,
-        // AI translations, and AI long_description columns intact.
-        return
-      }
-
-      // Refresh the source-locale translation row. Wipe its long_description
-      // too — the AI overview was derived from the old short description, so
-      // it's now stale and should be regenerated by the enrich-projects cron.
-      await tx
-        .insert(projectTranslation)
-        .values({
-          projectId,
-          locale: projectData.sourceLocale,
-          description: sanitized,
-          isSource: true,
-          aiGenerated: false,
-        })
-        .onConflictDoUpdate({
-          target: [projectTranslation.projectId, projectTranslation.locale],
-          set: {
-            description: sanitized,
-            isSource: true,
-            aiGenerated: false,
-            updatedAt: new Date(),
-            longDescription: null,
-            longDescriptionGeneratedAt: null,
-          },
-        })
-
-      // Also clear EN long_description if EN is not the source locale; cron will
-      // refill from the regenerated source content.
-      if (projectData.sourceLocale !== "en") {
-        await tx
-          .update(projectTranslation)
-          .set({ longDescription: null, longDescriptionGeneratedAt: null })
-          .where(
-            and(eq(projectTranslation.projectId, projectId), eq(projectTranslation.locale, "en")),
-          )
-      }
-
-      // Invalidate AI-generated translations so the cron regenerates them.
-      // Deleting the row also drops their long_description.
-      await tx
-        .delete(projectTranslation)
+    if (typeof data.description === "string") {
+      sanitizedDescription = sanitizeRichText(data.description)
+      const [currentSourceRow] = await db
+        .select({ description: projectTranslation.description })
+        .from(projectTranslation)
         .where(
           and(
             eq(projectTranslation.projectId, projectId),
-            eq(projectTranslation.aiGenerated, true),
+            eq(projectTranslation.locale, projectData.sourceLocale),
           ),
         )
+        .limit(1)
+      descriptionChanged = currentSourceRow?.description !== sanitizedDescription
+      updates.description = sanitizedDescription
+      if (descriptionChanged) {
+        // Same reasoning as before: clear the quality verdict so the
+        // cron re-classifies the new copy.
+        updates.qualityCheckedAt = null
+      }
+    }
+
+    if ("tagline" in data) {
+      const next = typeof data.tagline === "string" ? data.tagline.trim().slice(0, 60) : null
+      const [currentSourceRow] = await db
+        .select({ tagline: projectTranslation.tagline })
+        .from(projectTranslation)
+        .where(
+          and(
+            eq(projectTranslation.projectId, projectId),
+            eq(projectTranslation.locale, projectData.sourceLocale),
+          ),
+        )
+        .limit(1)
+      taglineChanged = (currentSourceRow?.tagline ?? null) !== (next || null)
+    }
+
+    if (typeof data.websiteUrl === "string") {
+      normalizedWebsiteUrl = data.websiteUrl.toLowerCase().trim().replace(/\/$/, "")
+      if (normalizedWebsiteUrl !== projectData.websiteUrl) {
+        // Uniqueness check — same rule as submitProject. If another
+        // active project already owns this URL, refuse.
+        const [conflict] = await db
+          .select({ id: project.id })
+          .from(project)
+          .where(and(eq(project.websiteUrl, normalizedWebsiteUrl), ne(project.id, projectId)))
+          .limit(1)
+        if (conflict) {
+          return { success: false, error: "This website URL is already used by another project" }
+        }
+        updates.websiteUrl = normalizedWebsiteUrl
+        // Changing the URL invalidates the previous badge verification —
+        // the badge lives on the old domain, not the new one.
+        updates.hasBadgeVerified = false
+      }
+    }
+
+    if (typeof data.logoUrl === "string" && data.logoUrl) updates.logoUrl = data.logoUrl
+    if ("productImage" in data) updates.productImage = data.productImage ?? null
+    if (Array.isArray(data.techStack)) updates.techStack = data.techStack.slice(0, 10)
+    if (Array.isArray(data.platforms)) updates.platforms = data.platforms
+    if (typeof data.pricing === "string") updates.pricing = data.pricing
+    if ("githubUrl" in data) updates.githubUrl = data.githubUrl ?? null
+    if ("twitterUrl" in data) updates.twitterUrl = data.twitterUrl ?? null
+
+    await db.transaction(async (tx) => {
+      await tx.update(project).set(updates).where(eq(project.id, projectId))
+
+      if (Array.isArray(data.categories)) {
+        await tx.delete(projectToCategory).where(eq(projectToCategory.projectId, projectId))
+        if (data.categories.length > 0) {
+          await tx.insert(projectToCategory).values(
+            data.categories.map((categoryId) => ({
+              projectId,
+              categoryId,
+            })),
+          )
+        }
+      }
+
+      if (descriptionChanged && sanitizedDescription !== null) {
+        // Refresh the source-locale row + clear its long_description so
+        // enrich-projects regenerates the AI overview.
+        await tx
+          .insert(projectTranslation)
+          .values({
+            projectId,
+            locale: projectData.sourceLocale,
+            description: sanitizedDescription,
+            isSource: true,
+            aiGenerated: false,
+          })
+          .onConflictDoUpdate({
+            target: [projectTranslation.projectId, projectTranslation.locale],
+            set: {
+              description: sanitizedDescription,
+              isSource: true,
+              aiGenerated: false,
+              updatedAt: new Date(),
+              longDescription: null,
+              longDescriptionGeneratedAt: null,
+            },
+          })
+
+        if (projectData.sourceLocale !== "en") {
+          await tx
+            .update(projectTranslation)
+            .set({ longDescription: null, longDescriptionGeneratedAt: null })
+            .where(
+              and(eq(projectTranslation.projectId, projectId), eq(projectTranslation.locale, "en")),
+            )
+        }
+
+        // Drop AI-generated translation rows so cron re-translates from
+        // the new source. (Deleting also drops their long_description.)
+        await tx
+          .delete(projectTranslation)
+          .where(
+            and(
+              eq(projectTranslation.projectId, projectId),
+              eq(projectTranslation.aiGenerated, true),
+            ),
+          )
+      }
+
+      if (taglineChanged) {
+        const nextTagline =
+          typeof data.tagline === "string" ? data.tagline.trim().slice(0, 60) || null : null
+        // Update source-locale row's tagline. If we just deleted AI rows
+        // above (descriptionChanged path), they're gone — that's fine,
+        // the upsert below targets only the source row.
+        await tx
+          .insert(projectTranslation)
+          .values({
+            projectId,
+            locale: projectData.sourceLocale,
+            description: sanitizedDescription ?? projectData.description,
+            isSource: true,
+            aiGenerated: false,
+            tagline: nextTagline,
+            taglineGeneratedAt: nextTagline ? new Date() : null,
+          })
+          .onConflictDoUpdate({
+            target: [projectTranslation.projectId, projectTranslation.locale],
+            set: {
+              tagline: nextTagline,
+              taglineGeneratedAt: nextTagline ? new Date() : null,
+              updatedAt: new Date(),
+            },
+          })
+        // Wipe AI-translated taglines on non-source rows so cron
+        // refans out from the new source value. (We only clear
+        // tagline/tagline_generated_at, NOT the description rows
+        // themselves — description didn't change just because tagline
+        // changed.)
+        if (!descriptionChanged) {
+          await tx
+            .update(projectTranslation)
+            .set({ tagline: null, taglineGeneratedAt: null })
+            .where(
+              and(
+                eq(projectTranslation.projectId, projectId),
+                ne(projectTranslation.locale, projectData.sourceLocale),
+              ),
+            )
+        }
+      }
     })
 
-    // Update categories (remove old ones and add new ones)
-    // First, delete existing categories
-    await db.delete(projectToCategory).where(eq(projectToCategory.projectId, projectId))
-
-    // Then add new categories
-    if (data.categories.length > 0) {
-      await db.insert(projectToCategory).values(
-        data.categories.map((categoryId) => ({
-          projectId: projectId,
-          categoryId,
-        })),
-      )
-    }
-
-    // Revalidate the project page
     revalidatePath(`/projects/${projectData.slug}`)
+    revalidatePath("/dashboard")
 
-    return {
-      success: true,
-      message: "Project updated successfully",
-    }
+    return { success: true, message: "Project updated successfully" }
   } catch (error) {
     console.error("Error updating project:", error)
-    return {
-      success: false,
-      error: "Failed to update project",
-    }
+    return { success: false, error: "Failed to update project" }
   }
 }

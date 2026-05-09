@@ -170,6 +170,12 @@ export const projectTranslation = pgTable(
     longDescriptionAttemptedAt: timestamp("long_description_attempted_at"),
     longDescriptionAttemptCount: integer("long_description_attempt_count").notNull().default(0),
     longDescriptionLastError: text("long_description_last_error"),
+    // Optional one-line marketing summary (≤60 chars). Source-locale
+    // row is set on submit; other locales are filled by
+    // translate-projects cron (uses tagline_generated_at to skip
+    // already-translated rows).
+    tagline: text("tagline"),
+    taglineGeneratedAt: timestamp("tagline_generated_at"),
   },
   (table) => {
     return {

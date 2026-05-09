@@ -224,6 +224,7 @@ const SUPPORTED_LOCALES: readonly ProjectLocale[] = ["en", "zh", "es", "pt", "fr
 
 interface ProjectSubmissionData {
   name: string
+  tagline?: string | null
   description: string
   sourceLocale?: string
   websiteUrl: string
@@ -251,6 +252,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     // Utiliser les données de projectData
     const {
       name,
+      tagline,
       description,
       sourceLocale: rawSourceLocale,
       websiteUrl: rawWebsiteUrl,
@@ -366,12 +368,16 @@ export async function submitProject(projectData: ProjectSubmissionData) {
         })
         .returning({ id: projectTable.id, slug: projectTable.slug })
 
-      // Persist the source-language description as a translation row.
-      // Other locales are populated asynchronously by the cron job.
+      // Persist the source-language description (and optional tagline)
+      // as a translation row. Other locales are populated asynchronously
+      // by the translate-projects cron.
+      const trimmedTagline = typeof tagline === "string" ? tagline.trim() : ""
       await tx.insert(projectTranslation).values({
         projectId: inserted.id,
         locale: sourceLocale,
         description: sanitizedDescription,
+        tagline: trimmedTagline ? trimmedTagline.slice(0, 60) : null,
+        taglineGeneratedAt: trimmedTagline ? new Date() : null,
         isSource: true,
         aiGenerated: false,
       })

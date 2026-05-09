@@ -352,6 +352,12 @@
         "help": "Enter your website URL and click Auto Fill to automatically populate the form.",
         "duplicateWarning": "⚠️ This URL has already been submitted. The final step will block this — please use a different URL."
       },
+      "tagline": {
+        "label": "Tagline",
+        "optional": "(Optional, ≤60 characters)",
+        "help": "A short marketing line shown under your project name on cards and the project page.",
+        "placeholder": "e.g. AI image generation, perfect text rendering"
+      },
       "autoFill": {
         "button": "Auto Fill",
         "loading": "Analyzing..."
@@ -540,6 +546,7 @@
         "websiteUrlInvalidQuick": "Please enter a valid URL first",
         "websiteUrlDuplicate": "This URL has already been submitted",
         "descriptionRequired": "Description is required",
+        "taglineTooLong": "Tagline must be 60 characters or fewer",
         "logoRequired": "Logo is required",
         "logoUploadFailedNoUrl": "Logo upload failed: No URL returned.",
         "logoUploadFailed": "Logo upload failed: {message}",

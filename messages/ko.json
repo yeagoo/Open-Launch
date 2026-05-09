@@ -380,6 +380,12 @@
         "add": "제품 이미지 추가",
         "preview": "제품 이미지 미리보기",
         "remove": "제품 이미지 제거"
+      },
+      "tagline": {
+        "label": "태그라인",
+        "optional": "(선택, 60자 이내)",
+        "help": "카드 및 프로젝트 페이지에서 프로젝트 이름 아래에 표시되는 짧은 마케팅 문구입니다.",
+        "placeholder": "예: AI 이미지 생성, 완벽한 텍스트 렌더링"
       }
     },
     "step2": {
@@ -552,7 +558,8 @@
         "scheduledDateRequired": "런칭 날짜를 선택해 주세요.",
         "scheduledDateOverLimit": "이 날짜는 일일 런칭 한도를 초과합니다.",
         "scheduledDateOverLimitDetail": "이 날짜에 이미 {count}/{limit}개의 프로젝트가 예약되어 있습니다. 다른 날짜를 선택해 주세요.",
-        "scheduledDateCheckFailed": "런칭 날짜 한도를 확인할 수 없습니다. 다시 시도해 주세요."
+        "scheduledDateCheckFailed": "런칭 날짜 한도를 확인할 수 없습니다. 다시 시도해 주세요.",
+        "taglineTooLong": "태그라인은 60자 이하여야 합니다"
       },
       "form": {
         "loadCategoriesFailed": "카테고리를 불러오지 못했습니다.",
