@@ -9,7 +9,6 @@ import { Tag, TagInput } from "emblor"
 import { toast } from "sonner"
 
 import { UploadButton } from "@/lib/r2-upload"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -448,20 +447,6 @@ export function EditProjectForm({ projectId, initial, onUpdate, onCancel }: Edit
           />
         </div>
       </div>
-
-      {(initial.categories.length > 0 || selectedCategoryIds.length > 0) && (
-        <div className="flex flex-wrap gap-1">
-          {selectedCategoryIds.map((cid) => {
-            const cat = allCategories.find((c) => c.id === cid) ||
-              initial.categories.find((c) => c.id === cid) || { id: cid, name: cid }
-            return (
-              <Badge key={cat.id} variant="secondary" className="text-xs">
-                {cat.name}
-              </Badge>
-            )
-          })}
-        </div>
-      )}
 
       {error && (
         <div className="bg-destructive/10 border-destructive/30 text-destructive rounded-md border p-3 text-sm">
