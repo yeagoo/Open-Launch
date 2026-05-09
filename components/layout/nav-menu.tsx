@@ -99,22 +99,6 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
           </NavigationMenuItem>
         )}
 
-        {/* Primary CTA — the one action we want every visitor to take.
-            Filled with --primary to break the visual monotony of the
-            other text-only nav links. Same height/padding as the rest
-            so it sits flush in the row. */}
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link
-              href="/projects/submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
-            >
-              <RiRocketLine className="h-4 w-4" />
-              {t("submitProject")}
-            </Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
-
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
             <Link href="/pricing" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
@@ -135,6 +119,27 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
           <NavigationMenuLink asChild>
             <Link href="/sponsors" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
               {t("sponsors")}
+            </Link>
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+
+        {/* Primary CTA — placed last so the colored fill anchors the
+            right end of the nav, matching the convention used by
+            Vercel / Linear / Resend / etc. (links on the left,
+            actions on the right). NavigationMenuLink with asChild
+            wraps a Slot, which can flake on multiple children — we
+            keep icon + text inside a single <span> wrapper so the
+            Slot has exactly one child. */}
+        <NavigationMenuItem>
+          <NavigationMenuLink asChild>
+            <Link
+              href="/projects/submit"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <RiRocketLine className="h-4 w-4" aria-hidden="true" />
+                {t("submitProject")}
+              </span>
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
