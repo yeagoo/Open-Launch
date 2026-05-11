@@ -491,6 +491,12 @@
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
           "popularBadge": "人気No.1",
+          "promo": {
+            "label": "プロモ",
+            "headline": "{code} · 初回購入15%OFF",
+            "subtext": "新規ユーザー限定 · Stripeチェックアウトで入力"
+          },
+          "deliveryNote": "Basicは自動で公開されます。Plus / Pro / Ultraは全サイトに手動で掲載 — 通常1〜3営業日以内に反映されます。",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
@@ -659,6 +665,7 @@
         "oneOff": "一回限りのお支払い",
         "subscription": "月額 · いつでも解約可"
       },
+      "deliveryNote": "Basicは自動で公開されます。Plus / Pro / Ultraは全サイトに手動で掲載 — 通常1〜3営業日以内に反映されます。",
       "basic": {
         "name": "ベーシック",
         "price": "$3.99",
@@ -679,15 +686,15 @@
         "name": "プラス",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4つの異なるドメイン → 自然なSEO効果。",
+        "tagline": "独立した4ドメインを一気に獲得 → Googleが「自然な口コミ」と判定するリンクプロファイル。",
         "reach": "<n>4サイト</n> · 月間30万以上の訪問",
-        "description": "ベーシックのすべてに加え、HiCyou、MF8.BIZ、BigKrへの掲載。4つの異なるドメインからのバックリンクは、単一サイトからのリンクよりもはるかに自然にGoogleに認識されます。ネットワーク合計：月間30万以上の訪問者、30日ごとに1万以上のGoogleクリック。",
+        "description": "Googleのアルゴリズムは現在、単一ソースからのリンク購入パターンを検出し、そのSEO評価を大幅に割り引きます。Plusは一度の購入で独立した4つのドメイン — aat.ee + HiCyou + MF8.BIZ + BigKr — にあなたを送り込みます。合計で月間30万以上の読者、30日あたり約1万件のオーガニックGoogleクリック。4つの異なる参照ドメインは「有料アウトリーチ」ではなく「自然な口コミ」として読み取られ、リンクエクイティが実際に複利で積み上がります。これは、単一サイト掲載ではいくら払っても買えないSEOプロファイルです。",
         "cta": "プラスを取得",
         "features": {
           "everything": "ベーシックのすべて",
-          "fourSites": "4つの異なるドメイン → アウトリーチスパムに見えない自然なバックリンクプロファイル",
+          "fourSites": "独立した4つの参照ドメインを一気に獲得 → オーガニックな口コミに見え、Googleの「単一ソース・リンク購入」割引を回避",
           "dofollowAll": "すべてのサイトからdofollowバックリンク",
-          "stats": "4サイト合計で月間30万以上の訪問者 · 30日ごとに1万以上のGoogleクリック",
+          "stats": "4サイト合計で月間30万以上の読者 · 30日あたり約1万件のGoogleクリック",
           "delivery": "aat.eeは1日以内 · その他は3日以内に公開"
         }
       },
@@ -696,17 +703,17 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "最も人気",
-        "tagline": "権威あるドキュメントサイト → GEO/AIEOを大きく押し上げ。",
+        "tagline": "ChatGPT・Claude・Perplexity・Geminiにあなたのプロダクトを名指しで推薦させる。",
         "reach": "<n>12サイト</n> · 月間70万回以上の訪問",
         "overflowLabel": "+ {n}サイト以上",
         "overflowTooltip": "このティアの追加サイト",
-        "description": "Plusの全機能に加え、8つの高権威ドキュメントサイトへのフレンドリンク掲載。権威あるドキュメントドメインはGEO/AIEOシグナルを大きく改善し、ユーザーがあなたのカテゴリーについて尋ねた際にChatGPT、Claude、Perplexity、GeminiなどのLLMがあなたのURLを推奨する可能性が大幅に高まります。ネットワーク全体：30日間のGoogleクリック数30,000以上、月間トラフィック70万以上。",
+        "description": "高権威のドキュメントドメイン8件からのフレンドリンク — これはまさにLLMが学習データをクロールする際に優先する種類のソースです。つまり、ユーザーがChatGPT・Claude・Perplexity・Geminiに「このカテゴリーで最高のツールは？」と尋ねたとき、モデルからあなたのプロダクト名が出てくる可能性が桁違いに高まります。これはGoogle広告にいくら積んでも買えないGEO/AIEO露出チャネルです。Plusの全機能を含みます。ネットワーク合計：12サイト、月間70万以上の読者、30日あたり3万以上のGoogleクリック。",
         "cta": "Proを取得",
         "features": {
           "everything": "Plusの全機能",
-          "docsSites": "8つの権威あるドキュメントサイトへのフレンドリンク → GEO/AIEOを大幅に強化し、ChatGPT、Claude、Perplexity、GeminiがあなたのURLをより頻繁に推奨",
-          "geo": "AI検索向けGEO/AIEOシグナルを強化",
-          "stats": "Googleクリック30,000以上 · 月間トラフィック70万以上",
+          "docsSites": "高権威ドキュメントサイト8件にフレンドリンク → ユーザーがあなたのカテゴリーを尋ねたとき、ChatGPT・Claude・Perplexity・Geminiがあなたのプロダクトを名指しで推薦する確率が大幅にアップ",
+          "geo": "Google広告予算では到達不可能なGEO/AIEO露出",
+          "stats": "12サイト合計で月間70万以上の読者 · 30日あたり3万以上のGoogleクリック",
           "delivery": "aat.eeは1日以内、他は3日以内に反映"
         }
       },

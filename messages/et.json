@@ -491,6 +491,12 @@
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
           "popularBadge": "Kõige populaarsem",
+          "promo": {
+            "label": "Promo",
+            "headline": "{code} · 15% soodustust esimeselt ostult",
+            "subtext": "Ainult uutele kasutajatele · sisesta Stripe'i kassas"
+          },
+          "deliveryNote": "Basic läheb õhku automaatselt. Plus / Pro / Ultra paigutatakse kõikidele saitidele käsitsi — tavaliselt õhus 1–3 tööpäeva jooksul.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
@@ -659,6 +665,7 @@
         "oneOff": "Ühekordne makse",
         "subscription": "Kuus · tühista igal ajal"
       },
+      "deliveryNote": "Basic läheb õhku automaatselt. Plus / Pro / Ultra paigutatakse kõikidele saitidele käsitsi — tavaliselt õhus 1–3 tööpäeva jooksul.",
       "basic": {
         "name": "Põhi",
         "price": "$3.99",
@@ -679,15 +686,15 @@
         "name": "Pluss",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4 erinevat domeeni → realistlik SEO tõus.",
+        "tagline": "4 sõltumatut domeeni → linkide profiil, mida Google peab orgaaniliseks.",
         "reach": "<n>4 saiti</n> · 300k+ igakuist külastust",
-        "description": "Kõik, mis on Põhis, pluss kirjed HiCyou, MF8.BIZ ja BigKr. Tagasilingid 4 erinevalt domeenilt mõjuvad Google'ile orgaaniliselt — palju usutavam kui üheainsa saidi link. Kombineeritud võrgustik: 300k+ igakuist külastajat, 10 000+ Google'i klikki iga 30 päeva jooksul.",
+        "description": "Google'i algoritm tuvastab nüüd ühest allikast ostetud linkide mustri ja vähendab nende SEO kaalu. Plus paigutab su projekti ühe sammuga 4 sõltumatule domeenile — aat.ee + HiCyou + MF8.BIZ + BigKr, kokku 300 000+ igakuist lugejat ja ~10 000 orgaanilist Google'i klikki iga 30 päeva jooksul. Neli erinevat viitavat domeeni mõjuvad loomuliku suust-suhu soovitusena, mitte tasulise outreach'ina — ja just nii hakkab link equity päriselt kuhjuma. See on SEO profiil, mida ühe-saidi paigutused ei osta ühegi hinnaga.",
         "cta": "Hangi Pluss",
         "features": {
           "everything": "Kõik, mis on Põhis",
-          "fourSites": "4 erinevat domeeni → loomuliku väljanägemisega tagasilinkide profiil, mis ei mõju levitatud rämpsuna",
+          "fourSites": "4 sõltumatut viitavat domeeni ühe sammuga → näeb välja nagu orgaaniline suust-suhu soovitus ja väldib Google'i ühe-allika linkide diskonteerimist",
           "dofollowAll": "Dofollow tagasilink igalt saidilt",
-          "stats": "Kombineeritud 300k+ igakuist külastajat 4 saidil · 10k+ Google'i klikki / 30 päeva",
+          "stats": "Kombineeritult 300 000+ igakuist lugejat · ~10 000 Google'i klikki iga 30 päeva jooksul üle 4 saidi",
           "delivery": "aat.ee aktiivne 1 päevaga · teised 3 päevaga"
         }
       },
@@ -696,17 +703,17 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "Kõige populaarsem",
-        "tagline": "Autoriteetsed dokumentatsioonisaidid → suur GEO/AIEO tõus.",
+        "tagline": "Pane ChatGPT, Claude, Perplexity ja Gemini sinu toodet soovitama.",
         "reach": "<n>12 saiti</n> · 700k+ igakuist külastust",
         "overflowLabel": "+ {n}+ saiti",
         "overflowTooltip": "Rohkem saite selles astmes",
-        "description": "Kõik, mis on Plus-astmes, pluss sõbralingid 8 kõrge autoriteediga dokumentatsioonisaidil. Autoriteetsed dokumentatsioonidomeenid parandavad märgatavalt GEO/AIEO signaale — LLM-id nagu ChatGPT, Claude, Perplexity ja Gemini soovitavad teie URL-i palju tõenäolisemalt, kui kasutajad küsivad teie kategooria kohta. Kombineeritud võrgustik: 30 000+ Google'i klikki / 30 päeva, 700k+ igakuist liiklust.",
+        "description": "Friend-lingid 8 kõrge autoriteediga dokumentatsioonidomeenilt — täpselt sellised allikad, mida LLM-id treeningandmete kogumisel eelistavad. Tõlge: kui keegi küsib ChatGPT-lt, Claude'ilt, Perplexitylt või Geminilt sinu kategooria parima tööriista kohta, on tunduvalt suurem tõenäosus, et mudel su nime välja ütleb. See on GEO/AIEO nähtavuse kanal, mida ei osta ühegi Google Ads'i eelarvega. Sisaldab kõike Plus-astmest. Kombineeritud võrgustik: 12 saiti, 700 000+ igakuist lugejat ja 30 000+ Google'i klikki iga 30 päeva jooksul.",
         "cta": "Hangi Pro",
         "features": {
           "everything": "Kõik, mis on Plus-astmes",
-          "docsSites": "Sõbralingid 8 autoriteetsel dokumentatsioonisaidil → märkimisväärne GEO/AIEO tõus, nii et ChatGPT, Claude, Perplexity ja Gemini soovitavad teie URL-i sagedamini",
-          "geo": "Tõstab GEO/AIEO signaale AI-toega otsingus",
-          "stats": "30k+ Google'i klikki · 700k+ igakuist liiklust",
+          "docsSites": "Friend-lingid 8 kõrge autoriteediga dokumentatsioonisaidil → ChatGPT, Claude, Perplexity ja Gemini mainivad sinu toodet palju tõenäolisemalt, kui kasutajad küsivad su kategooria kohta",
+          "geo": "GEO/AIEO nähtavus, milleni ükski Google Ads'i eelarve ei küüni",
+          "stats": "700 000+ igakuist lugejat · 30 000+ Google'i klikki iga 30 päeva jooksul üle 12 saidi",
           "delivery": "aat.ee 1 päevaga · teised 3 päevaga"
         }
       },

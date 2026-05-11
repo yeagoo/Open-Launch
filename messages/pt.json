@@ -491,6 +491,12 @@
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
           "popularBadge": "Mais popular",
+          "promo": {
+            "label": "Promo",
+            "headline": "{code} · 15% off na sua primeira compra",
+            "subtext": "Só para novos usuários · use no checkout do Stripe"
+          },
+          "deliveryNote": "O Basic vai ao ar automaticamente. Plus / Pro / Ultra são publicados manualmente em todos os sites — normalmente no ar em 1 a 3 dias úteis.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
@@ -659,6 +665,7 @@
         "oneOff": "Pagamento único",
         "subscription": "Mensal · cancele quando quiser"
       },
+      "deliveryNote": "O Basic vai ao ar automaticamente. Plus / Pro / Ultra são publicados manualmente em todos os sites — normalmente no ar em 1 a 3 dias úteis.",
       "basic": {
         "name": "Básico",
         "price": "$3.99",
@@ -679,15 +686,15 @@
         "name": "Plus",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4 domínios diferentes → ganho realista de SEO.",
+        "tagline": "4 domínios independentes → um perfil de links que o Google trata como orgânico.",
         "reach": "<n>4 sites</n> · 300k+ visitas mensais",
-        "description": "Tudo do Básico, mais listagens no HiCyou, MF8.BIZ e BigKr. Backlinks de 4 domínios diferentes são interpretados pelo Google como orgânicos — muito mais críveis do que um link de um único site. Rede combinada: 300k+ visitantes mensais, 10.000+ cliques do Google a cada 30 dias.",
+        "description": "O algoritmo do Google hoje detecta padrões de compra de links de fonte única e desconta o peso SEO desses backlinks. O Plus coloca seu projeto em 4 domínios independentes de uma vez — aat.ee + HiCyou + MF8.BIZ + BigKr, somando 300.000+ leitores mensais e ~10.000 cliques orgânicos do Google a cada 30 dias. Quatro domínios referenciadores distintos soam como boca a boca natural, não outreach pago — e é aí que o link equity realmente compõe. Esse é o tipo de perfil SEO que colocações em um único site não compram a nenhum preço.",
         "cta": "Obter Plus",
         "features": {
           "everything": "Tudo do Básico",
-          "fourSites": "4 domínios diferentes → um perfil de backlinks com aparência natural, que não parece spam de outreach",
-          "dofollowAll": "Backlink dofollow de cada site",
-          "stats": "300k+ visitantes mensais combinados nos 4 sites · 10k+ cliques do Google / 30 dias",
+          "fourSites": "4 domínios referenciadores independentes de uma só vez → parece boca a boca orgânico e foge do desconto que o Google aplica a links de fonte única",
+          "dofollowAll": "Backlink dofollow de cada um dos sites",
+          "stats": "300.000+ leitores mensais combinados · ~10.000 cliques do Google a cada 30 dias nos 4 sites",
           "delivery": "aat.ee publicado em 1 dia · outros em 3 dias"
         }
       },
@@ -696,17 +703,17 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "Mais popular",
-        "tagline": "Sites de documentação autoritários → grande impulso GEO/AIEO.",
+        "tagline": "Faça ChatGPT, Claude, Perplexity e Gemini recomendarem o seu produto.",
         "reach": "<n>12 sites</n> · 700k+ visitas mensais",
         "overflowLabel": "+ {n}+ sites",
         "overflowTooltip": "Mais sites neste nível",
-        "description": "Tudo do Plus, mais posicionamentos de links de amigo em 8 sites de documentação de alta autoridade. Domínios de documentação autoritários melhoram significativamente os sinais GEO/AIEO — LLMs como ChatGPT, Claude, Perplexity e Gemini têm muito mais probabilidade de exibir sua URL quando usuários perguntam sobre sua categoria. Rede combinada: 30.000+ cliques do Google / 30 dias, 700k+ tráfego mensal.",
+        "description": "Friend-links em 8 domínios de documentação de alta autoridade — exatamente o tipo de fonte que os LLMs priorizam ao rastrear dados de treinamento. Tradução prática: quando alguém pergunta ao ChatGPT, Claude, Perplexity ou Gemini qual é a melhor ferramenta da sua categoria, é muito mais provável que o seu nome saia do modelo. Esse é um canal de exposição GEO/AIEO que nenhum orçamento de Google Ads compra. Inclui tudo do Plus. Rede combinada: 12 sites, 700.000+ leitores mensais e 30.000+ cliques do Google a cada 30 dias.",
         "cta": "Obter Pro",
         "features": {
           "everything": "Tudo do Plus",
-          "docsSites": "Links de amigo em 8 sites autoritários de documentação → impulso significativo em GEO/AIEO, para que ChatGPT, Claude, Perplexity e Gemini recomendem sua URL com mais frequência",
-          "geo": "Impulsiona sinais GEO/AIEO para busca com IA",
-          "stats": "30k+ cliques do Google · 700k+ tráfego mensal",
+          "docsSites": "Friend-links em 8 sites de documentação de alta autoridade → ChatGPT, Claude, Perplexity e Gemini ficam muito mais propensos a citar o seu produto quando o usuário pergunta sobre a sua categoria",
+          "geo": "Exposição GEO/AIEO que nenhum orçamento de Google Ads alcança",
+          "stats": "700.000+ leitores mensais · 30.000+ cliques do Google a cada 30 dias nos 12 sites",
           "delivery": "aat.ee ao vivo em 1 dia · outros em 3 dias"
         }
       },

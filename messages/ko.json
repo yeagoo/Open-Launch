@@ -491,6 +491,12 @@
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
           "popularBadge": "가장 인기",
+          "promo": {
+            "label": "프로모",
+            "headline": "{code} · 첫 구매 15% 할인",
+            "subtext": "신규 사용자 한정 · Stripe 결제 시 입력"
+          },
+          "deliveryNote": "Basic은 자동으로 게시됩니다. Plus / Pro / Ultra는 모든 사이트에 수동으로 배치 — 일반적으로 1~3영업일 이내에 게시됩니다.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
@@ -659,6 +665,7 @@
         "oneOff": "일회성 결제",
         "subscription": "월간 · 언제든지 취소 가능"
       },
+      "deliveryNote": "Basic은 자동으로 게시됩니다. Plus / Pro / Ultra는 모든 사이트에 수동으로 배치 — 일반적으로 1~3영업일 이내에 게시됩니다.",
       "basic": {
         "name": "기본",
         "price": "$3.99",
@@ -679,15 +686,15 @@
         "name": "플러스",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4개의 서로 다른 도메인 → 자연스러운 SEO 효과.",
+        "tagline": "독립 도메인 4개를 한 번에 → Google이 '자연스러운 입소문'으로 판정하는 링크 프로필.",
         "reach": "<n>4개 사이트</n> · 월 30만+ 방문",
-        "description": "기본의 모든 기능에 더해 HiCyou, MF8.BIZ, BigKr에 등록됩니다. 4개의 서로 다른 도메인에서 오는 백링크는 단일 사이트의 링크보다 Google에 훨씬 더 자연스럽게 인식됩니다. 결합 네트워크: 월 30만+ 방문자, 30일마다 1만+ Google 클릭.",
+        "description": "Google 알고리즘은 이제 단일 출처의 링크 구매 패턴을 감지하고 그 SEO 가중치를 크게 깎습니다. Plus는 단 한 번의 결제로 독립된 4개 도메인 — aat.ee + HiCyou + MF8.BIZ + BigKr — 에 동시에 노출시킵니다. 합계 월 30만+ 독자, 30일마다 약 1만 회의 오가닉 Google 클릭. 서로 다른 4개 참조 도메인은 '유료 아웃리치'가 아니라 '자연스러운 입소문'으로 읽히기 때문에, 링크 에쿼티가 실제로 복리로 쌓입니다. 단일 사이트 게재로는 아무리 돈을 써도 살 수 없는 SEO 프로필입니다.",
         "cta": "플러스 시작",
         "features": {
           "everything": "기본의 모든 기능",
-          "fourSites": "4개의 서로 다른 도메인 → 아웃리치 스팸처럼 보이지 않는 자연스러운 백링크 프로필",
+          "fourSites": "한 번에 독립된 4개 참조 도메인 → 오가닉 입소문처럼 읽혀, Google의 '단일 출처 링크 구매' 가중치 깎임을 회피",
           "dofollowAll": "모든 사이트에서 dofollow 백링크",
-          "stats": "4개 사이트 합계 월 30만+ 방문자 · 30일마다 1만+ Google 클릭",
+          "stats": "4개 사이트 합계 월 30만+ 독자 · 30일마다 약 1만 회의 Google 클릭",
           "delivery": "aat.ee 1일 내 게시 · 기타 3일 내 게시"
         }
       },
@@ -696,17 +703,17 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "가장 인기",
-        "tagline": "권위 있는 문서 사이트 → GEO/AIEO 대폭 향상.",
+        "tagline": "ChatGPT · Claude · Perplexity · Gemini가 당신의 제품을 콕 집어 추천하게 만든다.",
         "reach": "<n>12개 사이트</n> · 월 70만+ 방문",
         "overflowLabel": "+ {n}개 사이트",
         "overflowTooltip": "이 등급의 추가 사이트",
-        "description": "Plus의 모든 기능에 더해, 권위 있는 문서 사이트 8곳에 친구 링크를 배치합니다. 권위 있는 문서 도메인은 GEO/AIEO 신호를 크게 개선하여, 사용자가 해당 카테고리에 대해 질문할 때 ChatGPT, Claude, Perplexity, Gemini 같은 LLM이 귀하의 URL을 추천할 가능성이 훨씬 높아집니다. 통합 네트워크: 30일 기준 Google 클릭 30,000회 이상, 월 트래픽 70만 이상.",
+        "description": "고권위 문서 도메인 8곳에서 오는 친구 링크 — LLM이 학습 데이터를 크롤링할 때 우선시하는 바로 그 유형의 출처입니다. 즉, 사용자가 ChatGPT · Claude · Perplexity · Gemini에게 '이 카테고리에서 가장 좋은 도구는?'이라고 물을 때, 모델 입에서 당신의 제품 이름이 나올 확률이 비교할 수 없을 만큼 높아집니다. 이는 Google Ads에 아무리 예산을 쏟아부어도 살 수 없는 GEO/AIEO 노출 채널입니다. Plus의 모든 기능 포함. 네트워크 합계: 12개 사이트, 월 70만+ 독자, 30일마다 3만+ Google 클릭.",
         "cta": "Pro 시작하기",
         "features": {
           "everything": "Plus의 모든 기능",
-          "docsSites": "권위 있는 문서 사이트 8곳에 친구 링크 → GEO/AIEO를 크게 향상시켜 ChatGPT, Claude, Perplexity, Gemini가 귀하의 URL을 더 자주 추천",
-          "geo": "AI 검색을 위한 GEO/AIEO 신호 강화",
-          "stats": "Google 클릭 3만+ · 월 트래픽 70만+",
+          "docsSites": "고권위 문서 사이트 8곳에 친구 링크 → 사용자가 해당 카테고리를 물을 때 ChatGPT · Claude · Perplexity · Gemini가 당신의 제품을 콕 집어 추천할 확률이 대폭 상승",
+          "geo": "Google Ads 예산으로는 도달 불가능한 GEO/AIEO 노출",
+          "stats": "12개 사이트 합계 월 70만+ 독자 · 30일마다 3만+ Google 클릭",
           "delivery": "aat.ee 1일 내 · 기타 3일 내 게재"
         }
       },
