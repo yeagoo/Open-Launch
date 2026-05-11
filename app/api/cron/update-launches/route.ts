@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -6,6 +6,7 @@ import { crawledData, launchStatus, project, upvote } from "@/drizzle/db/schema"
 import { endOfDay, startOfDay, subDays, subHours } from "date-fns"
 import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 
+import { HOME_PROJECTS_TAG, TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 
 export async function GET(request: NextRequest) {
@@ -187,10 +188,16 @@ export async function GET(request: NextRequest) {
       .returning({ id: crawledData.id })
     console.log(`- ${expiredCache.length} expired crawl cache rows deleted`)
 
-    // 如果有项目状态变化，重新生成 sitemap
+    // 如果有项目状态变化，重新生成 sitemap + 失效首页缓存。
+    // The home page caches `today / yesterday / month` listings
+    // for 10–60 min; without this tag bust, the new ONGOING set
+    // wouldn't surface until the next cache window expires —
+    // visible to users as "the 8 AM launch didn't show up."
     if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
       revalidatePath("/sitemap.xml")
-      console.log("✅ Sitemap regenerated due to project status changes")
+      revalidateTag(HOME_PROJECTS_TAG)
+      revalidateTag(TOP_CATEGORIES_TAG)
+      console.log("✅ Sitemap regenerated + home/category caches busted")
     }
 
     return NextResponse.json({

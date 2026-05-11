@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, unstable_cache } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
@@ -18,6 +18,7 @@ import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
+import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { sanitizeRichText } from "@/lib/sanitize"
 
 // Fonction pour générer un slug unique
@@ -54,23 +55,37 @@ export async function getAllCategories() {
   return categories
 }
 
-// Get top categories based on project count
-export async function getTopCategories(limit = 5) {
-  const topCategories = await db
-    .select({
-      id: categoryTable.id,
-      name: categoryTable.name,
-      count: count(projectToCategory.projectId),
-    })
-    .from(categoryTable)
-    .leftJoin(projectToCategory, eq(categoryTable.id, projectToCategory.categoryId))
-    .leftJoin(project, eq(projectToCategory.projectId, project.id))
-    .where(or(eq(project.launchStatus, "ongoing"), eq(project.launchStatus, "launched")))
-    .groupBy(categoryTable.id, categoryTable.name)
-    .orderBy(desc(count(projectToCategory.projectId)))
-    .limit(limit)
+// Get top categories based on project count.
+//
+// Wrapped in `unstable_cache` because the home sidebar calls this
+// on every render — the underlying GROUP BY + count(*) over
+// `project_to_category` is the kind of query that gets expensive
+// once the project table grows past a few thousand rows. A 1-hour
+// window is generous (the ranking barely shifts hour-to-hour) and
+// can be invalidated explicitly via `revalidateTag(TOP_CATEGORIES_TAG)`
+// from the launch-transition cron or admin category edits.
+const fetchTopCategoriesCached = unstable_cache(
+  async (limit: number) => {
+    return db
+      .select({
+        id: categoryTable.id,
+        name: categoryTable.name,
+        count: count(projectToCategory.projectId),
+      })
+      .from(categoryTable)
+      .leftJoin(projectToCategory, eq(categoryTable.id, projectToCategory.categoryId))
+      .leftJoin(project, eq(projectToCategory.projectId, project.id))
+      .where(or(eq(project.launchStatus, "ongoing"), eq(project.launchStatus, "launched")))
+      .groupBy(categoryTable.id, categoryTable.name)
+      .orderBy(desc(count(projectToCategory.projectId)))
+      .limit(limit)
+  },
+  ["top-categories-v1"],
+  { revalidate: 3600, tags: [TOP_CATEGORIES_TAG] },
+)
 
-  return topCategories
+export async function getTopCategories(limit = 5) {
+  return fetchTopCategoriesCached(limit)
 }
 
 // Get user's upvoted projects

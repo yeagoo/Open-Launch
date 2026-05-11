@@ -1,12 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next"
 import { headers } from "next/headers"
+import Image from "next/image"
 
 import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
-import { localizeProjectDescriptions } from "@/lib/get-project-translation"
+import { localizeProjectDescriptionGroups } from "@/lib/get-project-translation"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -34,17 +34,22 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const tSections = await getTranslations("home.sections")
   const tCommon = await getTranslations("common")
 
+  // 4 reads in parallel. The 3 listing calls are wrapped in
+  // `unstable_cache` so the bulk of the work is cached; the
+  // user-upvotes augmentation inside each runs per request.
   const [todayRaw, yesterdayRaw, monthRaw, topCategories] = await Promise.all([
     getTodayProjects(),
     getYesterdayProjects(),
     getMonthBestProjects(),
     getTopCategories(5),
   ])
-  const [todayProjects, yesterdayProjects, monthProjects] = await Promise.all([
-    localizeProjectDescriptions(todayRaw, locale),
-    localizeProjectDescriptions(yesterdayRaw, locale),
-    localizeProjectDescriptions(monthRaw, locale),
-  ])
+  // Single DB round-trip for translations across all 3 lists —
+  // previously this was 3 separate `localizeProjectDescriptions`
+  // calls (3 extra round-trips per home render).
+  const [todayProjects, yesterdayProjects, monthProjects] = await localizeProjectDescriptionGroups(
+    [todayRaw, yesterdayRaw, monthRaw],
+    locale,
+  )
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -87,10 +92,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
                 <div className="hidden items-center justify-center gap-12 md:flex">
                   <div className="flex-shrink-0">
-                    <img
+                    <Image
                       src="/oppieG.png"
                       alt="aat.ee Character"
+                      width={96}
+                      height={96}
                       className="h-24 w-24 object-contain"
+                      priority
                     />
                   </div>
                   <div className="flex flex-col items-center justify-center gap-4 text-center">
@@ -105,10 +113,13 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   </div>
 
                   <div className="flex-shrink-0">
-                    <img
+                    <Image
                       src="/oppieD.png"
                       alt="aat.ee Character"
+                      width={96}
+                      height={96}
                       className="h-24 w-24 object-contain"
+                      priority
                     />
                   </div>
                 </div>
@@ -177,7 +188,18 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <SidebarSponsors />
 
             <div className="py-4">
-              <img src="/images/img1.png" alt="build for joy" className="w-full rounded-lg" />
+              {/* Sidebar promo image — below the fold (sponsor block
+                  + categories sit above it on lg screens), so no
+                  `priority`. `sizes` lets next/image pick the right
+                  variant for the ~320px sidebar column. */}
+              <Image
+                src="/images/img1.png"
+                alt="build for joy"
+                width={600}
+                height={600}
+                sizes="(max-width: 1024px) 100vw, 320px"
+                className="h-auto w-full rounded-lg"
+              />
             </div>
 
             {/* Categories */}

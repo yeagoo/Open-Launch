@@ -210,3 +210,83 @@ export async function localizeProjectDescriptions<
     return next
   })
 }
+
+/**
+ * Batched variant for callers that need to localize several
+ * project lists in one shot (the home page calls this for today /
+ * yesterday / month). The single-list version was being called
+ * three times per home render — three separate DB queries that
+ * could trivially be one.
+ *
+ * Returns each input group localized, preserving order and length.
+ * Duplicate ids across groups (rare but possible) share one
+ * translation lookup.
+ */
+export async function localizeProjectDescriptionGroups<
+  T extends { id: string; description: string | null | undefined; tagline?: string | null },
+>(groups: T[][], locale: string): Promise<T[][]> {
+  const ids = Array.from(new Set(groups.flatMap((g) => g.map((p) => p.id))))
+  if (ids.length === 0) return groups
+
+  const localeFilters =
+    locale === "en"
+      ? [eq(projectTranslation.locale, "en"), eq(projectTranslation.isSource, true)]
+      : [
+          eq(projectTranslation.locale, locale),
+          eq(projectTranslation.locale, "en"),
+          eq(projectTranslation.isSource, true),
+        ]
+
+  const rows = await db
+    .select({
+      projectId: projectTranslation.projectId,
+      locale: projectTranslation.locale,
+      description: projectTranslation.description,
+      tagline: projectTranslation.tagline,
+      isSource: projectTranslation.isSource,
+    })
+    .from(projectTranslation)
+    .where(and(inArray(projectTranslation.projectId, ids), or(...localeFilters)))
+
+  interface Slot {
+    exact?: string
+    source?: string
+    en?: string
+    exactTagline?: string | null
+    sourceTagline?: string | null
+    enTagline?: string | null
+  }
+  const byProject = new Map<string, Slot>()
+  for (const r of rows) {
+    const slot: Slot = byProject.get(r.projectId) ?? {}
+    if (r.locale === locale) {
+      slot.exact = r.description
+      slot.exactTagline = r.tagline
+    }
+    if (r.isSource) {
+      slot.source = r.description
+      slot.sourceTagline = r.tagline
+    }
+    if (r.locale === "en") {
+      slot.en = r.description
+      slot.enTagline = r.tagline
+    }
+    byProject.set(r.projectId, slot)
+  }
+
+  function applySlot(p: T): T {
+    const slot = byProject.get(p.id)
+    if (!slot) return p
+    const localizedDescription = slot.exact ?? slot.source ?? slot.en
+    const localizedTagline =
+      (slot.exactTagline && slot.exactTagline.trim()) ||
+      (slot.sourceTagline && slot.sourceTagline.trim()) ||
+      (slot.enTagline && slot.enTagline.trim()) ||
+      null
+    const next = localizedDescription ? { ...p, description: localizedDescription } : { ...p }
+    if (localizedTagline) (next as T & { tagline: string | null }).tagline = localizedTagline
+    return next
+  }
+
+  return groups.map((g) => g.map(applySlot))
+}
