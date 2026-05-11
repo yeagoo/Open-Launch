@@ -485,6 +485,17 @@
           "guaranteedDofollow": "Backlink Dofollow Garantido (DR {dr})",
           "slotsLabel": "{n} vagas premium/dia",
           "scheduling": "Agendamento de até {n} dias"
+        },
+        "boost": {
+          "name": "Boost (paid)",
+          "subtitle": "Skip the queue · pick a tier",
+          "tierSelected": "{tier} selected",
+          "tiers": {
+            "basic": "Skip queue · dofollow link on aat.ee",
+            "plus": "Basic + 3 partner directories (manually placed)",
+            "pro": "Plus + 8 high-DR documentation sites",
+            "ultra": "Pro + permanent sidebar sponsor slot"
+          }
         }
       },
       "date": {

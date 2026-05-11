@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { format, parseISO } from "date-fns"
 import {
+  Award,
   Ban,
   Calendar,
   CreditCard,
@@ -277,6 +278,15 @@ export default function AdminDashboard() {
           >
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Directory Orders</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/admin/badge-projects")}
+            className="h-8 gap-2"
+          >
+            <Award className="h-4 w-4" />
+            <span className="hidden sm:inline">Badge Projects</span>
           </Button>
           <Button
             size="sm"

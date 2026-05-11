@@ -485,6 +485,17 @@
           "guaranteedDofollow": "保证 Dofollow 反向链接（DR {dr}）",
           "slotsLabel": "每天 {n} 个高级名额",
           "scheduling": "最多可提前 {n} 天预约"
+        },
+        "boost": {
+          "name": "付费推广",
+          "subtitle": "跳过排队 · 选择套餐",
+          "tierSelected": "已选 {tier}",
+          "tiers": {
+            "basic": "跳队 · aat.ee 上获得 dofollow 反向链接",
+            "plus": "包含 Basic + 3 个合作导航站（人工上架）",
+            "pro": "包含 Plus + 8 个高 DR 文档站友链",
+            "ultra": "包含 Pro + 永久侧栏赞助位"
+          }
         }
       },
       "date": {
