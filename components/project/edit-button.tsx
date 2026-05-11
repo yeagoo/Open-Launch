@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 
 import { RiPencilLine } from "@remixicon/react"
 import { toast } from "sonner"
@@ -9,7 +10,21 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getProjectForEdit } from "@/app/actions/project-details"
 
-import { EditProjectForm } from "./edit-project-form"
+// EditProjectForm pulls in the Tiptap editor + emblor TagInput +
+// upload SDK (~100KB+ gzipped). Most detail-page visitors never
+// click "Edit", so we lazy-load the form chunk only when the
+// owner actually opens the dialog. `ssr: false` is fine because
+// the form is only visible after a client-side state toggle
+// anyway — there's nothing to pre-render server-side.
+const EditProjectForm = dynamic(
+  () => import("./edit-project-form").then((m) => ({ default: m.EditProjectForm })),
+  {
+    ssr: false,
+    loading: () => (
+      <p className="text-muted-foreground py-8 text-center text-sm">Loading editor…</p>
+    ),
+  },
+)
 
 const LOCALE_DISPLAY: Record<string, string> = {
   en: "English",

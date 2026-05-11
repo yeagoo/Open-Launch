@@ -18,31 +18,18 @@ import StarterKit from "@tiptap/starter-kit"
 import { cn } from "@/lib/utils"
 
 import { Button } from "./button"
-
-// Styles communs pour le contenu riche
-const RICH_TEXT_STYLES =
-  "prose prose-sm prose-zinc dark:prose-invert max-w-none w-full whitespace-pre-wrap [&_h1]:my-2 [&_h2]:my-1 [&_p]:my-2 [&_ul]:my-0.5 [&_ol]:my-0.5 [&_li]:my-0.5"
+// Styles need to match `RICH_TEXT_DISPLAY_STYLES` in
+// `./rich-text-display.tsx` so what you type ends up looking the
+// same as what gets rendered. The two are deliberately separate
+// modules so the display side stays server-renderable (no Tiptap
+// in the page bundle).
+import { RICH_TEXT_DISPLAY_STYLES } from "./rich-text-display"
 
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
   placeholder?: string
   className?: string
-}
-
-interface RichTextDisplayProps {
-  content: string
-  className?: string
-}
-
-// Composant pour afficher le contenu riche formaté
-export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
-  return (
-    <div
-      className={cn(RICH_TEXT_STYLES, className)}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
-  )
 }
 
 // Composant éditeur
@@ -73,7 +60,7 @@ export function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: cn(RICH_TEXT_STYLES, "focus:outline-none min-h-[120px] px-3 py-2"),
+        class: cn(RICH_TEXT_DISPLAY_STYLES, "focus:outline-none min-h-[120px] px-3 py-2"),
         spellcheck: "false",
       },
     },
