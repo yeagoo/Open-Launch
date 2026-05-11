@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   RiAddLine,
   RiCalendarLine,
+  RiCheckLine,
   RiFireLine,
   RiHashtag,
   RiRocketLine,
@@ -46,7 +47,11 @@ interface BaseProject {
   dailyRanking?: number | null
 }
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ dir_order?: string }>
+}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
@@ -55,6 +60,14 @@ export default async function Dashboard() {
   if (!session?.user?.id) {
     return null
   }
+
+  // Set when the Stripe Payment Link redirected here via
+  // /payment/verify after a successful directory-order checkout.
+  // The webhook has already marked the order paid; this banner is
+  // just the buyer-facing confirmation so they don't wonder whether
+  // anything happened.
+  const sp = await searchParams
+  const showOrderSuccess = sp.dir_order === "success"
 
   // Get data from actions
   const upvotedProjectsData = await getUserUpvotedProjects()
@@ -104,6 +117,22 @@ export default async function Dashboard() {
   return (
     <div className="min-h-[calc(100vh-64px)] py-6 sm:py-8">
       <div className="mx-auto max-w-6xl px-4">
+        {showOrderSuccess && (
+          <div className="mb-6 flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+              <RiCheckLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-foreground text-sm font-semibold">Payment received — thank you!</p>
+              <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                Basic listings go live on aat.ee automatically. Plus / Pro / Ultra are placed
+                manually across all sites within 1–3 business days. We&apos;ll email a confirmation
+                when each placement is live.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Dashboard Header */}
         <div className="mb-8">
           <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
