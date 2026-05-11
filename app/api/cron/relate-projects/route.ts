@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -10,6 +11,7 @@ import {
 } from "@/drizzle/db/schema"
 import { and, eq, inArray, sql } from "drizzle-orm"
 
+import { PROJECT_RELATED_TAG } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
 import { pickRelatedProjects, type RelatedCandidate } from "@/lib/enrich-project"
@@ -210,6 +212,13 @@ export async function GET(request: NextRequest) {
       errors.push(`${subject.id}: ${err instanceof Error ? err.message : err}`)
       await markAttempted(subject.id).catch(() => {})
     }
+  }
+
+  // Bust the per-project related-products cache so the new
+  // rankings surface on detail pages without waiting for the
+  // 6h revalidate window.
+  if (written > 0) {
+    revalidateTag(PROJECT_RELATED_TAG)
   }
 
   // 5xx if every attempted subject errored (partial errors stay 200).

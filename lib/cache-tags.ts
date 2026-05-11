@@ -25,3 +25,14 @@ export const TOP_CATEGORIES_TAG = "top-categories"
 // invalidation as HOME_PROJECTS_TAG — but kept separate so a
 // future "live winners" UI could bust it independently.
 export const WINNERS_TAG = "winners"
+
+// AI-generated "related products" recommendations shown on the
+// project detail page. Refreshed by the `relate-projects` cron;
+// also affected when a project is flagged low-quality (the
+// filter drops it from results).
+export const PROJECT_RELATED_TAG = "project-related"
+
+// Sidebar comparison + alternatives links shown on the project
+// detail page. Refreshed by the `generate-comparisons` and
+// `generate-alternatives` crons when they ship new pages.
+export const PROJECT_SIDEBAR_LINKS_TAG = "project-sidebar-links"

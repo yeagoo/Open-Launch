@@ -1,6 +1,10 @@
+import { unstable_cache } from "next/cache"
+
 import { db } from "@/drizzle/db"
 import { project, projectRelated, projectTranslation } from "@/drizzle/db/schema"
 import { and, asc, eq, inArray, or } from "drizzle-orm"
+
+import { PROJECT_RELATED_TAG } from "@/lib/cache-tags"
 
 export interface RelatedProjectCard {
   id: string
@@ -13,11 +17,34 @@ export interface RelatedProjectCard {
 /**
  * Fetch related products for a given project, with descriptions localized via
  * the same locale → source → en fallback used elsewhere.
+ *
+ * Wrapped in `unstable_cache` because related-product rankings
+ * change at most daily (the `relate-projects` cron regenerates
+ * them on a schedule). Cache key includes (projectId, locale,
+ * limit) so each detail page + locale gets its own entry; tag
+ * invalidation from the cron forces a refresh when new rankings
+ * land. Bumped to 6h since the underlying data rarely changes.
  */
+const fetchRelatedProjectsCached = unstable_cache(
+  async (projectId: string, locale: string, limit: number): Promise<RelatedProjectCard[]> => {
+    return fetchRelatedProjectsImpl(projectId, locale, limit)
+  },
+  ["project-related-v1"],
+  { revalidate: 21600, tags: [PROJECT_RELATED_TAG] },
+)
+
 export async function getRelatedProjects(
   projectId: string,
   locale: string,
   limit = 4,
+): Promise<RelatedProjectCard[]> {
+  return fetchRelatedProjectsCached(projectId, locale, limit)
+}
+
+async function fetchRelatedProjectsImpl(
+  projectId: string,
+  locale: string,
+  limit: number,
 ): Promise<RelatedProjectCard[]> {
   const relations = await db
     .select({

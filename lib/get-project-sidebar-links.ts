@@ -1,6 +1,10 @@
+import { unstable_cache } from "next/cache"
+
 import { db } from "@/drizzle/db"
 import { alternativePage, alternativePageToProject, comparisonPage } from "@/drizzle/db/schema"
 import { desc, eq, or } from "drizzle-orm"
+
+import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
 
 export interface SidebarComparisonLink {
   slug: string
@@ -35,7 +39,23 @@ export interface ProjectSidebarLinks {
  *        {this}").
  *   Returned in that priority order, capped at 5 total.
  */
+/**
+ * Wrapped in `unstable_cache` because the cron jobs that produce
+ * `comparison_page` and `alternative_page` rows write at most once
+ * per project per day. The tag is busted by those crons so new
+ * pages surface immediately.
+ */
+const fetchSidebarLinksCached = unstable_cache(
+  async (projectId: string): Promise<ProjectSidebarLinks> => fetchSidebarLinksImpl(projectId),
+  ["project-sidebar-links-v1"],
+  { revalidate: 21600, tags: [PROJECT_SIDEBAR_LINKS_TAG] },
+)
+
 export async function getProjectSidebarLinks(projectId: string): Promise<ProjectSidebarLinks> {
+  return fetchSidebarLinksCached(projectId)
+}
+
+async function fetchSidebarLinksImpl(projectId: string): Promise<ProjectSidebarLinks> {
   const [comparisons, asSubject, asListed] = await Promise.all([
     db
       .select({ slug: comparisonPage.slug, title: comparisonPage.title })
