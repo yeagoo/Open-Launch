@@ -66,6 +66,17 @@ import {
 import type { LaunchAvailability } from "@/app/actions/launch"
 import { deleteMyDraftProject, getAllCategories, submitProject } from "@/app/actions/projects"
 
+// Tier labels are brand-y proper nouns (Basic / Plus / Pro / Ultra)
+// so they don't need translating; centralising the capitalisation
+// keeps the casing consistent across the picker + selected indicator
+// and avoids the inline `charAt(0).toUpperCase() + slice(1)` dance.
+const TIER_LABELS: Record<DirectoryTier, string> = {
+  basic: "Basic",
+  plus: "Plus",
+  pro: "Pro",
+  ultra: "Ultra",
+}
+
 interface ProjectFormData {
   name: string
   tagline: string
@@ -1594,71 +1605,128 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                     semantics) AND directoryTier=<picked> (drives
                     which Stripe Payment Link the submit redirect
                     lands on, and which row gets written to
-                    `directory_order`). */}
-                <div
-                  className={`rounded-lg border p-3 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.PREMIUM ? "border-primary/70 ring-primary/70 bg-primary/5 shadow-sm ring-1" : "hover:border-primary/50"}`}
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <h5 className="flex items-center gap-1.5 text-sm font-semibold">
-                      <RiStarLine className="text-primary h-4 w-4" />
-                      Boost (paid)
-                    </h5>
-                    <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
-                      Skip the queue · pick a tier
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {DIRECTORY_TIERS.map((tierKey) => {
-                      const cfg = DIRECTORY_TIER_CONFIG[tierKey]
-                      const selected =
-                        formData.launchType === LAUNCH_TYPES.PREMIUM &&
-                        formData.directoryTier === tierKey
-                      const label = tierKey.charAt(0).toUpperCase() + tierKey.slice(1)
-                      const priceText = cfg.isSubscription
-                        ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
-                        : `$${(cfg.amountCents / 100).toFixed(2)}`
-                      const summary: Record<DirectoryTier, string> = {
-                        basic: "Skip queue · dofollow link on aat.ee",
-                        plus: "Basic + 3 partner directories (manually placed)",
-                        pro: "Plus + 8 high-DR documentation sites",
-                        ultra: "Pro + permanent sidebar sponsor slot",
-                      }
-                      return (
-                        <button
-                          type="button"
-                          key={tierKey}
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              launchType: LAUNCH_TYPES.PREMIUM,
-                              directoryTier: tierKey,
-                            }))
-                          }}
-                          className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-all ${
-                            selected
-                              ? "border-primary bg-primary/10 ring-primary/40 ring-1"
-                              : "border-border hover:border-primary/40 hover:bg-primary/5"
-                          }`}
+                    `directory_order`).
+                    Clicking the card's surrounding area (header,
+                    padding) is treated as "I want paid" too — we
+                    default to Basic so a user who didn't notice the
+                    individual tier buttons still gets their state
+                    flipped from FREE → PREMIUM. Otherwise the date
+                    picker keeps showing free dates (queue full) and
+                    looks broken. */}
+                {(() => {
+                  // Centralise the "switch to PREMIUM" logic so the
+                  // outer card click and the inner tier buttons share
+                  // the same write path.
+                  const isPremium = formData.launchType === LAUNCH_TYPES.PREMIUM
+                  const pickTier = (tierKey: DirectoryTier | null) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      launchType: LAUNCH_TYPES.PREMIUM,
+                      directoryTier: tierKey ?? prev.directoryTier ?? "basic",
+                      // Free range is 21-180 days, premium is 1-30 —
+                      // any old free date won't be in the new dropdown,
+                      // so reset whenever we transition into PREMIUM.
+                      scheduledDate:
+                        prev.launchType === LAUNCH_TYPES.PREMIUM ? prev.scheduledDate : null,
+                    }))
+                  }
+                  const selectedTierLabel =
+                    isPremium && formData.directoryTier ? TIER_LABELS[formData.directoryTier] : null
+                  return (
+                    // Outer wrapper is intentionally a plain `<div>`
+                    // with `onClick` for mouse users (clicking the
+                    // card background defaults to "basic") — NOT a
+                    // `role="button"`. WAI-ARIA forbids interactive
+                    // descendants in a button role, and the 4 inner
+                    // `<button>`s are the real interactive elements
+                    // for keyboard / screen-reader users.
+                    <div
+                      onClick={() => {
+                        if (isPremium) return
+                        pickTier(null)
+                      }}
+                      className={`relative rounded-lg border p-4 transition-all duration-150 ${
+                        isPremium
+                          ? "border-primary ring-primary/70 bg-primary/5 shadow-sm ring-1"
+                          : "hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
+                      }`}
+                    >
+                      {/* "Selected" badge mirrors the Free card pattern
+                          for visual consistency — without it, users
+                          may not realise this card is the chosen one. */}
+                      {isPremium && (
+                        <Badge
+                          variant="default"
+                          className="bg-primary text-primary-foreground absolute -top-2 -right-2 text-xs"
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold">{label}</span>
-                              {selected && (
-                                <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5" />
-                              )}
-                            </div>
-                            <p className="text-muted-foreground mt-0.5 text-xs">
-                              {summary[tierKey]}
-                            </p>
-                          </div>
-                          <span className="font-mono text-sm font-semibold tabular-nums">
-                            {priceText}
+                          {t("step3.launchType.selected")}
+                        </Badge>
+                      )}
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <h5 className="flex items-center gap-1.5 font-medium">
+                          <RiStarLine className="text-primary h-4 w-4" />
+                          {t("step3.launchType.boost.name")}
+                        </h5>
+                        {selectedTierLabel ? (
+                          <span className="text-primary text-xs font-semibold">
+                            {t("step3.launchType.boost.tierSelected", {
+                              tier: selectedTierLabel,
+                            })}
                           </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
+                        ) : (
+                          <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                            {t("step3.launchType.boost.subtitle")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        {DIRECTORY_TIERS.map((tierKey) => {
+                          const cfg = DIRECTORY_TIER_CONFIG[tierKey]
+                          const selected = isPremium && formData.directoryTier === tierKey
+                          const label = TIER_LABELS[tierKey]
+                          const priceText = cfg.isSubscription
+                            ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
+                            : `$${(cfg.amountCents / 100).toFixed(2)}`
+                          return (
+                            <button
+                              type="button"
+                              key={tierKey}
+                              aria-pressed={selected}
+                              onClick={(e) => {
+                                // Stop the outer card's onClick from
+                                // also firing (it would default to
+                                // "basic" and overwrite the tier the
+                                // user just clicked on).
+                                e.stopPropagation()
+                                pickTier(tierKey)
+                              }}
+                              className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-all ${
+                                selected
+                                  ? "border-primary bg-primary/10 ring-primary/40 ring-1"
+                                  : "border-border hover:border-primary/40 hover:bg-background"
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold">{label}</span>
+                                  {selected && (
+                                    <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
+                                  )}
+                                </div>
+                                <p className="text-muted-foreground mt-0.5 text-xs">
+                                  {t(`step3.launchType.boost.tiers.${tierKey}`)}
+                                </p>
+                              </div>
+                              <span className="font-mono text-sm font-semibold tabular-nums">
+                                {priceText}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${

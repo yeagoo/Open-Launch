@@ -301,3 +301,46 @@ export async function getPaidProjects() {
     stats,
   }
 }
+
+/**
+ * Badge Fast Track projects — `launch_type = 'free_with_badge'`.
+ * Used by /admin/badge-projects to track which projects skipped the
+ * queue via the badge install (free path) so admin can audit:
+ *   - that the badge is actually still present on their site
+ *   - usage volume vs paid Directory tiers
+ */
+export async function getBadgeProjects() {
+  await checkAdminAccess()
+
+  const rows = await db
+    .select({
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      websiteUrl: project.websiteUrl,
+      logoUrl: project.logoUrl,
+      launchType: project.launchType,
+      launchStatus: project.launchStatus,
+      scheduledLaunchDate: project.scheduledLaunchDate,
+      hasBadgeVerified: project.hasBadgeVerified,
+      badgeVerifiedAt: project.badgeVerifiedAt,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+    })
+    .from(project)
+    .leftJoin(user, eq(project.createdBy, user.id))
+    .where(eq(project.launchType, "free_with_badge"))
+    .orderBy(desc(project.scheduledLaunchDate), desc(project.updatedAt))
+
+  const stats = {
+    total: rows.length,
+    scheduled: rows.filter((p) => p.launchStatus === "scheduled").length,
+    launched: rows.filter((p) => p.launchStatus === "launched").length,
+    ongoing: rows.filter((p) => p.launchStatus === "ongoing").length,
+  }
+
+  return { projects: rows, stats }
+}

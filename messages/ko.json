@@ -485,6 +485,17 @@
           "guaranteedDofollow": "Dofollow 백링크 보장 (DR {dr})",
           "slotsLabel": "일일 {n}개 프리미엄 슬롯",
           "scheduling": "최대 {n}일 예약 가능"
+        },
+        "boost": {
+          "name": "Boost (paid)",
+          "subtitle": "Skip the queue · pick a tier",
+          "tierSelected": "{tier} selected",
+          "tiers": {
+            "basic": "Skip queue · dofollow link on aat.ee",
+            "plus": "Basic + 3 partner directories (manually placed)",
+            "pro": "Plus + 8 high-DR documentation sites",
+            "ultra": "Pro + permanent sidebar sponsor slot"
+          }
         }
       },
       "date": {
