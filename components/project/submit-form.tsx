@@ -36,7 +36,12 @@ import {
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
 } from "@/lib/constants"
-import { DIRECTORY_TIER_CONFIG, DIRECTORY_TIERS, type DirectoryTier } from "@/lib/directory-tiers"
+import {
+  DIRECTORY_PROMO,
+  DIRECTORY_TIER_CONFIG,
+  DIRECTORY_TIERS,
+  type DirectoryTier,
+} from "@/lib/directory-tiers"
 // Import from the pure-data module, NOT `lib/dr` — `lib/dr` re-exports
 // these constants but also imports `db` (pg), which webpack would then
 // drag into the client bundle and fail to resolve Node-only `fs` /
@@ -1647,6 +1652,41 @@ export function SubmitProjectForm({
                   </ul>
                 </div>
 
+                {/* Promo banner — surfaces the same discount code as
+                    the public /pricing/directories page. Submitters
+                    who landed straight on /projects/submit (e.g. via
+                    the prominent nav CTA) would otherwise never see
+                    the offer and might bounce at the Stripe checkout
+                    when they realise there's no discount applied.
+                    Single source of truth: DIRECTORY_PROMO. */}
+                {DIRECTORY_PROMO.enabled && (
+                  <div className="border-primary/30 from-primary/10 via-primary/5 rounded-lg border bg-gradient-to-br to-transparent p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-primary mb-0.5 font-mono text-[10px] tracking-wider uppercase">
+                          {t("step3.launchType.boost.promo.label")}
+                        </p>
+                        <p className="text-foreground text-sm font-semibold">
+                          {t("step3.launchType.boost.promo.headline", {
+                            code: DIRECTORY_PROMO.code,
+                          })}
+                        </p>
+                        <p className="text-muted-foreground text-[11px]">
+                          {t("step3.launchType.boost.promo.subtext")}
+                        </p>
+                      </div>
+                      {/* Static code chip — clicking has no effect by
+                          design: the actual discount is applied at
+                          Stripe checkout via the buyer typing the
+                          code there. Showing it as a "pressable"
+                          control would lie about the flow. */}
+                      <span className="bg-primary text-primary-foreground rounded-md px-2.5 py-1 font-mono text-xs font-bold tracking-wider">
+                        {DIRECTORY_PROMO.code}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Paid tier cards — 4 stacked rows: Basic / Plus /
                     Pro / Ultra. Each card sets launchType=PREMIUM
                     (queue-skip semantics) AND directoryTier=<picked>
@@ -1793,6 +1833,16 @@ export function SubmitProjectForm({
                     </div>
                   )
                 })}
+
+                {/* Delivery expectation note — Basic auto-publishes
+                    on aat.ee within 1 business day; Plus / Pro / Ultra
+                    span partner sites that need a human to place the
+                    listing. Setting that expectation here (not just
+                    on /pricing/directories) avoids "I paid but
+                    nothing's live" support tickets. */}
+                <p className="text-muted-foreground px-1 text-center text-[11px]">
+                  {t("step3.launchType.boost.deliveryNote")}
+                </p>
 
                 {/* <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${

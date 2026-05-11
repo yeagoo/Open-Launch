@@ -491,6 +491,12 @@
           "subtitle": "不用等待 · 选择套餐",
           "tierSelected": "已选 {tier}",
           "popularBadge": "最受欢迎",
+          "promo": {
+            "label": "优惠码",
+            "headline": "{code} · 首单立减 15%",
+            "subtext": "仅限新用户 · Stripe 结账页输入"
+          },
+          "deliveryNote": "Basic 自动上线。Plus / Pro / Ultra 由人工添加到所有站点，通常 1-3 个工作日内全部完成。",
           "tiers": {
             "basic": "不用等待 · aat.ee 上获得 dofollow 反向链接",
             "plus": "包含 Basic + 3 个合作导航站（人工上架）",
@@ -653,6 +659,7 @@
         "oneOff": "一次性付款",
         "subscription": "按月订阅 · 可随时取消"
       },
+      "deliveryNote": "Basic 自动上线。Plus / Pro / Ultra 由人工添加到所有站点，通常 1-3 个工作日内全部完成。",
       "basic": {
         "name": "Basic",
         "price": "$3.99",
@@ -673,15 +680,15 @@
         "name": "Plus",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4 个不同域名 → 更真实的 SEO 提升。",
+        "tagline": "4 个独立域名 → 反链画像看起来像自然口碑扩散。",
         "reach": "<n>4 个站点</n> · 月访问 30 万+",
-        "description": "包含 Basic 全部内容，并额外发布到 HiCyou、MF8.BIZ 和 BigKr。来自 4 个不同域名的反向链接在 Google 看来更像自然外链，比单站点链接可信得多。整个网络合计：月流量 30 万+，近 30 天 Google 搜索点击 1 万+。",
+        "description": "Google 现在能识别单一来源的「外链购买」模式，单条高 DR 链接的实际权重正在被打折。Plus 一次给您 4 个独立域名的 dofollow 反链 —— aat.ee + HiCyou + MF8.BIZ + BigKr，4 个站合计月活读者 30 万+，近 30 天 Google 自然点击约 1 万。来自 4 个独立来源的链接画像在算法看来像真实的口碑扩散，权重才会真正叠加。这是单链接买不到的 SEO 资产。",
         "cta": "购买 Plus",
         "features": {
           "everything": "包含 Basic 全部内容",
-          "fourSites": "4 个不同域名 → 自然真实的反向链接画像，不会被 Google 当作刷链接",
+          "fourSites": "一次拿下 4 个独立来源 dofollow 反链 → 链接画像像自然口碑扩散，避开 Google 对「单一来源外链」的权重打折",
           "dofollowAll": "每个站点都给 Dofollow 反向链接",
-          "stats": "4 个站点合计月流量 30 万+ · 近 30 天 Google 点击 1 万+",
+          "stats": "4 个站合计月活读者 30 万+ · 近 30 天 Google 自然点击约 1 万",
           "delivery": "aat.ee 1 天上线 · 其他 3 天内"
         }
       },
@@ -690,17 +697,17 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "最受欢迎",
-        "tagline": "权威文档站 → 显著拉升 GEO/AIEO。",
+        "tagline": "让 ChatGPT、Claude、Perplexity、Gemini 主动推荐您的产品。",
         "reach": "<n>12 个站点</n> · 月访问 70 万+",
         "overflowLabel": "等 {n}+ 网站",
         "overflowTooltip": "本套餐包含的更多站点",
-        "description": "包含 Plus 全部内容，再加 8 个高权重文档站的友情链接。权威文档域名能显著拉升 GEO/AIEO 信号 — 让 ChatGPT、Claude、Perplexity、Gemini 等大模型在用户询问相关品类时，更高几率推荐您的网站。整个网络合计：近 30 天 Google 点击 3 万+，月流量 70 万+。",
+        "description": "8 个高权重文档站友链 —— 这正是大模型抓取训练语料时优先采用的高权威源。换句话说：当用户在 ChatGPT、Claude、Perplexity、Gemini 里问「{您的品类} 最好的工具是哪个」，模型大概率会直接报出您的名字。这条 GEO/AIEO 曝光通道，花再多 Google Ads 也买不到。包含 Plus 全部内容。整个网络合计：12 个站点，月活读者 70 万+，近 30 天 Google 自然点击 3 万+。",
         "cta": "购买 Pro",
         "features": {
           "everything": "包含 Plus 全部内容",
-          "docsSites": "8 个权威文档站友链 → 显著提升 GEO/AIEO，让 ChatGPT、Claude、Perplexity、Gemini 等大模型更高几率推荐您的网站",
-          "geo": "强化 AI 搜索（GEO/AIEO）权威信号",
-          "stats": "Google 点击 3 万+ · 月流量 70 万+",
+          "docsSites": "8 个高 DR 文档站友链 → 用户在 ChatGPT / Claude / Perplexity / Gemini 里搜索您所在品类时，大模型大概率主动报出您的名字",
+          "geo": "GEO/AIEO 曝光通道，再多 Google Ads 预算也买不到",
+          "stats": "12 个站合计月活读者 70 万+ · 近 30 天 Google 自然点击 3 万+",
           "delivery": "aat.ee 1 天上线 · 其他 3 天内"
         }
       },

@@ -273,7 +273,10 @@ export default async function DirectoryPricingPage({
           </div>
         </section>
 
-        {/* ─── Price-change notice (after tier grid) ─── */}
+        {/* ─── Delivery + price-change notices (after tier grid) ─── */}
+        <p className="text-muted-foreground mt-4 mb-3 text-center text-xs">
+          {t("tiers.deliveryNote")}
+        </p>
         <PriceNotice text={t("priceNotice")} className="mb-12" />
 
         {/* ─── Ultra spotlight (elaborate pitch) ─── */}
