@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "Tutvustusplatvorm oma toodetele",
-      "subtitle": "Esita, saa märk ja tagasilink"
+      "subtitle": "Esita, saa märk ja tagasilink",
+      "directoriesTitle": "Lisa oma sait 4 kvaliteetsesse kataloogi hinnaga $6.99",
+      "submitButton": "Esita oma projekt",
+      "freeBadge": "Tasuta",
+      "promoCodeLabel": "Sooduskood",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "Piiratud aja pakkumine"
     },
     "sections": {
       "todayTitle": "Täna käivitatud parimad projektid",

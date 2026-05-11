@@ -198,27 +198,6 @@ export default function FooterSection() {
                 />
               </a>
 
-              {/* OPEN-LAUNCH Badge */}
-              <a
-                href="https://open-launch.com/projects/aat-ee"
-                target="_blank"
-                title="Powered by Open-Launch"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-light.svg"
-                  alt="Powered by Open-Launch"
-                  style={{ height: "30px", width: "auto" }}
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
-                  alt="Powered by Open-Launch"
-                  style={{ height: "30px", width: "auto" }}
-                  className="hidden dark:block"
-                />
-              </a>
-
               {/* Dofollow.tools Badge */}
               <a
                 href="https://dofollow.tools/product/aatee"
@@ -335,27 +314,6 @@ export default function FooterSection() {
                 <img
                   src="/images/badges/featured-badge-dark.svg"
                   alt="Featured on aat.ee"
-                  style={{ height: "30px", width: "auto" }}
-                  className="hidden dark:block"
-                />
-              </a>
-
-              {/* OPEN-LAUNCH Badge */}
-              <a
-                href="https://open-launch.com/projects/aat-ee"
-                target="_blank"
-                title="Powered by Open-Launch"
-                rel="noopener noreferrer"
-              >
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-light.svg"
-                  alt="Powered by Open-Launch"
-                  style={{ height: "30px", width: "auto" }}
-                  className="block dark:hidden"
-                />
-                <img
-                  src="https://open-launch.com/images/badges/powered-by-dark.svg"
-                  alt="Powered by Open-Launch"
                   style={{ height: "30px", width: "auto" }}
                   className="hidden dark:block"
                 />

@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "Plateforme de lancement pour vos produits",
-      "subtitle": "Soumettez, obtenez un badge et un lien retour"
+      "subtitle": "Soumettez, obtenez un badge et un lien retour",
+      "directoriesTitle": "Référencé dans 4 annuaires de qualité pour seulement 6,99 $",
+      "submitButton": "Soumettre votre projet",
+      "freeBadge": "Gratuit",
+      "promoCodeLabel": "Code promo",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "Offre à durée limitée"
     },
     "sections": {
       "todayTitle": "Meilleurs projets lancés aujourd'hui",

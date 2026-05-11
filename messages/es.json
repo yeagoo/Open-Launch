@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "Plataforma de lanzamiento para tus productos",
-      "subtitle": "Envía, obtén una insignia y un enlace"
+      "subtitle": "Envía, obtén una insignia y un enlace",
+      "directoriesTitle": "Listado en 4 directorios de calidad por solo $6.99",
+      "submitButton": "Envía tu proyecto",
+      "freeBadge": "Gratis",
+      "promoCodeLabel": "Código promocional",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "Oferta por tiempo limitado"
     },
     "sections": {
       "todayTitle": "Principales proyectos lanzados hoy",

@@ -88,6 +88,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                       </p>
                     </div>
                   </Link>
+                  <Button asChild size="sm">
+                    <Link href="/projects/submit">
+                      {t("banner.submitButton")}
+                      <span className="bg-background/20 ml-2 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold">
+                        {t("banner.freeBadge")}
+                      </span>
+                    </Link>
+                  </Button>
                 </div>
 
                 {/* Desktop-only banner with mascot pair. The oppie
@@ -107,7 +115,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                       className="h-24 w-24 object-contain"
                     />
                   </div>
-                  <div className="flex flex-col items-center justify-center gap-4 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3 text-center">
                     <Link href="/pricing" className="cursor-pointer">
                       <h1 className="text-foreground text-lg font-semibold">
                         <span>{t("banner.title")}</span>
@@ -116,6 +124,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                         <span>{t("banner.subtitle")}</span>
                       </p>
                     </Link>
+                    <Button asChild size="sm">
+                      <Link href="/projects/submit">
+                        {t("banner.submitButton")}
+                        <span className="bg-background/20 ml-2 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold">
+                          {t("banner.freeBadge")}
+                        </span>
+                      </Link>
+                    </Button>
                   </div>
 
                   <div className="flex-shrink-0">
@@ -129,6 +145,59 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Directories promo banner */}
+            <div className="bg-secondary/70 hover:bg-secondary border-border/40 relative z-10 overflow-hidden rounded-lg border">
+              <Link href="/pricing" className="block">
+                <div className="container mx-auto max-w-6xl px-4 py-4 md:py-5">
+                  <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      {[
+                        { name: "aat.ee", logo: "/logo.svg", dr: 36 },
+                        {
+                          name: "Hi Cyou",
+                          logo: "https://hicyou.com/favicon/favicon.svg",
+                          dr: 28,
+                        },
+                        { name: "BigKr", logo: "https://bigkr.com/logo.svg", dr: 32 },
+                        { name: "MF8", logo: "https://www.mf8.biz/logo.svg", dr: 42 },
+                      ].map((d) => (
+                        <div key={d.name} className="relative">
+                          <div className="bg-background border-border/60 flex h-12 w-12 items-center justify-center rounded-md border p-2 md:h-14 md:w-14">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={d.logo}
+                              alt={d.name}
+                              loading="lazy"
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+                          <span className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold">
+                            DR {d.dr}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 text-center md:items-start md:text-left">
+                      <h2 className="text-foreground text-sm font-semibold md:text-base">
+                        <span>{t("banner.directoriesTitle")}</span>
+                      </h2>
+                      <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                        <span className="text-muted-foreground text-xs">
+                          {t("banner.promoCodeLabel")}:
+                        </span>
+                        <code className="bg-primary/10 text-primary border-primary/30 rounded-md border border-dashed px-2 py-0.5 text-xs font-bold tracking-wider">
+                          {t("banner.promoCodeValue")}
+                        </code>
+                        <span className="text-destructive text-[11px] font-medium">
+                          {t("banner.promoCodeHint")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </div>
 
             {/* Today's reads — hero (top 3) + dense list for the rest. */}

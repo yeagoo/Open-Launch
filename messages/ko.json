@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "당신의 제품을 위한 런칭 플랫폼",
-      "subtitle": "제출하고 배지와 백링크를 받으세요"
+      "subtitle": "제출하고 배지와 백링크를 받으세요",
+      "directoriesTitle": "단 $6.99로 4개 고품질 디렉터리에 등재",
+      "submitButton": "프로젝트 제출",
+      "freeBadge": "무료",
+      "promoCodeLabel": "프로모션 코드",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "기간 한정 혜택"
     },
     "sections": {
       "todayTitle": "오늘 출시된 주요 프로젝트",

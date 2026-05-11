@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "Plataforma de lançamento para seus produtos",
-      "subtitle": "Envie, ganhe um selo e backlink"
+      "subtitle": "Envie, ganhe um selo e backlink",
+      "directoriesTitle": "Listado em 4 diretórios de qualidade por apenas $6.99",
+      "submitButton": "Envie seu projeto",
+      "freeBadge": "Grátis",
+      "promoCodeLabel": "Código promocional",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "Oferta por tempo limitado"
     },
     "sections": {
       "todayTitle": "Principais Projetos Lançados Hoje",
