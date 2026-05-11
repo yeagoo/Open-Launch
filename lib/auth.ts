@@ -8,7 +8,12 @@ import Stripe from "stripe"
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
 
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// Pinned to the SDK's latest known API version. Bump together with
+// the `stripe` npm package — the SDK's `LatestApiVersion` type
+// tracks what it knows about.
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-02-24.acacia",
+})
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000",

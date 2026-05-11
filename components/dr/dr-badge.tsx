@@ -94,3 +94,60 @@ export function DrBadgeRow({ records, size = "md" }: DrBadgeRowProps) {
     </div>
   )
 }
+
+interface OverflowDrBadgeProps {
+  // The hidden records we want the user to see only on hover.
+  records: DRRecord[]
+  // Pill text — usually "+ N+ sites" or its localised equivalent.
+  // Translated upstream so we don't bake locale into this UI atom.
+  label: string
+  // Tooltip header, e.g. "More sites in this tier".
+  tooltipHeading: string
+  size?: "sm" | "md"
+}
+
+/**
+ * Single-cell overflow pill that matches the DR badge sizing. On
+ * hover/focus it reveals a tooltip listing every hidden site with
+ * its current DR — useful for tier cards where rendering all 12 DR
+ * pills would crowd the layout.
+ */
+export function OverflowDrBadge({
+  records,
+  label,
+  tooltipHeading,
+  size = "sm",
+}: OverflowDrBadgeProps) {
+  const sizing = size === "sm" ? "h-6 text-[11px] px-2" : "h-8 text-xs px-2.5"
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className={`bg-primary/10 text-primary border-primary/20 inline-flex items-center rounded-md border ${sizing} cursor-help font-mono font-medium`}
+          >
+            {label}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={4} className="max-w-[280px] p-3">
+          <p className="text-muted-foreground mb-2 text-[11px] font-medium tracking-wide uppercase">
+            {tooltipHeading}
+          </p>
+          <ul className="space-y-1.5">
+            {records.map((r) => (
+              <li
+                key={r.domain}
+                className="flex items-center justify-between gap-4 text-xs tabular-nums"
+              >
+                <span className="font-mono">{r.domain}</span>
+                <span className="text-primary font-mono font-medium">DR {r.dr ?? "—"}</span>
+              </li>
+            ))}
+          </ul>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}

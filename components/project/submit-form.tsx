@@ -36,8 +36,8 @@ import {
   LAUNCH_LIMITS,
   LAUNCH_SETTINGS,
   LAUNCH_TYPES,
-  PREMIUM_PAYMENT_LINK,
 } from "@/lib/constants"
+import { DIRECTORY_TIER_CONFIG, DIRECTORY_TIERS, type DirectoryTier } from "@/lib/directory-tiers"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
 import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { createDirectoryOrder } from "@/app/actions/directory-orders"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
 import {
   checkUserLaunchLimit,
@@ -80,6 +81,11 @@ interface ProjectFormData {
   twitterUrl?: string
   scheduledDate: string | null
   launchType: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES]
+  // Directory tier picked when user goes paid. Drives which Stripe
+  // Payment Link the submit redirect lands on, and which row gets
+  // written to `directory_order`. Null when launchType is FREE /
+  // FREE_WITH_BADGE — no payment in those flows.
+  directoryTier: DirectoryTier | null
   productImage: string | null
   hasBadgeVerified: boolean
 }
@@ -142,6 +148,7 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     twitterUrl: "",
     scheduledDate: null,
     launchType: LAUNCH_TYPES.FREE,
+    directoryTier: null,
     productImage: null,
     hasBadgeVerified: false,
   })
@@ -470,6 +477,9 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     setFormData((prev) => ({
       ...prev,
       launchType: type,
+      // Switching back to a free path discards any prior tier
+      // selection so the submit redirect doesn't try to charge.
+      directoryTier: type === LAUNCH_TYPES.PREMIUM ? prev.directoryTier : null,
       scheduledDate: null,
     }))
   }
@@ -762,11 +772,23 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
       ) {
         router.push(`/projects/${projectSlug}`)
       } else {
-        const paymentLink = PREMIUM_PAYMENT_LINK
-
-        const paymentUrl = `${paymentLink}?client_reference_id=${projectId}`
-
-        window.location.href = paymentUrl
+        // Paid path: create a `pending` directory_order row tied to
+        // this freshly-submitted project, then redirect to the
+        // tier-specific Stripe Payment Link. The webhook will flip
+        // the project from `payment_pending → SCHEDULED` once the
+        // funds settle (see `scheduleProjectIfPendingPayment` in
+        // `app/api/auth/stripe/webhook/route.ts`).
+        const tier: DirectoryTier = formData.directoryTier ?? "basic"
+        try {
+          const { redirectUrl } = await createDirectoryOrder({ projectId, tier })
+          window.location.href = redirectUrl
+        } catch (orderError: unknown) {
+          console.error("Failed to start checkout:", orderError)
+          setFormError(
+            orderError instanceof Error ? orderError.message : t("errors.form.submitFailed"),
+          )
+          setIsPending(false)
+        }
       }
     } catch (submissionError: unknown) {
       console.error("Error during final submission:", submissionError)
@@ -1567,53 +1589,75 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   </ul>
                 </div>
 
+                {/* Boost (paid) — 4 directory tiers stacked. Picking
+                    any of these sets launchType=PREMIUM (queue-skip
+                    semantics) AND directoryTier=<picked> (drives
+                    which Stripe Payment Link the submit redirect
+                    lands on, and which row gets written to
+                    `directory_order`). */}
                 <div
-                  className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.PREMIUM ? "border-primary/70 ring-primary/70 bg-primary/5 relative shadow-sm ring-1" : "hover:border-primary/50 hover:bg-primary/5"}`}
-                  onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.PREMIUM)}
+                  className={`rounded-lg border p-3 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.PREMIUM ? "border-primary/70 ring-primary/70 bg-primary/5 shadow-sm ring-1" : "hover:border-primary/50"}`}
                 >
-                  {formData.launchType === LAUNCH_TYPES.PREMIUM && (
-                    <Badge
-                      variant="default"
-                      className="bg-primary text-primary-foreground absolute -top-2 -right-2 text-xs"
-                    >
-                      {t("step3.launchType.selected")}
-                    </Badge>
-                  )}
-                  <h5 className="mb-2 flex items-center gap-1.5 font-medium">
-                    <RiStarLine className="text-primary h-4 w-4" />
-                    {t("step3.launchType.premium.name")}
-                  </h5>
-                  <p className="mb-3 text-2xl font-bold">${LAUNCH_SETTINGS.PREMIUM_PRICE}</p>
-                  <ul className="space-y-1 text-sm">
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="font-semibold">
-                        {t("step3.launchType.premium.skipQueue")}
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="font-semibold">
-                        {t("step3.launchType.premium.guaranteedDofollow", { dr: DOMAIN_AUTHORITY })}
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>
-                        {t("step3.launchType.premium.slotsLabel", {
-                          n: LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT,
-                        })}
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <RiCheckboxCircleFill className="text-primary/80 h-3.5 w-3.5 flex-shrink-0" />
-                      <span>
-                        {t("step3.launchType.premium.scheduling", {
-                          n: LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD,
-                        })}
-                      </span>
-                    </li>
-                  </ul>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h5 className="flex items-center gap-1.5 text-sm font-semibold">
+                      <RiStarLine className="text-primary h-4 w-4" />
+                      Boost (paid)
+                    </h5>
+                    <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
+                      Skip the queue · pick a tier
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {DIRECTORY_TIERS.map((tierKey) => {
+                      const cfg = DIRECTORY_TIER_CONFIG[tierKey]
+                      const selected =
+                        formData.launchType === LAUNCH_TYPES.PREMIUM &&
+                        formData.directoryTier === tierKey
+                      const label = tierKey.charAt(0).toUpperCase() + tierKey.slice(1)
+                      const priceText = cfg.isSubscription
+                        ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
+                        : `$${(cfg.amountCents / 100).toFixed(2)}`
+                      const summary: Record<DirectoryTier, string> = {
+                        basic: "Skip queue · dofollow link on aat.ee",
+                        plus: "Basic + 3 partner directories (manually placed)",
+                        pro: "Plus + 8 high-DR documentation sites",
+                        ultra: "Pro + permanent sidebar sponsor slot",
+                      }
+                      return (
+                        <button
+                          type="button"
+                          key={tierKey}
+                          onClick={() => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              launchType: LAUNCH_TYPES.PREMIUM,
+                              directoryTier: tierKey,
+                            }))
+                          }}
+                          className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-all ${
+                            selected
+                              ? "border-primary bg-primary/10 ring-primary/40 ring-1"
+                              : "border-border hover:border-primary/40 hover:bg-primary/5"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold">{label}</span>
+                              {selected && (
+                                <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5" />
+                              )}
+                            </div>
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {summary[tierKey]}
+                            </p>
+                          </div>
+                          <span className="font-mono text-sm font-semibold tabular-nums">
+                            {priceText}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
 
                 {/* <div

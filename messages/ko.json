@@ -6,9 +6,9 @@
     "cancel": "취소",
     "submit": "제출",
     "delete": "삭제",
-    "edit": "수정",
+    "edit": "편집",
     "search": "검색",
-    "viewAll": "전체 보기",
+    "viewAll": "모두 보기",
     "back": "뒤로",
     "next": "다음",
     "previous": "이전",
@@ -20,7 +20,7 @@
   "nav": {
     "explore": "탐색",
     "exploreDesc": {
-      "trendingTitle": "현재 인기",
+      "trendingTitle": "현재 트렌드",
       "trendingDesc": "가장 인기 있는 프로젝트를 발견하세요",
       "winnersTitle": "일간 우승자",
       "winnersDesc": "오늘의 최고 프로젝트를 확인하세요",
@@ -39,7 +39,7 @@
     "navigation": "네비게이션",
     "actions": "액션",
     "home": "홈",
-    "trending": "인기",
+    "trending": "트렌딩",
     "categories": "카테고리",
     "winners": "우승자"
   },
@@ -50,7 +50,7 @@
     "legal": "법적 고지",
     "friends": "친구",
     "links": {
-      "trending": "인기",
+      "trending": "트렌딩",
       "categories": "카테고리",
       "compareTools": "도구 비교",
       "alternatives": "대안",
@@ -59,8 +59,8 @@
       "sponsors": "스폰서",
       "blog": "블로그",
       "friendsPage": "친구",
-      "termsOfService": "이용약관",
-      "privacyPolicy": "개인정보처리방침"
+      "termsOfService": "서비스 이용약관",
+      "privacyPolicy": "개인정보 처리방침"
     }
   },
   "home": {
@@ -69,7 +69,7 @@
       "todayDesc": "aat.ee에서 오늘 출시된 최신 제품(스타트업, AI 도구, SaaS 제품)을 발견하세요"
     },
     "banner": {
-      "title": "제품 출시 플랫폼",
+      "title": "당신의 제품을 위한 런칭 플랫폼",
       "subtitle": "제출하고 배지와 백링크를 받으세요"
     },
     "sections": {
@@ -83,7 +83,7 @@
       "recommended": "추천",
       "webcasaDesc": "AI 네이티브 오픈소스 서버 제어판",
       "litehttpdDesc": "경량 웹 서버, Apache HTTPD와 높은 호환성",
-      "trendingNow": "지금 트렌딩",
+      "trendingNow": "지금 인기",
       "dailyWinners": "일간 우승자",
       "bestOfMonth": "이달의 베스트",
       "dashboard": "대시보드",
@@ -108,10 +108,10 @@
       "captchaRequired": "보안 인증을 완료해주세요",
       "genericError": "오류가 발생했습니다",
       "successToast": "로그인 성공",
-      "termsAgreement": "계속을 클릭하면 다음에 동의하는 것입니다.",
+      "termsAgreement": "계속을 클릭하면 다음에 동의하는 것입니다",
       "termsOfService": "서비스 이용약관",
       "and": "및",
-      "privacyPolicy": "개인정보 처리방침"
+      "privacyPolicy": "개인정보처리방침"
     },
     "signUp": {
       "title": "계정 만들기",
@@ -132,11 +132,11 @@
     },
     "forgotPassword": {
       "title": "비밀번호 재설정",
-      "subtitle": "이메일을 입력하시면 재설정 링크를 보내드립니다",
+      "subtitle": "이메일을 입력하면 재설정 링크를 보내드립니다",
       "emailLabel": "이메일",
       "submit": "재설정 링크 보내기",
       "backToSignIn": "로그인으로 돌아가기",
-      "successMessage": "해당 이메일이 존재하는 경우 재설정 링크를 보냈습니다."
+      "successMessage": "해당 이메일이 존재하면 재설정 링크를 보냈습니다."
     },
     "resetPassword": {
       "title": "새 비밀번호 설정",
@@ -171,7 +171,7 @@
       "scheduledFor": "예정일",
       "ongoing": "진행 중",
       "launched": "출시됨",
-      "scheduled": "예정",
+      "scheduled": "예정됨",
       "byMaker": "제작자",
       "aboutHeading": "{name} 소개",
       "relatedHeading": "관련 제품",
@@ -191,13 +191,13 @@
     },
     "sidebar": {
       "achievement": "성과",
+      "maker": "제작자",
       "unknownCreator": "알 수 없는 제작자",
       "launchDate": "출시일",
       "platform": "플랫폼",
       "pricing": "가격",
       "socials": "소셜",
       "productKeywords": "제품 키워드",
-      "maker": "제작자",
       "visitWebsite": "웹사이트 방문",
       "projectInfo": "프로젝트 정보",
       "compareWith": "비교",
@@ -205,7 +205,7 @@
     },
     "comments": {
       "heading": "댓글",
-      "notLaunchedYet": "프로젝트가 출시된 후에 댓글을 작성할 수 있습니다.",
+      "notLaunchedYet": "프로젝트가 출시되면 댓글을 사용할 수 있습니다.",
       "placeholder": "댓글 추가...",
       "noComments": "아직 댓글이 없습니다. 첫 번째로 댓글을 남겨보세요!",
       "loading": "댓글 로딩 중...",
@@ -219,7 +219,7 @@
       "cancel": "취소",
       "save": "저장",
       "send": "보내기",
-      "replyingTo": "{name}님에게 답글",
+      "replyingTo": "{name}님에게 답글 작성 중",
       "deleteConfirm": "이 댓글을 삭제하시겠습니까?",
       "deleteSuccess": "댓글이 삭제되었습니다",
       "deleteError": "댓글 삭제에 실패했습니다",
@@ -235,7 +235,7 @@
     }
   },
   "pricing": {
-    "title": "가격 정책",
+    "title": "요금제",
     "subtitle": "런칭에 맞는 요금제를 선택하세요",
     "free": "무료",
     "premium": "프리미엄",
@@ -252,14 +252,14 @@
   },
   "errors": {
     "generic": "문제가 발생했습니다. 다시 시도해 주세요.",
-    "unauthorized": "인증되지 않음",
+    "unauthorized": "권한이 없습니다",
     "notFound": "페이지를 찾을 수 없습니다",
     "rateLimited": "요청이 너무 많습니다. 잠시 기다려 주세요.",
     "serverError": "서버 오류입니다. 나중에 다시 시도해 주세요."
   },
   "friends": {
     "title": "친구들",
-    "subtitle": "웹 곳곳에 있는 친구와 파트너입니다.",
+    "subtitle": "웹 곳곳에 있는 친구 및 파트너입니다.",
     "backToHome": "홈으로 돌아가기",
     "groups": {
       "linuxCommunities": "리눅스 커뮤니티",
@@ -271,18 +271,18 @@
   "metadata": {
     "projects": {
       "title": "프로젝트 — 이번 달 런칭 | aat.ee",
-      "description": "aat.ee에서 이번 달에 런칭된 프로젝트 — 스타트업, AI 도구, SaaS 제품을 둘러보세요."
+      "description": "aat.ee에서 이번 달에 런칭된 프로젝트를 둘러보세요 — 스타트업, AI 도구, SaaS 제품."
     },
     "trending": {
       "title": "트렌딩 — aat.ee",
-      "description": "aat.ee에서 인기 있는 기술 제품, AI 도구, SaaS 런칭을 발견하세요."
+      "description": "aat.ee에서 트렌딩 기술 제품, AI 도구, SaaS 런칭을 발견하세요."
     },
     "categories": {
       "title": "카테고리 — aat.ee",
-      "description": "aat.ee에서 카테고리별 기술 제품을 둘러보세요 — 스타트업, AI 도구, SaaS 앱을 찾아보세요."
+      "description": "aat.ee에서 카테고리별로 기술 제품을 둘러보세요 — 스타트업, AI 도구, SaaS 앱을 찾아보세요."
     },
     "winners": {
-      "title": "일일 우승자 — aat.ee",
+      "title": "데일리 위너 — aat.ee",
       "description": "aat.ee에서 런칭된 최고 순위 제품, 날짜별로 확인하세요."
     },
     "tags": {
@@ -290,24 +290,24 @@
       "description": "aat.ee에서 태그별로 제품을 탐색하세요 — AI, 개발자 도구, 생산성 등."
     },
     "pricing": {
-      "title": "가격 정책 — aat.ee",
-      "description": "aat.ee의 런칭 패키지를 비교하세요 — 무료, 프리미엄, 프리미엄 플러스 등급."
+      "title": "요금제 — aat.ee",
+      "description": "aat.ee의 런칭 패키지를 비교하세요 — 무료, 프리미엄, 프리미엄 플러스."
     },
     "blog": {
       "title": "블로그 — aat.ee",
       "description": "aat.ee 팀의 기사, 런칭 플레이북, 제품 업데이트."
     },
     "badge": {
-      "title": "특별 배지 — aat.ee",
+      "title": "추천 배지 — aat.ee",
       "description": "사이트에 aat.ee 배지를 추가하여 런칭을 자랑하고 SEO 백링크를 얻으세요."
     },
     "sponsors": {
       "title": "스폰서 — aat.ee",
-      "description": "aat.ee를 스폰서하고 메이커, 창업자, 기술 애호가로 구성된 큐레이션된 청중에게 도달하세요."
+      "description": "aat.ee를 스폰서하여 메이커, 창업자, 기술 애호가로 구성된 큐레이션된 오디언스에게 도달하세요."
     },
     "reviews": {
       "title": "제품 리뷰 — aat.ee",
-      "description": "aat.ee에서 최신 기술 제품과 도구에 대한 심층 리뷰 및 분석."
+      "description": "aat.ee에서 최신 기술 제품 및 도구에 대한 심층 리뷰와 분석."
     }
   },
   "breadcrumb": {
@@ -316,22 +316,22 @@
     "trending": "트렌딩",
     "tags": "태그",
     "categories": "카테고리",
-    "winners": "우승자",
-    "pricing": "가격 정책",
+    "winners": "수상작",
+    "pricing": "가격",
     "blog": "블로그",
-    "badge": "특별 배지"
+    "badge": "추천 배지"
   },
   "upvote": {
-    "mustBeLoggedIn": "추천하려면 로그인해야 합니다.",
-    "rateLimited": "안티 스팸팀입니다: {count}개의 추천이 {minutes}분 내에 최대치에 도달했습니다! {seconds}초 후에 다시 시도해주세요.",
-    "minWaitSeconds": "안티 스팸팀입니다: 투표 변경을 위해 {seconds}초를 기다려야 합니다.",
+    "mustBeLoggedIn": "추천하려면 로그인이 필요합니다.",
+    "rateLimited": "안티스팸팀입니다: {count}회 추천({minutes}분 내 최대) 초과! {seconds}초 후 다시 시도하세요.",
+    "minWaitSeconds": "안티스팸팀입니다: 투표 변경을 위해 {seconds}초 대기가 필요합니다.",
     "projectNotFound": "프로젝트를 찾을 수 없습니다.",
-    "notOngoing": "투표는 프로젝트가 오늘 출시되는 동안에만 가능합니다."
+    "notOngoing": "투표는 프로젝트가 오늘 출시 중일 때만 가능합니다."
   },
   "submitProject": {
     "page": {
       "title": "프로젝트 제출",
-      "subtitle": "커뮤니티와 프로젝트를 공유하세요. 아래 세부 정보를 입력해주세요."
+      "subtitle": "커뮤니티에 프로젝트를 공유하세요. 아래에 세부 정보를 입력해 주세요."
     },
     "stepper": {
       "step1": "프로젝트 정보",
@@ -344,13 +344,19 @@
     "step1": {
       "name": {
         "label": "프로젝트 이름",
-        "placeholder": "나의 멋진 프로젝트"
+        "placeholder": "내 멋진 프로젝트"
       },
       "websiteUrl": {
         "label": "웹사이트 URL",
         "placeholder": "https://myawesomeproject.com",
-        "help": "웹사이트 URL을 입력하고 자동 채우기를 클릭하여 양식을 자동으로 작성하세요.",
-        "duplicateWarning": "⚠️ 이 URL은 이미 제출되었습니다. 마지막 단계에서 차단되므로 다른 URL을 사용해주세요."
+        "help": "웹사이트 URL을 입력하고 자동 채우기를 클릭하면 양식이 자동으로 입력됩니다.",
+        "duplicateWarning": "⚠️ 이 URL은 이미 제출되었습니다. 마지막 단계에서 차단되므로 다른 URL을 사용해 주세요."
+      },
+      "tagline": {
+        "label": "태그라인",
+        "optional": "(선택 사항, 60자 이내)",
+        "help": "카드 및 프로젝트 페이지에서 프로젝트 이름 아래에 표시되는 짧은 마케팅 문구입니다.",
+        "placeholder": "예: AI 이미지 생성, 완벽한 텍스트 렌더링"
       },
       "autoFill": {
         "button": "자동 채우기",
@@ -362,7 +368,7 @@
       },
       "description": {
         "label": "설명",
-        "placeholder": "프로젝트를 설명해주세요"
+        "placeholder": "프로젝트 설명"
       },
       "logo": {
         "label": "로고 (최대 1MB)",
@@ -380,26 +386,20 @@
         "add": "제품 이미지 추가",
         "preview": "제품 이미지 미리보기",
         "remove": "제품 이미지 제거"
-      },
-      "tagline": {
-        "label": "태그라인",
-        "optional": "(선택, 60자 이내)",
-        "help": "카드 및 프로젝트 페이지에서 프로젝트 이름 아래에 표시되는 짧은 마케팅 문구입니다.",
-        "placeholder": "예: AI 이미지 생성, 완벽한 텍스트 렌더링"
       }
     },
     "step2": {
       "categories": {
         "label": "카테고리",
-        "counter": "({count}/3 선택됨)",
-        "help": "관련 카테고리를 최대 3개까지 선택하세요.",
+        "counter": "({count}/3개 선택됨)",
+        "help": "관련 카테고리를 최대 3개 선택하세요.",
         "empty": "사용 가능한 카테고리가 없습니다.",
         "loading": "로딩 중..."
       },
       "tags": {
         "label": "제품 태그",
-        "counter": "({count}/10 태그)",
-        "placeholder": "예: ai, saas, 오픈소스, 개발자 도구...",
+        "counter": "({count}/10개 태그)",
+        "placeholder": "예: ai, saas, 오픈소스, 개발자도구...",
         "help": "최대 10개의 태그를 추가하여 사용자가 프로젝트를 찾을 수 있도록 도와주세요. Enter 또는 쉼표로 추가합니다."
       },
       "platforms": {
@@ -408,7 +408,7 @@
         "options": {
           "web": "웹",
           "mobile": "모바일",
-          "desktop": "데스크탑",
+          "desktop": "데스크톱",
           "api": "API",
           "other": "기타"
         }
@@ -437,8 +437,8 @@
         "body": "모든 출시는 {hour}:00 UTC에 진행됩니다. 하루에 출시되는 프로젝트 수는 제한되어 있습니다."
       },
       "badgeCard": {
-        "heading": "🚀 2일 후에 출시하고 싶으신가요?",
-        "body": "대기열을 건너뛰세요! 웹사이트에 배지를 추가하면 몇 주 또는 몇 달을 기다리지 않고 2일 후에 출시할 수 있습니다.",
+        "heading": "🚀 2일 안에 출시하고 싶으신가요?",
+        "body": "대기열을 건너뛰세요! 웹사이트에 배지를 추가하면 몇 주 또는 몇 달을 기다리지 않고 2일 안에 출시할 수 있습니다.",
         "getCode": "배지 코드 받기",
         "verify": "배지 확인",
         "verifying": "확인 중...",
@@ -448,20 +448,20 @@
       },
       "badgeVerified": {
         "heading": "✅ 배지 확인 완료!",
-        "body": "이제 배지 패스트트랙을 이용할 수 있습니다! 아래에서 출시 할당량을 선택하세요."
+        "body": "이제 배지 패스트 트랙을 이용할 수 있습니다! 아래에서 출시 할당량을 선택하세요."
       },
       "quota": {
         "heading": "출시 할당량 선택",
         "free": {
           "name": "무료 할당량",
-          "slots": "하루 {n}개 슬롯",
+          "slots": "일일 {n}개 슬롯",
           "queue": "일반 대기열",
           "dofollow": "상위 3위 또는 배지 시 Dofollow"
         },
         "badge": {
-          "name": "배지 패스트트랙",
-          "tag": "🚀 빠름",
-          "slots": "하루 {n}개 슬롯",
+          "name": "배지 패스트 트랙",
+          "tag": "🚀 패스트",
+          "slots": "일일 {n}개 슬롯",
           "tomorrow": "2일 후 출시!",
           "dofollow": "Dofollow 링크 보장"
         },
@@ -473,7 +473,7 @@
         "selected": "선택됨",
         "free": {
           "name": "무료 출시",
-          "slotsLabel": "하루 {n}개 슬롯",
+          "slotsLabel": "일일 {n}개 슬롯",
           "scheduling": "최대 {n}일 예약 가능",
           "dofollowConditional": "Dofollow 백링크 조건:",
           "topRanking": "1. 일일 순위 상위 3위",
@@ -483,25 +483,25 @@
           "name": "프리미엄 출시",
           "skipQueue": "무료 대기열 건너뛰기",
           "guaranteedDofollow": "Dofollow 백링크 보장 (DR {dr})",
-          "slotsLabel": "하루 {n}개 프리미엄 슬롯",
+          "slotsLabel": "일일 {n}개 프리미엄 슬롯",
           "scheduling": "최대 {n}일 예약 가능"
         }
       },
       "date": {
         "label": "출시 날짜",
         "loading": "가능한 날짜를 불러오는 중...",
-        "empty": "선택한 유형에 대해 허용 범위 내에서 사용 가능한 출시 날짜가 없습니다.",
+        "empty": "선택한 유형에 대해 허용된 범위 내에서 사용 가능한 출시 날짜가 없습니다.",
         "placeholder": "출시 날짜 선택",
-        "slotsAvailable": "{n}개 {type} 슬롯",
+        "slotsAvailable": "{n}개의 {type} 슬롯",
         "slotTypeFree": "무료",
         "slotTypeBadge": "배지",
         "slotTypePremium": "프리미엄",
-        "crowdednessTooltip": "이미 {n}개 프로젝트가 예약됨",
+        "crowdednessTooltip": "이미 {n}개의 프로젝트가 예약됨",
         "scheduledFor": "예약 날짜",
-        "noDate": "선택된 날짜 없음"
+        "noDate": "날짜를 선택하지 않음"
       },
       "premiumUpsell": {
-        "heading": "프리미엄으로 {days, plural, one {#일} other {#일}} 더 일찍 출시하세요!",
+        "heading": "프리미엄으로 {days, plural, one {#일} other {#일}} 먼저 출시하세요!",
         "body": "{date}부터 이용 가능 • DR{dr} 백링크 보장 • 대기열 건너뛰기",
         "button": "프리미엄으로 업그레이드 ${price}"
       }
@@ -526,10 +526,10 @@
       },
       "logoAlt": "업로드된 로고",
       "productImageAlt": "제품 이미지",
-      "premiumPriceLabel": "프리미엄 런칭 (${price})",
+      "premiumPriceLabel": "프리미엄 출시 (${price})",
       "readyToSubmit": {
         "heading": "제출할 준비가 되셨나요?",
-        "body": "모든 정보를 신중히 검토해 주세요. 제출 후 프로젝트는 런칭 일정에 등록됩니다.",
+        "body": "모든 정보를 신중히 검토해 주세요. 제출 후 프로젝트는 출시 일정에 등록됩니다.",
         "paymentRedirect": "제출 후 결제 페이지로 이동합니다."
       }
     },
@@ -540,30 +540,30 @@
     },
     "errors": {
       "fields": {
-        "nameRequired": "프로젝트 이름은 필수입니다.",
-        "websiteUrlRequired": "웹사이트 URL은 필수입니다.",
+        "nameRequired": "프로젝트 이름은 필수입니다",
+        "websiteUrlRequired": "웹사이트 URL은 필수입니다",
         "websiteUrlInvalid": "올바른 URL을 입력해 주세요 (https://...)",
         "websiteUrlInvalidQuick": "먼저 올바른 URL을 입력해 주세요",
-        "websiteUrlDuplicate": "이 URL은 이미 제출되었습니다.",
-        "descriptionRequired": "설명은 필수입니다.",
-        "logoRequired": "로고는 필수입니다.",
+        "websiteUrlDuplicate": "이 URL은 이미 제출되었습니다",
+        "descriptionRequired": "설명은 필수입니다",
+        "taglineTooLong": "태그라인은 60자 이하여야 합니다",
+        "logoRequired": "로고는 필수입니다",
         "logoUploadFailedNoUrl": "로고 업로드 실패: URL이 반환되지 않았습니다.",
         "logoUploadFailed": "로고 업로드 실패: {message}",
-        "categoriesMin": "최소 하나의 카테고리를 선택해 주세요.",
-        "categoriesMax": "최대 3개의 카테고리까지 선택 가능합니다.",
-        "techStackMin": "최소 하나의 태그를 추가해 주세요.",
-        "techStackMax": "최대 10개의 태그까지 추가 가능합니다.",
-        "platformsMin": "최소 하나의 플랫폼을 선택해 주세요.",
-        "pricingRequired": "가격 정책을 선택해 주세요.",
-        "scheduledDateRequired": "런칭 날짜를 선택해 주세요.",
-        "scheduledDateOverLimit": "이 날짜는 일일 런칭 한도를 초과합니다.",
-        "scheduledDateOverLimitDetail": "이 날짜에 이미 {count}/{limit}개의 프로젝트가 예약되어 있습니다. 다른 날짜를 선택해 주세요.",
-        "scheduledDateCheckFailed": "런칭 날짜 한도를 확인할 수 없습니다. 다시 시도해 주세요.",
-        "taglineTooLong": "태그라인은 60자 이하여야 합니다"
+        "categoriesMin": "최소 하나의 카테고리를 선택해 주세요",
+        "categoriesMax": "최대 3개의 카테고리",
+        "techStackMin": "최소 하나의 태그를 추가해 주세요",
+        "techStackMax": "최대 10개의 태그",
+        "platformsMin": "최소 하나의 플랫폼을 선택해 주세요",
+        "pricingRequired": "가격 정책을 선택해 주세요",
+        "scheduledDateRequired": "출시 날짜를 선택해 주세요",
+        "scheduledDateOverLimit": "이 날짜는 일일 출시 한도를 초과합니다",
+        "scheduledDateOverLimitDetail": "이 날짜에 이미 {count}/{limit}개의 프로젝트를 예약했습니다. 다른 날짜를 선택해 주세요.",
+        "scheduledDateCheckFailed": "출시 날짜 한도를 확인할 수 없습니다. 다시 시도해 주세요."
       },
       "form": {
-        "loadCategoriesFailed": "카테고리를 불러오지 못했습니다.",
-        "loadDatesFailed": "사용 가능한 날짜를 불러오지 못했습니다.",
+        "loadCategoriesFailed": "카테고리를 불러오지 못했습니다",
+        "loadDatesFailed": "사용 가능한 날짜를 불러오지 못했습니다",
         "productImageUploadFailedNoUrl": "제품 이미지 업로드 실패: URL이 반환되지 않았습니다.",
         "productImageUploadFailed": "제품 이미지 업로드 실패: {message}",
         "autoFillFailed": "자동 채우기에 실패했습니다. 다시 시도해 주세요.",
@@ -572,163 +572,232 @@
       }
     },
     "toast": {
-      "draftRestored": "저장되지 않은 임시 저장본을 복구했습니다."
+      "draftRestored": "저장되지 않은 임시 저장본을 복원했습니다"
+    }
+  },
+  "dashboardBoost": {
+    "button": "리스트 부스트",
+    "redirecting": "리디렉션 중…",
+    "pickTier": "티어 선택",
+    "manageSubscription": "구독 관리",
+    "ultraSlotsFull": "5개 스폰서 슬롯이 모두 마감 — 다음 달에 다시 시도하세요",
+    "tiers": {
+      "basic": {
+        "label": "기본",
+        "sublabel": "1개 사이트 · aat.ee"
+      },
+      "plus": {
+        "label": "플러스",
+        "sublabel": "4개 사이트"
+      },
+      "pro": {
+        "label": "프로",
+        "sublabel": "12개 사이트 · 가장 인기"
+      },
+      "ultra": {
+        "label": "울트라",
+        "sublabel": "스폰서 슬롯 · 월간"
+      }
+    },
+    "errors": {
+      "checkoutFailed": "결제 시작 실패",
+      "portalFailed": "구독 포털 열기 실패"
     }
   },
   "pricingDirectories": {
     "metadata": {
-      "title": "Get Listed — Directory Pricing | aat.ee",
-      "description": "Skip the queue, get a guaranteed dofollow link, and feature your project across our directory network: aat.ee + 11 partner sites."
+      "title": "등록하기 — 디렉토리 가격 | aat.ee",
+      "description": "대기열을 건너뛰고, 보장된 dofollow 링크를 받고, aat.ee + 11개 파트너 사이트로 구성된 디렉토리 네트워크에서 프로젝트를 소개하세요."
     },
     "hero": {
-      "kicker": "Directory listings",
-      "heading": "Get your product seen across our directory network",
-      "subheading": "Skip the queue. Earn dofollow backlinks. Reach makers and early adopters across {n}+ curated sites with combined 700k+ monthly visitors.",
-      "limited": "Launch pricing — discounts shrink as our DR & traffic grow."
+      "kicker": "디렉토리 등록",
+      "heading": "당신의 <rotate>제품</rotate>을 <accent>디렉토리 네트워크</accent>에서 알리세요",
+      "headingRotateWords": {
+        "0": "제품",
+        "1": "웹사이트",
+        "2": "SaaS",
+        "3": "앱",
+        "4": "도구"
+      },
+      "subheading": "대기열을 건너뛰세요. dofollow 백링크를 얻으세요. <num>{n}+</num>개의 엄선된 사이트에서 메이커와 얼리어답터에게 도달하세요. 월간 방문자 <num>70만+</num>명.",
+      "limited": "런칭 가격 — DR과 트래픽이 증가함에 따라 할인이 줄어듭니다.",
+      "outcomes": {
+        "kicker": "실제로 움직일 것",
+        "trafficTitle": "실제 추천 트래픽",
+        "trafficDesc": "70만+ 월간 독자(메이커, 창업자, 얼리어답터)의 방문 — 실제로 클릭하는 사람들입니다.",
+        "drTitle": "자연스러운 Domain Rating 상승",
+        "drDesc": "고DR, 중DR, 저DR 사이트의 균형 잡힌 조합으로 자연스러운 백링크 프로필을 구축하여 DR이 스팸처럼 보이지 않고 부드럽게 상승합니다.",
+        "seoTitle": "더 나은 Google 색인",
+        "seoDesc": "실제 색인된 도메인이 검색 엔진에 크롤 신호를 전달합니다. URL이 0에서 시작하는 대신 신뢰할 수 있는 사이트를 통해 발견됩니다.",
+        "aieoTitle": "AI 검색 가시성",
+        "aieoDesc": "사용자가 카테고리에 대해 질문할 때 ChatGPT, Perplexity, Claude, Gemini에서 인용됩니다. GEO/AIEO 준비 완료."
+      }
     },
     "tiers": {
+      "priceScope": "URL당 · 일회성",
       "basic": {
-        "name": "Basic",
-        "price": "$6.99",
+        "name": "기본",
+        "price": "$3.99",
         "originalPrice": "$9.99",
-        "tagline": "Skip the queue on aat.ee.",
-        "description": "Get featured on aat.ee with a dofollow link. Your project also surfaces on related-product carousels, comparison pages, and alternatives pages — multiple discoverable touchpoints.",
-        "cta": "Get Basic",
+        "tagline": "aat.ee에서 대기열을 건너뛰세요.",
+        "reach": "<n>1개 사이트</n> · 월 8만+ 방문",
+        "description": "aat.ee에 dofollow 링크와 함께 소개됩니다. 프로젝트는 관련 제품 캐러셀, 비교 페이지, 대안 페이지에도 표시되어 여러 발견 지점을 제공합니다.",
+        "cta": "기본 시작",
         "features": {
-          "skipQueue": "Skip the launch queue (no badge required)",
-          "dofollow": "Guaranteed dofollow backlink",
-          "site": "Listed on aat.ee",
-          "extra": "Bonus: appears in similar-product, compare, and alternatives pages",
-          "delivery": "Live within 1 business day (auto-published)"
+          "skipQueue": "런칭 대기열 건너뛰기 (배지 불필요)",
+          "dofollow": "보장된 dofollow 백링크",
+          "site": "aat.ee에 등록",
+          "extra": "보너스: 유사 제품, 비교, 대안 페이지에 표시",
+          "delivery": "1영업일 이내 게시 (자동 게시)"
         }
       },
       "plus": {
-        "name": "Plus",
-        "price": "$9.99",
+        "name": "플러스",
+        "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "Reach 4 directories at once.",
-        "description": "Everything in Basic, plus listings on HiCyou, MF8.BIZ, and BigKr. Combined network does 10,000+ Google clicks every 30 days and serves 300k+ monthly visitors.",
-        "cta": "Get Plus",
+        "tagline": "4개 디렉토리에 동시 도달.",
+        "reach": "<n>4개 사이트</n> · 월 30만+ 방문",
+        "description": "기본의 모든 기능에 더해 HiCyou, MF8.BIZ, BigKr에 등록됩니다. 결합 네트워크는 30일마다 10,000회 이상의 Google 클릭을 발생시키고 월 30만+ 방문자를 제공합니다.",
+        "cta": "플러스 시작",
         "features": {
-          "everything": "Everything in Basic",
-          "fourSites": "Listed on aat.ee, HiCyou, MF8.BIZ, BigKr",
-          "dofollowAll": "Dofollow backlink from every site",
-          "stats": "10,000+ Google clicks / 30 days · 300k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "기본의 모든 기능",
+          "fourSites": "디렉토리 네트워크의 4개 사이트에 등록",
+          "dofollowAll": "모든 사이트에서 dofollow 백링크",
+          "stats": "1만+ Google 클릭 · 월 30만+ 트래픽",
+          "delivery": "aat.ee 1일 내 게시 · 기타 3일 내 게시"
         }
       },
       "pro": {
-        "name": "Pro",
-        "price": "$16.99",
+        "name": "프로",
+        "price": "$15.99",
         "originalPrice": "$39.99",
-        "badge": "Most popular",
-        "tagline": "Authority links from 8 documentation sites.",
-        "description": "Everything in Plus, plus friend-link placements on 8 high-authority documentation sites — strengthens GEO/AIEO recommendations and pushes your domain rating up. Combined network: 30,000+ Google clicks / 30 days, 700k+ monthly traffic.",
-        "cta": "Get Pro",
+        "badge": "가장 인기",
+        "tagline": "8개 문서 사이트의 권위 링크.",
+        "reach": "<n>12개 사이트</n> · 월 70만+ 방문",
+        "overflowLabel": "+ {n}개 사이트",
+        "overflowTooltip": "이 등급의 추가 사이트",
+        "description": "Plus의 모든 기능에 더해, 권위 있는 문서 사이트 8곳에 친구 링크 배치 — GEO/AIEO 추천을 강화하고 도메인 평판을 높입니다. 통합 네트워크: 30일 기준 Google 클릭 30,000회 이상, 월 트래픽 70만 이상.",
+        "cta": "Pro 시작하기",
         "features": {
-          "everything": "Everything in Plus",
-          "docsSites": "Friend-links on 8 docs sites: Debian Club, Ubuntu.fan, AlmaLinux, Run-EnTLinux, EOL.wiki, Rank.fan, LiteHttpd, PortcYou",
-          "geo": "Boosts GEO/AIEO authority signals for AI-powered search",
-          "stats": "30,000+ Google clicks / 30 days · 700k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "Plus의 모든 기능",
+          "docsSites": "높은 DR 문서 사이트 8곳에 친구 링크",
+          "geo": "AI 검색을 위한 GEO/AIEO 신호 강화",
+          "stats": "Google 클릭 3만+ · 월 트래픽 70만+",
+          "delivery": "aat.ee 1일 내 · 기타 3일 내 게재"
         }
       },
       "ultra": {
         "name": "Ultra",
-        "subtitle": "Sponsorship",
-        "price": "$69.99",
-        "priceSuffix": "/month",
-        "tagline": "Permanent sidebar visibility, every page, every visit.",
-        "description": "Subscription. Includes everything in Pro, plus your sponsor card in the right sidebar of every aat.ee and HiCyou page — so every visitor sees your brand, on every project, every comparison, every alternative.",
-        "limit": "Limited to 5 active sponsors at any time.",
-        "cta": "Subscribe to Ultra",
+        "subtitle": "스폰서십",
+        "price": "$19.99",
+        "priceSuffix": "/월",
+        "tagline": "모든 페이지, 모든 방문에서 영구적인 사이드바 노출.",
+        "description": "구독형. Pro의 모든 기능에 더해, aat.ee 및 HiCyou의 모든 페이지 오른쪽 사이드바에 스폰서 카드가 표시됩니다 — 모든 방문자가 모든 프로젝트, 비교, 대안 페이지에서 귀하의 브랜드를 볼 수 있습니다.",
+        "limit": "동시에 최대 5명의 활성 스폰서로 제한됩니다.",
+        "cta": "Ultra 구독하기",
         "features": {
-          "everything": "Everything in Pro (delivered automatically)",
-          "sidebar": "Sponsor card on every aat.ee + HiCyou page",
-          "exclusive": "Maximum 5 sponsors at any time",
-          "cancel": "Cancel anytime — pro-rated billing"
+          "everything": "Pro의 모든 기능 (자동 제공)",
+          "sidebar": "모든 aat.ee + HiCyou 페이지에 스폰서 카드",
+          "exclusive": "동시 최대 5명의 스폰서",
+          "cancel": "언제든지 취소 가능 — 비례 청구"
         }
       }
     },
     "stats": {
-      "heading": "What you're buying access to",
-      "domainRating": "Domain Rating",
-      "trafficLine": "Combined monthly traffic",
-      "clicksLine": "30-day Google search clicks",
-      "trafficValue": "700k+",
+      "heading": "구매 시 이용할 수 있는 혜택",
+      "domainRating": "도메인 평판",
+      "trafficLine": "통합 월 트래픽",
+      "clicksLine": "30일 Google 검색 클릭",
+      "trafficValue": "70만+",
       "clicksValue": "30,000+",
-      "trafficNote": "Across all 12 sites. Numbers grow each month — that's also why discount prices won't last.",
-      "drCardTitle": "Live Domain Ratings",
-      "drCardSubtitle": "Refreshed every 3 days from Ahrefs.",
-      "drDisclaimer": "Domain Rating values are pulled directly from Ahrefs and updated every 3 days. Higher DR sites pass more SEO authority through their dofollow links."
+      "sitesLine": "네트워크 사이트",
+      "sitesValue": "12+",
+      "sitesNote": "4개 디렉토리 + 8개 문서 사이트에 걸쳐 있습니다. 결합된 노출은 복합적으로 증가하며, 각 새 도메인이 네트워크의 권위 기준을 높입니다.",
+      "trafficNote": "12개 사이트 전체 기준. 매월 숫자가 증가합니다 — 따라서 할인 가격이 오래 지속되지 않습니다.",
+      "clicksNote": "지난 30일간 네트워크 전체의 유기적 Google 클릭 수입니다.",
+      "drCardTitle": "실시간 도메인 평판",
+      "drCardSubtitle": "Ahrefs에서 3일마다 업데이트됩니다.",
+      "drDisclaimer": "도메인 평판 값은 Ahrefs에서 직접 가져오며 3일마다 업데이트됩니다. DR이 높은 사이트는 dofollow 링크를 통해 더 많은 SEO 권위를 전달합니다."
+    },
+    "priceNotice": "런칭 가격 — 네트워크의 트래픽, DR, GEO/AIEO 점수가 상승함에 따라 이 할인 가격은 인상됩니다. 오늘의 요금을 확정하세요.",
+    "promoCode": {
+      "label": "테스트 단계 한정 프로모",
+      "headline": "첫 구매 15% 할인",
+      "subtext": "신규 사용자 전용 · Stripe 결제 페이지에서 입력",
+      "warning": "테스트 단계 특별 혜택 — 언제든지 종료될 수 있습니다. 서둘러 사용하세요.",
+      "copy": "복사",
+      "copied": "복사됨"
     },
     "comparison": {
-      "heading": "Compare tiers side by side",
+      "heading": "등급별 비교",
       "rows": {
-        "sites": "Sites listed on",
-        "skipQueue": "Skip the queue",
-        "dofollow": "Dofollow link",
-        "extraPages": "Featured on compare/alternatives pages",
-        "docsLinks": "Friend-links on docs sites",
-        "sidebarAd": "Sponsor sidebar ad",
-        "monthlyTraffic": "Combined monthly traffic",
-        "googleClicks": "30-day Google clicks",
-        "delivery": "Delivery time",
-        "billing": "Billing"
+        "sites": "등재 사이트",
+        "skipQueue": "대기열 건너뛰기",
+        "dofollow": "Dofollow 링크",
+        "extraPages": "비교/대안 페이지에 노출",
+        "docsLinks": "문서 사이트 친구 링크",
+        "sidebarAd": "스폰서 사이드바 광고",
+        "monthlyTraffic": "통합 월 트래픽",
+        "googleClicks": "30일 Google 클릭",
+        "delivery": "게재 시간",
+        "urlScope": "URL 범위",
+        "billing": "결제 방식"
       },
       "values": {
-        "yes": "Yes",
+        "yes": "있음",
         "no": "—",
-        "basicSites": "1 site (aat.ee)",
-        "plusSites": "4 sites",
-        "proSites": "12 sites",
-        "ultraSites": "12 sites + sidebar",
-        "basicTraffic": "~50k/mo",
-        "plusTraffic": "300k+/mo",
-        "proTraffic": "700k+/mo",
-        "ultraTraffic": "700k+/mo",
-        "basicClicks": "~3k/30d",
-        "plusClicks": "10k+/30d",
-        "proClicks": "30k+/30d",
-        "ultraClicks": "30k+/30d",
-        "auto1d": "1 business day",
-        "manual3d": "Up to 3 business days",
-        "subscription": "$69.99/month",
-        "oneOff": "One-time"
+        "basicSites": "1개 사이트 (aat.ee)",
+        "plusSites": "4개 사이트",
+        "proSites": "12개 사이트",
+        "ultraSites": "12개 사이트 + 사이드바",
+        "basicTraffic": "월 약 5만",
+        "plusTraffic": "월 30만+",
+        "proTraffic": "월 70만+",
+        "ultraTraffic": "월 70만+",
+        "basicClicks": "30일 약 3천",
+        "plusClicks": "10k+/30일",
+        "proClicks": "30k+/30일",
+        "ultraClicks": "30k+/30일",
+        "auto1d": "1영업일",
+        "manual3d": "최대 3영업일",
+        "oneUrl": "1개 URL",
+        "sponsorSlot": "스폰서 슬롯",
+        "subscription": "월 $69.99",
+        "oneOff": "일회성"
       }
     },
     "faq": {
-      "heading": "Frequently asked questions",
+      "heading": "자주 묻는 질문",
       "items": {
         "discount": {
-          "q": "Why are these prices discounted?",
-          "a": "We're scaling our directory network's authority. As our DR rises and traffic grows month over month, the value of a listing increases — so the discount price you see today won't be available in 3 months. Lock in the rate now."
+          "q": "이 가격들은 왜 할인된 건가요?",
+          "a": "저희 디렉토리 네트워크의 권위를 높이고 있습니다. DR이 상승하고 트래픽이 매달 증가함에 따라 리스팅의 가치도 올라갑니다. 따라서 오늘 보시는 할인 가격은 3개월 후에는 유효하지 않을 수 있습니다. 지금 요금을 확정하세요."
         },
         "delivery": {
-          "q": "How fast is delivery?",
-          "a": "aat.ee is automated — your listing goes live within 1 business day after payment. The other 11 sites are added manually within 3 business days. We'll email you when each placement is live."
+          "q": "배송은 얼마나 빠른가요?",
+          "a": "aat.ee는 자동화되어 있어 결제 후 1영업일 이내에 리스팅이 게시됩니다. 나머지 11개 사이트는 수동으로 추가되며 3영업일 이내에 완료됩니다. 각 배치가 게시될 때 이메일로 알려드립니다."
         },
         "retention": {
-          "q": "How long do the links stay up?",
-          "a": "All links and listings are intended to be permanent. We do not auto-expire one-time tier purchases. Sites we no longer operate may go offline in the future, but we'll email you in that rare case."
+          "q": "링크는 얼마나 오래 유지되나요?",
+          "a": "모든 링크와 리스팅은 영구적으로 유지됩니다. 일회성 티어 구매는 자동으로 만료되지 않습니다. 더 이상 운영하지 않는 사이트는 향후 오프라인이 될 수 있지만, 드문 경우에 이메일로 알려드리겠습니다."
         },
         "upgrade": {
-          "q": "Can I upgrade tiers later?",
-          "a": "Yes. Email us within 30 days of your purchase and we'll credit what you already paid toward the higher tier. After 30 days, you can buy the upgrade at the current rate."
+          "q": "나중에 티어를 업그레이드할 수 있나요?",
+          "a": "네. 구매 후 30일 이내에 이메일을 보내주시면 이미 지불한 금액을 상위 티어에 크레딧으로 적용해 드립니다. 30일 이후에는 현재 요금으로 업그레이드를 구매하실 수 있습니다."
         },
         "refund": {
-          "q": "What's the refund policy?",
-          "a": "If we haven't yet placed your listing, full refund — just email us. After placement, we don't offer refunds since the link equity has been transferred. Ultra subscribers can cancel anytime; we pro-rate the unused portion of the current month."
+          "q": "환불 정책은 어떻게 되나요?",
+          "a": "아직 리스팅이 배치되지 않은 경우, 이메일을 보내주시면 전액 환불해 드립니다. 배치 후에는 링크 자산이 이미 이전되었으므로 환불이 불가능합니다. Ultra 구독자는 언제든지 취소할 수 있으며, 해당 월의 사용하지 않은 부분에 대해 비례하여 환불해 드립니다."
         },
         "multiple": {
-          "q": "Can I buy listings for multiple projects?",
-          "a": "Yes — each project is a separate purchase. We don't currently offer bundled discounts, but heavy users should email us directly."
+          "q": "여러 프로젝트에 대해 리스팅을 구매할 수 있나요?",
+          "a": "네, 각 프로젝트는 별도 구매입니다. 현재 번들 할인은 제공하지 않지만, 많이 이용하시는 분은 저희에게 직접 이메일을 보내주세요."
         }
       }
     },
     "footer": {
-      "heading": "Ready to skip the queue?",
-      "body": "Pick a tier above and submit your project. Manual placements start within 1 business day."
+      "heading": "대기열을 건너뛸 준비가 되셨나요?",
+      "body": "위에서 티어를 선택하고 프로젝트를 제출하세요. 수동 배치는 1영업일 이내에 시작됩니다."
     }
   }
 }

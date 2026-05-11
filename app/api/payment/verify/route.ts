@@ -6,7 +6,11 @@ import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/sch
 import { and, eq, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// Pinned to the SDK's latest known API version — see
+// `app/api/auth/stripe/webhook/route.ts` for the rationale.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-02-24.acacia",
+})
 
 export async function GET(request: Request) {
   try {

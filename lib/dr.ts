@@ -9,11 +9,20 @@ import { eq, inArray } from "drizzle-orm"
  * Adding a domain: append to the right tier and the cron picks it up
  * on the next run (every 3 days). DRs ship as null until first fetch.
  */
-export const DR_DOMAINS_BASIC = ["aat.ee"] as const
+// Typed as `readonly string[]` (not narrow tuple literals) so callers
+// can `.includes(someString)` without casting. The arrays themselves
+// are still frozen at runtime via the `as const` assertion in the
+// initialiser.
+export const DR_DOMAINS_BASIC: readonly string[] = ["aat.ee"] as const
 
-export const DR_DOMAINS_PLUS = [...DR_DOMAINS_BASIC, "hicyou.com", "mf8.biz", "bigkr.com"] as const
+export const DR_DOMAINS_PLUS: readonly string[] = [
+  ...DR_DOMAINS_BASIC,
+  "hicyou.com",
+  "mf8.biz",
+  "bigkr.com",
+] as const
 
-export const DR_DOMAINS_PRO = [
+export const DR_DOMAINS_PRO: readonly string[] = [
   ...DR_DOMAINS_PLUS,
   "debian.club",
   "ubuntu.fan",
@@ -26,6 +35,16 @@ export const DR_DOMAINS_PRO = [
 ] as const
 
 export const ALL_TRACKED_DOMAINS = DR_DOMAINS_PRO
+
+// Three docs sites we feature inline on the Pro tier card. The other
+// nine sites (4 directories + 5 docs) live in a hover-revealed
+// overflow pill so the card stays scannable. Keep this list in sync
+// with what the marketing copy on the page shows.
+export const DR_DOMAINS_PRO_PREVIEW: readonly string[] = [
+  "debian.club",
+  "portcyou.com",
+  "rank.fan",
+] as const
 
 // A DR value is considered fresh for this many ms. Past this it
 // still renders (with a "Updated X days ago" hint) but the cron

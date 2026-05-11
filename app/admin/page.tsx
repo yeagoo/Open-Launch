@@ -272,11 +272,11 @@ export default function AdminDashboard() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => router.push("/admin/promo-codes")}
+            onClick={() => router.push("/admin/directory-orders")}
             className="h-8 gap-2"
           >
-            <Tag className="h-4 w-4" />
-            <span className="hidden sm:inline">Promo Codes</span>
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Directory Orders</span>
           </Button>
           <Button
             size="sm"
