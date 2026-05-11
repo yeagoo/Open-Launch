@@ -4,6 +4,8 @@ import { db } from "@/drizzle/db"
 import { launchStatus, project as projectTable } from "@/drizzle/db/schema"
 import { and, eq, sql } from "drizzle-orm"
 
+import { countInt } from "@/lib/db-utils"
+
 // Récupérer les projets gagnants pour une date spécifique
 export async function getWinnersByDate(date: Date) {
   // Créer le début et la fin de la journée
@@ -48,7 +50,7 @@ export async function dateHasWinners(date: Date) {
 
   const result = await db
     .select({
-      count: sql<number>`count(*)`.mapWith(Number),
+      count: countInt(),
     })
     .from(projectTable)
     .where(

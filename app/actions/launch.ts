@@ -23,6 +23,7 @@ import {
   LAUNCH_TYPES,
   USER_DAILY_LAUNCH_LIMIT,
 } from "@/lib/constants"
+import { countInt } from "@/lib/db-utils"
 
 async function getSession() {
   return auth.api.getSession({ headers: await headers() })
@@ -49,15 +50,15 @@ export async function getLaunchAvailability(date: string): Promise<LaunchAvailab
   // Obtenir le nombre de lancements déjà programmés pour cette date
   const scheduledLaunches = await db
     .select({
-      // `::int` casts the BIGINT count to int4 so pg/Drizzle hands
-      // back a JS number, not a string. Without it, the arithmetic
-      // below silently turns into string concatenation:
-      //   `10 - ("0" + "5" + "0")` → `10 - "050"` → -40 → max(0, -40) = 0
-      // and every date renders as "0 premium slots available".
-      freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})::int`,
-      badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')::int`,
-      premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})::int`,
-      totalCount: sql<number>`count(*)::int`,
+      // `countInt` casts BIGINT → int4 so pg returns a JS number,
+      // not a string. See `lib/db-utils.ts` for the rationale —
+      // without the cast, `premiumSlots` math below would silently
+      // turn into string concatenation and every date would render
+      // as "0 slots available".
+      freeCount: countInt(sql`${projectTable.launchType} = ${launchType.FREE}`),
+      badgeCount: countInt(sql`${projectTable.launchType} = 'free_with_badge'`),
+      premiumCount: countInt(sql`${projectTable.launchType} = ${launchType.PREMIUM}`),
+      totalCount: countInt(),
     })
     .from(projectTable)
     .where(
@@ -313,10 +314,10 @@ export async function scheduleLaunch(
       const dayEnd = addDays(dayStart, 1)
       const [counts] = await tx
         .select({
-          freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})::int`,
-          badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')::int`,
-          premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})::int`,
-          total: sql<number>`count(*)::int`,
+          freeCount: countInt(sql`${projectTable.launchType} = ${launchType.FREE}`),
+          badgeCount: countInt(sql`${projectTable.launchType} = 'free_with_badge'`),
+          premiumCount: countInt(sql`${projectTable.launchType} = ${launchType.PREMIUM}`),
+          total: countInt(),
         })
         .from(projectTable)
         .where(
