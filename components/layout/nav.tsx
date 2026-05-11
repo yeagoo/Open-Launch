@@ -5,7 +5,6 @@ import { Link } from "@/i18n/navigation"
 import {
   RiDashboardLine,
   RiFlashlightLine,
-  RiHandCoinLine,
   RiHomeLine,
   RiLayoutGridLine,
   RiLoginBoxLine,
@@ -191,15 +190,6 @@ export default async function Nav() {
                           >
                             <RiFlashlightLine className="text-muted-foreground h-4 w-4" />
                             <span>{t("fastTrack")}</span>
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link
-                            href="/sponsors"
-                            className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
-                          >
-                            <RiHandCoinLine className="text-muted-foreground h-4 w-4" />
-                            <span>{t("sponsors")}</span>
                           </Link>
                         </SheetClose>
                         <SheetClose asChild>
