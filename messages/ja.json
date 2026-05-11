@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "あなたの製品のローンチプラットフォーム",
-      "subtitle": "投稿して、バッジとバックリンクを獲得"
+      "subtitle": "投稿して、バッジとバックリンクを獲得",
+      "directoriesTitle": "わずか $6.99 で 4 つの高品質ディレクトリに掲載",
+      "submitButton": "プロジェクトを投稿",
+      "freeBadge": "無料",
+      "promoCodeLabel": "プロモコード",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "期間限定オファー"
     },
     "sections": {
       "todayTitle": "本日ローンチされたトッププロジェクト",

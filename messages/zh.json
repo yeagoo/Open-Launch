@@ -70,7 +70,13 @@
     },
     "banner": {
       "title": "您的产品发布平台",
-      "subtitle": "提交产品，获取徽章和反向链接"
+      "subtitle": "提交产品，获取徽章和反向链接",
+      "directoriesTitle": "仅需 $6.99 即可将网站发布到 4 个高质量目录",
+      "submitButton": "提交您的项目",
+      "freeBadge": "免费",
+      "promoCodeLabel": "优惠码",
+      "promoCodeValue": "AAT15",
+      "promoCodeHint": "限时优惠"
     },
     "sections": {
       "todayTitle": "今日热门项目",
