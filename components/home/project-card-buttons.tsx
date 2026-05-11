@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 
-import { launchStatus as launchStatusEnum } from "@/drizzle/db/schema"
 import { RiMessage2Line, RiThumbUpLine } from "@remixicon/react"
 
+import { launchStatus as launchStatusEnum } from "@/lib/project-enums"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { UpvoteButton } from "@/components/project/upvote-button"
 

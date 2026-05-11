@@ -3,11 +3,11 @@
 
 import { useEffect, useId, useState } from "react"
 
-import { platformType, pricingType } from "@/drizzle/db/schema"
 import { RiCheckLine, RiCloseCircleLine, RiCloseLine, RiLoader4Line } from "@remixicon/react"
 import { Tag, TagInput } from "emblor"
 import { toast } from "sonner"
 
+import { platformType, pricingType } from "@/lib/project-enums"
 import { UploadButton } from "@/lib/r2-upload"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"

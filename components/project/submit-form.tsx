@@ -5,7 +5,6 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
-import { platformType, pricingType } from "@/drizzle/db/schema"
 import { routing } from "@/i18n/routing"
 import {
   RiArrowLeftLine,
@@ -50,6 +49,7 @@ import {
   type DRRecord,
 } from "@/lib/dr-domains"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
+import { platformType, pricingType } from "@/lib/project-enums"
 import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
