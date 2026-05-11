@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { getDRBatch } from "@/lib/dr"
 import { localizeProjectDescriptionGroups } from "@/lib/get-project-translation"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
 import { cn } from "@/lib/utils"
@@ -37,12 +38,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   // 4 reads in parallel. The 3 listing calls are wrapped in
   // `unstable_cache` so the bulk of the work is cached; the
   // user-upvotes augmentation inside each runs per request.
-  const [todayRaw, yesterdayRaw, monthRaw, topCategories] = await Promise.all([
+  const [todayRaw, yesterdayRaw, monthRaw, topCategories, bannerDr] = await Promise.all([
     getTodayProjects(),
     getYesterdayProjects(),
     getMonthBestProjects(),
     getTopCategories(5),
+    getDRBatch(["aat.ee", "hicyou.com", "bigkr.com", "mf8.biz"] as const),
   ])
+  const drByDomain = new Map(bannerDr.map((r) => [r.domain, r.dr]))
   // Single DB round-trip for translations across all 3 lists —
   // previously this was 3 separate `localizeProjectDescriptions`
   // calls (3 extra round-trips per home render).
@@ -154,30 +157,39 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-6">
                     <div className="flex items-center gap-3 sm:gap-4">
                       {[
-                        { name: "aat.ee", logo: "/logo.svg", dr: 36 },
+                        { name: "aat.ee", domain: "aat.ee", logo: "/logo.svg" },
                         {
                           name: "Hi Cyou",
+                          domain: "hicyou.com",
                           logo: "https://hicyou.com/favicon/favicon.svg",
-                          dr: 28,
                         },
-                        { name: "BigKr", logo: "https://bigkr.com/logo.svg", dr: 32 },
-                        { name: "MF8", logo: "https://www.mf8.biz/logo.svg", dr: 42 },
-                      ].map((d) => (
-                        <div key={d.name} className="relative">
-                          <div className="bg-background border-border/60 flex h-12 w-12 items-center justify-center rounded-md border p-2 md:h-14 md:w-14">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={d.logo}
-                              alt={d.name}
-                              loading="lazy"
-                              className="h-full w-full object-contain"
-                            />
+                        {
+                          name: "BigKr",
+                          domain: "bigkr.com",
+                          logo: "https://bigkr.com/logo.svg",
+                        },
+                        { name: "MF8", domain: "mf8.biz", logo: "https://www.mf8.biz/logo.svg" },
+                      ].map((d) => {
+                        const dr = drByDomain.get(d.domain) ?? null
+                        return (
+                          <div key={d.name} className="relative">
+                            <div className="bg-background border-border/60 flex h-12 w-12 items-center justify-center rounded-md border p-2 md:h-14 md:w-14">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={d.logo}
+                                alt={d.name}
+                                loading="lazy"
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                            {dr !== null && (
+                              <span className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold">
+                                DR {dr}
+                              </span>
+                            )}
                           </div>
-                          <span className="bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold">
-                            DR {d.dr}
-                          </span>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                     <div className="flex flex-col items-center gap-1.5 text-center md:items-start md:text-left">
                       <h2 className="text-foreground text-sm font-semibold md:text-base">
