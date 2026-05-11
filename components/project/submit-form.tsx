@@ -62,7 +62,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { RichTextDisplay, RichTextEditor } from "@/components/ui/rich-text-editor"
+import { RichTextDisplay } from "@/components/ui/rich-text-display"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   Select,
   SelectContent,

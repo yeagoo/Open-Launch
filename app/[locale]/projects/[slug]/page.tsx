@@ -20,8 +20,9 @@ import {
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { Button } from "@/components/ui/button"
-import { RichTextDisplay } from "@/components/ui/rich-text-editor"
+import { RichTextDisplay } from "@/components/ui/rich-text-display"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
+import { CommentsLazy } from "@/components/project/comments-lazy"
 import { EditButton } from "@/components/project/edit-button"
 import { LongDescription } from "@/components/project/long-description"
 import { ProjectImageWithLoader } from "@/components/project/project-image-with-loader"
@@ -31,7 +32,6 @@ import { MakerCard } from "@/components/project/sidebar/maker-card"
 import { ProjectMetaCard } from "@/components/project/sidebar/project-meta-card"
 import { RelatedPagesCard } from "@/components/project/sidebar/related-pages-card"
 import { VisitWebsiteCard } from "@/components/project/sidebar/visit-website-card"
-import { TranslatedComments } from "@/components/project/translated-comments"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { BreadcrumbSchema, ProductSchema } from "@/components/seo/structured-data"
 import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
@@ -440,7 +440,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 </h2>
                 {projectData.launchStatus === "ongoing" ||
                 projectData.launchStatus === "launched" ? (
-                  <TranslatedComments
+                  <CommentsLazy
                     projectId={projectData.id}
                     placeholder={tComments("placeholder")}
                     currentUserId={session?.user?.id ?? null}
