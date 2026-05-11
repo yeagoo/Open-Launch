@@ -9,10 +9,10 @@ import { permanentRedirect } from "next/navigation"
  *
  * 308 permanent redirect keeps existing backlinks and SEO equity
  * flowing into the new canonical URL. The `#ultra` anchor jumps
- * the visitor straight to the Ultra spotlight section on the
- * directory pricing page.
+ * the visitor straight to the Ultra card on the consolidated
+ * pricing hub.
  *
- * Internal links across the codebase (nav, footer, sponsor cards)
+ * Internal links across the codebase (footer, sponsor cards)
  * still point at /sponsors — that's fine, they hit this redirect
  * and land on the right place. We can clean those up later if we
  * want to skip the extra hop.
@@ -23,5 +23,5 @@ export default async function SponsorsRedirect({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
-  permanentRedirect(`/${locale}/pricing/directories#ultra`)
+  permanentRedirect(`/${locale}/pricing#ultra`)
 }

@@ -35,7 +35,7 @@ export const DIRECTORY_ORDER_REF_PREFIX = "dir_"
 // gate, UI hint text, sidebar render limit).
 export const ULTRA_SPONSOR_SLOT_LIMIT = 5
 
-// Test-phase promo code displayed on /pricing/directories. The
+// Test-phase promo code displayed on /pricing. The
 // actual discount is configured server-side in the Stripe Dashboard
 // (Coupons + Promotion Codes) — this is just the marketing surface.
 // Flip `enabled: false` to retire the banner without redeploying
