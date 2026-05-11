@@ -205,7 +205,7 @@ export default async function DirectoryPricingPage({
               reach={t.rich("tiers.basic.reach", reachChunks)}
               price={t("tiers.basic.price")}
               originalPrice={t("tiers.basic.originalPrice")}
-              priceScope={t("tiers.priceScope")}
+              billingNote={t("tiers.billing.oneOff")}
               cta={t("tiers.basic.cta")}
               ctaHref="/dashboard"
               features={[
@@ -222,7 +222,7 @@ export default async function DirectoryPricingPage({
               reach={t.rich("tiers.plus.reach", reachChunks)}
               price={t("tiers.plus.price")}
               originalPrice={t("tiers.plus.originalPrice")}
-              priceScope={t("tiers.priceScope")}
+              billingNote={t("tiers.billing.oneOff")}
               cta={t("tiers.plus.cta")}
               ctaHref="/dashboard"
               features={[
@@ -239,7 +239,7 @@ export default async function DirectoryPricingPage({
               reach={t.rich("tiers.pro.reach", reachChunks)}
               price={t("tiers.pro.price")}
               originalPrice={t("tiers.pro.originalPrice")}
-              priceScope={t("tiers.priceScope")}
+              billingNote={t("tiers.billing.oneOff")}
               badge={t("tiers.pro.badge")}
               highlighted
               cta={t("tiers.pro.cta")}
@@ -261,6 +261,7 @@ export default async function DirectoryPricingPage({
               tagline={t("tiers.ultra.tagline")}
               price={t("tiers.ultra.price")}
               priceSuffix={t("tiers.ultra.priceSuffix")}
+              billingNote={t("tiers.billing.subscription")}
               cta={t("tiers.ultra.cta")}
               limit={t("tiers.ultra.limit")}
               features={[
@@ -285,6 +286,7 @@ export default async function DirectoryPricingPage({
             limit={t("tiers.ultra.limit")}
             price={t("tiers.ultra.price")}
             priceSuffix={t("tiers.ultra.priceSuffix")}
+            billingNote={t("tiers.billing.subscription")}
             cta={t("tiers.ultra.cta")}
             features={[
               t("tiers.ultra.features.everything"),
@@ -465,11 +467,10 @@ interface TierCardProps {
   reach: React.ReactNode
   price: string
   originalPrice: string
-  // Tiny caption under the price strip (e.g. "per URL · one-off").
-  // Required: every TierCard caller passes one. Keeping it required
-  // means the spacing/sizing block below the price has a single,
-  // non-conditional layout instead of two mirrored branches.
-  priceScope: string
+  // Prominent "One-time payment" chip under the price. Required so
+  // every paid card answers the "is this monthly?" question without
+  // the user having to scroll to the comparison table.
+  billingNote: string
   badge?: string
   highlighted?: boolean
   cta: string
@@ -519,9 +520,15 @@ function TierCard(props: TierCardProps) {
           {props.originalPrice}
         </span>
       </div>
-      <p className="text-muted-foreground/80 mt-1 mb-4 font-mono text-[10px] tracking-wide uppercase">
-        {props.priceScope}
-      </p>
+      {/* Billing chip — emerald pill so the one-off payment scope
+          can't be missed. Without this, the 4 stacked tier cards
+          (Basic / Plus / Pro / Ultra) read at a glance like four
+          monthly plans of different sizes, since Ultra IS monthly. */}
+      <div className="mt-2 mb-4">
+        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20">
+          {props.billingNote}
+        </span>
+      </div>
 
       <div className="border-border/60 mb-5 space-y-2 border-y py-3">
         {/* `<div>` (not `<p>`) — `reach` is `ReactNode` so a future
@@ -636,6 +643,10 @@ interface UltraTierCardProps {
   tagline: string
   price: string
   priceSuffix: string
+  // Violet "Monthly · cancel anytime" pill — mirrors the emerald
+  // "One-time payment" pill on the other 3 tiers so the user can
+  // tell at a glance which cards are subscription vs one-off.
+  billingNote: string
   cta: string
   limit: string
   features: string[]
@@ -655,9 +666,17 @@ function UltraTierCard(props: UltraTierCardProps) {
       <span className="font-editorial text-2xl font-semibold tracking-tight">{props.name}</span>
       <p className="text-muted-foreground mt-1.5 text-sm">{props.tagline}</p>
 
-      <div className="mt-6 mb-4 flex items-baseline gap-1">
+      <div className="mt-6 flex items-baseline gap-1">
         <span className="font-editorial text-4xl font-semibold tabular-nums">{props.price}</span>
         <span className="text-muted-foreground text-sm">{props.priceSuffix}</span>
+      </div>
+      {/* Violet billing chip — sets visual contrast with the
+          emerald "One-time" chips on the other three cards so the
+          subscription nature is unmistakable. */}
+      <div className="mt-2 mb-4">
+        <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-violet-700 ring-1 ring-violet-500/20 dark:bg-violet-400/10 dark:text-violet-200 dark:ring-violet-400/20">
+          {props.billingNote}
+        </span>
       </div>
 
       <div className="mb-5 border-y border-violet-200/70 py-3 dark:border-violet-900/50">
@@ -690,6 +709,7 @@ interface UltraCardProps {
   limit: string
   price: string
   priceSuffix: string
+  billingNote: string
   cta: string
   features: string[]
 }
@@ -724,11 +744,19 @@ function UltraCard(props: UltraCardProps) {
           <p className="text-xs font-medium text-amber-400">{props.limit}</p>
         </div>
         <div className="border-background/20 sm:border-l sm:pl-8 lg:min-w-[240px]">
-          <div className="mb-4 flex items-baseline gap-1">
+          <div className="mb-2 flex items-baseline gap-1">
             <span className="font-editorial text-4xl font-semibold tabular-nums">
               {props.price}
             </span>
             <span className="text-background/70 text-sm">{props.priceSuffix}</span>
+          </div>
+          {/* Amber chip on the dark Ultra spotlight — makes the
+              monthly / cancel-anytime nature explicit and matches
+              the violet chip in the in-grid Ultra card above. */}
+          <div className="mb-4">
+            <span className="inline-flex items-center rounded-full bg-amber-400/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-amber-300 ring-1 ring-amber-400/30">
+              {props.billingNote}
+            </span>
           </div>
           <Button
             size="lg"

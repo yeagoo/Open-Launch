@@ -490,11 +490,16 @@
           "name": "Boost (paid)",
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
+          "popularBadge": "Más popular",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 8 high-DR documentation sites",
-            "ultra": "Pro + permanent sidebar sponsor slot"
+            "pro": "Plus + 8 sitios de documentación con autoridad (impulsa GEO/AIEO)",
+            "ultra": "Pro + espacio de patrocinador en barra lateral (activo mientras dure la suscripción)"
+          },
+          "billing": {
+            "oneOff": "Pago único",
+            "subscription": "Suscripción"
           },
           "overflow": {
             "label": "+ {n} sites",
@@ -650,6 +655,10 @@
     },
     "tiers": {
       "priceScope": "por URL · único pago",
+      "billing": {
+        "oneOff": "Pago único",
+        "subscription": "Mensual · cancela cuando quieras"
+      },
       "basic": {
         "name": "Básico",
         "price": "$3.99",
@@ -670,15 +679,15 @@
         "name": "Plus",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "Llega a 4 directorios a la vez.",
+        "tagline": "4 dominios distintos → un perfil SEO creíble.",
         "reach": "<n>4 sitios</n> · 300k+ visitas mensuales",
-        "description": "Todo lo de Básico, más listados en HiCyou, MF8.BIZ y BigKr. La red combinada genera más de 10,000 clics de Google cada 30 días y recibe más de 300k visitantes mensuales.",
+        "description": "Todo lo de Básico, más listados en HiCyou, MF8.BIZ y BigKr. Los backlinks desde 4 dominios distintos se ven orgánicos ante Google — mucho más creíbles que un enlace desde un solo sitio. Red combinada: 300k+ visitantes mensuales, 10,000+ clics de Google cada 30 días.",
         "cta": "Obtener Plus",
         "features": {
           "everything": "Todo lo de Básico",
-          "fourSites": "Listado en 4 sitios de nuestra red de directorios",
+          "fourSites": "4 dominios distintos → un perfil de backlinks de aspecto natural que no parece spam de outreach",
           "dofollowAll": "Enlace dofollow desde cada sitio",
-          "stats": "10k+ clics de Google · 300k+ tráfico mensual",
+          "stats": "Suma de 300k+ visitantes mensuales en los 4 sitios · 10k+ clics de Google / 30 días",
           "delivery": "aat.ee en 1 día · otros en 3 días"
         }
       },
@@ -687,15 +696,15 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "Más popular",
-        "tagline": "Enlaces de autoridad desde 8 sitios de documentación.",
+        "tagline": "Sitios de documentación con autoridad → gran impulso GEO/AIEO.",
         "reach": "<n>12 sitios</n> · 700k+ visitas mensuales",
         "overflowLabel": "+ {n}+ sitios",
         "overflowTooltip": "Más sitios en este nivel",
-        "description": "Todo lo de Plus, más colocación de enlaces de amigo en 8 sitios de documentación de alta autoridad: fortalece las recomendaciones GEO/AIEO y aumenta tu Domain Rating. Red combinada: 30,000+ clics de Google / 30 días, 700k+ tráfico mensual.",
+        "description": "Todo lo de Plus, más colocación de enlaces de amigo en 8 sitios de documentación de alta autoridad. Los dominios de documentación con autoridad mejoran notablemente las señales GEO/AIEO — los LLM como ChatGPT, Claude, Perplexity y Gemini tienen muchas más probabilidades de mostrar tu URL cuando los usuarios preguntan sobre tu categoría. Red combinada: 30,000+ clics de Google / 30 días, 700k+ tráfico mensual.",
         "cta": "Obtener Pro",
         "features": {
           "everything": "Todo lo de Plus",
-          "docsSites": "Enlaces de amigo en 8 sitios de documentación con alto DR",
+          "docsSites": "Enlaces de amigo en 8 sitios de documentación con autoridad → impulso GEO/AIEO significativo, para que ChatGPT, Claude, Perplexity y Gemini recomienden tu URL con más frecuencia",
           "geo": "Impulsa señales GEO/AIEO para búsqueda potenciada por IA",
           "stats": "30k+ clics de Google · 700k+ tráfico mensual",
           "delivery": "aat.ee en vivo en 1 día · otros en 3 días"
@@ -706,13 +715,13 @@
         "subtitle": "Patrocinio",
         "price": "$19.99",
         "priceSuffix": "/mes",
-        "tagline": "Visibilidad permanente en la barra lateral, en cada página, cada visita.",
-        "description": "Suscripción. Incluye todo lo de Pro, más tu tarjeta de patrocinador en la barra lateral derecha de cada página de aat.ee y HiCyou: cada visitante ve tu marca, en cada proyecto, cada comparación, cada alternativa.",
+        "tagline": "Tarjeta de patrocinador en cada página — por cada mes que sigas suscrito.",
+        "description": "Suscripción. Incluye todo lo de Pro, más tu tarjeta de patrocinador en la barra lateral derecha de cada página de aat.ee y HiCyou. El espacio está activo mientras mantengas la suscripción — no es una ubicación permanente. Suscríbete un mes y tu tarjeta se muestra un mes; suscríbete seis y se muestra seis. Cancela cuando quieras y el espacio se libera al final del período de facturación en curso.",
         "limit": "Limitado a 5 patrocinadores activos en todo momento.",
         "cta": "Suscribirse a Ultra",
         "features": {
           "everything": "Todo lo de Pro (entregado automáticamente)",
-          "sidebar": "Tarjeta de patrocinador en cada página de aat.ee + HiCyou",
+          "sidebar": "Tarjeta de patrocinador en cada página de aat.ee + HiCyou — activa mientras estés suscrito, no es un espacio permanente",
           "exclusive": "Máximo 5 patrocinadores en todo momento",
           "cancel": "Cancela cuando quieras — facturación prorrateada"
         }

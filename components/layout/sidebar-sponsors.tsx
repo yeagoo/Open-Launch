@@ -47,7 +47,11 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
       // `sponsored` rel value is the standard SEO marker for paid
       // placements; `noopener` + `noreferrer` are baseline safety.
       rel="noopener noreferrer sponsored"
-      className="group hover:bg-muted/50 block rounded-lg border p-3 transition-colors"
+      // Bold border + subtle shadow so the paid slot reads as the
+      // most prominent block in the sidebar. The visual weight is the
+      // deliverable Ultra subscribers are paying for; muted styling
+      // would undercut that.
+      className="group border-primary/40 hover:border-primary hover:bg-muted/50 block rounded-lg border-2 p-3 shadow-sm transition-colors"
     >
       <div className="flex items-start gap-3">
         <div className="bg-background shrink-0 overflow-hidden rounded-md border p-1">
@@ -61,12 +65,14 @@ function SponsorCard({ sponsor }: { sponsor: Sponsor }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-foreground group-hover:text-primary text-sm font-medium transition-colors">
+            <span className="text-foreground group-hover:text-primary text-sm font-bold transition-colors">
               {sponsor.name}
             </span>
             <ExternalLink className="text-muted-foreground h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
-          <p className="text-muted-foreground line-clamp-2 text-xs">{sponsor.description}</p>
+          <p className="text-muted-foreground line-clamp-2 text-xs font-medium">
+            {sponsor.description}
+          </p>
         </div>
       </div>
     </Link>
