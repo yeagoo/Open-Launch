@@ -243,7 +243,40 @@
     "perLaunch": "ローンチごと",
     "getStarted": "始める",
     "subscribe": "購読する",
-    "compareFeatures": "機能を比較"
+    "compareFeatures": "機能を比較",
+    "hub": {
+      "kicker": "料金プラン",
+      "heading": "aat.ee でローンチするすべての方法",
+      "subheading": "標準的なローンチは無料。順番待ちをスキップしたい、12 サイトのネットワーク全体で dofollow バックリンクを得たい、または恒久的な SEO 記事が欲しい場合は有料プランをどうぞ — あなたの目的に合うものをお選びください。",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "billingNote": "ずっと無料",
+        "tagline": "aat.ee での標準的なローンチ。",
+        "features": {
+          "slots": "1 日あたり {n} のローンチ枠",
+          "schedule": "最大 {n} 日先まで予約可能",
+          "homepage": "ローンチ当日にホームページで紹介",
+          "dofollow": "トップ 3 入りまたは Badge を表示すれば dofollow バックリンク付与"
+        },
+        "cta": "無料でローンチ"
+      },
+      "boostSectionHeading": "Boost — 有料プラン",
+      "boostSectionSubheading": "順番待ちをスキップ、12 サイトのディレクトリネットワーク全体で dofollow バックリンク、サイドバースポンサー枠もオプションで利用可能。プロジェクト送信時にプランをお選びください。",
+      "seoSectionHeading": "長期的な SEO トラフィックが必要ですか？",
+      "seoSectionSubheading": "専用の SEO Growth Package をご購入ください — aat.ee 上にカスタムの「[あなたのプロダクト] レビュー」記事を執筆し、検索上位に押し上げます。",
+      "comparison": {
+        "heading": "並べて比較",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "詳細を見る",
+      "viewDirectoryPricing": "Directory の完全な料金を開く →",
+      "faqHeading": "よくある質問",
+      "footerHeading": "ローンチの準備はできましたか？",
+      "footerBody": "プロジェクトを送信し、その流れでプランをお選びください。",
+      "footerCta": "プロジェクトを送信"
+    }
   },
   "search": {
     "placeholder": "プロジェクトを検索...",

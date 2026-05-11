@@ -243,7 +243,40 @@
     "perLaunch": "每次发布",
     "getStarted": "开始使用",
     "subscribe": "订阅",
-    "compareFeatures": "比较功能"
+    "compareFeatures": "比较功能",
+    "hub": {
+      "kicker": "定价",
+      "heading": "在 aat.ee 上发布的所有方式",
+      "subheading": "标准发布免费。如果想跳过排队、在 12 个站点的导航网络拿到 dofollow 反链、或者长期 SEO 文章，选下面对应的付费套餐就好。",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "billingNote": "永久免费",
+        "tagline": "aat.ee 上的标准发布。",
+        "features": {
+          "slots": "每天 {n} 个发布名额",
+          "schedule": "最多可提前 {n} 天预约",
+          "homepage": "发布当日首页推荐",
+          "dofollow": "排名前 3 或在网站上挂我们 Badge 即获 Dofollow 反链"
+        },
+        "cta": "免费发布"
+      },
+      "boostSectionHeading": "Boost — 付费套餐",
+      "boostSectionSubheading": "跳过排队，在 12 个站点的导航网络获得 dofollow 反链，可选侧栏赞助位。提交项目时直接在表单里选档位。",
+      "seoSectionHeading": "想要长期 SEO 流量？",
+      "seoSectionSubheading": "购买 SEO Growth Package — 我们为您写一篇定制的「您的产品 review」文章发布在 aat.ee，并把它排上 Google。",
+      "comparison": {
+        "heading": "横向对比",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "查看完整说明",
+      "viewDirectoryPricing": "查看完整 Directory 定价 →",
+      "faqHeading": "常见问题",
+      "footerHeading": "准备好发布了吗？",
+      "footerBody": "提交您的项目，在提交流程里选择档位。",
+      "footerCta": "提交项目"
+    }
   },
   "search": {
     "placeholder": "搜索项目...",

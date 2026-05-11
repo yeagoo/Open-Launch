@@ -243,7 +243,40 @@
     "perLaunch": "por lanzamiento",
     "getStarted": "Comenzar",
     "subscribe": "Suscribirse",
-    "compareFeatures": "Comparar funciones"
+    "compareFeatures": "Comparar funciones",
+    "hub": {
+      "kicker": "Precios",
+      "heading": "Todas las formas de lanzar en aat.ee",
+      "subheading": "Gratis para un lanzamiento estándar. Niveles de pago si quieres saltarte la cola, conseguir backlinks dofollow en nuestra red de 12 sitios o un artículo SEO permanente — elige el que se ajuste a tu objetivo.",
+      "free": {
+        "name": "Free",
+        "price": "0 $",
+        "billingNote": "Siempre gratis",
+        "tagline": "Un lanzamiento estándar en aat.ee.",
+        "features": {
+          "slots": "{n} espacios de lanzamiento por día",
+          "schedule": "Programa con hasta {n} días de antelación",
+          "homepage": "Destacado en la página de inicio el día del lanzamiento",
+          "dofollow": "Backlink dofollow si quedas en el top 3 o muestras nuestro Badge"
+        },
+        "cta": "Lanzar gratis"
+      },
+      "boostSectionHeading": "Boost — niveles de pago",
+      "boostSectionSubheading": "Sáltate la cola, backlinks dofollow en nuestra red de 12 directorios, patrocinio opcional en la barra lateral. Elige un nivel al enviar tu proyecto.",
+      "seoSectionHeading": "¿Necesitas tráfico SEO a largo plazo?",
+      "seoSectionSubheading": "Compra un SEO Growth Package dedicado — escribimos y posicionamos un artículo personalizado de \"reseña de [tu producto]\" en aat.ee.",
+      "comparison": {
+        "heading": "Compara lado a lado",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "Ver todos los detalles",
+      "viewDirectoryPricing": "Abrir los precios completos del Directory →",
+      "faqHeading": "Preguntas frecuentes",
+      "footerHeading": "¿Listo para lanzar?",
+      "footerBody": "Envía tu proyecto y elige un nivel durante el proceso.",
+      "footerCta": "Enviar un proyecto"
+    }
   },
   "search": {
     "placeholder": "Buscar proyectos...",

@@ -243,7 +243,40 @@
     "perLaunch": "par lancement",
     "getStarted": "Commencer",
     "subscribe": "S'abonner",
-    "compareFeatures": "Comparer les fonctionnalités"
+    "compareFeatures": "Comparer les fonctionnalités",
+    "hub": {
+      "kicker": "Tarifs",
+      "heading": "Toutes les façons de lancer sur aat.ee",
+      "subheading": "Gratuit pour un lancement standard. Forfaits payants si vous souhaitez passer devant la file, des backlinks dofollow sur notre réseau de 12 sites, ou un article SEO permanent — choisissez celui qui correspond à votre objectif.",
+      "free": {
+        "name": "Free",
+        "price": "0 $",
+        "billingNote": "Toujours gratuit",
+        "tagline": "Un lancement standard sur aat.ee.",
+        "features": {
+          "slots": "{n} créneaux de lancement par jour",
+          "schedule": "Planifiez jusqu'à {n} jours à l'avance",
+          "homepage": "Mis en avant sur la page d'accueil le jour du lancement",
+          "dofollow": "Backlink dofollow si vous êtes top 3 ou si vous affichez notre Badge"
+        },
+        "cta": "Lancer gratuitement"
+      },
+      "boostSectionHeading": "Boost — forfaits payants",
+      "boostSectionSubheading": "Passez devant la file, des backlinks dofollow sur notre réseau de 12 annuaires, sponsoring de la barre latérale en option. Choisissez un forfait au moment de la soumission.",
+      "seoSectionHeading": "Besoin de trafic SEO à long terme ?",
+      "seoSectionSubheading": "Achetez un SEO Growth Package dédié — nous rédigeons et positionnons un article personnalisé \"avis sur [votre produit]\" sur aat.ee.",
+      "comparison": {
+        "heading": "Comparer côte à côte",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "Voir tous les détails",
+      "viewDirectoryPricing": "Ouvrir la tarification complète du Directory →",
+      "faqHeading": "Questions fréquentes",
+      "footerHeading": "Prêt à lancer ?",
+      "footerBody": "Soumettez votre projet et choisissez un forfait en chemin.",
+      "footerCta": "Soumettre un projet"
+    }
   },
   "search": {
     "placeholder": "Rechercher des projets...",

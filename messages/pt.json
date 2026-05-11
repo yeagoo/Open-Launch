@@ -243,7 +243,40 @@
     "perLaunch": "por lançamento",
     "getStarted": "Comece agora",
     "subscribe": "Assinar",
-    "compareFeatures": "Comparar recursos"
+    "compareFeatures": "Comparar recursos",
+    "hub": {
+      "kicker": "Preços",
+      "heading": "Todas as formas de lançar no aat.ee",
+      "subheading": "Gratuito para um lançamento padrão. Planos pagos se você quiser furar a fila, conseguir backlinks dofollow em nossa rede de 12 sites ou um artigo de SEO permanente — escolha o que combina com seu objetivo.",
+      "free": {
+        "name": "Free",
+        "price": "US$ 0",
+        "billingNote": "Sempre gratuito",
+        "tagline": "Um lançamento padrão no aat.ee.",
+        "features": {
+          "slots": "{n} vagas de lançamento por dia",
+          "schedule": "Agende com até {n} dias de antecedência",
+          "homepage": "Destaque na página inicial no dia do lançamento",
+          "dofollow": "Backlink dofollow se você ficar no top 3 ou exibir nosso Badge"
+        },
+        "cta": "Lançar grátis"
+      },
+      "boostSectionHeading": "Boost — planos pagos",
+      "boostSectionSubheading": "Fure a fila, backlinks dofollow em nossa rede de 12 diretórios, patrocínio opcional na barra lateral. Escolha um plano ao enviar seu projeto.",
+      "seoSectionHeading": "Precisa de tráfego de SEO no longo prazo?",
+      "seoSectionSubheading": "Compre um SEO Growth Package dedicado — escrevemos e rankeamos um artigo personalizado de \"review do [seu produto]\" no aat.ee.",
+      "comparison": {
+        "heading": "Compare lado a lado",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "Ver todos os detalhes",
+      "viewDirectoryPricing": "Abrir os preços completos do Directory →",
+      "faqHeading": "Perguntas frequentes",
+      "footerHeading": "Pronto para lançar?",
+      "footerBody": "Envie seu projeto e escolha um plano no caminho.",
+      "footerCta": "Enviar um projeto"
+    }
   },
   "search": {
     "placeholder": "Pesquisar projetos...",
