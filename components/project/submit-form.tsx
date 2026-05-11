@@ -38,6 +38,7 @@ import {
   LAUNCH_TYPES,
 } from "@/lib/constants"
 import { DIRECTORY_TIER_CONFIG, DIRECTORY_TIERS, type DirectoryTier } from "@/lib/directory-tiers"
+import { DR_DOMAINS_BASIC, DR_DOMAINS_PLUS, DR_DOMAINS_PRO_PREVIEW, type DRRecord } from "@/lib/dr"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
 import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DrBadge, OverflowDrBadge } from "@/components/dr/dr-badge"
 import { createDirectoryOrder } from "@/app/actions/directory-orders"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
 import {
@@ -126,9 +128,20 @@ interface SubmitProjectFormProps {
    * tag spellings instead of inventing fresh duplicates.
    */
   popularTags?: string[]
+  /**
+   * DR snapshot for the 12-site directory network, fetched once on
+   * the server. The Step-3 tier picker uses this to render DR
+   * badges next to each paid tier so users see the SEO value
+   * before paying.
+   */
+  drRecords?: DRRecord[]
 }
 
-export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFormProps) {
+export function SubmitProjectForm({
+  userId,
+  popularTags = [],
+  drRecords = [],
+}: SubmitProjectFormProps) {
   const t = useTranslations("submitProject")
 
   // Stabilize the autocomplete options across re-renders. Without this,
@@ -139,6 +152,25 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
     () => popularTags.map((name) => ({ id: `popular-${name}`, text: name })),
     [popularTags],
   )
+
+  // Pre-slice DR records per tier. Memoised so we don't filter the
+  // 12-row array on every render of the Step-3 picker.
+  //  - Basic: aat.ee (1)
+  //  - Plus: 4 directory sites
+  //  - Pro / Ultra: 3 docs-site preview + everything else into the
+  //    hover-revealed "+ N+ sites" overflow pill.
+  const tierDrs = useMemo(() => {
+    const inSet = (set: readonly string[]) => (r: DRRecord) => set.includes(r.domain)
+    const preview = drRecords.filter(inSet(DR_DOMAINS_PRO_PREVIEW))
+    const overflow = drRecords.filter((r) => !DR_DOMAINS_PRO_PREVIEW.includes(r.domain))
+    return {
+      basic: drRecords.filter(inSet(DR_DOMAINS_BASIC)),
+      plus: drRecords.filter(inSet(DR_DOMAINS_PLUS)),
+      pro: { preview, overflow },
+      ultra: { preview, overflow },
+    }
+  }, [drRecords])
+
   const router = useRouter()
   const locale = useLocale() as (typeof routing.locales)[number]
   const defaultSourceLocale = (routing.locales as readonly string[]).includes(locale)
@@ -1547,7 +1579,12 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
 
             <div>
               <h4 className="mb-4 text-sm font-medium">{t("step3.launchType.heading")}</h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* Single-column stack of 5 cards: Free / Basic / Plus /
+                  Pro / Ultra. Vertical layout lets each paid card
+                  show its DR badges row inline so users see the SEO
+                  value before committing — the prior 2-col + nested
+                  tier rows design hid this. */}
+              <div className="grid grid-cols-1 gap-4">
                 <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${formData.launchType === LAUNCH_TYPES.FREE ? "border-primary ring-primary bg-primary/5 relative shadow-sm ring-1" : "hover:border-foreground/20 hover:bg-muted/50"}`}
                   onClick={() => handleLaunchTypeChange(LAUNCH_TYPES.FREE)}
@@ -1600,61 +1637,53 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                   </ul>
                 </div>
 
-                {/* Boost (paid) — 4 directory tiers stacked. Picking
-                    any of these sets launchType=PREMIUM (queue-skip
-                    semantics) AND directoryTier=<picked> (drives
-                    which Stripe Payment Link the submit redirect
-                    lands on, and which row gets written to
-                    `directory_order`).
-                    Clicking the card's surrounding area (header,
-                    padding) is treated as "I want paid" too — we
-                    default to Basic so a user who didn't notice the
-                    individual tier buttons still gets their state
-                    flipped from FREE → PREMIUM. Otherwise the date
-                    picker keeps showing free dates (queue full) and
-                    looks broken. */}
-                {(() => {
-                  // Centralise the "switch to PREMIUM" logic so the
-                  // outer card click and the inner tier buttons share
-                  // the same write path.
-                  const isPremium = formData.launchType === LAUNCH_TYPES.PREMIUM
-                  const pickTier = (tierKey: DirectoryTier | null) => {
+                {/* Paid tier cards — 4 stacked rows: Basic / Plus /
+                    Pro / Ultra. Each card sets launchType=PREMIUM
+                    (queue-skip semantics) AND directoryTier=<picked>
+                    (drives which Stripe Payment Link the submit
+                    redirect lands on, plus which row gets written to
+                    `directory_order`). Each paid card shows the DR
+                    badges for the sites it covers — Pro / Ultra get
+                    a 3-preview + overflow pill so 12 sites fit. */}
+                {DIRECTORY_TIERS.map((tierKey) => {
+                  const cfg = DIRECTORY_TIER_CONFIG[tierKey]
+                  const selected =
+                    formData.launchType === LAUNCH_TYPES.PREMIUM &&
+                    formData.directoryTier === tierKey
+                  const label = TIER_LABELS[tierKey]
+                  const priceText = cfg.isSubscription
+                    ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
+                    : `$${(cfg.amountCents / 100).toFixed(2)}`
+                  // Shared selection writer — mouse click and
+                  // keyboard activation (Enter / Space) both end up
+                  // here so the state transition logic lives in one
+                  // place. Free range is 21-180 days, premium is
+                  // 1-30, so any old free-tier date in scheduledDate
+                  // is invalid after the switch and gets reset.
+                  const select = () => {
                     setFormData((prev) => ({
                       ...prev,
                       launchType: LAUNCH_TYPES.PREMIUM,
-                      directoryTier: tierKey ?? prev.directoryTier ?? "basic",
-                      // Free range is 21-180 days, premium is 1-30 —
-                      // any old free date won't be in the new dropdown,
-                      // so reset whenever we transition into PREMIUM.
+                      directoryTier: tierKey,
                       scheduledDate:
                         prev.launchType === LAUNCH_TYPES.PREMIUM ? prev.scheduledDate : null,
                     }))
                   }
-                  const selectedTierLabel =
-                    isPremium && formData.directoryTier ? TIER_LABELS[formData.directoryTier] : null
                   return (
-                    // Outer wrapper is intentionally a plain `<div>`
-                    // with `onClick` for mouse users (clicking the
-                    // card background defaults to "basic") — NOT a
-                    // `role="button"`. WAI-ARIA forbids interactive
-                    // descendants in a button role, and the 4 inner
-                    // `<button>`s are the real interactive elements
-                    // for keyboard / screen-reader users.
                     <div
-                      onClick={() => {
-                        if (isPremium) return
-                        pickTier(null)
+                      key={tierKey}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selected}
+                      onClick={select}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" && e.key !== " ") return
+                        e.preventDefault()
+                        select()
                       }}
-                      className={`relative rounded-lg border p-4 transition-all duration-150 ${
-                        isPremium
-                          ? "border-primary ring-primary/70 bg-primary/5 shadow-sm ring-1"
-                          : "hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
-                      }`}
+                      className={`relative cursor-pointer rounded-lg border p-4 transition-all duration-150 ${selected ? "border-primary ring-primary bg-primary/5 shadow-sm ring-1" : "hover:border-primary/50 hover:bg-primary/5"}`}
                     >
-                      {/* "Selected" badge mirrors the Free card pattern
-                          for visual consistency — without it, users
-                          may not realise this card is the chosen one. */}
-                      {isPremium && (
+                      {selected && (
                         <Badge
                           variant="default"
                           className="bg-primary text-primary-foreground absolute -top-2 -right-2 text-xs"
@@ -1662,71 +1691,55 @@ export function SubmitProjectForm({ userId, popularTags = [] }: SubmitProjectFor
                           {t("step3.launchType.selected")}
                         </Badge>
                       )}
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <h5 className="flex items-center gap-1.5 font-medium">
-                          <RiStarLine className="text-primary h-4 w-4" />
-                          {t("step3.launchType.boost.name")}
-                        </h5>
-                        {selectedTierLabel ? (
-                          <span className="text-primary text-xs font-semibold">
-                            {t("step3.launchType.boost.tierSelected", {
-                              tier: selectedTierLabel,
-                            })}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-[10px] tracking-wider uppercase">
-                            {t("step3.launchType.boost.subtitle")}
-                          </span>
-                        )}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h5 className="flex items-center gap-1.5 font-medium">
+                            <RiStarLine className="text-primary h-4 w-4 flex-shrink-0" />
+                            {label}
+                          </h5>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {t(`step3.launchType.boost.tiers.${tierKey}`)}
+                          </p>
+                        </div>
+                        <span className="font-mono text-lg font-bold tabular-nums">
+                          {priceText}
+                        </span>
                       </div>
-                      <div className="space-y-2">
-                        {DIRECTORY_TIERS.map((tierKey) => {
-                          const cfg = DIRECTORY_TIER_CONFIG[tierKey]
-                          const selected = isPremium && formData.directoryTier === tierKey
-                          const label = TIER_LABELS[tierKey]
-                          const priceText = cfg.isSubscription
-                            ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
-                            : `$${(cfg.amountCents / 100).toFixed(2)}`
-                          return (
-                            <button
-                              type="button"
-                              key={tierKey}
-                              aria-pressed={selected}
-                              onClick={(e) => {
-                                // Stop the outer card's onClick from
-                                // also firing (it would default to
-                                // "basic" and overwrite the tier the
-                                // user just clicked on).
-                                e.stopPropagation()
-                                pickTier(tierKey)
-                              }}
-                              className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-all ${
-                                selected
-                                  ? "border-primary bg-primary/10 ring-primary/40 ring-1"
-                                  : "border-border hover:border-primary/40 hover:bg-background"
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold">{label}</span>
-                                  {selected && (
-                                    <RiCheckboxCircleFill className="text-primary h-3.5 w-3.5 flex-shrink-0" />
-                                  )}
-                                </div>
-                                <p className="text-muted-foreground mt-0.5 text-xs">
-                                  {t(`step3.launchType.boost.tiers.${tierKey}`)}
-                                </p>
-                              </div>
-                              <span className="font-mono text-sm font-semibold tabular-nums">
-                                {priceText}
-                              </span>
-                            </button>
-                          )
-                        })}
+
+                      {/* DR badges row — shows the SEO surface this
+                          tier buys. Pro / Ultra cover 12 sites so we
+                          render 3 preview pills + a "+N+ sites" pill
+                          that tooltip-reveals the full list on hover. */}
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {tierKey === "basic" &&
+                          tierDrs.basic.map((r) => <DrBadge key={r.domain} record={r} size="sm" />)}
+                        {tierKey === "plus" &&
+                          tierDrs.plus.map((r) => <DrBadge key={r.domain} record={r} size="sm" />)}
+                        {(tierKey === "pro" || tierKey === "ultra") && (
+                          <>
+                            {tierDrs[tierKey].preview.map((r) => (
+                              <DrBadge key={r.domain} record={r} size="sm" />
+                            ))}
+                            {tierDrs[tierKey].overflow.length > 0 && (
+                              <OverflowDrBadge
+                                records={tierDrs[tierKey].overflow}
+                                label={t("step3.launchType.boost.overflow.label", {
+                                  n: tierDrs[tierKey].overflow.length,
+                                })}
+                                // Heading scopes the popup to "what
+                                // else this tier covers" rather than
+                                // implying the popup contains all 12
+                                // sites (it only lists the hidden N).
+                                tooltipHeading={t("step3.launchType.boost.overflow.tooltipHeading")}
+                                size="sm"
+                              />
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   )
-                })()}
+                })}
 
                 {/* <div
                   className={`cursor-pointer rounded-lg border p-4 transition-all duration-150 ${

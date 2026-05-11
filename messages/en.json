@@ -495,6 +495,10 @@
             "plus": "Basic + 3 partner directories (manually placed)",
             "pro": "Plus + 8 high-DR documentation sites",
             "ultra": "Pro + permanent sidebar sponsor slot"
+          },
+          "overflow": {
+            "label": "+ {n} sites",
+            "tooltipHeading": "Other sites included"
           }
         }
       },
