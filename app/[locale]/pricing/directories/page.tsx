@@ -280,7 +280,7 @@ export default async function DirectoryPricingPage({
         <PriceNotice text={t("priceNotice")} className="mb-12" />
 
         {/* ─── Ultra spotlight (elaborate pitch) ─── */}
-        <section className="mb-20">
+        <section id="ultra" className="mb-20 scroll-mt-24">
           <UltraCard
             name={t("tiers.ultra.name")}
             subtitle={t("tiers.ultra.subtitle")}

@@ -243,7 +243,40 @@
     "perLaunch": "käivituse kohta",
     "getStarted": "Alusta",
     "subscribe": "Telli",
-    "compareFeatures": "Võrdle funktsioone"
+    "compareFeatures": "Võrdle funktsioone",
+    "hub": {
+      "kicker": "Hinnakiri",
+      "heading": "Kõik viisid aat.ee-s käivitamiseks",
+      "subheading": "Tavakäivitus on tasuta. Tasulised tasemed, kui soovid järjekorrast mööda minna, dofollow tagasilinke meie 12 saidi võrgustikus või püsivat SEO-artiklit — vali see, mis sinu eesmärgiga sobib.",
+      "free": {
+        "name": "Free",
+        "price": "0 $",
+        "billingNote": "Alati tasuta",
+        "tagline": "Tavakäivitus aat.ee-s.",
+        "features": {
+          "slots": "{n} käivituskohta päevas",
+          "schedule": "Planeeri kuni {n} päeva ette",
+          "homepage": "Esiletõstetud avalehel käivituspäeval",
+          "dofollow": "Dofollow tagasilink, kui jõuad top 3-sse või kuvad meie Badge'i"
+        },
+        "cta": "Käivita tasuta"
+      },
+      "boostSectionHeading": "Boost — tasulised tasemed",
+      "boostSectionSubheading": "Mine järjekorrast mööda, saa dofollow tagasilinke meie 12 kataloogi võrgustikus, valikuline külgriba sponsorlus. Vali tase projekti esitamisel.",
+      "seoSectionHeading": "Vajad pikaajalist SEO-liiklust?",
+      "seoSectionSubheading": "Osta spetsiaalne SEO Growth Package — kirjutame ja seame järjestusse kohandatud \"[sinu toote] arvustus\" artikli aat.ee-s.",
+      "comparison": {
+        "heading": "Võrdle kõrvuti",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "Vaata kõiki üksikasju",
+      "viewDirectoryPricing": "Ava Directory täielik hinnakiri →",
+      "faqHeading": "Korduma kippuvad küsimused",
+      "footerHeading": "Valmis käivitama?",
+      "footerBody": "Esita oma projekt ja vali tase teel.",
+      "footerCta": "Esita projekt"
+    }
   },
   "search": {
     "placeholder": "Otsi projekte...",

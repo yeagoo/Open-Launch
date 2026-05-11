@@ -243,7 +243,40 @@
     "perLaunch": "per launch",
     "getStarted": "Get started",
     "subscribe": "Subscribe",
-    "compareFeatures": "Compare features"
+    "compareFeatures": "Compare features",
+    "hub": {
+      "kicker": "Pricing",
+      "heading": "Every way to launch on aat.ee",
+      "subheading": "Free for a standard launch. Paid tiers if you want the queue skipped, dofollow backlinks across our 12-site network, or a permanent SEO article — pick the one that matches your goal.",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "billingNote": "Always free",
+        "tagline": "A standard launch on aat.ee.",
+        "features": {
+          "slots": "{n} launch slots per day",
+          "schedule": "Schedule up to {n} days ahead",
+          "homepage": "Featured on the homepage on launch day",
+          "dofollow": "Dofollow backlink if you rank top-3 or display our badge"
+        },
+        "cta": "Launch for free"
+      },
+      "boostSectionHeading": "Boost — paid tiers",
+      "boostSectionSubheading": "Skip the queue, dofollow backlinks across our 12-site directory network, optional sidebar sponsorship. Pick a tier at submission time.",
+      "seoSectionHeading": "Need long-term SEO traffic?",
+      "seoSectionSubheading": "Buy a dedicated SEO Growth Package — we write and rank a custom \"[your product] review\" article on aat.ee.",
+      "comparison": {
+        "heading": "Compare side by side",
+        "tierColumn": "",
+        "free": "Free"
+      },
+      "deepLinkLabel": "See full details",
+      "viewDirectoryPricing": "Open the full Directory pricing →",
+      "faqHeading": "Frequently asked questions",
+      "footerHeading": "Ready to launch?",
+      "footerBody": "Submit your project and pick a tier on the way in.",
+      "footerCta": "Submit a project"
+    }
   },
   "search": {
     "placeholder": "Search projects...",
