@@ -1,4 +1,8 @@
-import { project as projectSchema } from "@/drizzle/db/schema"
+// Type-only — `typeof projectSchema.$inferSelect` is evaluated by
+// TypeScript at compile time and erased at runtime, so this import
+// doesn't drag the schema (and its drizzle/pg dependencies) into
+// the client bundle.
+import type { project as projectSchema } from "@/drizzle/db/schema"
 import { RiExternalLinkLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 

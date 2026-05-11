@@ -13,14 +13,12 @@ import {
   varchar,
 } from "drizzle-orm/pg-core"
 
-// Launch status enum
-export const launchStatus = {
-  PAYMENT_PENDING: "payment_pending",
-  PAYMENT_FAILED: "payment_failed",
-  SCHEDULED: "scheduled",
-  ONGOING: "ongoing",
-  LAUNCHED: "launched",
-} as const
+import { launchStatus, pricingType } from "@/lib/project-enums"
+
+// Launch status enum lives in `lib/project-enums.ts` so client
+// components can import without dragging the schema graph into the
+// browser bundle. Re-export for server-side compatibility.
+export { launchStatus } from "@/lib/project-enums"
 
 export type LaunchStatus = (typeof launchStatus)[keyof typeof launchStatus]
 
@@ -34,20 +32,12 @@ export const launchType = {
 
 export type LaunchType = (typeof launchType)[keyof typeof launchType]
 
-// Ajouter de nouveaux enums pour les projets tech
-export const pricingType = {
-  FREE: "free",
-  FREEMIUM: "freemium",
-  PAID: "paid",
-} as const
-
-export const platformType = {
-  WEB: "web",
-  MOBILE: "mobile",
-  DESKTOP: "desktop",
-  API: "api",
-  OTHER: "other",
-} as const
+// Pure-data enums live in `lib/project-enums.ts` so client forms
+// can import them without dragging the drizzle/schema graph into
+// the browser bundle. Re-export here to keep the existing
+// `import { platformType, ... } from "@/drizzle/db/schema"`
+// call sites working on the server side.
+export { pricingType, platformType } from "@/lib/project-enums"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
