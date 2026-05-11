@@ -488,11 +488,11 @@
         },
         "boost": {
           "name": "付费推广",
-          "subtitle": "跳过排队 · 选择套餐",
+          "subtitle": "不用等待 · 选择套餐",
           "tierSelected": "已选 {tier}",
           "popularBadge": "最受欢迎",
           "tiers": {
-            "basic": "跳队 · aat.ee 上获得 dofollow 反向链接",
+            "basic": "不用等待 · aat.ee 上获得 dofollow 反向链接",
             "plus": "包含 Basic + 3 个合作导航站（人工上架）",
             "pro": "包含 Plus + 8 个权威文档站（提升 GEO/AIEO）",
             "ultra": "包含 Pro + 侧栏赞助位（订阅期内有效）"
@@ -657,12 +657,12 @@
         "name": "Basic",
         "price": "$3.99",
         "originalPrice": "$9.99",
-        "tagline": "在 aat.ee 上跳过排队。",
+        "tagline": "在 aat.ee 上无需等待，直接发布。",
         "reach": "<n>1 个站点</n> · 月访问 8 万+",
         "description": "在 aat.ee 上获得 dofollow 反向链接。同时您的项目还会出现在相关产品推荐、对比页面和替代方案页面中 — 多个曝光入口。",
         "cta": "购买 Basic",
         "features": {
-          "skipQueue": "跳过发布排队（无需 Badge 验证）",
+          "skipQueue": "无需等待，直接发布（无需 Badge 验证）",
           "dofollow": "保证获得 Dofollow 反向链接",
           "site": "在 aat.ee 上发布",
           "extra": "附加曝光：相关产品 / 对比 / 替代方案页面",
@@ -750,7 +750,7 @@
       "heading": "套餐横向对比",
       "rows": {
         "sites": "发布站点",
-        "skipQueue": "跳过排队",
+        "skipQueue": "无需等待",
         "dofollow": "Dofollow 链接",
         "extraPages": "对比 / 替代方案页面曝光",
         "docsLinks": "文档站友链",
