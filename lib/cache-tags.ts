@@ -16,5 +16,12 @@ export const HOME_PROJECTS_TAG = "home-projects"
 
 // Top categories shown in the home sidebar. Also busted by the
 // launch-transition cron since the project↔category counts change
-// when new launches go ONGOING.
+// when new launches go ONGOING. Also busted by admin moderation
+// flows (project edits, category remaps) so the sidebar reflects
+// edits without waiting up to an hour.
 export const TOP_CATEGORIES_TAG = "top-categories"
+
+// Per-day winners cache (used by `/winners`). Same cron-driven
+// invalidation as HOME_PROJECTS_TAG — but kept separate so a
+// future "live winners" UI could bust it independently.
+export const WINNERS_TAG = "winners"

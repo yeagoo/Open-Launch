@@ -19,7 +19,9 @@ import { getTranslations } from "next-intl/server"
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
+import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { sanitizeRichText } from "@/lib/sanitize"
+import { getCurrentUserId } from "@/lib/server-auth"
 
 // Fonction pour générer un slug unique
 async function generateUniqueSlug(name: string): Promise<string> {
@@ -473,58 +475,6 @@ export async function deleteMyDraftProject(projectId: string): Promise<void> {
   )
 }
 
-async function enrichProjectsWithUserData<T extends { id: string }>(
-  projects: T[],
-  userId: string | null,
-): Promise<
-  (T & {
-    userHasUpvoted: boolean
-    categories: { id: string; name: string }[]
-  })[]
-> {
-  if (!projects.length) return []
-
-  const projectIds = projects.map((p) => p.id)
-
-  // Récupérer les catégories pour tous les projets
-  const categoriesData = await db
-    .select({
-      projectId: projectToCategory.projectId,
-      categoryId: categoryTable.id,
-      categoryName: categoryTable.name,
-    })
-    .from(projectToCategory)
-    .innerJoin(categoryTable, eq(categoryTable.id, projectToCategory.categoryId))
-    .where(sql`${projectToCategory.projectId} IN ${projectIds}`)
-
-  const categoriesByProjectId = categoriesData.reduce(
-    (acc, row) => {
-      if (!acc[row.projectId]) {
-        acc[row.projectId] = []
-      }
-      acc[row.projectId].push({ id: row.categoryId, name: row.categoryName })
-      return acc
-    },
-    {} as Record<string, { id: string; name: string }[]>,
-  )
-
-  // Récupérer les upvotes de l'utilisateur
-  let userUpvotedProjectIds = new Set<string>()
-  if (userId) {
-    const userUpvotes = await db
-      .select({ projectId: upvote.projectId })
-      .from(upvote)
-      .where(and(eq(upvote.userId, userId), sql`${upvote.projectId} IN ${projectIds}`))
-    userUpvotedProjectIds = new Set(userUpvotes.map((uv) => uv.projectId))
-  }
-
-  return projects.map((project) => ({
-    ...project,
-    userHasUpvoted: userUpvotedProjectIds.has(project.id),
-    categories: categoriesByProjectId[project.id] || [],
-  }))
-}
-
 // Get projects by category with pagination and sorting
 export async function getProjectsByCategory(
   categoryId: string,
@@ -532,9 +482,6 @@ export async function getProjectsByCategory(
   limit: number = 10,
   sort: string = "recent",
 ) {
-  const session = await getSession()
-  const userId = session?.user?.id || null
-
   let orderByClause
   switch (sort) {
     case "upvotes":
@@ -556,52 +503,56 @@ export async function getProjectsByCategory(
     or(eq(projectTable.launchStatus, "ongoing"), eq(projectTable.launchStatus, "launched")),
   )
 
-  const projectsData = await db
-    .select({
-      id: projectTable.id,
-      name: projectTable.name,
-      slug: projectTable.slug,
-      description: projectTable.description,
-      logoUrl: projectTable.logoUrl,
-      websiteUrl: projectTable.websiteUrl,
-      launchStatus: projectTable.launchStatus,
-      launchType: projectTable.launchType,
-      dailyRanking: projectTable.dailyRanking,
-      scheduledLaunchDate: projectTable.scheduledLaunchDate,
-      createdAt: projectTable.createdAt,
-      upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
-      commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
-    })
-    .from(projectTable)
-    .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
-    .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-    .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
-    .where(queryConditions)
-    .groupBy(
-      projectTable.id,
-      projectTable.name,
-      projectTable.slug,
-      projectTable.description,
-      projectTable.logoUrl,
-      projectTable.websiteUrl,
-      projectTable.launchStatus,
-      projectTable.launchType,
-      projectTable.dailyRanking,
-      projectTable.scheduledLaunchDate,
-      projectTable.createdAt,
-    )
-    .orderBy(orderByClause)
-    .limit(limit)
-    .offset(offset)
+  // Projects, count, and auth lookup all in parallel. The count
+  // query and the projects query share `queryConditions` but have
+  // no data dependency on each other.
+  const [projectsData, totalProjectsResult, userId] = await Promise.all([
+    db
+      .select({
+        id: projectTable.id,
+        name: projectTable.name,
+        slug: projectTable.slug,
+        description: projectTable.description,
+        logoUrl: projectTable.logoUrl,
+        websiteUrl: projectTable.websiteUrl,
+        launchStatus: projectTable.launchStatus,
+        launchType: projectTable.launchType,
+        dailyRanking: projectTable.dailyRanking,
+        scheduledLaunchDate: projectTable.scheduledLaunchDate,
+        createdAt: projectTable.createdAt,
+        upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
+        commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
+      })
+      .from(projectTable)
+      .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
+      .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
+      .where(queryConditions)
+      .groupBy(
+        projectTable.id,
+        projectTable.name,
+        projectTable.slug,
+        projectTable.description,
+        projectTable.logoUrl,
+        projectTable.websiteUrl,
+        projectTable.launchStatus,
+        projectTable.launchType,
+        projectTable.dailyRanking,
+        projectTable.scheduledLaunchDate,
+        projectTable.createdAt,
+      )
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: count(projectTable.id) })
+      .from(projectTable)
+      .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+      .where(queryConditions),
+    getCurrentUserId(),
+  ])
 
-  const enrichedProjects = await enrichProjectsWithUserData(projectsData, userId)
-
-  const totalProjectsResult = await db
-    .select({ count: count(projectTable.id) })
-    .from(projectTable)
-    .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
-    .where(queryConditions)
-
+  const enrichedProjects = await enrichWithCategoriesAndUpvotes(projectsData, userId)
   const totalCount = totalProjectsResult[0]?.count || 0
 
   return {

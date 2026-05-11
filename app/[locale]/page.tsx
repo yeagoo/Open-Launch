@@ -90,15 +90,21 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   </Link>
                 </div>
 
+                {/* Desktop-only banner with mascot pair. The oppie
+                    images are decorative (the banner text is the real
+                    content) so no `priority` — preload hints on
+                    decorative imagery just push real content lower in
+                    the priority queue. Mobile users don't see these
+                    at all (`hidden md:flex`), so a preload hint
+                    would have been wasted there. */}
                 <div className="hidden items-center justify-center gap-12 md:flex">
                   <div className="flex-shrink-0">
                     <Image
                       src="/oppieG.png"
-                      alt="aat.ee Character"
+                      alt=""
                       width={96}
                       height={96}
                       className="h-24 w-24 object-contain"
-                      priority
                     />
                   </div>
                   <div className="flex flex-col items-center justify-center gap-4 text-center">
@@ -115,11 +121,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   <div className="flex-shrink-0">
                     <Image
                       src="/oppieD.png"
-                      alt="aat.ee Character"
+                      alt=""
                       width={96}
                       height={96}
                       className="h-24 w-24 object-contain"
-                      priority
                     />
                   </div>
                 </div>
@@ -195,8 +200,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               <Image
                 src="/images/img1.png"
                 alt="build for joy"
-                width={600}
-                height={600}
+                width={960}
+                height={540}
                 sizes="(max-width: 1024px) 100vw, 320px"
                 className="h-auto w-full rounded-lg"
               />
