@@ -38,7 +38,17 @@ import {
   LAUNCH_TYPES,
 } from "@/lib/constants"
 import { DIRECTORY_TIER_CONFIG, DIRECTORY_TIERS, type DirectoryTier } from "@/lib/directory-tiers"
-import { DR_DOMAINS_BASIC, DR_DOMAINS_PLUS, DR_DOMAINS_PRO_PREVIEW, type DRRecord } from "@/lib/dr"
+// Import from the pure-data module, NOT `lib/dr` — `lib/dr` re-exports
+// these constants but also imports `db` (pg), which webpack would then
+// drag into the client bundle and fail to resolve Node-only `fs` /
+// `net` / `tls`. Type imports would survive (stripped at compile time)
+// but the value imports pull the whole module graph.
+import {
+  DR_DOMAINS_BASIC,
+  DR_DOMAINS_PLUS,
+  DR_DOMAINS_PRO_PREVIEW,
+  type DRRecord,
+} from "@/lib/dr-domains"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
 import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
