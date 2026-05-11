@@ -490,11 +490,16 @@
           "name": "Boost (paid)",
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
+          "popularBadge": "가장 인기",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 8 high-DR documentation sites",
-            "ultra": "Pro + permanent sidebar sponsor slot"
+            "pro": "Plus + 권위 있는 문서 사이트 8곳 (GEO/AIEO 강화)",
+            "ultra": "Pro + 사이드바 스폰서 슬롯 (구독 중에는 계속 노출)"
+          },
+          "billing": {
+            "oneOff": "일회성 결제",
+            "subscription": "구독"
           },
           "overflow": {
             "label": "+ {n} sites",
@@ -650,6 +655,10 @@
     },
     "tiers": {
       "priceScope": "URL당 · 일회성",
+      "billing": {
+        "oneOff": "일회성 결제",
+        "subscription": "월간 · 언제든지 취소 가능"
+      },
       "basic": {
         "name": "기본",
         "price": "$3.99",
@@ -670,15 +679,15 @@
         "name": "플러스",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "4개 디렉토리에 동시 도달.",
+        "tagline": "4개의 서로 다른 도메인 → 자연스러운 SEO 효과.",
         "reach": "<n>4개 사이트</n> · 월 30만+ 방문",
-        "description": "기본의 모든 기능에 더해 HiCyou, MF8.BIZ, BigKr에 등록됩니다. 결합 네트워크는 30일마다 10,000회 이상의 Google 클릭을 발생시키고 월 30만+ 방문자를 제공합니다.",
+        "description": "기본의 모든 기능에 더해 HiCyou, MF8.BIZ, BigKr에 등록됩니다. 4개의 서로 다른 도메인에서 오는 백링크는 단일 사이트의 링크보다 Google에 훨씬 더 자연스럽게 인식됩니다. 결합 네트워크: 월 30만+ 방문자, 30일마다 1만+ Google 클릭.",
         "cta": "플러스 시작",
         "features": {
           "everything": "기본의 모든 기능",
-          "fourSites": "디렉토리 네트워크의 4개 사이트에 등록",
+          "fourSites": "4개의 서로 다른 도메인 → 아웃리치 스팸처럼 보이지 않는 자연스러운 백링크 프로필",
           "dofollowAll": "모든 사이트에서 dofollow 백링크",
-          "stats": "1만+ Google 클릭 · 월 30만+ 트래픽",
+          "stats": "4개 사이트 합계 월 30만+ 방문자 · 30일마다 1만+ Google 클릭",
           "delivery": "aat.ee 1일 내 게시 · 기타 3일 내 게시"
         }
       },
@@ -687,15 +696,15 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "가장 인기",
-        "tagline": "8개 문서 사이트의 권위 링크.",
+        "tagline": "권위 있는 문서 사이트 → GEO/AIEO 대폭 향상.",
         "reach": "<n>12개 사이트</n> · 월 70만+ 방문",
         "overflowLabel": "+ {n}개 사이트",
         "overflowTooltip": "이 등급의 추가 사이트",
-        "description": "Plus의 모든 기능에 더해, 권위 있는 문서 사이트 8곳에 친구 링크 배치 — GEO/AIEO 추천을 강화하고 도메인 평판을 높입니다. 통합 네트워크: 30일 기준 Google 클릭 30,000회 이상, 월 트래픽 70만 이상.",
+        "description": "Plus의 모든 기능에 더해, 권위 있는 문서 사이트 8곳에 친구 링크를 배치합니다. 권위 있는 문서 도메인은 GEO/AIEO 신호를 크게 개선하여, 사용자가 해당 카테고리에 대해 질문할 때 ChatGPT, Claude, Perplexity, Gemini 같은 LLM이 귀하의 URL을 추천할 가능성이 훨씬 높아집니다. 통합 네트워크: 30일 기준 Google 클릭 30,000회 이상, 월 트래픽 70만 이상.",
         "cta": "Pro 시작하기",
         "features": {
           "everything": "Plus의 모든 기능",
-          "docsSites": "높은 DR 문서 사이트 8곳에 친구 링크",
+          "docsSites": "권위 있는 문서 사이트 8곳에 친구 링크 → GEO/AIEO를 크게 향상시켜 ChatGPT, Claude, Perplexity, Gemini가 귀하의 URL을 더 자주 추천",
           "geo": "AI 검색을 위한 GEO/AIEO 신호 강화",
           "stats": "Google 클릭 3만+ · 월 트래픽 70만+",
           "delivery": "aat.ee 1일 내 · 기타 3일 내 게재"
@@ -706,13 +715,13 @@
         "subtitle": "스폰서십",
         "price": "$19.99",
         "priceSuffix": "/월",
-        "tagline": "모든 페이지, 모든 방문에서 영구적인 사이드바 노출.",
-        "description": "구독형. Pro의 모든 기능에 더해, aat.ee 및 HiCyou의 모든 페이지 오른쪽 사이드바에 스폰서 카드가 표시됩니다 — 모든 방문자가 모든 프로젝트, 비교, 대안 페이지에서 귀하의 브랜드를 볼 수 있습니다.",
+        "tagline": "모든 페이지에 스폰서 카드 — 구독 중인 기간 동안만 노출.",
+        "description": "구독형. Pro의 모든 기능에 더해, aat.ee 및 HiCyou의 모든 페이지 오른쪽 사이드바에 스폰서 카드가 표시됩니다. 슬롯은 구독 중인 기간에만 활성화되며 영구적인 배치가 아닙니다. 1개월 구독하면 카드가 1개월 동안 노출되고, 6개월 구독하면 6개월 동안 노출됩니다. 언제든지 취소할 수 있으며 현재 결제 기간 종료 시 슬롯이 해제됩니다.",
         "limit": "동시에 최대 5명의 활성 스폰서로 제한됩니다.",
         "cta": "Ultra 구독하기",
         "features": {
           "everything": "Pro의 모든 기능 (자동 제공)",
-          "sidebar": "모든 aat.ee + HiCyou 페이지에 스폰서 카드",
+          "sidebar": "모든 aat.ee + HiCyou 페이지에 스폰서 카드 — 구독 중에만 활성, 영구 슬롯 아님",
           "exclusive": "동시 최대 5명의 스폰서",
           "cancel": "언제든지 취소 가능 — 비례 청구"
         }

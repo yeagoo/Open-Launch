@@ -1664,6 +1664,15 @@ export function SubmitProjectForm({
                   const priceText = cfg.isSubscription
                     ? `$${(cfg.amountCents / 100).toFixed(2)}/mo`
                     : `$${(cfg.amountCents / 100).toFixed(2)}`
+                  // Pro is the recommended sweet-spot tier (matches
+                  // the public pricing page's "Most popular" badge).
+                  // Surfacing it on the in-form picker means users
+                  // who skipped the pricing page still see the
+                  // recommendation at decision time.
+                  const isPopular = tierKey === "pro"
+                  const billingChip = cfg.isSubscription
+                    ? t("step3.launchType.boost.billing.subscription")
+                    : t("step3.launchType.boost.billing.oneOff")
                   // Shared selection writer — mouse click and
                   // keyboard activation (Enter / Space) both end up
                   // here so the state transition logic lives in one
@@ -1691,8 +1700,26 @@ export function SubmitProjectForm({
                         e.preventDefault()
                         select()
                       }}
-                      className={`relative cursor-pointer rounded-lg border p-4 transition-all duration-150 ${selected ? "border-primary ring-primary bg-primary/5 shadow-sm ring-1" : "hover:border-primary/50 hover:bg-primary/5"}`}
+                      // Pro gets a thicker primary border + ring even
+                      // when unselected, so the recommendation reads
+                      // visually before the "Most popular" pill text
+                      // gets parsed.
+                      className={`relative cursor-pointer rounded-lg border p-4 transition-all duration-150 ${
+                        selected
+                          ? "border-primary ring-primary bg-primary/5 shadow-sm ring-1"
+                          : isPopular
+                            ? "border-primary/60 hover:border-primary hover:bg-primary/5"
+                            : "hover:border-primary/50 hover:bg-primary/5"
+                      }`}
                     >
+                      {isPopular && (
+                        <Badge
+                          variant="default"
+                          className="bg-primary text-primary-foreground absolute -top-2 left-3 text-[10px]"
+                        >
+                          {t("step3.launchType.boost.popularBadge")}
+                        </Badge>
+                      )}
                       {selected && (
                         <Badge
                           variant="default"
@@ -1711,9 +1738,25 @@ export function SubmitProjectForm({
                             {t(`step3.launchType.boost.tiers.${tierKey}`)}
                           </p>
                         </div>
-                        <span className="font-mono text-lg font-bold tabular-nums">
-                          {priceText}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="font-mono text-lg font-bold tabular-nums">
+                            {priceText}
+                          </span>
+                          {/* Billing chip — emerald for one-off,
+                              violet for the Ultra subscription. Mirrors
+                              the chip on /pricing/directories so users
+                              don't mistake the in-form $3.99/$6.99/$15.99
+                              for monthly plans. */}
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${
+                              cfg.isSubscription
+                                ? "bg-violet-500/10 text-violet-700 ring-1 ring-violet-500/20 dark:bg-violet-400/10 dark:text-violet-200 dark:ring-violet-400/20"
+                                : "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20"
+                            }`}
+                          >
+                            {billingChip}
+                          </span>
+                        </div>
                       </div>
 
                       {/* DR badges row — shows the SEO surface this

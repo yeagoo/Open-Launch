@@ -490,11 +490,16 @@
           "name": "付费推广",
           "subtitle": "跳过排队 · 选择套餐",
           "tierSelected": "已选 {tier}",
+          "popularBadge": "最受欢迎",
           "tiers": {
             "basic": "跳队 · aat.ee 上获得 dofollow 反向链接",
             "plus": "包含 Basic + 3 个合作导航站（人工上架）",
-            "pro": "包含 Plus + 8 个高 DR 文档站友链",
-            "ultra": "包含 Pro + 永久侧栏赞助位"
+            "pro": "包含 Plus + 8 个权威文档站（提升 GEO/AIEO）",
+            "ultra": "包含 Pro + 侧栏赞助位（订阅期内有效）"
+          },
+          "billing": {
+            "oneOff": "一次性付款",
+            "subscription": "按月订阅"
           },
           "overflow": {
             "label": "+ 还有 {n} 个站点",
@@ -644,6 +649,10 @@
     },
     "tiers": {
       "priceScope": "针对 1 个 URL · 一次性付费",
+      "billing": {
+        "oneOff": "一次性付款",
+        "subscription": "按月订阅 · 可随时取消"
+      },
       "basic": {
         "name": "Basic",
         "price": "$3.99",
@@ -664,15 +673,15 @@
         "name": "Plus",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "一次覆盖 4 个导航站。",
+        "tagline": "4 个不同域名 → 更真实的 SEO 提升。",
         "reach": "<n>4 个站点</n> · 月访问 30 万+",
-        "description": "包含 Basic 全部内容，并额外发布到 HiCyou、MF8.BIZ 和 BigKr。整个网络近 30 天 Google 搜索点击 1 万+，月流量 30 万+。",
+        "description": "包含 Basic 全部内容，并额外发布到 HiCyou、MF8.BIZ 和 BigKr。来自 4 个不同域名的反向链接在 Google 看来更像自然外链，比单站点链接可信得多。整个网络合计：月流量 30 万+，近 30 天 Google 搜索点击 1 万+。",
         "cta": "购买 Plus",
         "features": {
           "everything": "包含 Basic 全部内容",
-          "fourSites": "覆盖网络中 4 个导航站",
+          "fourSites": "4 个不同域名 → 自然真实的反向链接画像，不会被 Google 当作刷链接",
           "dofollowAll": "每个站点都给 Dofollow 反向链接",
-          "stats": "Google 点击 1 万+ · 月流量 30 万+",
+          "stats": "4 个站点合计月流量 30 万+ · 近 30 天 Google 点击 1 万+",
           "delivery": "aat.ee 1 天上线 · 其他 3 天内"
         }
       },
@@ -681,15 +690,15 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "最受欢迎",
-        "tagline": "再加 8 个高权重文档站友链。",
+        "tagline": "权威文档站 → 显著拉升 GEO/AIEO。",
         "reach": "<n>12 个站点</n> · 月访问 70 万+",
         "overflowLabel": "等 {n}+ 网站",
         "overflowTooltip": "本套餐包含的更多站点",
-        "description": "包含 Plus 全部内容，再加 8 个高权重文档站的友情链接 — 强化 GEO/AIEO 推荐权重，提升域名 DR。整个网络近 30 天 Google 点击 3 万+，月流量 70 万+。",
+        "description": "包含 Plus 全部内容，再加 8 个高权重文档站的友情链接。权威文档域名能显著拉升 GEO/AIEO 信号 — 让 ChatGPT、Claude、Perplexity、Gemini 等大模型在用户询问相关品类时，更高几率推荐您的网站。整个网络合计：近 30 天 Google 点击 3 万+，月流量 70 万+。",
         "cta": "购买 Pro",
         "features": {
           "everything": "包含 Plus 全部内容",
-          "docsSites": "8 个高权重文档站友链",
+          "docsSites": "8 个权威文档站友链 → 显著提升 GEO/AIEO，让 ChatGPT、Claude、Perplexity、Gemini 等大模型更高几率推荐您的网站",
           "geo": "强化 AI 搜索（GEO/AIEO）权威信号",
           "stats": "Google 点击 3 万+ · 月流量 70 万+",
           "delivery": "aat.ee 1 天上线 · 其他 3 天内"
@@ -700,13 +709,13 @@
         "subtitle": "赞助商套餐",
         "price": "$19.99",
         "priceSuffix": "/月",
-        "tagline": "每个页面、每次访问的右侧栏品牌曝光。",
-        "description": "订阅制。自动包含 Pro 全部权益，并额外在 aat.ee 与 HiCyou 的每个页面右侧栏展示您的赞助商卡片 — 用户访问任何页面都会看到您的品牌。",
+        "tagline": "订阅期内，每个页面都有您的赞助商位。",
+        "description": "订阅制。自动包含 Pro 全部权益，并额外在 aat.ee 与 HiCyou 的每个页面右侧栏展示您的赞助商卡片。订阅几个月就展示几个月 — 这不是永久赞助位。订阅 1 个月展示 1 个月，订阅 6 个月展示 6 个月。可随时取消，到当前周期结束后释放赞助位。",
         "limit": "同一时段最多 5 个赞助商。",
         "cta": "订阅 Ultra",
         "features": {
           "everything": "自动包含 Pro 全部内容",
-          "sidebar": "在 aat.ee + HiCyou 每个页面右侧栏展示赞助商卡片",
+          "sidebar": "aat.ee + HiCyou 每个页面右侧栏赞助商卡片 — 订阅期内有效，不是永久赞助位",
           "exclusive": "全站同时最多仅 5 个赞助商",
           "cancel": "可随时取消，按比例退款"
         }

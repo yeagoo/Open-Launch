@@ -490,11 +490,16 @@
           "name": "Boost (paid)",
           "subtitle": "Skip the queue · pick a tier",
           "tierSelected": "{tier} selected",
+          "popularBadge": "人気No.1",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
             "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 8 high-DR documentation sites",
-            "ultra": "Pro + permanent sidebar sponsor slot"
+            "pro": "Plus + 権威性の高いドキュメントサイト8件（GEO/AIEOを強化）",
+            "ultra": "Pro + サイドバーのスポンサー枠（サブスクリプション有効中は掲載）"
+          },
+          "billing": {
+            "oneOff": "一括払い",
+            "subscription": "サブスクリプション"
           },
           "overflow": {
             "label": "+ {n} sites",
@@ -650,6 +655,10 @@
     },
     "tiers": {
       "priceScope": "URLあたり · 一回限り",
+      "billing": {
+        "oneOff": "一回限りのお支払い",
+        "subscription": "月額 · いつでも解約可"
+      },
       "basic": {
         "name": "ベーシック",
         "price": "$3.99",
@@ -670,15 +679,15 @@
         "name": "プラス",
         "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "一度に4つのディレクトリにリーチ。",
+        "tagline": "4つの異なるドメイン → 自然なSEO効果。",
         "reach": "<n>4サイト</n> · 月間30万以上の訪問",
-        "description": "ベーシックのすべてに加え、HiCyou、MF8.BIZ、BigKrへの掲載。ネットワーク全体で30日ごとに1万以上のGoogleクリックを獲得し、月間30万以上の訪問者にサービスを提供。",
+        "description": "ベーシックのすべてに加え、HiCyou、MF8.BIZ、BigKrへの掲載。4つの異なるドメインからのバックリンクは、単一サイトからのリンクよりもはるかに自然にGoogleに認識されます。ネットワーク合計：月間30万以上の訪問者、30日ごとに1万以上のGoogleクリック。",
         "cta": "プラスを取得",
         "features": {
           "everything": "ベーシックのすべて",
-          "fourSites": "ディレクトリネットワークの4サイトに掲載",
+          "fourSites": "4つの異なるドメイン → アウトリーチスパムに見えない自然なバックリンクプロファイル",
           "dofollowAll": "すべてのサイトからdofollowバックリンク",
-          "stats": "1万以上のGoogleクリック · 月間30万以上のトラフィック",
+          "stats": "4サイト合計で月間30万以上の訪問者 · 30日ごとに1万以上のGoogleクリック",
           "delivery": "aat.eeは1日以内 · その他は3日以内に公開"
         }
       },
@@ -687,15 +696,15 @@
         "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "最も人気",
-        "tagline": "8つのドキュメンテーションサイトからの権威リンク。",
+        "tagline": "権威あるドキュメントサイト → GEO/AIEOを大きく押し上げ。",
         "reach": "<n>12サイト</n> · 月間70万回以上の訪問",
         "overflowLabel": "+ {n}サイト以上",
         "overflowTooltip": "このティアの追加サイト",
-        "description": "Plusの全機能に加え、8つの高権威ドキュメントサイトへのフレンドリンク掲載。GEO/AIEOの推奨を強化し、ドメインレーティングを押し上げます。ネットワーク全体：30日間のGoogleクリック数30,000以上、月間トラフィック70万以上。",
+        "description": "Plusの全機能に加え、8つの高権威ドキュメントサイトへのフレンドリンク掲載。権威あるドキュメントドメインはGEO/AIEOシグナルを大きく改善し、ユーザーがあなたのカテゴリーについて尋ねた際にChatGPT、Claude、Perplexity、GeminiなどのLLMがあなたのURLを推奨する可能性が大幅に高まります。ネットワーク全体：30日間のGoogleクリック数30,000以上、月間トラフィック70万以上。",
         "cta": "Proを取得",
         "features": {
           "everything": "Plusの全機能",
-          "docsSites": "8つの高DRドキュメントサイトへのフレンドリンク",
+          "docsSites": "8つの権威あるドキュメントサイトへのフレンドリンク → GEO/AIEOを大幅に強化し、ChatGPT、Claude、Perplexity、GeminiがあなたのURLをより頻繁に推奨",
           "geo": "AI検索向けGEO/AIEOシグナルを強化",
           "stats": "Googleクリック30,000以上 · 月間トラフィック70万以上",
           "delivery": "aat.eeは1日以内、他は3日以内に反映"
@@ -706,13 +715,13 @@
         "subtitle": "スポンサーシップ",
         "price": "$19.99",
         "priceSuffix": "/月",
-        "tagline": "すべてのページ、すべての訪問でサイドバーに常時表示。",
-        "description": "サブスクリプション。Proの全機能に加え、aat.eeおよびHiCyouの全ページの右サイドバーにスポンサーカードが表示されます。すべての訪問者が、すべてのプロジェクト、比較、代替案であなたのブランドを目にします。",
+        "tagline": "全ページにスポンサーカード — 購読中の月だけ表示。",
+        "description": "サブスクリプション。Proの全機能に加え、aat.eeおよびHiCyouの全ページの右サイドバーにスポンサーカードが表示されます。スロットは購読中の期間のみアクティブで、永続的な掲載ではありません。1ヶ月購読すればカードは1ヶ月表示、6ヶ月購読すれば6ヶ月表示されます。いつでも解約可能で、現在の請求期間の終了時にスロットが解放されます。",
         "limit": "同時にアクティブなスポンサーは最大5社に制限されています。",
         "cta": "Ultraに登録",
         "features": {
           "everything": "Proの全機能（自動反映）",
-          "sidebar": "aat.ee + HiCyouの全ページにスポンサーカード",
+          "sidebar": "aat.ee + HiCyouの全ページにスポンサーカード — 購読中のみアクティブ、永続的なスロットではありません",
           "exclusive": "同時スポンサーは最大5社",
           "cancel": "いつでも解約可能 — 日割り請求"
         }
