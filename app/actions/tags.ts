@@ -15,6 +15,8 @@ import {
 import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import { getCurrentUserId } from "@/lib/server-auth"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -67,9 +69,6 @@ export async function getTagBySlug(slug: string) {
 }
 
 export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, sort = "recent") {
-  const session = await getSession()
-  const userId = session?.user?.id || null
-
   const tagData = await getTagBySlug(tagSlug)
   if (!tagData) return { projects: [], totalCount: 0 }
 
@@ -96,52 +95,57 @@ export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, so
     or(eq(projectTable.launchStatus, "ongoing"), eq(projectTable.launchStatus, "launched")),
   )
 
-  const projectsData = await db
-    .select({
-      id: projectTable.id,
-      name: projectTable.name,
-      slug: projectTable.slug,
-      description: projectTable.description,
-      logoUrl: projectTable.logoUrl,
-      websiteUrl: projectTable.websiteUrl,
-      launchStatus: projectTable.launchStatus,
-      launchType: projectTable.launchType,
-      dailyRanking: projectTable.dailyRanking,
-      scheduledLaunchDate: projectTable.scheduledLaunchDate,
-      createdAt: projectTable.createdAt,
-      upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
-      commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
-    })
-    .from(projectTable)
-    .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
-    .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-    .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
-    .where(queryConditions)
-    .groupBy(
-      projectTable.id,
-      projectTable.name,
-      projectTable.slug,
-      projectTable.description,
-      projectTable.logoUrl,
-      projectTable.websiteUrl,
-      projectTable.launchStatus,
-      projectTable.launchType,
-      projectTable.dailyRanking,
-      projectTable.scheduledLaunchDate,
-      projectTable.createdAt,
-    )
-    .orderBy(orderByClause)
-    .limit(limit)
-    .offset(offset)
+  // Run the projects query, the count query, and the auth lookup
+  // all in parallel. Previously these were sequential awaits, so
+  // the count blocked the enrichment even though they share no
+  // data.
+  const [projectsData, totalResult, userId] = await Promise.all([
+    db
+      .select({
+        id: projectTable.id,
+        name: projectTable.name,
+        slug: projectTable.slug,
+        description: projectTable.description,
+        logoUrl: projectTable.logoUrl,
+        websiteUrl: projectTable.websiteUrl,
+        launchStatus: projectTable.launchStatus,
+        launchType: projectTable.launchType,
+        dailyRanking: projectTable.dailyRanking,
+        scheduledLaunchDate: projectTable.scheduledLaunchDate,
+        createdAt: projectTable.createdAt,
+        upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
+        commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
+      })
+      .from(projectTable)
+      .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
+      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
+      .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
+      .where(queryConditions)
+      .groupBy(
+        projectTable.id,
+        projectTable.name,
+        projectTable.slug,
+        projectTable.description,
+        projectTable.logoUrl,
+        projectTable.websiteUrl,
+        projectTable.launchStatus,
+        projectTable.launchType,
+        projectTable.dailyRanking,
+        projectTable.scheduledLaunchDate,
+        projectTable.createdAt,
+      )
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: count(projectTable.id) })
+      .from(projectTable)
+      .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
+      .where(queryConditions),
+    getCurrentUserId(),
+  ])
 
-  // Enrich with user upvote data and categories
-  const enrichedProjects = await enrichProjectsWithUserData(projectsData, userId)
-
-  const totalResult = await db
-    .select({ count: count(projectTable.id) })
-    .from(projectTable)
-    .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
-    .where(queryConditions)
+  const enrichedProjects = await enrichWithCategoriesAndUpvotes(projectsData, userId)
 
   return {
     projects: enrichedProjects,
@@ -278,57 +282,4 @@ export async function deleteTag(tagId: string) {
   revalidatePath("/tags")
   revalidatePath("/admin/tags")
   return { success: true }
-}
-
-// ─── Shared helper (mirrors pattern from projects.ts) ────────────────────────
-
-async function enrichProjectsWithUserData<T extends { id: string }>(
-  projects: T[],
-  userId: string | null,
-) {
-  if (!projects.length)
-    return projects.map((p) => ({
-      ...p,
-      userHasUpvoted: false,
-      categories: [] as { id: string; name: string }[],
-    }))
-
-  const projectIds = projects.map((p) => p.id)
-
-  // Import dynamically to avoid circular deps
-  const { projectToCategory, category: categoryTable } = await import("@/drizzle/db/schema")
-
-  const categoriesData = await db
-    .select({
-      projectId: projectToCategory.projectId,
-      categoryId: categoryTable.id,
-      categoryName: categoryTable.name,
-    })
-    .from(projectToCategory)
-    .innerJoin(categoryTable, eq(categoryTable.id, projectToCategory.categoryId))
-    .where(sql`${projectToCategory.projectId} IN ${projectIds}`)
-
-  const categoriesByProjectId = categoriesData.reduce(
-    (acc, row) => {
-      if (!acc[row.projectId]) acc[row.projectId] = []
-      acc[row.projectId].push({ id: row.categoryId, name: row.categoryName })
-      return acc
-    },
-    {} as Record<string, { id: string; name: string }[]>,
-  )
-
-  let userUpvotedProjectIds = new Set<string>()
-  if (userId) {
-    const userUpvotes = await db
-      .select({ projectId: upvote.projectId })
-      .from(upvote)
-      .where(and(eq(upvote.userId, userId), sql`${upvote.projectId} IN ${projectIds}`))
-    userUpvotedProjectIds = new Set(userUpvotes.map((uv) => uv.projectId))
-  }
-
-  return projects.map((project) => ({
-    ...project,
-    userHasUpvoted: userUpvotedProjectIds.has(project.id),
-    categories: categoriesByProjectId[project.id] || [],
-  }))
 }

@@ -1,51 +1,27 @@
 "use server"
 
 import { unstable_cache } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
-  category as categoryTable,
   fumaComments,
   launchStatus,
   launchType,
   project as projectTable,
-  projectToCategory,
   upvote,
 } from "@/drizzle/db/schema"
 import { endOfMonth, startOfMonth } from "date-fns"
-import { and, desc, eq, inArray, sql } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
-import { HOME_PROJECTS_TAG } from "@/lib/cache-tags"
+import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
+import { getCurrentUserId } from "@/lib/server-auth"
 
-async function getCurrentUserId() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  return session?.user?.id ?? null
-}
-
-interface ProjectBase {
-  id: string
-  name: string
-  slug: string
-  description: string
-  logoUrl: string
-  websiteUrl: string
-  launchStatus: string
-  launchType: string | null
-  dailyRanking: number | null
-  scheduledLaunchDate: Date | null
-  createdAt: Date
-  upvoteCount: number
-  commentCount: number
-  categories: { id: string; name: string }[]
-}
-
-// Reusable project-summary projection — the 3 home-page listings
-// (today / yesterday / month) all need the exact same columns, and
-// duplicating them is how `dailyRanking` and `commentCount` drift
-// apart between listings during refactors.
+// Reusable project-summary projection — the 4 listings on home /
+// winners all need the exact same columns, and duplicating them is
+// how `dailyRanking` and `commentCount` drift apart between
+// listings during refactors.
 const projectSummarySelect = {
   id: projectTable.id,
   name: projectTable.name,
@@ -62,51 +38,6 @@ const projectSummarySelect = {
   commentCount: sql<number>`cast(count(distinct ${fumaComments.id}) as int)`.mapWith(Number),
 } as const
 
-// Attaches categories to a project list. User-agnostic — folded
-// into the cached fetchers so cached pages don't re-issue this
-// query per request.
-async function attachCategories<T extends { id: string }>(
-  projects: T[],
-): Promise<(T & { categories: { id: string; name: string }[] })[]> {
-  if (!projects.length) return []
-  const projectIds = projects.map((p) => p.id)
-  const rows = await db
-    .select({
-      projectId: projectToCategory.projectId,
-      categoryId: categoryTable.id,
-      categoryName: categoryTable.name,
-    })
-    .from(projectToCategory)
-    .innerJoin(categoryTable, eq(categoryTable.id, projectToCategory.categoryId))
-    .where(inArray(projectToCategory.projectId, projectIds))
-
-  const byId = new Map<string, { id: string; name: string }[]>()
-  for (const r of rows) {
-    const existing = byId.get(r.projectId)
-    const entry = { id: r.categoryId, name: r.categoryName }
-    if (existing) existing.push(entry)
-    else byId.set(r.projectId, [entry])
-  }
-  return projects.map((p) => ({ ...p, categories: byId.get(p.id) ?? [] }))
-}
-
-// Looks up which of `projectIds` the user has upvoted. Per-request
-// (depends on the signed-in user), so it's outside the cached
-// fetchers and intentionally fast: indexed `(user_id, project_id)`
-// is the access path.
-async function getUpvotedSet(userId: string | null, projectIds: string[]): Promise<Set<string>> {
-  if (!userId || !projectIds.length) return new Set()
-  const rows = await db
-    .select({ projectId: upvote.projectId })
-    .from(upvote)
-    .where(and(eq(upvote.userId, userId), inArray(upvote.projectId, projectIds)))
-  return new Set(rows.map((r) => r.projectId))
-}
-
-function withUserUpvoted<T extends { id: string }>(projects: T[], upvoted: Set<string>) {
-  return projects.map((p) => ({ ...p, userHasUpvoted: upvoted.has(p.id) }))
-}
-
 // ─── User-agnostic cached fetchers ──────────────────────────────────────────
 // Each base fetcher is wrapped with `unstable_cache` so multiple
 // home-page renders share one DB round-trip per cache window.
@@ -114,7 +45,7 @@ function withUserUpvoted<T extends { id: string }>(projects: T[], upvoted: Set<s
 // public entry points below.
 
 const fetchTodayProjectsBase = unstable_cache(
-  async (limit: number): Promise<ProjectBase[]> => {
+  async (limit: number) => {
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
@@ -136,7 +67,7 @@ const fetchTodayProjectsBase = unstable_cache(
 )
 
 const fetchYesterdayProjectsBase = unstable_cache(
-  async (limit: number, queryStartIso: string, yesterdayEndIso: string): Promise<ProjectBase[]> => {
+  async (limit: number, queryStartIso: string, yesterdayEndIso: string) => {
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
@@ -161,7 +92,7 @@ const fetchYesterdayProjectsBase = unstable_cache(
 )
 
 const fetchMonthBestProjectsBase = unstable_cache(
-  async (limit: number, monthStartIso: string, monthEndIso: string): Promise<ProjectBase[]> => {
+  async (limit: number, monthStartIso: string, monthEndIso: string) => {
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
@@ -181,6 +112,33 @@ const fetchMonthBestProjectsBase = unstable_cache(
   },
   ["home-month-projects-v1"],
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
+)
+
+const fetchWinnersByDateBase = unstable_cache(
+  async (dayStartIso: string, dayEndIso: string) => {
+    const base = await db
+      .select(projectSummarySelect)
+      .from(projectTable)
+      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
+      .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
+      .where(
+        and(
+          eq(projectTable.launchStatus, launchStatus.LAUNCHED),
+          sql`${projectTable.dailyRanking} IS NOT NULL`,
+          sql`${projectTable.dailyRanking} <= 3`,
+          sql`${projectTable.scheduledLaunchDate} >= ${dayStartIso}`,
+          sql`${projectTable.scheduledLaunchDate} <= ${dayEndIso}`,
+        ),
+      )
+      .groupBy(projectTable.id)
+      .orderBy(projectTable.dailyRanking)
+    return attachCategories(base)
+  },
+  ["winners-by-date-v1"],
+  // Past winners are immutable once the 8 AM cron has stamped
+  // `dailyRanking`. 6h is generous; tag-bust still catches the
+  // initial transition.
+  { revalidate: 21600, tags: [HOME_PROJECTS_TAG, WINNERS_TAG] },
 )
 
 // ─── Public entry points ────────────────────────────────────────────────────
@@ -295,33 +253,18 @@ export async function getYesterdayTopProjects() {
 }
 
 export async function getWinnersByDate(date: Date) {
-  const userId = await getCurrentUserId()
   const dayStart = new Date(date)
   dayStart.setHours(0, 0, 0, 0)
   const dayEnd = new Date(date)
   dayEnd.setHours(23, 59, 59, 999)
 
-  const winnersBase = await db
-    .select(projectSummarySelect)
-    .from(projectTable)
-    .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-    .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
-    .where(
-      and(
-        eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-        sql`${projectTable.dailyRanking} IS NOT NULL`,
-        sql`${projectTable.dailyRanking} <= 3`,
-        sql`${projectTable.scheduledLaunchDate} >= ${dayStart.toISOString()}`,
-        sql`${projectTable.scheduledLaunchDate} <= ${dayEnd.toISOString()}`,
-      ),
-    )
-    .groupBy(projectTable.id)
-    .orderBy(projectTable.dailyRanking)
-
-  const withCats = await attachCategories(winnersBase)
+  const [base, userId] = await Promise.all([
+    fetchWinnersByDateBase(dayStart.toISOString(), dayEnd.toISOString()),
+    getCurrentUserId(),
+  ])
   const upvoted = await getUpvotedSet(
     userId,
-    withCats.map((p) => p.id),
+    base.map((p) => p.id),
   )
-  return withUserUpvoted(withCats, upvoted)
+  return withUserUpvoted(base, upvoted)
 }
