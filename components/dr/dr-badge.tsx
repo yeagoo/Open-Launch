@@ -1,6 +1,10 @@
 import { formatDistanceToNow } from "date-fns"
 
-import type { DRRecord } from "@/lib/dr"
+// Type-only — stripped at compile time so `lib/dr` here wouldn't
+// actually drag pg into the client bundle. Routing through the
+// pure-data module keeps the rule "client code never touches
+// lib/dr" consistent and grep-friendly.
+import type { DRRecord } from "@/lib/dr-domains"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface DrBadgeProps {

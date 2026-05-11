@@ -2,61 +2,21 @@ import { db } from "@/drizzle/db"
 import { domainDrCache } from "@/drizzle/db/schema"
 import { eq, inArray } from "drizzle-orm"
 
-/**
- * Domains tracked by the refresh-dr cron, grouped by Directory tier.
- * Each tier inherits everything in the tiers above it.
- *
- * Adding a domain: append to the right tier and the cron picks it up
- * on the next run (every 3 days). DRs ship as null until first fetch.
- */
-// Typed as `readonly string[]` (not narrow tuple literals) so callers
-// can `.includes(someString)` without casting. The arrays themselves
-// are still frozen at runtime via the `as const` assertion in the
-// initialiser.
-export const DR_DOMAINS_BASIC: readonly string[] = ["aat.ee"] as const
+import { FRESH_WINDOW_MS, type DRRecord } from "@/lib/dr-domains"
 
-export const DR_DOMAINS_PLUS: readonly string[] = [
-  ...DR_DOMAINS_BASIC,
-  "hicyou.com",
-  "mf8.biz",
-  "bigkr.com",
-] as const
-
-export const DR_DOMAINS_PRO: readonly string[] = [
-  ...DR_DOMAINS_PLUS,
-  "debian.club",
-  "ubuntu.fan",
-  "almalinux.com.cn",
-  "runentlinux.com",
-  "eol.wiki",
-  "rank.fan",
-  "litehttpd.com",
-  "portcyou.com",
-] as const
-
-export const ALL_TRACKED_DOMAINS = DR_DOMAINS_PRO
-
-// Three docs sites we feature inline on the Pro tier card. The other
-// nine sites (4 directories + 5 docs) live in a hover-revealed
-// overflow pill so the card stays scannable. Keep this list in sync
-// with what the marketing copy on the page shows.
-export const DR_DOMAINS_PRO_PREVIEW: readonly string[] = [
-  "debian.club",
-  "portcyou.com",
-  "rank.fan",
-] as const
-
-// A DR value is considered fresh for this many ms. Past this it
-// still renders (with a "Updated X days ago" hint) but the cron
-// will refresh on its next 3-day tick.
-const FRESH_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
-
-export interface DRRecord {
-  domain: string
-  dr: number | null
-  fetchedAt: Date | null
-  isFresh: boolean
-}
+// Re-export the pure-data constants + type so existing server-side
+// callers that did `import { DR_DOMAINS_PRO, getDRBatch } from "@/lib/dr"`
+// keep working without churn. Client components should import directly
+// from `lib/dr-domains` to avoid pulling pg into the browser bundle.
+export {
+  ALL_TRACKED_DOMAINS,
+  DR_DOMAINS_BASIC,
+  DR_DOMAINS_PLUS,
+  DR_DOMAINS_PRO,
+  DR_DOMAINS_PRO_PREVIEW,
+  type DRRecord,
+  FRESH_WINDOW_MS,
+} from "@/lib/dr-domains"
 
 /**
  * Read DR values for the given domain list out of the cache. Returns
