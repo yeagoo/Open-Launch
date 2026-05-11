@@ -193,21 +193,13 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
 
         {/* ─── Boost section ─── */}
         <section className="mb-10">
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="font-editorial text-2xl font-semibold tracking-tight sm:text-3xl">
-                {t("boostSectionHeading")}
-              </h2>
-              <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
-                {t("boostSectionSubheading")}
-              </p>
-            </div>
-            <Link
-              href="/pricing/directories"
-              className="text-primary hover:text-primary/80 flex-shrink-0 text-sm font-medium"
-            >
-              {t("viewDirectoryPricing")}
-            </Link>
+          <div className="mb-5">
+            <h2 className="font-editorial text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("boostSectionHeading")}
+            </h2>
+            <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
+              {t("boostSectionSubheading")}
+            </p>
           </div>
 
           {/* Promo banner — same DIRECTORY_PROMO source-of-truth as
@@ -246,7 +238,11 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
               return (
                 <div
                   key={tier}
-                  className={`bg-card relative flex flex-col rounded-xl border p-5 ${
+                  // `id="ultra"` anchor target — the legacy /sponsors
+                  // route 308-redirects to /pricing#ultra, so this is
+                  // the row that needs to scroll into view.
+                  id={tier === "ultra" ? "ultra" : undefined}
+                  className={`bg-card relative flex scroll-mt-24 flex-col rounded-xl border p-5 ${
                     isPopular ? "border-primary ring-primary/20 ring-1" : ""
                   }`}
                 >

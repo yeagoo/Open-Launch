@@ -40,7 +40,7 @@ export const ALL_TRACKED_DOMAINS = DR_DOMAINS_PRO
 // Three docs sites featured inline on the Pro/Ultra tier cards.
 // The other nine sites (4 directories + 5 docs) live behind a
 // hover-revealed overflow pill so the card stays scannable. Keep
-// in sync with marketing copy in /pricing/directories.
+// in sync with marketing copy in /pricing.
 export const DR_DOMAINS_PRO_PREVIEW: readonly string[] = [
   "debian.club",
   "portcyou.com",

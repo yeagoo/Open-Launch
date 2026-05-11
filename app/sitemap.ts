@@ -84,7 +84,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedEntries("/winners", { changeFrequency: "daily", priority: 0.8 }),
     ...localizedEntries("/blog", { changeFrequency: "weekly", priority: 0.7 }),
     ...localizedEntries("/reviews", { changeFrequency: "weekly", priority: 0.7 }),
-    ...localizedEntries("/sponsors", { changeFrequency: "monthly", priority: 0.6 }),
+    // /sponsors and /pricing/directories both 308-redirect into
+    // /pricing (the consolidated pricing hub). Redirected URLs
+    // don't belong in the sitemap — crawlers will discover them
+    // via the canonical /pricing entry above.
     ...localizedEntries("/friends", { changeFrequency: "monthly", priority: 0.5 }),
     // Legal docs are English-only — translating them carries liability, so
     // we don't emit hreflang sitemap entries for them either.
