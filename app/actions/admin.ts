@@ -9,6 +9,7 @@ import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
+import { countInt } from "@/lib/db-utils"
 
 import { getLaunchAvailabilityRange } from "./launch"
 
@@ -55,36 +56,36 @@ export async function getAdminStatsAndUsers() {
 
   // Get new users today
   const newUsersToday = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(user)
     .where(gte(user.createdAt, today))
 
   // Get launch stats
-  const totalLaunches = await db.select({ count: sql`count(*)` }).from(project)
+  const totalLaunches = await db.select({ count: countInt() }).from(project)
   const premiumLaunches = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(project)
     .where(eq(project.launchType, "premium"))
   const premiumPlusLaunches = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(project)
     .where(eq(project.launchType, "premium_plus"))
 
   // Get new launches today
   const newLaunchesToday = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(project)
     .where(gte(project.createdAt, today))
 
   // Get new premium launches today
   const newPremiumLaunchesToday = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(project)
     .where(and(gte(project.createdAt, today), eq(project.launchType, "premium")))
 
   // Get new premium plus launches today
   const newPremiumPlusLaunchesToday = await db
-    .select({ count: sql`count(*)` })
+    .select({ count: countInt() })
     .from(project)
     .where(and(gte(project.createdAt, today), eq(project.launchType, "premium_plus")))
 
@@ -138,7 +139,7 @@ export async function getCategories() {
     .from(category)
     .orderBy(category.name)
 
-  const totalCount = await db.select({ count: sql<number>`count(*)::int` }).from(category)
+  const totalCount = await db.select({ count: countInt() }).from(category)
 
   return {
     categories,
