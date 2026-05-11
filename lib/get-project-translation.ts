@@ -1,3 +1,5 @@
+import { cache } from "react"
+
 import { db } from "@/drizzle/db"
 import { projectTranslation } from "@/drizzle/db/schema"
 import { and, eq, inArray, or } from "drizzle-orm"
@@ -10,42 +12,46 @@ import { and, eq, inArray, or } from "drizzle-orm"
  *   2. Source-locale row (`is_source = true`)
  *   3. English row (most common ground truth)
  *   4. The bare `fallback` string passed in (last resort, usually project.description)
+ *
+ * Wrapped in React `cache()` because the detail page calls this
+ * from `generateMetadata` and again from the page body for the
+ * same args — without dedup that's 2× the DB load per render.
  */
-export async function getLocalizedProjectDescription(
-  projectId: string,
-  locale: string,
-  fallback: string,
-): Promise<string> {
-  const rows = await db
-    .select({
-      locale: projectTranslation.locale,
-      description: projectTranslation.description,
-      isSource: projectTranslation.isSource,
-    })
-    .from(projectTranslation)
-    .where(
-      and(
-        eq(projectTranslation.projectId, projectId),
-        inArray(projectTranslation.locale, [locale, "en"]),
-      ),
-    )
+export const getLocalizedProjectDescription = cache(
+  async (projectId: string, locale: string, fallback: string): Promise<string> => {
+    const rows = await db
+      .select({
+        locale: projectTranslation.locale,
+        description: projectTranslation.description,
+        isSource: projectTranslation.isSource,
+      })
+      .from(projectTranslation)
+      .where(
+        and(
+          eq(projectTranslation.projectId, projectId),
+          inArray(projectTranslation.locale, [locale, "en"]),
+        ),
+      )
 
-  const exact = rows.find((r) => r.locale === locale)
-  if (exact) return exact.description
+    const exact = rows.find((r) => r.locale === locale)
+    if (exact) return exact.description
 
-  // Try the source row (one extra query when locale != en and source != en)
-  const [source] = await db
-    .select({ description: projectTranslation.description })
-    .from(projectTranslation)
-    .where(and(eq(projectTranslation.projectId, projectId), eq(projectTranslation.isSource, true)))
-    .limit(1)
-  if (source) return source.description
+    // Try the source row (one extra query when locale != en and source != en)
+    const [source] = await db
+      .select({ description: projectTranslation.description })
+      .from(projectTranslation)
+      .where(
+        and(eq(projectTranslation.projectId, projectId), eq(projectTranslation.isSource, true)),
+      )
+      .limit(1)
+    if (source) return source.description
 
-  const en = rows.find((r) => r.locale === "en")
-  if (en) return en.description
+    const en = rows.find((r) => r.locale === "en")
+    if (en) return en.description
 
-  return fallback
-}
+    return fallback
+  },
+)
 
 /**
  * Bulk: fetch the canonical English description for a list of projects.

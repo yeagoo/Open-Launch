@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import { Metadata, ResolvingMetadata } from "next"
-import { headers } from "next/headers"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -9,7 +8,6 @@ import { RiGlobalLine, RiHashtag, RiVipCrownLine } from "@remixicon/react"
 import { format } from "date-fns"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
 import { getRelatedProjects } from "@/lib/get-project-related"
 import { getProjectSidebarLinks } from "@/lib/get-project-sidebar-links"
 import {
@@ -19,6 +17,7 @@ import {
 } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
+import { getCurrentUserId } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -128,11 +127,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     getLocalizedProjectTagline(projectData.id, locale),
   ])
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
-
-  const hasUpvoted = session?.user ? await hasUserUpvoted(projectData.id) : false
+  // `getCurrentUserId` is React-cached per request, so this is
+  // free even though `hasUserUpvoted` (and a couple other places
+  // in this project) calls it internally too.
+  const userId = await getCurrentUserId()
+  const hasUpvoted = userId ? await hasUserUpvoted(projectData.id) : false
 
   const scheduledDate = projectData.scheduledLaunchDate
     ? new Date(projectData.scheduledLaunchDate)
@@ -142,7 +141,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const isScheduled = projectData.launchStatus === "scheduled"
 
-  const isOwner = session?.user?.id === projectData.createdBy
+  const isOwner = userId === projectData.createdBy
 
   const websiteRelAttribute = getProjectWebsiteRelAttribute(
     {
@@ -274,7 +273,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       projectId={projectData.id}
                       upvoteCount={projectData.upvoteCount}
                       initialUpvoted={hasUpvoted}
-                      isAuthenticated={Boolean(session?.user)}
+                      isAuthenticated={Boolean(userId)}
                     />
                   ) : (
                     <div className="border-muted bg-muted flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium">
@@ -342,7 +341,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       projectId={projectData.id}
                       upvoteCount={projectData.upvoteCount}
                       initialUpvoted={hasUpvoted}
-                      isAuthenticated={Boolean(session?.user)}
+                      isAuthenticated={Boolean(userId)}
                     />
                   ) : (
                     <div className="border-muted bg-muted flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium">
@@ -443,7 +442,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   <CommentsLazy
                     projectId={projectData.id}
                     placeholder={tComments("placeholder")}
-                    currentUserId={session?.user?.id ?? null}
+                    currentUserId={userId}
                   />
                 ) : (
                   <div className="py-6 text-center">

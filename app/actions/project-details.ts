@@ -1,5 +1,6 @@
 "use server"
 
+import { cache } from "react"
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 
@@ -17,6 +18,7 @@ import { and, eq, ne, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { sanitizeRichText } from "@/lib/sanitize"
+import { getCurrentUserId } from "@/lib/server-auth"
 
 // Get session helper
 async function getSession() {
@@ -25,8 +27,17 @@ async function getSession() {
   })
 }
 
-// Get project by slug
-export async function getProjectBySlug(slug: string) {
+/**
+ * Get project by slug — wrapped in React `cache()` so that within
+ * a single request, `generateMetadata` and the page body share one
+ * lookup. Without this the detail page issued 8 DB queries per
+ * render (4 inside this function, called twice).
+ *
+ * `cache()` is per-request so two different visitors still trigger
+ * two real DB reads — for cross-request caching see `unstable_cache`
+ * in the actions called from the home page.
+ */
+export const getProjectBySlug = cache(async (slug: string) => {
   // Get project details - Exclure les projets avec le statut payment_pending
   const [projectData] = await db
     .select()
@@ -76,20 +87,21 @@ export async function getProjectBySlug(slug: string) {
     creator,
     // Ne plus inclure les commentaires dans l'objet retourné
   }
-}
+})
 
-// Check if a user has upvoted a project
+// Check if a user has upvoted a project.
+//
+// Uses `getCurrentUserId` (React-cached per request) so detail-page
+// renders that already resolved the user share the lookup instead of
+// hitting auth again.
 export async function hasUserUpvoted(projectId: string) {
-  const session = await getSession()
-
-  if (!session?.user?.id) {
-    return false
-  }
+  const userId = await getCurrentUserId()
+  if (!userId) return false
 
   const userUpvotes = await db
     .select()
     .from(upvote)
-    .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
+    .where(and(eq(upvote.userId, userId), eq(upvote.projectId, projectId)))
     .limit(1)
 
   return userUpvotes.length > 0

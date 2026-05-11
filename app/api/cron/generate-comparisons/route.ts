@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -14,6 +14,7 @@ import {
 import { and, count, desc, eq, gte, or, sql } from "drizzle-orm"
 
 import { generateComparisonContent } from "@/lib/ai-content"
+import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { getEnglishDescriptions } from "@/lib/get-project-translation"
@@ -229,6 +230,10 @@ export async function GET(request: NextRequest) {
 
     if (generated > 0) {
       revalidatePath("/compare")
+      // Detail pages cache their sidebar comparison list per project;
+      // bust the tag so freshly-written comparisons surface without
+      // waiting for the 6h revalidate window.
+      revalidateTag(PROJECT_SIDEBAR_LINKS_TAG)
     }
 
     return NextResponse.json({

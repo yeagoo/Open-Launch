@@ -20,8 +20,16 @@ const TranslatedComments = dynamic(
   () => import("./translated-comments").then((m) => ({ default: m.TranslatedComments })),
   {
     ssr: false,
+    // Reserve ~240px so the swap from "Loading…" to the real
+    // comments thread doesn't yank the page down by several
+    // hundred pixels (CLS). A single short comment renders at
+    // ~100px; logged-out users see a "sign in to comment" pitch
+    // that's a bit taller; 240px covers the common case without
+    // looking awkwardly empty.
     loading: () => (
-      <p className="text-muted-foreground py-6 text-center text-sm">Loading comments…</p>
+      <div className="flex min-h-[240px] items-center justify-center">
+        <p className="text-muted-foreground text-sm">Loading comments…</p>
+      </div>
     ),
   },
 )
