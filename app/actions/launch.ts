@@ -49,10 +49,15 @@ export async function getLaunchAvailability(date: string): Promise<LaunchAvailab
   // Obtenir le nombre de lancements déjà programmés pour cette date
   const scheduledLaunches = await db
     .select({
-      freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})`,
-      badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')`,
-      premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})`,
-      totalCount: sql<number>`count(*)`,
+      // `::int` casts the BIGINT count to int4 so pg/Drizzle hands
+      // back a JS number, not a string. Without it, the arithmetic
+      // below silently turns into string concatenation:
+      //   `10 - ("0" + "5" + "0")` → `10 - "050"` → -40 → max(0, -40) = 0
+      // and every date renders as "0 premium slots available".
+      freeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.FREE})::int`,
+      badgeCount: sql<number>`count(*) filter (where ${projectTable.launchType} = 'free_with_badge')::int`,
+      premiumCount: sql<number>`count(*) filter (where ${projectTable.launchType} = ${launchType.PREMIUM})::int`,
+      totalCount: sql<number>`count(*)::int`,
     })
     .from(projectTable)
     .where(
