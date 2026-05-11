@@ -575,6 +575,35 @@
       "draftRestored": "已恢复未保存的草稿"
     }
   },
+  "dashboardBoost": {
+    "button": "Boost 推广",
+    "redirecting": "跳转中…",
+    "pickTier": "选择套餐",
+    "manageSubscription": "管理订阅",
+    "ultraSlotsFull": "5 个赞助位已满 — 下月再试",
+    "tiers": {
+      "basic": {
+        "label": "Basic",
+        "sublabel": "1 个站点 · aat.ee"
+      },
+      "plus": {
+        "label": "Plus",
+        "sublabel": "4 个站点"
+      },
+      "pro": {
+        "label": "Pro",
+        "sublabel": "12 个站点 · 最受欢迎"
+      },
+      "ultra": {
+        "label": "Ultra",
+        "sublabel": "1 个广告位 · 月订阅"
+      }
+    },
+    "errors": {
+      "checkoutFailed": "结账启动失败",
+      "portalFailed": "打开订阅管理失败"
+    }
+  },
   "pricingDirectories": {
     "metadata": {
       "title": "导航站推广 — 套餐定价 | aat.ee",
@@ -582,16 +611,30 @@
     },
     "hero": {
       "kicker": "导航站推广",
-      "heading": "把您的产品推广到我们的导航网络",
-      "subheading": "免排队。获得 Dofollow 反向链接。在 {n}+ 个精选站点中曝光您的产品，月流量合计 70 万+。",
-      "limited": "限时折扣 — 随着我们 DR 与流量的提升，价格只升不降。"
+      "heading": "把您的<rotate>产品</rotate><lb></lb>推广到我们的<accent>导航网络</accent>",
+      "headingRotateWords": ["产品", "网站", "SaaS", "App", "工具"],
+      "subheading": "免排队。获得 Dofollow 反向链接。在 <num>{n}+</num> 个精选站点中曝光您的产品，月流量合计 <num>70 万+</num>。",
+      "limited": "限时折扣 — 随着我们 DR 与流量的提升，价格只升不降。",
+      "outcomes": {
+        "kicker": "上线之后会真实提升的指标",
+        "trafficTitle": "真实导流",
+        "trafficDesc": "来自网络中 70 万+ 月度访客 — maker、创业者与早期采用者，会真正点进来。",
+        "drTitle": "自然的 DR 提升",
+        "drDesc": "高、中、低 DR 站点合理搭配，构建自然的反向链接画像 — DR 分数稳步、平滑提升，不会触发「链接堆叠」的风险信号。",
+        "seoTitle": "更好的 Google 收录",
+        "seoDesc": "真实、已收录的域名为搜索引擎传递抓取信号 — 您的 URL 通过可信站点被发现，而不是从零起步。",
+        "aieoTitle": "AI 搜索可见性",
+        "aieoDesc": "ChatGPT、Perplexity、Claude、Gemini 在用户询问相关品类时引用您的产品 — 兼容 GEO / AIEO 优化。"
+      }
     },
     "tiers": {
+      "priceScope": "针对 1 个 URL · 一次性付费",
       "basic": {
         "name": "Basic",
-        "price": "$6.99",
+        "price": "$3.99",
         "originalPrice": "$9.99",
         "tagline": "在 aat.ee 上跳过排队。",
+        "reach": "<n>1 个站点</n> · 月访问 8 万+",
         "description": "在 aat.ee 上获得 dofollow 反向链接。同时您的项目还会出现在相关产品推荐、对比页面和替代方案页面中 — 多个曝光入口。",
         "cta": "购买 Basic",
         "features": {
@@ -604,39 +647,43 @@
       },
       "plus": {
         "name": "Plus",
-        "price": "$9.99",
+        "price": "$6.99",
         "originalPrice": "$29.99",
         "tagline": "一次覆盖 4 个导航站。",
+        "reach": "<n>4 个站点</n> · 月访问 30 万+",
         "description": "包含 Basic 全部内容，并额外发布到 HiCyou、MF8.BIZ 和 BigKr。整个网络近 30 天 Google 搜索点击 1 万+，月流量 30 万+。",
         "cta": "购买 Plus",
         "features": {
           "everything": "包含 Basic 全部内容",
-          "fourSites": "在 aat.ee、HiCyou、MF8.BIZ、BigKr 上发布",
-          "dofollowAll": "每个站点都给您 Dofollow 反向链接",
-          "stats": "近 30 天 Google 点击 1 万+ · 月流量 30 万+",
-          "delivery": "aat.ee 1 个工作日内 · 其他站点 3 个工作日内"
+          "fourSites": "覆盖网络中 4 个导航站",
+          "dofollowAll": "每个站点都给 Dofollow 反向链接",
+          "stats": "Google 点击 1 万+ · 月流量 30 万+",
+          "delivery": "aat.ee 1 天上线 · 其他 3 天内"
         }
       },
       "pro": {
         "name": "Pro",
-        "price": "$16.99",
+        "price": "$15.99",
         "originalPrice": "$39.99",
         "badge": "最受欢迎",
         "tagline": "再加 8 个高权重文档站友链。",
+        "reach": "<n>12 个站点</n> · 月访问 70 万+",
+        "overflowLabel": "等 {n}+ 网站",
+        "overflowTooltip": "本套餐包含的更多站点",
         "description": "包含 Plus 全部内容，再加 8 个高权重文档站的友情链接 — 强化 GEO/AIEO 推荐权重，提升域名 DR。整个网络近 30 天 Google 点击 3 万+，月流量 70 万+。",
         "cta": "购买 Pro",
         "features": {
           "everything": "包含 Plus 全部内容",
-          "docsSites": "8 个文档站友链：Debian Club、Ubuntu.fan、AlmaLinux、Run-EnTLinux、EOL.wiki、Rank.fan、LiteHttpd、PortcYou",
-          "geo": "提升 AI 搜索引擎（GEO/AIEO）的引用权威",
-          "stats": "近 30 天 Google 点击 3 万+ · 月流量 70 万+",
-          "delivery": "aat.ee 1 个工作日内 · 其他站点 3 个工作日内"
+          "docsSites": "8 个高权重文档站友链",
+          "geo": "强化 AI 搜索（GEO/AIEO）权威信号",
+          "stats": "Google 点击 3 万+ · 月流量 70 万+",
+          "delivery": "aat.ee 1 天上线 · 其他 3 天内"
         }
       },
       "ultra": {
         "name": "Ultra",
         "subtitle": "赞助商套餐",
-        "price": "$69.99",
+        "price": "$19.99",
         "priceSuffix": "/月",
         "tagline": "每个页面、每次访问的右侧栏品牌曝光。",
         "description": "订阅制。自动包含 Pro 全部权益，并额外在 aat.ee 与 HiCyou 的每个页面右侧栏展示您的赞助商卡片 — 用户访问任何页面都会看到您的品牌。",
@@ -657,10 +704,23 @@
       "clicksLine": "近 30 天 Google 搜索点击",
       "trafficValue": "70 万+",
       "clicksValue": "3 万+",
+      "sitesLine": "网络站点数",
+      "sitesValue": "12+",
+      "sitesNote": "4 个导航站 + 8 个高权重文档站。每新增一个站点都会拉高整个网络的权威下限。",
       "trafficNote": "12 个站点合计。每月持续增长 — 这也是折扣价不会保留太久的原因。",
+      "clicksNote": "整个网络近 30 天的 Google 自然搜索点击。",
       "drCardTitle": "实时 DR 数据",
       "drCardSubtitle": "通过 Ahrefs 接口每 3 天刷新一次。",
       "drDisclaimer": "DR 数据直接从 Ahrefs 拉取，每 3 天刷新一次。DR 越高的站点通过 Dofollow 链接传递的 SEO 权重越多。"
+    },
+    "priceNotice": "限时定价 — 随着我们网络流量、DR 与 GEO/AIEO 分数的提升，这些折扣价格会逐步上调。今天下单即可锁定当前价格。",
+    "promoCode": {
+      "label": "产品测试期专享",
+      "headline": "首次下单立减 15%",
+      "subtext": "仅限新用户 · Stripe 结账页输入",
+      "warning": "产品测试阶段特殊优惠 — 随时可能下架，请尽快使用。",
+      "copy": "复制",
+      "copied": "已复制"
     },
     "comparison": {
       "heading": "套餐横向对比",
@@ -674,6 +734,7 @@
         "monthlyTraffic": "全网月流量",
         "googleClicks": "近 30 天 Google 点击",
         "delivery": "交付时间",
+        "urlScope": "覆盖 URL 数",
         "billing": "付费方式"
       },
       "values": {
@@ -693,6 +754,8 @@
         "ultraClicks": "3 万+/30天",
         "auto1d": "1 个工作日",
         "manual3d": "最多 3 个工作日",
+        "oneUrl": "1 个 URL",
+        "sponsorSlot": "1 个广告位",
         "subscription": "$69.99/月",
         "oneOff": "一次性付款"
       }

@@ -29,7 +29,7 @@ export const PROJECT_LIMITS_VARIABLES = {
 } as const
 
 export const LAUNCH_SETTINGS = {
-  PREMIUM_PRICE: 2.99, // USD - Premium Launch 价格
+  PREMIUM_PRICE: 3.99, // USD - Premium Launch 价格
   ARTICLE_PRICE: 50, // USD - SEO Growth Package 价格
   MIN_DAYS_AHEAD: 21, // Minimum days ahead for free queue scheduling
   MAX_DAYS_AHEAD: 180, // Maximum days ahead for scheduling (6 months)
@@ -44,13 +44,6 @@ export const LAUNCH_TYPES = {
   FREE: "free",
   FREE_WITH_BADGE: "free_with_badge", // 使用 Badge 配额的免费发布
   PREMIUM: "premium", // Premium Launch（加速发布）
-} as const
-
-// 优惠码配置
-export const PROMO_CODE_SETTINGS = {
-  MAX_USES_PER_USER: 10, // 每个用户最多使用 10 次优惠码
-  VALIDITY_DAYS: 30, // 优惠码有效期 30 天
-  DISCOUNT_AMOUNT: 2.99, // 优惠金额（抵扣 Premium Launch 费用）
 } as const
 
 export const DATE_FORMAT = {
@@ -83,7 +76,7 @@ export const UPVOTE_LIMITS = {
   DEBOUNCE_TIME_MS: 500, // Temps de debounce côté client (500ms)
 } as const
 
-// Premium Launch 支付链接 ($2.99/次)
+// Premium Launch 支付链接 ($3.99/次)
 export const PREMIUM_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PAYMENT_LINK!
 // SEO Growth Package 支付链接 ($50)
 export const SEO_ARTICLE_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK!

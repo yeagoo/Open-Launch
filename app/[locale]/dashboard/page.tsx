@@ -22,8 +22,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BoostListingButton } from "@/components/dashboard/boost-listing-button"
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card"
 import { DraftProjectRow } from "@/components/dashboard/draft-project-row"
+import { ManageSubscriptionButton } from "@/components/dashboard/manage-subscription-button"
+import { getActiveUltraProjectIds, getUltraSlotInfo } from "@/app/actions/directory-orders"
 import { getUserCreatedProjects, getUserUpvotedProjects } from "@/app/actions/projects"
 
 // Base project type that matches the actual structure from the database
@@ -80,6 +83,23 @@ export default async function Dashboard() {
   const activeLaunches = createdProjects.filter((project) => project.launchStatus === "ongoing")
 
   const previousLaunches = createdProjects.filter((project) => project.launchStatus === "launched")
+
+  // Single round-trip: figure out which of the user's projects
+  // currently have an active Ultra subscription so we can render
+  // "Manage subscription" instead of "Boost listing" on those rows.
+  // Plus the global Ultra slot accounting (capped at 5) so the
+  // Boost dropdown can gray out Ultra when full instead of showing
+  // it then erroring at checkout.
+  const [activeUltraIds, ultraSlots] = await Promise.all([
+    getActiveUltraProjectIds(createdProjects.map((p) => p.id)),
+    getUltraSlotInfo(),
+  ])
+  const renderProjectAction = (projectId: string) =>
+    activeUltraIds.has(projectId) ? (
+      <ManageSubscriptionButton projectId={projectId} />
+    ) : (
+      <BoostListingButton projectId={projectId} ultraAvailable={ultraSlots.available} />
+    )
 
   return (
     <div className="min-h-[calc(100vh-64px)] py-6 sm:py-8">
@@ -178,7 +198,11 @@ export default async function Dashboard() {
                     {upcomingLaunches.length > 0 ? (
                       <div className="space-y-3">
                         {upcomingLaunches.map((project) => (
-                          <DashboardProjectCard key={project.id} {...project} />
+                          <DashboardProjectCard
+                            key={project.id}
+                            {...project}
+                            actionButton={renderProjectAction(project.id)}
+                          />
                         ))}
                       </div>
                     ) : (
@@ -201,7 +225,11 @@ export default async function Dashboard() {
                     {activeLaunches.length > 0 ? (
                       <div className="space-y-3">
                         {activeLaunches.map((project) => (
-                          <DashboardProjectCard key={project.id} {...project} />
+                          <DashboardProjectCard
+                            key={project.id}
+                            {...project}
+                            actionButton={renderProjectAction(project.id)}
+                          />
                         ))}
                       </div>
                     ) : (
@@ -224,7 +252,11 @@ export default async function Dashboard() {
                     {previousLaunches.length > 0 ? (
                       <div className="space-y-3">
                         {previousLaunches.map((project) => (
-                          <DashboardProjectCard key={project.id} {...project} />
+                          <DashboardProjectCard
+                            key={project.id}
+                            {...project}
+                            actionButton={renderProjectAction(project.id)}
+                          />
                         ))}
                       </div>
                     ) : (

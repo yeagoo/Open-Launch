@@ -20,7 +20,7 @@
   "nav": {
     "explore": "Explorar",
     "exploreDesc": {
-      "trendingTitle": "Tendencias ahora",
+      "trendingTitle": "Tendencias",
       "trendingDesc": "Descubre los proyectos más populares",
       "winnersTitle": "Ganadores del día",
       "winnersDesc": "Mira los mejores proyectos del día",
@@ -79,14 +79,14 @@
       "topCategories": "Categorías principales",
       "quickAccess": "Acceso rápido",
       "linuxAlliance": "Alianza de Documentación de Linux",
-      "linuxAllianceFooter": "Consulta el ciclo de vida del software en:",
-      "recommended": "Recomendado",
+      "linuxAllianceFooter": "Consulta el ciclo de vida del soporte de software en:",
+      "recommended": "Recomendados",
       "webcasaDesc": "Panel de control de servidor de código abierto nativo de IA",
       "litehttpdDesc": "Servidor web ligero, altamente compatible con Apache HTTPD",
-      "trendingNow": "Tendencia ahora",
+      "trendingNow": "Tendencias ahora",
       "dailyWinners": "Ganadores del día",
       "bestOfMonth": "Mejor del mes",
-      "dashboard": "Panel de control",
+      "dashboard": "Panel",
       "projectsCount": "{count} proyectos"
     }
   },
@@ -135,7 +135,7 @@
       "subtitle": "Ingresa tu correo y te enviaremos un enlace de restablecimiento",
       "emailLabel": "Correo electrónico",
       "submit": "Enviar enlace de restablecimiento",
-      "backToSignIn": "Volver a inicio de sesión",
+      "backToSignIn": "Volver a iniciar sesión",
       "successMessage": "Si ese correo existe, enviamos un enlace de restablecimiento."
     },
     "resetPassword": {
@@ -187,17 +187,17 @@
       "tags": "Etiquetas",
       "logo": "Logotipo",
       "submitButton": "Enviar proyecto",
-      "autoFill": "Rellenar automáticamente desde la URL"
+      "autoFill": "Autocompletar desde URL"
     },
     "sidebar": {
       "achievement": "Logro",
+      "maker": "Creador",
       "unknownCreator": "Creador desconocido",
       "launchDate": "Fecha de lanzamiento",
       "platform": "Plataforma",
-      "pricing": "Precio",
+      "pricing": "Precios",
       "socials": "Redes sociales",
       "productKeywords": "Palabras clave del producto",
-      "maker": "Creador",
       "visitWebsite": "Visitar sitio web",
       "projectInfo": "Información del proyecto",
       "compareWith": "Comparar con",
@@ -243,7 +243,7 @@
     "perLaunch": "por lanzamiento",
     "getStarted": "Comenzar",
     "subscribe": "Suscribirse",
-    "compareFeatures": "Comparar características"
+    "compareFeatures": "Comparar funciones"
   },
   "search": {
     "placeholder": "Buscar proyectos...",
@@ -254,8 +254,8 @@
     "generic": "Algo salió mal. Inténtalo de nuevo.",
     "unauthorized": "No autorizado",
     "notFound": "Página no encontrada",
-    "rateLimited": "Demasiadas solicitudes. Por favor espera.",
-    "serverError": "Error del servidor. Inténtalo más tarde."
+    "rateLimited": "Demasiadas solicitudes. Por favor, espera.",
+    "serverError": "Error del servidor. Inténtalo de nuevo más tarde."
   },
   "friends": {
     "title": "Amigos",
@@ -271,7 +271,7 @@
   "metadata": {
     "projects": {
       "title": "Proyectos — Lanzamientos de este mes | aat.ee",
-      "description": "Explora proyectos lanzados este mes en aat.ee — startups, herramientas de IA y productos SaaS."
+      "description": "Explora los proyectos lanzados este mes en aat.ee — startups, herramientas de IA y productos SaaS."
     },
     "trending": {
       "title": "Tendencias — aat.ee",
@@ -299,7 +299,7 @@
     },
     "badge": {
       "title": "Insignias destacadas — aat.ee",
-      "description": "Obtén una insignia de aat.ee para tu sitio y muestra tu lanzamiento, además de ganar un enlace SEO."
+      "description": "Obtén una insignia de aat.ee para tu sitio y muestra tu lanzamiento, obteniendo un backlink SEO."
     },
     "sponsors": {
       "title": "Patrocinadores — aat.ee",
@@ -323,8 +323,8 @@
   },
   "upvote": {
     "mustBeLoggedIn": "Debes iniciar sesión para votar",
-    "rateLimited": "Escuadrón Anti-Spam aquí: {count} votos en {minutes} minutos es el máximo. Reintenta en {seconds} segundos.",
-    "minWaitSeconds": "Escuadrón Anti-Spam aquí: espera de {seconds} segundos para cambiar el voto",
+    "rateLimited": "El Escuadrón Anti-Spam dice: {count} votos en {minutes} minutos es el máximo. Reintenta en {seconds} segundos.",
+    "minWaitSeconds": "El Escuadrón Anti-Spam dice: espera {seconds} segundos para cambiar tu voto",
     "projectNotFound": "Proyecto no encontrado",
     "notOngoing": "La votación solo está abierta mientras el proyecto se lanza hoy"
   },
@@ -348,12 +348,18 @@
       },
       "websiteUrl": {
         "label": "URL del Sitio Web",
-        "placeholder": "https://miawesomeproject.com",
-        "help": "Ingresa la URL de tu sitio web y haz clic en Auto Rellenar para completar el formulario automáticamente.",
-        "duplicateWarning": "⚠️ Esta URL ya ha sido enviada. El paso final lo bloqueará; por favor usa una URL diferente."
+        "placeholder": "https://miaplicacionincreible.com",
+        "help": "Ingresa la URL de tu sitio web y haz clic en Autocompletar para llenar el formulario automáticamente.",
+        "duplicateWarning": "⚠️ Esta URL ya ha sido enviada. El último paso lo bloqueará; usa una URL diferente."
+      },
+      "tagline": {
+        "label": "Eslogan",
+        "optional": "(Opcional, ≤60 caracteres)",
+        "help": "Una línea de marketing corta que aparece bajo el nombre de tu proyecto en tarjetas y en la página del proyecto.",
+        "placeholder": "ej. generación de imágenes con IA, renderizado de texto perfecto"
       },
       "autoFill": {
-        "button": "Auto Rellenar",
+        "button": "Autocompletar",
         "loading": "Analizando..."
       },
       "sourceLocale": {
@@ -380,12 +386,6 @@
         "add": "Añadir Imagen del Producto",
         "preview": "Vista previa de la imagen del producto",
         "remove": "Eliminar imagen del producto"
-      },
-      "tagline": {
-        "label": "Tagline",
-        "optional": "(Opcional, ≤60 caracteres)",
-        "help": "Una línea breve de marketing que se mostrará bajo el nombre del proyecto en tarjetas y la página del proyecto.",
-        "placeholder": "p. ej. Generación de imágenes con IA, renderizado perfecto de texto"
       }
     },
     "step2": {
@@ -404,7 +404,7 @@
       },
       "platforms": {
         "label": "Plataformas",
-        "help": "Selecciona todas las plataformas que soporta tu proyecto.",
+        "help": "Selecciona todas las plataformas que tu proyecto soporta.",
         "options": {
           "web": "web",
           "mobile": "móvil",
@@ -414,7 +414,7 @@
         }
       },
       "pricing": {
-        "label": "Modelo de Precios",
+        "label": "Modelo de precios",
         "options": {
           "free": "gratuito",
           "freemium": "freemium",
@@ -422,18 +422,18 @@
         }
       },
       "githubUrl": {
-        "label": "URL de GitHub (Opcional)",
+        "label": "URL de GitHub (opcional)",
         "placeholder": "https://github.com/usuario/repo"
       },
       "twitterUrl": {
-        "label": "URL de Twitter (Opcional)",
+        "label": "URL de Twitter (opcional)",
         "placeholder": "https://twitter.com/usuario"
       }
     },
     "step3": {
-      "title": "Elige el tipo y la fecha de lanzamiento",
+      "title": "Elige tipo de lanzamiento y fecha",
       "infoBanner": {
-        "heading": "Selecciona tu tipo y fecha de lanzamiento",
+        "heading": "Selecciona tu tipo de lanzamiento y fecha",
         "body": "Todos los lanzamientos ocurren a las {hour}:00 UTC. Lanzamos un número limitado de proyectos cada día."
       },
       "badgeCard": {
@@ -448,12 +448,12 @@
       },
       "badgeVerified": {
         "heading": "✅ ¡Insignia verificada!",
-        "body": "¡Ahora tienes acceso al Carril Rápido por Insignia! Elige tu cuota de lanzamiento a continuación."
+        "body": "¡Ahora tienes acceso al Carril Rápido por Insignia! Elige tu cupo de lanzamiento a continuación."
       },
       "quota": {
-        "heading": "Seleccionar cuota de lanzamiento",
+        "heading": "Seleccionar cupo de lanzamiento",
         "free": {
-          "name": "Cuota gratuita",
+          "name": "Cupo gratuito",
           "slots": "{n} espacios/día",
           "queue": "Cola estándar",
           "dofollow": "Dofollow si Top 3 o insignia"
@@ -474,17 +474,17 @@
         "free": {
           "name": "Lanzamiento gratuito",
           "slotsLabel": "{n} espacios/día",
-          "scheduling": "Programación de hasta {n} días",
-          "dofollowConditional": "Backlink Dofollow solo si:",
+          "scheduling": "Hasta {n} días de programación",
+          "dofollowConditional": "Enlace dofollow solo si:",
           "topRanking": "1. Top 3 del ranking diario",
           "displayBadge": "2. Muestras nuestra insignia en tu sitio"
         },
         "premium": {
           "name": "Lanzamiento premium",
           "skipQueue": "Salta la cola gratuita",
-          "guaranteedDofollow": "Backlink Dofollow garantizado (DR {dr})",
+          "guaranteedDofollow": "Enlace dofollow garantizado (DR {dr})",
           "slotsLabel": "{n} espacios premium/día",
-          "scheduling": "Programación de hasta {n} días"
+          "scheduling": "Hasta {n} días de programación"
         }
       },
       "date": {
@@ -498,11 +498,11 @@
         "slotTypePremium": "premium",
         "crowdednessTooltip": "{n} proyecto(s) ya programados",
         "scheduledFor": "Programado para",
-        "noDate": "Ninguna fecha seleccionada"
+        "noDate": "Sin fecha seleccionada"
       },
       "premiumUpsell": {
         "heading": "¡Lanza {days, plural, one {# día} other {# días}} antes con Premium!",
-        "body": "Disponible desde {date} • Backlink DR{dr} garantizado • Salta la cola",
+        "body": "Disponible desde {date} • Enlace de retroceso DR{dr} garantizado • Salta la cola",
         "button": "Actualizar a Premium ${price}"
       }
     },
@@ -526,11 +526,11 @@
       },
       "logoAlt": "Logotipo subido",
       "productImageAlt": "Imagen del producto",
-      "premiumPriceLabel": "Lanzamiento premium (${price})",
+      "premiumPriceLabel": "Lanzamiento Premium (${price})",
       "readyToSubmit": {
         "heading": "¿Listo para enviar?",
-        "body": "Revise toda la información cuidadosamente. Una vez enviado, su proyecto se programará para su lanzamiento.",
-        "paymentRedirect": "Será redirigido a la página de pago después del envío."
+        "body": "Revisa toda la información cuidadosamente. Una vez enviado, tu proyecto se programará para su lanzamiento.",
+        "paymentRedirect": "Serás redirigido a la página de pago después del envío."
       }
     },
     "buttons": {
@@ -542,193 +542,262 @@
       "fields": {
         "nameRequired": "El nombre del proyecto es obligatorio",
         "websiteUrlRequired": "La URL del sitio web es obligatoria",
-        "websiteUrlInvalid": "Ingrese una URL válida (https://...)",
-        "websiteUrlInvalidQuick": "Ingrese primero una URL válida",
+        "websiteUrlInvalid": "Ingresa una URL válida (https://...)",
+        "websiteUrlInvalidQuick": "Ingresa primero una URL válida",
         "websiteUrlDuplicate": "Esta URL ya ha sido enviada",
         "descriptionRequired": "La descripción es obligatoria",
+        "taglineTooLong": "El eslogan debe tener 60 caracteres o menos",
         "logoRequired": "El logotipo es obligatorio",
         "logoUploadFailedNoUrl": "Error al subir el logotipo: no se devolvió ninguna URL.",
         "logoUploadFailed": "Error al subir el logotipo: {message}",
-        "categoriesMin": "Seleccione al menos una categoría",
+        "categoriesMin": "Selecciona al menos una categoría",
         "categoriesMax": "Máximo 3 categorías",
-        "techStackMin": "Agregue al menos una etiqueta",
+        "techStackMin": "Añade al menos una etiqueta",
         "techStackMax": "Máximo 10 etiquetas",
-        "platformsMin": "Seleccione al menos una plataforma",
-        "pricingRequired": "Seleccione un modelo de precios",
-        "scheduledDateRequired": "Elija una fecha de lanzamiento",
-        "scheduledDateOverLimit": "Esta fecha supera su límite de lanzamientos diarios",
-        "scheduledDateOverLimitDetail": "Ya ha programado {count}/{limit} proyecto(s) para esta fecha. Por favor, seleccione otra fecha.",
-        "scheduledDateCheckFailed": "No se pudo verificar el límite de fecha de lanzamiento. Inténtelo de nuevo.",
-        "taglineTooLong": "El tagline debe tener 60 caracteres o menos"
+        "platformsMin": "Selecciona al menos una plataforma",
+        "pricingRequired": "Selecciona un modelo de precios",
+        "scheduledDateRequired": "Elige una fecha de lanzamiento",
+        "scheduledDateOverLimit": "Esta fecha supera tu límite diario de lanzamientos",
+        "scheduledDateOverLimitDetail": "Ya has programado {count}/{limit} proyecto(s) para esta fecha. Por favor, elige otra fecha.",
+        "scheduledDateCheckFailed": "No se pudo verificar el límite de fecha de lanzamiento. Inténtalo de nuevo."
       },
       "form": {
         "loadCategoriesFailed": "Error al cargar las categorías",
         "loadDatesFailed": "Error al cargar las fechas disponibles",
         "productImageUploadFailedNoUrl": "Error al subir la imagen del producto: no se devolvió ninguna URL.",
         "productImageUploadFailed": "Error al subir la imagen del producto: {message}",
-        "autoFillFailed": "Error al autocompletar. Inténtelo de nuevo.",
+        "autoFillFailed": "Error al autocompletar. Inténtalo de nuevo.",
         "submitFailed": "Ocurrió un error inesperado.",
         "scheduleFailed": "Ocurrió un error durante la programación."
       }
     },
     "toast": {
-      "draftRestored": "Se restauró su borrador no guardado"
+      "draftRestored": "Se restauró tu borrador no guardado"
+    }
+  },
+  "dashboardBoost": {
+    "button": "Promocionar listado",
+    "redirecting": "Redirigiendo…",
+    "pickTier": "Elige un nivel",
+    "manageSubscription": "Gestionar suscripción",
+    "ultraSlotsFull": "Las 5 plazas de patrocinio están ocupadas — inténtalo el próximo mes",
+    "tiers": {
+      "basic": {
+        "label": "Básico",
+        "sublabel": "1 sitio · aat.ee"
+      },
+      "plus": {
+        "label": "Plus",
+        "sublabel": "4 sitios"
+      },
+      "pro": {
+        "label": "Pro",
+        "sublabel": "12 sitios · más popular"
+      },
+      "ultra": {
+        "label": "Ultra",
+        "sublabel": "Espacio de patrocinio · mensual"
+      }
+    },
+    "errors": {
+      "checkoutFailed": "Error al iniciar el pago",
+      "portalFailed": "Error al abrir el portal de suscripción"
     }
   },
   "pricingDirectories": {
     "metadata": {
-      "title": "Get Listed — Directory Pricing | aat.ee",
-      "description": "Skip the queue, get a guaranteed dofollow link, and feature your project across our directory network: aat.ee + 11 partner sites."
+      "title": "Consigue tu listado — Precios de directorios | aat.ee",
+      "description": "Salta la cola, consigue un enlace dofollow garantizado y destaca tu proyecto en nuestra red de directorios: aat.ee + 11 sitios asociados."
     },
     "hero": {
-      "kicker": "Directory listings",
-      "heading": "Get your product seen across our directory network",
-      "subheading": "Skip the queue. Earn dofollow backlinks. Reach makers and early adopters across {n}+ curated sites with combined 700k+ monthly visitors.",
-      "limited": "Launch pricing — discounts shrink as our DR & traffic grow."
+      "kicker": "Listados en directorios",
+      "heading": "Haz que vean tu <rotate>producto</rotate> en nuestra <accent>red de directorios</accent>",
+      "headingRotateWords": {
+        "0": "producto",
+        "1": "sitio web",
+        "2": "SaaS",
+        "3": "app",
+        "4": "herramienta"
+      },
+      "subheading": "Salta la cola. Consigue enlaces dofollow. Llega a creadores y early adopters en <num>{n}+</num> sitios seleccionados con más de <num>700k+</num> visitantes mensuales combinados.",
+      "limited": "Precio de lanzamiento — los descuentos se reducen a medida que nuestro DR y tráfico crecen.",
+      "outcomes": {
+        "kicker": "Lo que realmente moverá",
+        "trafficTitle": "Tráfico de referencia real",
+        "trafficDesc": "Visitas de nuestros más de 700k lectores mensuales: creadores, fundadores y early adopters que realmente hacen clic.",
+        "drTitle": "Aumento natural del Domain Rating",
+        "drDesc": "Una mezcla equilibrada de sitios con DR alto, medio y bajo construye un perfil de enlaces de aspecto natural, para que tu DR suba suavemente sin parecer spam.",
+        "seoTitle": "Mejor indexación en Google",
+        "seoDesc": "Los dominios reales e indexados transmiten señales de rastreo a los motores de búsqueda: tu URL se descubre a través de sitios de confianza en lugar de empezar desde cero.",
+        "aieoTitle": "Visibilidad en búsqueda por IA",
+        "aieoDesc": "Citado por ChatGPT, Perplexity, Claude y Gemini cuando los usuarios preguntan sobre tu categoría — listo para GEO / AIEO."
+      }
     },
     "tiers": {
+      "priceScope": "por URL · único pago",
       "basic": {
-        "name": "Basic",
-        "price": "$6.99",
+        "name": "Básico",
+        "price": "$3.99",
         "originalPrice": "$9.99",
-        "tagline": "Skip the queue on aat.ee.",
-        "description": "Get featured on aat.ee with a dofollow link. Your project also surfaces on related-product carousels, comparison pages, and alternatives pages — multiple discoverable touchpoints.",
-        "cta": "Get Basic",
+        "tagline": "Salta la cola en aat.ee.",
+        "reach": "<n>1 sitio</n> · 80k+ visitas mensuales",
+        "description": "Destaca en aat.ee con un enlace dofollow. Tu proyecto también aparece en carruseles de productos relacionados, páginas de comparación y páginas de alternativas — múltiples puntos de contacto descubribles.",
+        "cta": "Obtener Básico",
         "features": {
-          "skipQueue": "Skip the launch queue (no badge required)",
-          "dofollow": "Guaranteed dofollow backlink",
-          "site": "Listed on aat.ee",
-          "extra": "Bonus: appears in similar-product, compare, and alternatives pages",
-          "delivery": "Live within 1 business day (auto-published)"
+          "skipQueue": "Salta la cola de lanzamiento (sin necesidad de insignia)",
+          "dofollow": "Enlace dofollow garantizado",
+          "site": "Listado en aat.ee",
+          "extra": "Bonus: aparece en páginas de productos similares, comparativas y alternativas",
+          "delivery": "Publicado en 1 día hábil (publicación automática)"
         }
       },
       "plus": {
         "name": "Plus",
-        "price": "$9.99",
+        "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "Reach 4 directories at once.",
-        "description": "Everything in Basic, plus listings on HiCyou, MF8.BIZ, and BigKr. Combined network does 10,000+ Google clicks every 30 days and serves 300k+ monthly visitors.",
-        "cta": "Get Plus",
+        "tagline": "Llega a 4 directorios a la vez.",
+        "reach": "<n>4 sitios</n> · 300k+ visitas mensuales",
+        "description": "Todo lo de Básico, más listados en HiCyou, MF8.BIZ y BigKr. La red combinada genera más de 10,000 clics de Google cada 30 días y recibe más de 300k visitantes mensuales.",
+        "cta": "Obtener Plus",
         "features": {
-          "everything": "Everything in Basic",
-          "fourSites": "Listed on aat.ee, HiCyou, MF8.BIZ, BigKr",
-          "dofollowAll": "Dofollow backlink from every site",
-          "stats": "10,000+ Google clicks / 30 days · 300k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "Todo lo de Básico",
+          "fourSites": "Listado en 4 sitios de nuestra red de directorios",
+          "dofollowAll": "Enlace dofollow desde cada sitio",
+          "stats": "10k+ clics de Google · 300k+ tráfico mensual",
+          "delivery": "aat.ee en 1 día · otros en 3 días"
         }
       },
       "pro": {
         "name": "Pro",
-        "price": "$16.99",
+        "price": "$15.99",
         "originalPrice": "$39.99",
-        "badge": "Most popular",
-        "tagline": "Authority links from 8 documentation sites.",
-        "description": "Everything in Plus, plus friend-link placements on 8 high-authority documentation sites — strengthens GEO/AIEO recommendations and pushes your domain rating up. Combined network: 30,000+ Google clicks / 30 days, 700k+ monthly traffic.",
-        "cta": "Get Pro",
+        "badge": "Más popular",
+        "tagline": "Enlaces de autoridad desde 8 sitios de documentación.",
+        "reach": "<n>12 sitios</n> · 700k+ visitas mensuales",
+        "overflowLabel": "+ {n}+ sitios",
+        "overflowTooltip": "Más sitios en este nivel",
+        "description": "Todo lo de Plus, más colocación de enlaces de amigo en 8 sitios de documentación de alta autoridad: fortalece las recomendaciones GEO/AIEO y aumenta tu Domain Rating. Red combinada: 30,000+ clics de Google / 30 días, 700k+ tráfico mensual.",
+        "cta": "Obtener Pro",
         "features": {
-          "everything": "Everything in Plus",
-          "docsSites": "Friend-links on 8 docs sites: Debian Club, Ubuntu.fan, AlmaLinux, Run-EnTLinux, EOL.wiki, Rank.fan, LiteHttpd, PortcYou",
-          "geo": "Boosts GEO/AIEO authority signals for AI-powered search",
-          "stats": "30,000+ Google clicks / 30 days · 700k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "Todo lo de Plus",
+          "docsSites": "Enlaces de amigo en 8 sitios de documentación con alto DR",
+          "geo": "Impulsa señales GEO/AIEO para búsqueda potenciada por IA",
+          "stats": "30k+ clics de Google · 700k+ tráfico mensual",
+          "delivery": "aat.ee en vivo en 1 día · otros en 3 días"
         }
       },
       "ultra": {
         "name": "Ultra",
-        "subtitle": "Sponsorship",
-        "price": "$69.99",
-        "priceSuffix": "/month",
-        "tagline": "Permanent sidebar visibility, every page, every visit.",
-        "description": "Subscription. Includes everything in Pro, plus your sponsor card in the right sidebar of every aat.ee and HiCyou page — so every visitor sees your brand, on every project, every comparison, every alternative.",
-        "limit": "Limited to 5 active sponsors at any time.",
-        "cta": "Subscribe to Ultra",
+        "subtitle": "Patrocinio",
+        "price": "$19.99",
+        "priceSuffix": "/mes",
+        "tagline": "Visibilidad permanente en la barra lateral, en cada página, cada visita.",
+        "description": "Suscripción. Incluye todo lo de Pro, más tu tarjeta de patrocinador en la barra lateral derecha de cada página de aat.ee y HiCyou: cada visitante ve tu marca, en cada proyecto, cada comparación, cada alternativa.",
+        "limit": "Limitado a 5 patrocinadores activos en todo momento.",
+        "cta": "Suscribirse a Ultra",
         "features": {
-          "everything": "Everything in Pro (delivered automatically)",
-          "sidebar": "Sponsor card on every aat.ee + HiCyou page",
-          "exclusive": "Maximum 5 sponsors at any time",
-          "cancel": "Cancel anytime — pro-rated billing"
+          "everything": "Todo lo de Pro (entregado automáticamente)",
+          "sidebar": "Tarjeta de patrocinador en cada página de aat.ee + HiCyou",
+          "exclusive": "Máximo 5 patrocinadores en todo momento",
+          "cancel": "Cancela cuando quieras — facturación prorrateada"
         }
       }
     },
     "stats": {
-      "heading": "What you're buying access to",
+      "heading": "A lo que estás comprando acceso",
       "domainRating": "Domain Rating",
-      "trafficLine": "Combined monthly traffic",
-      "clicksLine": "30-day Google search clicks",
+      "trafficLine": "Tráfico mensual combinado",
+      "clicksLine": "Clics de búsqueda de Google en 30 días",
       "trafficValue": "700k+",
       "clicksValue": "30,000+",
-      "trafficNote": "Across all 12 sites. Numbers grow each month — that's also why discount prices won't last.",
-      "drCardTitle": "Live Domain Ratings",
-      "drCardSubtitle": "Refreshed every 3 days from Ahrefs.",
-      "drDisclaimer": "Domain Rating values are pulled directly from Ahrefs and updated every 3 days. Higher DR sites pass more SEO authority through their dofollow links."
+      "sitesLine": "Sitios de la red",
+      "sitesValue": "12+",
+      "sitesNote": "En 4 directorios + 8 sitios de documentación. La exposición combinada se acumula: cada nuevo dominio eleva el piso de autoridad de la red.",
+      "trafficNote": "En los 12 sitios. Las cifras crecen cada mes — por eso los precios de descuento no durarán.",
+      "clicksNote": "Clics orgánicos de Google en la red en los últimos 30 días.",
+      "drCardTitle": "Domain Ratings en vivo",
+      "drCardSubtitle": "Actualizados cada 3 días desde Ahrefs.",
+      "drDisclaimer": "Los valores de Domain Rating se obtienen directamente de Ahrefs y se actualizan cada 3 días. Los sitios con DR más alto transmiten más autoridad SEO a través de sus enlaces dofollow."
+    },
+    "priceNotice": "Precio de lanzamiento — a medida que el tráfico, DR y puntuaciones GEO/AIEO de nuestra red crecen, estos precios de descuento se ajustarán al alza. Asegura la tarifa de hoy.",
+    "promoCode": {
+      "label": "Promoción en fase de prueba",
+      "headline": "15 % de descuento en tu primera compra",
+      "subtext": "Solo nuevos usuarios · introducir en el checkout de Stripe",
+      "warning": "Oferta de fase de prueba — puede retirarse en cualquier momento. Úsala pronto.",
+      "copy": "Copiar",
+      "copied": "¡Copiado!"
     },
     "comparison": {
-      "heading": "Compare tiers side by side",
+      "heading": "Compara niveles lado a lado",
       "rows": {
-        "sites": "Sites listed on",
-        "skipQueue": "Skip the queue",
-        "dofollow": "Dofollow link",
-        "extraPages": "Featured on compare/alternatives pages",
-        "docsLinks": "Friend-links on docs sites",
-        "sidebarAd": "Sponsor sidebar ad",
-        "monthlyTraffic": "Combined monthly traffic",
-        "googleClicks": "30-day Google clicks",
-        "delivery": "Delivery time",
-        "billing": "Billing"
+        "sites": "Sitios en los que aparece",
+        "skipQueue": "Saltar la cola",
+        "dofollow": "Enlace dofollow",
+        "extraPages": "Destacado en páginas de comparación/alternativas",
+        "docsLinks": "Enlaces de amigo en sitios de documentación",
+        "sidebarAd": "Anuncio en barra lateral de patrocinador",
+        "monthlyTraffic": "Tráfico mensual combinado",
+        "googleClicks": "Clics de Google en 30 días",
+        "delivery": "Tiempo de entrega",
+        "urlScope": "Cobertura de URL",
+        "billing": "Facturación"
       },
       "values": {
-        "yes": "Yes",
+        "yes": "Sí",
         "no": "—",
-        "basicSites": "1 site (aat.ee)",
-        "plusSites": "4 sites",
-        "proSites": "12 sites",
-        "ultraSites": "12 sites + sidebar",
-        "basicTraffic": "~50k/mo",
-        "plusTraffic": "300k+/mo",
-        "proTraffic": "700k+/mo",
-        "ultraTraffic": "700k+/mo",
+        "basicSites": "1 sitio (aat.ee)",
+        "plusSites": "4 sitios",
+        "proSites": "12 sitios",
+        "ultraSites": "12 sitios + barra lateral",
+        "basicTraffic": "~50k/mes",
+        "plusTraffic": "300k+/mes",
+        "proTraffic": "700k+/mes",
+        "ultraTraffic": "700k+/mes",
         "basicClicks": "~3k/30d",
         "plusClicks": "10k+/30d",
         "proClicks": "30k+/30d",
         "ultraClicks": "30k+/30d",
-        "auto1d": "1 business day",
-        "manual3d": "Up to 3 business days",
-        "subscription": "$69.99/month",
-        "oneOff": "One-time"
+        "auto1d": "1 día hábil",
+        "manual3d": "Hasta 3 días hábiles",
+        "oneUrl": "1 URL",
+        "sponsorSlot": "Espacio de patrocinio",
+        "subscription": "$69.99/mes",
+        "oneOff": "Único pago"
       }
     },
     "faq": {
-      "heading": "Frequently asked questions",
+      "heading": "Preguntas frecuentes",
       "items": {
         "discount": {
-          "q": "Why are these prices discounted?",
-          "a": "We're scaling our directory network's authority. As our DR rises and traffic grows month over month, the value of a listing increases — so the discount price you see today won't be available in 3 months. Lock in the rate now."
+          "q": "¿Por qué estos precios tienen descuento?",
+          "a": "Estamos escalando la autoridad de nuestra red de directorios. A medida que nuestro DR aumenta y el tráfico crece mes a mes, el valor de un listado se incrementa, por lo que el precio con descuento que ves hoy no estará disponible en 3 meses. Asegura la tarifa ahora."
         },
         "delivery": {
-          "q": "How fast is delivery?",
-          "a": "aat.ee is automated — your listing goes live within 1 business day after payment. The other 11 sites are added manually within 3 business days. We'll email you when each placement is live."
+          "q": "¿Qué tan rápido es la entrega?",
+          "a": "aat.ee es automatizado: tu listado se publica dentro de 1 día hábil después del pago. Los otros 11 sitios se añaden manualmente en un plazo de 3 días hábiles. Te enviaremos un correo electrónico cuando cada colocación esté activa."
         },
         "retention": {
-          "q": "How long do the links stay up?",
-          "a": "All links and listings are intended to be permanent. We do not auto-expire one-time tier purchases. Sites we no longer operate may go offline in the future, but we'll email you in that rare case."
+          "q": "¿Cuánto tiempo permanecen los enlaces?",
+          "a": "Todos los enlaces y listados están diseñados para ser permanentes. No caducamos automáticamente las compras de nivel único. Los sitios que ya no operemos podrían desconectarse en el futuro, pero te enviaremos un correo en ese raro caso."
         },
         "upgrade": {
-          "q": "Can I upgrade tiers later?",
-          "a": "Yes. Email us within 30 days of your purchase and we'll credit what you already paid toward the higher tier. After 30 days, you can buy the upgrade at the current rate."
+          "q": "¿Puedo actualizar de nivel más tarde?",
+          "a": "Sí. Envíanos un correo dentro de los 30 días posteriores a tu compra y acreditaremos lo que ya pagaste hacia el nivel superior. Después de 30 días, puedes comprar la actualización a la tarifa actual."
         },
         "refund": {
-          "q": "What's the refund policy?",
-          "a": "If we haven't yet placed your listing, full refund — just email us. After placement, we don't offer refunds since the link equity has been transferred. Ultra subscribers can cancel anytime; we pro-rate the unused portion of the current month."
+          "q": "¿Cuál es la política de reembolso?",
+          "a": "Si aún no hemos colocado tu listado, reembolso completo — solo envíanos un correo. Después de la colocación, no ofrecemos reembolsos ya que la equidad del enlace se ha transferido. Los suscriptores Ultra pueden cancelar en cualquier momento; prorrateamos la parte no utilizada del mes actual."
         },
         "multiple": {
-          "q": "Can I buy listings for multiple projects?",
-          "a": "Yes — each project is a separate purchase. We don't currently offer bundled discounts, but heavy users should email us directly."
+          "q": "¿Puedo comprar listados para múltiples proyectos?",
+          "a": "Sí — cada proyecto es una compra separada. Actualmente no ofrecemos descuentos por paquete, pero los usuarios frecuentes deben contactarnos directamente por correo."
         }
       }
     },
     "footer": {
-      "heading": "Ready to skip the queue?",
-      "body": "Pick a tier above and submit your project. Manual placements start within 1 business day."
+      "heading": "¿Listo para saltarte la fila?",
+      "body": "Elige un nivel arriba y envía tu proyecto. Las colocaciones manuales comienzan dentro de 1 día hábil."
     }
   }
 }

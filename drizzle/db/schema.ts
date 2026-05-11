@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core"
 
@@ -357,7 +358,19 @@ export const blogArticle = pgTable(
   },
 )
 
-// Promo Code tables
+/**
+ * @deprecated since 2026-05-10
+ *
+ * Promo code feature was removed in Phase 5 alongside the
+ * Premium-Launch price bump ($2.99 → $6.99). The tables are
+ * retained for historical data only — no application code reads
+ * or writes these rows. Do NOT use as a template for new
+ * features (the feature was decoupled from any active flow).
+ *
+ * Drop with a follow-up migration once the data is no longer
+ * needed for support / refund history (typical retention: 1-2
+ * billing cycles).
+ */
 export const promoCode = pgTable(
   "promo_code",
   {
@@ -380,6 +393,7 @@ export const promoCode = pgTable(
   },
 )
 
+/** @deprecated since 2026-05-10 — see `promoCode` deprecation note. */
 export const promoCodeUsage = pgTable(
   "promo_code_usage",
   {
@@ -715,5 +729,43 @@ export const ahrefsProviderQuota = pgTable(
   },
   (table) => ({
     pk: primaryKey(table.provider, table.month),
+  }),
+)
+
+// One row per directory-listing purchase. Plus / Pro are one-off
+// payments that need manual fulfilment by admin; Ultra is a Stripe
+// subscription. See drizzle/migrations/0021_directory_order.sql.
+export const directoryOrder = pgTable(
+  "directory_order",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    // Allowed values are enforced via a CHECK constraint in the
+    // migration (drizzle/migrations/0021_directory_order.sql). Keep
+    // the comment in sync when extending the set.
+    tier: text("tier").notNull(), // 'basic' | 'plus' | 'pro' | 'ultra'
+    url: text("url").notNull(),
+    // Buyer's UI locale (next-intl) at checkout. Captured so the
+    // post-payment confirmation email can land on the same-locale
+    // dashboard instead of always English.
+    locale: text("locale"),
+    status: text("status").notNull().default("pending"), // 'pending' | 'paid' | 'fulfilled' | 'refunded' | 'failed' | 'canceled'
+    amountCents: integer("amount_cents"),
+    currency: text("currency").default("usd"),
+    stripeSessionId: text("stripe_session_id").unique(),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    stripeCustomerId: text("stripe_customer_id"),
+    paidAt: timestamp("paid_at"),
+    fulfilledAt: timestamp("fulfilled_at"),
+    fulfilledBy: text("fulfilled_by").references(() => user.id, { onDelete: "set null" }),
+    adminNotes: text("admin_notes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    statusIdx: index("directory_order_status_idx").on(table.status, table.paidAt),
+    projectIdx: index("directory_order_project_idx").on(table.projectId),
   }),
 )

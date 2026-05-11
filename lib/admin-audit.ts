@@ -4,8 +4,6 @@ import { db } from "@/drizzle/db"
 import { adminAuditLog } from "@/drizzle/db/schema"
 
 export type AdminAction =
-  | "promo_code.generate"
-  | "promo_code.deactivate"
   | "user.ban"
   | "user.unban"
   | "user.role_change"
@@ -13,6 +11,7 @@ export type AdminAction =
   | "project.feature"
   | "tag.approve"
   | "tag.reject"
+  | "directory_order.fulfill"
 
 interface LogAdminActionParams {
   adminUserId: string

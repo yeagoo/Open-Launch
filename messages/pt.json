@@ -24,7 +24,7 @@
       "trendingDesc": "Descubra os projetos mais populares",
       "winnersTitle": "Vencedores do Dia",
       "winnersDesc": "Veja os melhores projetos do dia",
-      "monthTitle": "Melhores do Mês",
+      "monthTitle": "Melhor do Mês",
       "monthDesc": "Veja os melhores projetos do mês",
       "categoriesTitle": "Categorias",
       "categoriesDesc": "Navegue por projetos por categoria"
@@ -32,7 +32,7 @@
     "dashboard": "Painel",
     "submitProject": "Enviar Projeto",
     "pricing": "Preços",
-    "fastTrack": "Acelerado 🚀",
+    "fastTrack": "Fast Track 🚀",
     "sponsors": "Patrocinadores",
     "signIn": "Entrar",
     "signUp": "Cadastrar",
@@ -66,7 +66,7 @@
   "home": {
     "metadata": {
       "today": "Lançamentos de Hoje no aat.ee",
-      "todayDesc": "Descubra os últimos lançamentos de produtos hoje no aat.ee - startups, ferramentas de IA e produtos SaaS"
+      "todayDesc": "Descubra os lançamentos de produtos mais recentes hoje no aat.ee - startups, ferramentas de IA e produtos SaaS"
     },
     "banner": {
       "title": "Plataforma de lançamento para seus produtos",
@@ -85,7 +85,7 @@
       "litehttpdDesc": "Servidor web leve, altamente compatível com Apache HTTPD",
       "trendingNow": "Em Alta Agora",
       "dailyWinners": "Vencedores do Dia",
-      "bestOfMonth": "Melhores do Mês",
+      "bestOfMonth": "Melhor do Mês",
       "dashboard": "Painel",
       "projectsCount": "{count} projetos"
     }
@@ -191,13 +191,13 @@
     },
     "sidebar": {
       "achievement": "Conquista",
+      "maker": "Criador",
       "unknownCreator": "Criador desconhecido",
       "launchDate": "Data de lançamento",
       "platform": "Plataforma",
       "pricing": "Preço",
       "socials": "Redes sociais",
       "productKeywords": "Palavras-chave do produto",
-      "maker": "Criador",
       "visitWebsite": "Visitar site",
       "projectInfo": "Informações do projeto",
       "compareWith": "Comparar com",
@@ -237,11 +237,11 @@
   "pricing": {
     "title": "Preços",
     "subtitle": "Escolha o plano ideal para seu lançamento",
-    "free": "Grátis",
+    "free": "Gratuito",
     "premium": "Premium",
     "premiumPlus": "Premium Plus",
     "perLaunch": "por lançamento",
-    "getStarted": "Começar",
+    "getStarted": "Comece agora",
     "subscribe": "Assinar",
     "compareFeatures": "Comparar recursos"
   },
@@ -270,7 +270,7 @@
   },
   "metadata": {
     "projects": {
-      "title": "Projetos — Lançamentos deste Mês | aat.ee",
+      "title": "Projetos — Lançamentos do Mês | aat.ee",
       "description": "Navegue pelos projetos lançados este mês no aat.ee — startups, ferramentas de IA e produtos SaaS."
     },
     "trending": {
@@ -279,7 +279,7 @@
     },
     "categories": {
       "title": "Categorias — aat.ee",
-      "description": "Navegue por produtos de tecnologia por categoria no aat.ee — encontre startups, ferramentas de IA e apps SaaS."
+      "description": "Navegue por produtos de tecnologia por categoria no aat.ee — encontre startups, ferramentas de IA e aplicativos SaaS."
     },
     "winners": {
       "title": "Vencedores Diários — aat.ee",
@@ -291,23 +291,23 @@
     },
     "pricing": {
       "title": "Preços — aat.ee",
-      "description": "Compare pacotes de lançamento no aat.ee — níveis Grátis, Premium e Premium Plus."
+      "description": "Compare pacotes de lançamento no aat.ee — níveis Gratuito, Premium e Premium Plus."
     },
     "blog": {
       "title": "Blog — aat.ee",
       "description": "Artigos, guias de lançamento e atualizações de produtos da equipe aat.ee."
     },
     "badge": {
-      "title": "Distintivos em Destaque — aat.ee",
-      "description": "Obtenha um distintivo aat.ee para seu site e mostre seu lançamento, ganhando um backlink de SEO."
+      "title": "Selos em Destaque — aat.ee",
+      "description": "Obtenha um selo aat.ee para seu site e mostre seu lançamento, ganhando um backlink de SEO."
     },
     "sponsors": {
       "title": "Patrocinadores — aat.ee",
-      "description": "Patrocine o aat.ee e alcance um público seleto de criadores, fundadores e entusiastas de tecnologia."
+      "description": "Patrocine o aat.ee e alcance uma audiência selecionada de criadores, fundadores e entusiastas de tecnologia."
     },
     "reviews": {
       "title": "Avaliações de Produtos — aat.ee",
-      "description": "Análises aprofundadas dos mais recentes produtos e ferramentas de tecnologia no aat.ee."
+      "description": "Análises detalhadas dos mais recentes produtos e ferramentas de tecnologia no aat.ee."
     }
   },
   "breadcrumb": {
@@ -323,10 +323,10 @@
   },
   "upvote": {
     "mustBeLoggedIn": "Você precisa estar logado para votar",
-    "rateLimited": "Esquadrão Antispam aqui: {count} votos em {minutes} minutos é o máximo! Tente novamente em {seconds} segundos.",
-    "minWaitSeconds": "Esquadrão Antispam aqui: é necessário aguardar {seconds} segundos para alterar o voto",
+    "rateLimited": "Esquadrão Anti-Spam aqui: {count} votos em {minutes} minutos é o máximo! Tente novamente em {seconds} segundos.",
+    "minWaitSeconds": "Esquadrão Anti-Spam aqui: aguarde {seconds} segundos para alterar o voto",
     "projectNotFound": "Projeto não encontrado",
-    "notOngoing": "A votação está aberta apenas enquanto o projeto está sendo lançado hoje"
+    "notOngoing": "A votação só está aberta enquanto o projeto está sendo lançado hoje"
   },
   "submitProject": {
     "page": {
@@ -352,6 +352,12 @@
         "help": "Insira a URL do seu site e clique em Preenchimento Automático para preencher o formulário automaticamente.",
         "duplicateWarning": "⚠️ Esta URL já foi enviada. A etapa final bloqueará isso — use uma URL diferente."
       },
+      "tagline": {
+        "label": "Slogan",
+        "optional": "(Opcional, ≤60 caracteres)",
+        "help": "Uma frase de marketing curta exibida abaixo do nome do seu projeto nos cards e na página do projeto.",
+        "placeholder": "ex.: Geração de imagens por IA, renderização de texto perfeita"
+      },
       "autoFill": {
         "button": "Preenchimento Automático",
         "loading": "Analisando..."
@@ -365,27 +371,21 @@
         "placeholder": "Descreva seu projeto"
       },
       "logo": {
-        "label": "Logotipo (Máx. 1 MB)",
-        "help": "Recomendado: imagem quadrada 1:1 (ex.: 256x256 px).",
+        "label": "Logotipo (Máx. 1MB)",
+        "help": "Recomendado: imagem quadrada 1:1 (ex.: 256x256px).",
         "upload": "Enviar Logotipo",
         "uploading": "Enviando...",
         "preparing": "Preparando...",
-        "preview": "Visualização do logotipo",
+        "preview": "Prévia do logotipo",
         "remove": "Remover logotipo"
       },
       "productImage": {
         "label": "Imagem do Produto",
         "optional": "(Opcional)",
-        "help": "Adicione uma imagem do produto. Recomendado: proporção 16:9 (ex.: 800x450 px).",
+        "help": "Adicione uma imagem do produto. Recomendado: proporção 16:9 (ex.: 800x450px).",
         "add": "Adicionar Imagem do Produto",
-        "preview": "Visualização da imagem do produto",
+        "preview": "Prévia da imagem do produto",
         "remove": "Remover imagem do produto"
-      },
-      "tagline": {
-        "label": "Tagline",
-        "optional": "(Opcional, ≤60 caracteres)",
-        "help": "Uma linha curta de marketing exibida abaixo do nome do projeto em cards e na página do projeto.",
-        "placeholder": "ex.: Geração de imagens com IA, renderização perfeita de texto"
       }
     },
     "step2": {
@@ -423,11 +423,11 @@
       },
       "githubUrl": {
         "label": "URL do GitHub (Opcional)",
-        "placeholder": "https://github.com/usuario/repositorio"
+        "placeholder": "https://github.com/usuario/repo"
       },
       "twitterUrl": {
         "label": "URL do Twitter (Opcional)",
-        "placeholder": "https://twitter.com/nomeusuario"
+        "placeholder": "https://twitter.com/username"
       }
     },
     "step3": {
@@ -442,7 +442,7 @@
         "getCode": "Obter Código do Selo",
         "verify": "Verificar Selo",
         "verifying": "Verificando...",
-        "urlRequired": "Insira primeiro a URL do seu site",
+        "urlRequired": "Por favor, insira primeiro a URL do seu site",
         "notFound": "Selo não encontrado no seu site",
         "verifyFailed": "Falha ao verificar o selo. Tente novamente."
       },
@@ -492,7 +492,7 @@
         "loading": "Carregando datas disponíveis...",
         "empty": "Nenhuma data de lançamento disponível para o tipo selecionado no intervalo permitido.",
         "placeholder": "Selecione uma data de lançamento",
-        "slotsAvailable": "{n} vaga(s) {type}",
+        "slotsAvailable": "{n} {type} vaga(s)",
         "slotTypeFree": "gratuita",
         "slotTypeBadge": "selo",
         "slotTypePremium": "premium",
@@ -501,9 +501,9 @@
         "noDate": "Nenhuma data selecionada"
       },
       "premiumUpsell": {
-        "heading": "Lance {days, plural, one {# dia} other {# dias}} mais cedo com o Premium!",
+        "heading": "Lance {days, plural, one {# dia} other {# dias}} mais cedo com Premium!",
         "body": "Disponível a partir de {date} • Backlink DR{dr} garantido • Pule a fila",
-        "button": "Atualizar para Premium ${price}"
+        "button": "Upgrade para Premium ${price}"
       }
     },
     "step4": {
@@ -520,7 +520,7 @@
         "categories": "Categorias:",
         "tags": "Tags do Produto:",
         "platforms": "Plataformas:",
-        "pricing": "Preço:",
+        "pricing": "Precificação:",
         "github": "GitHub:",
         "twitter": "Twitter:"
       },
@@ -546,6 +546,7 @@
         "websiteUrlInvalidQuick": "Insira uma URL válida primeiro",
         "websiteUrlDuplicate": "Esta URL já foi enviada",
         "descriptionRequired": "A descrição é obrigatória",
+        "taglineTooLong": "A tagline deve ter no máximo 60 caracteres",
         "logoRequired": "O logotipo é obrigatório",
         "logoUploadFailedNoUrl": "Falha no upload do logotipo: Nenhuma URL retornada.",
         "logoUploadFailed": "Falha no upload do logotipo: {message}",
@@ -554,12 +555,11 @@
         "techStackMin": "Adicione pelo menos uma tag",
         "techStackMax": "Máximo de 10 tags",
         "platformsMin": "Selecione pelo menos uma plataforma",
-        "pricingRequired": "Selecione um modelo de preço",
+        "pricingRequired": "Selecione um modelo de precificação",
         "scheduledDateRequired": "Escolha uma data de lançamento",
         "scheduledDateOverLimit": "Esta data excede seu limite diário de lançamentos",
-        "scheduledDateOverLimitDetail": "Você já agendou {count}/{limit} projeto(s) para esta data. Por favor, selecione outra data.",
-        "scheduledDateCheckFailed": "Não foi possível verificar o limite de data de lançamento. Tente novamente.",
-        "taglineTooLong": "A tagline deve ter no máximo 60 caracteres"
+        "scheduledDateOverLimitDetail": "Você já agendou {count}/{limit} projeto(s) para esta data. Selecione outra data.",
+        "scheduledDateCheckFailed": "Não foi possível verificar o limite de data de lançamento. Tente novamente."
       },
       "form": {
         "loadCategoriesFailed": "Falha ao carregar categorias",
@@ -575,160 +575,229 @@
       "draftRestored": "Rascunho não salvo restaurado"
     }
   },
-  "pricingDirectories": {
-    "metadata": {
-      "title": "Get Listed — Directory Pricing | aat.ee",
-      "description": "Skip the queue, get a guaranteed dofollow link, and feature your project across our directory network: aat.ee + 11 partner sites."
-    },
-    "hero": {
-      "kicker": "Directory listings",
-      "heading": "Get your product seen across our directory network",
-      "subheading": "Skip the queue. Earn dofollow backlinks. Reach makers and early adopters across {n}+ curated sites with combined 700k+ monthly visitors.",
-      "limited": "Launch pricing — discounts shrink as our DR & traffic grow."
-    },
+  "dashboardBoost": {
+    "button": "Impulsionar listagem",
+    "redirecting": "Redirecionando…",
+    "pickTier": "Escolha um nível",
+    "manageSubscription": "Gerenciar assinatura",
+    "ultraSlotsFull": "Todas as 5 vagas de patrocínio estão ocupadas — tente no próximo mês",
     "tiers": {
       "basic": {
-        "name": "Basic",
-        "price": "$6.99",
+        "label": "Básico",
+        "sublabel": "1 site · aat.ee"
+      },
+      "plus": {
+        "label": "Plus",
+        "sublabel": "4 sites"
+      },
+      "pro": {
+        "label": "Pro",
+        "sublabel": "12 sites · mais popular"
+      },
+      "ultra": {
+        "label": "Ultra",
+        "sublabel": "Vaga de patrocinador · mensal"
+      }
+    },
+    "errors": {
+      "checkoutFailed": "Falha ao iniciar o checkout",
+      "portalFailed": "Falha ao abrir o portal de assinatura"
+    }
+  },
+  "pricingDirectories": {
+    "metadata": {
+      "title": "Seja Listado — Preços de Diretório | aat.ee",
+      "description": "Pule a fila, obtenha um link dofollow garantido e destaque seu projeto em nossa rede de diretórios: aat.ee + 11 sites parceiros."
+    },
+    "hero": {
+      "kicker": "Listagens em diretórios",
+      "heading": "Faça seu <rotate>produto</rotate> ser visto em nossa <accent>rede de diretórios</accent>",
+      "headingRotateWords": {
+        "0": "produto",
+        "1": "site",
+        "2": "SaaS",
+        "3": "app",
+        "4": "ferramenta"
+      },
+      "subheading": "Pule a fila. Ganhe backlinks dofollow. Alcance makers e early adopters em <num>{n}+</num> sites selecionados com mais de <num>700k+</num> visitantes mensais combinados.",
+      "limited": "Preço de lançamento — os descontos diminuem à medida que nosso DR e tráfego crescem.",
+      "outcomes": {
+        "kicker": "O que realmente vai mover",
+        "trafficTitle": "Tráfego de referência real",
+        "trafficDesc": "Visitas de nossos mais de 700k leitores mensais — makers, fundadores e early adopters que realmente clicam.",
+        "drTitle": "Aumento natural do Domain Rating",
+        "drDesc": "Uma combinação equilibrada de sites com DR alto, médio e baixo constrói um perfil de backlinks natural, fazendo seu DR subir suavemente sem parecer spam.",
+        "seoTitle": "Melhor indexação no Google",
+        "seoDesc": "Domínios reais e indexados transmitem sinais de rastreamento para mecanismos de busca — sua URL é descoberta através de sites confiáveis em vez de começar do zero.",
+        "aieoTitle": "Visibilidade em busca por IA",
+        "aieoDesc": "Citado pelo ChatGPT, Perplexity, Claude e Gemini quando usuários perguntam sobre sua categoria — pronto para GEO / AIEO."
+      }
+    },
+    "tiers": {
+      "priceScope": "por URL · pagamento único",
+      "basic": {
+        "name": "Básico",
+        "price": "$3.99",
         "originalPrice": "$9.99",
-        "tagline": "Skip the queue on aat.ee.",
-        "description": "Get featured on aat.ee with a dofollow link. Your project also surfaces on related-product carousels, comparison pages, and alternatives pages — multiple discoverable touchpoints.",
-        "cta": "Get Basic",
+        "tagline": "Pule a fila no aat.ee.",
+        "reach": "<n>1 site</n> · 80k+ visitas mensais",
+        "description": "Seja destaque no aat.ee com um link dofollow. Seu projeto também aparece em carrosséis de produtos relacionados, páginas de comparação e páginas de alternativas — múltiplos pontos de contato detectáveis.",
+        "cta": "Obter Básico",
         "features": {
-          "skipQueue": "Skip the launch queue (no badge required)",
-          "dofollow": "Guaranteed dofollow backlink",
-          "site": "Listed on aat.ee",
-          "extra": "Bonus: appears in similar-product, compare, and alternatives pages",
-          "delivery": "Live within 1 business day (auto-published)"
+          "skipQueue": "Pule a fila de lançamento (nenhum badge necessário)",
+          "dofollow": "Backlink dofollow garantido",
+          "site": "Listado no aat.ee",
+          "extra": "Bônus: aparece em páginas de produtos similares, compare e alternativas",
+          "delivery": "Publicado em até 1 dia útil (publicação automática)"
         }
       },
       "plus": {
         "name": "Plus",
-        "price": "$9.99",
+        "price": "$6.99",
         "originalPrice": "$29.99",
-        "tagline": "Reach 4 directories at once.",
-        "description": "Everything in Basic, plus listings on HiCyou, MF8.BIZ, and BigKr. Combined network does 10,000+ Google clicks every 30 days and serves 300k+ monthly visitors.",
-        "cta": "Get Plus",
+        "tagline": "Alcance 4 diretórios de uma vez.",
+        "reach": "<n>4 sites</n> · 300k+ visitas mensais",
+        "description": "Tudo do Básico, mais listagens no HiCyou, MF8.BIZ e BigKr. A rede combinada gera mais de 10.000 cliques do Google a cada 30 dias e atende mais de 300k visitantes mensais.",
+        "cta": "Obter Plus",
         "features": {
-          "everything": "Everything in Basic",
-          "fourSites": "Listed on aat.ee, HiCyou, MF8.BIZ, BigKr",
-          "dofollowAll": "Dofollow backlink from every site",
-          "stats": "10,000+ Google clicks / 30 days · 300k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "Tudo do Básico",
+          "fourSites": "Listado em 4 sites da nossa rede de diretórios",
+          "dofollowAll": "Backlink dofollow de cada site",
+          "stats": "10k+ cliques do Google · 300k+ tráfego mensal",
+          "delivery": "aat.ee publicado em 1 dia · outros em 3 dias"
         }
       },
       "pro": {
         "name": "Pro",
-        "price": "$16.99",
+        "price": "$15.99",
         "originalPrice": "$39.99",
-        "badge": "Most popular",
-        "tagline": "Authority links from 8 documentation sites.",
-        "description": "Everything in Plus, plus friend-link placements on 8 high-authority documentation sites — strengthens GEO/AIEO recommendations and pushes your domain rating up. Combined network: 30,000+ Google clicks / 30 days, 700k+ monthly traffic.",
-        "cta": "Get Pro",
+        "badge": "Mais popular",
+        "tagline": "Links de autoridade de 8 sites de documentação.",
+        "reach": "<n>12 sites</n> · 700k+ visitas mensais",
+        "overflowLabel": "+ {n}+ sites",
+        "overflowTooltip": "Mais sites neste nível",
+        "description": "Tudo do Plus, mais posicionamentos de links de amigo em 8 sites de documentação de alta autoridade — fortalece recomendações GEO/AIEO e aumenta sua classificação de domínio. Rede combinada: 30.000+ cliques do Google / 30 dias, 700k+ tráfego mensal.",
+        "cta": "Obter Pro",
         "features": {
-          "everything": "Everything in Plus",
-          "docsSites": "Friend-links on 8 docs sites: Debian Club, Ubuntu.fan, AlmaLinux, Run-EnTLinux, EOL.wiki, Rank.fan, LiteHttpd, PortcYou",
-          "geo": "Boosts GEO/AIEO authority signals for AI-powered search",
-          "stats": "30,000+ Google clicks / 30 days · 700k+ monthly traffic",
-          "delivery": "aat.ee live within 1 day · others within 3 business days"
+          "everything": "Tudo do Plus",
+          "docsSites": "Links de amigo em 8 sites de documentação com alto DR",
+          "geo": "Impulsiona sinais GEO/AIEO para busca com IA",
+          "stats": "30k+ cliques do Google · 700k+ tráfego mensal",
+          "delivery": "aat.ee ao vivo em 1 dia · outros em 3 dias"
         }
       },
       "ultra": {
         "name": "Ultra",
-        "subtitle": "Sponsorship",
-        "price": "$69.99",
-        "priceSuffix": "/month",
-        "tagline": "Permanent sidebar visibility, every page, every visit.",
-        "description": "Subscription. Includes everything in Pro, plus your sponsor card in the right sidebar of every aat.ee and HiCyou page — so every visitor sees your brand, on every project, every comparison, every alternative.",
-        "limit": "Limited to 5 active sponsors at any time.",
-        "cta": "Subscribe to Ultra",
+        "subtitle": "Patrocínio",
+        "price": "$19.99",
+        "priceSuffix": "/mês",
+        "tagline": "Visibilidade permanente na barra lateral, em todas as páginas, em todas as visitas.",
+        "description": "Assinatura. Inclui tudo do Pro, mais seu cartão de patrocinador na barra lateral direita de todas as páginas do aat.ee e HiCyou — assim, cada visitante vê sua marca, em cada projeto, cada comparação, cada alternativa.",
+        "limit": "Limitado a 5 patrocinadores ativos por vez.",
+        "cta": "Assinar Ultra",
         "features": {
-          "everything": "Everything in Pro (delivered automatically)",
-          "sidebar": "Sponsor card on every aat.ee + HiCyou page",
-          "exclusive": "Maximum 5 sponsors at any time",
-          "cancel": "Cancel anytime — pro-rated billing"
+          "everything": "Tudo do Pro (entregue automaticamente)",
+          "sidebar": "Cartão de patrocinador em todas as páginas do aat.ee + HiCyou",
+          "exclusive": "Máximo de 5 patrocinadores por vez",
+          "cancel": "Cancele quando quiser — faturamento proporcional"
         }
       }
     },
     "stats": {
-      "heading": "What you're buying access to",
-      "domainRating": "Domain Rating",
-      "trafficLine": "Combined monthly traffic",
-      "clicksLine": "30-day Google search clicks",
+      "heading": "Ao que você está comprando acesso",
+      "domainRating": "Classificação de Domínio",
+      "trafficLine": "Tráfego mensal combinado",
+      "clicksLine": "Cliques de busca do Google em 30 dias",
       "trafficValue": "700k+",
-      "clicksValue": "30,000+",
-      "trafficNote": "Across all 12 sites. Numbers grow each month — that's also why discount prices won't last.",
-      "drCardTitle": "Live Domain Ratings",
-      "drCardSubtitle": "Refreshed every 3 days from Ahrefs.",
-      "drDisclaimer": "Domain Rating values are pulled directly from Ahrefs and updated every 3 days. Higher DR sites pass more SEO authority through their dofollow links."
+      "clicksValue": "30.000+",
+      "sitesLine": "Sites da rede",
+      "sitesValue": "12+",
+      "sitesNote": "Em 4 diretórios + 8 sites de documentação. A exposição combinada se acumula — cada novo domínio eleva o piso de autoridade da rede.",
+      "trafficNote": "Em todos os 12 sites. Os números crescem a cada mês — é por isso que os preços promocionais não durarão.",
+      "clicksNote": "Cliques orgânicos do Google em toda a rede nos últimos 30 dias.",
+      "drCardTitle": "Classificações de Domínio ao Vivo",
+      "drCardSubtitle": "Atualizadas a cada 3 dias pelo Ahrefs.",
+      "drDisclaimer": "Os valores de Classificação de Domínio são obtidos diretamente do Ahrefs e atualizados a cada 3 dias. Sites com DR mais alto transmitem mais autoridade de SEO através de seus links dofollow."
+    },
+    "priceNotice": "Preço de lançamento — conforme o tráfego, DR e pontuações GEO/AIEO da nossa rede crescem, esses preços promocionais serão ajustados para cima. Garanta a taxa de hoje.",
+    "promoCode": {
+      "label": "Promoção em fase de teste",
+      "headline": "15% de desconto na sua primeira compra",
+      "subtext": "Apenas novos usuários · insira no checkout do Stripe",
+      "warning": "Oferta em fase de teste — pode ser removida a qualquer momento. Use logo.",
+      "copy": "Copiar",
+      "copied": "Copiado!"
     },
     "comparison": {
-      "heading": "Compare tiers side by side",
+      "heading": "Compare os níveis lado a lado",
       "rows": {
-        "sites": "Sites listed on",
-        "skipQueue": "Skip the queue",
-        "dofollow": "Dofollow link",
-        "extraPages": "Featured on compare/alternatives pages",
-        "docsLinks": "Friend-links on docs sites",
-        "sidebarAd": "Sponsor sidebar ad",
-        "monthlyTraffic": "Combined monthly traffic",
-        "googleClicks": "30-day Google clicks",
-        "delivery": "Delivery time",
-        "billing": "Billing"
+        "sites": "Sites listados em",
+        "skipQueue": "Pule a fila",
+        "dofollow": "Link Dofollow",
+        "extraPages": "Destacado em páginas de comparação/alternativas",
+        "docsLinks": "Links de amigo em sites de documentação",
+        "sidebarAd": "Anúncio na barra lateral do patrocinador",
+        "monthlyTraffic": "Tráfego mensal combinado",
+        "googleClicks": "Cliques do Google em 30 dias",
+        "delivery": "Tempo de entrega",
+        "urlScope": "Cobertura de URL",
+        "billing": "Faturamento"
       },
       "values": {
-        "yes": "Yes",
+        "yes": "Sim",
         "no": "—",
         "basicSites": "1 site (aat.ee)",
         "plusSites": "4 sites",
         "proSites": "12 sites",
-        "ultraSites": "12 sites + sidebar",
-        "basicTraffic": "~50k/mo",
-        "plusTraffic": "300k+/mo",
-        "proTraffic": "700k+/mo",
-        "ultraTraffic": "700k+/mo",
+        "ultraSites": "12 sites + barra lateral",
+        "basicTraffic": "~50k/mês",
+        "plusTraffic": "300k+/mês",
+        "proTraffic": "700k+/mês",
+        "ultraTraffic": "700k+/mês",
         "basicClicks": "~3k/30d",
         "plusClicks": "10k+/30d",
         "proClicks": "30k+/30d",
         "ultraClicks": "30k+/30d",
-        "auto1d": "1 business day",
-        "manual3d": "Up to 3 business days",
-        "subscription": "$69.99/month",
-        "oneOff": "One-time"
+        "auto1d": "1 dia útil",
+        "manual3d": "Até 3 dias úteis",
+        "oneUrl": "1 URL",
+        "sponsorSlot": "Vaga de patrocinador",
+        "subscription": "$69,99/mês",
+        "oneOff": "Pagamento único"
       }
     },
     "faq": {
-      "heading": "Frequently asked questions",
+      "heading": "Perguntas frequentes",
       "items": {
         "discount": {
-          "q": "Why are these prices discounted?",
-          "a": "We're scaling our directory network's authority. As our DR rises and traffic grows month over month, the value of a listing increases — so the discount price you see today won't be available in 3 months. Lock in the rate now."
+          "q": "Por que esses preços estão com desconto?",
+          "a": "Estamos aumentando a autoridade da nossa rede de diretórios. À medida que nosso DR cresce e o tráfego aumenta mês a mês, o valor de uma listagem também aumenta — portanto, o preço com desconto que você vê hoje não estará disponível em 3 meses. Garanta a taxa agora."
         },
         "delivery": {
-          "q": "How fast is delivery?",
-          "a": "aat.ee is automated — your listing goes live within 1 business day after payment. The other 11 sites are added manually within 3 business days. We'll email you when each placement is live."
+          "q": "Qual é a velocidade de entrega?",
+          "a": "O aat.ee é automatizado — sua listagem entra no ar em até 1 dia útil após o pagamento. Os outros 11 sites são adicionados manualmente em até 3 dias úteis. Enviaremos um e-mail quando cada colocação estiver no ar."
         },
         "retention": {
-          "q": "How long do the links stay up?",
-          "a": "All links and listings are intended to be permanent. We do not auto-expire one-time tier purchases. Sites we no longer operate may go offline in the future, but we'll email you in that rare case."
+          "q": "Por quanto tempo os links permanecem ativos?",
+          "a": "Todos os links e listagens são permanentes. Não expiramos automaticamente as compras de nível único. Sites que não operamos mais podem ficar offline no futuro, mas enviaremos um e-mail nesse caso raro."
         },
         "upgrade": {
-          "q": "Can I upgrade tiers later?",
-          "a": "Yes. Email us within 30 days of your purchase and we'll credit what you already paid toward the higher tier. After 30 days, you can buy the upgrade at the current rate."
+          "q": "Posso fazer upgrade de nível depois?",
+          "a": "Sim. Envie-nos um e-mail dentro de 30 dias após a compra e creditaremos o valor já pago para o nível superior. Após 30 dias, você pode comprar o upgrade pela taxa atual."
         },
         "refund": {
-          "q": "What's the refund policy?",
-          "a": "If we haven't yet placed your listing, full refund — just email us. After placement, we don't offer refunds since the link equity has been transferred. Ultra subscribers can cancel anytime; we pro-rate the unused portion of the current month."
+          "q": "Qual é a política de reembolso?",
+          "a": "Se ainda não colocamos sua listagem, reembolso total — basta nos enviar um e-mail. Após a colocação, não oferecemos reembolsos, pois a equidade do link já foi transferida. Assinantes Ultra podem cancelar a qualquer momento; calculamos proporcionalmente a parte não utilizada do mês atual."
         },
         "multiple": {
-          "q": "Can I buy listings for multiple projects?",
-          "a": "Yes — each project is a separate purchase. We don't currently offer bundled discounts, but heavy users should email us directly."
+          "q": "Posso comprar listagens para vários projetos?",
+          "a": "Sim — cada projeto é uma compra separada. Atualmente não oferecemos descontos em pacotes, mas usuários frequentes devem nos enviar um e-mail diretamente."
         }
       }
     },
     "footer": {
-      "heading": "Ready to skip the queue?",
-      "body": "Pick a tier above and submit your project. Manual placements start within 1 business day."
+      "heading": "Pronto para pular a fila?",
+      "body": "Escolha um nível acima e envie seu projeto. As colocações manuais começam em até 1 dia útil."
     }
   }
 }
