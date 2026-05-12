@@ -3,13 +3,23 @@
 import { useState } from "react"
 import Image from "next/image"
 
-import { RiAlertLine, RiCalendarLine, RiDeleteBinLine, RiPencilLine } from "@remixicon/react"
+import {
+  RiAlertLine,
+  RiArrowRightLine,
+  RiCalendarLine,
+  RiDeleteBinLine,
+  RiPencilLine,
+} from "@remixicon/react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { EditProjectForm } from "@/components/project/edit-project-form"
+import {
+  cancelPendingDirectoryOrder,
+  resumePendingDirectoryOrder,
+} from "@/app/actions/directory-orders"
 import { getProjectForEdit } from "@/app/actions/project-details"
 import { deleteMyDraftProject } from "@/app/actions/projects"
 
@@ -66,18 +76,45 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
     }
   }
 
+  const isPendingPayment = props.launchStatus === "payment_pending"
+
   async function handleDelete() {
-    if (!confirm(`Delete "${props.name}"? This can't be undone.`)) return
+    const message = isPendingPayment
+      ? `Cancel pending payment for "${props.name}"? Any in-flight Stripe checkout will be voided.`
+      : `Delete "${props.name}"? This can't be undone.`
+    if (!confirm(message)) return
     setIsDeleting(true)
     try {
-      await deleteMyDraftProject(props.id)
-      toast.success("Project deleted")
+      if (isPendingPayment) {
+        // payment_pending has a scheduledLaunchDate, so deleteMyDraftProject
+        // would no-op. Use the cancel action — it expires any open Stripe
+        // sessions before removing the project, preventing orphan payments.
+        await cancelPendingDirectoryOrder(props.id)
+        toast.success("Pending payment canceled")
+      } else {
+        await deleteMyDraftProject(props.id)
+        toast.success("Project deleted")
+      }
       // Hard reload — dashboard is a server component, easiest way to
       // refresh the list.
       window.location.reload()
     } catch (err) {
       console.error(err)
-      toast.error("Failed to delete project")
+      toast.error(isPendingPayment ? "Failed to cancel payment" : "Failed to delete project")
+      setIsDeleting(false)
+    }
+  }
+
+  async function handleResume() {
+    setIsDeleting(true) // reuses the busy state to disable buttons
+    try {
+      // Pulls the original tier from the pending row so resuming Plus
+      // doesn't silently demote the user to Basic.
+      const { redirectUrl } = await resumePendingDirectoryOrder(props.id)
+      window.location.href = redirectUrl
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to resume payment")
       setIsDeleting(false)
     }
   }
@@ -112,6 +149,12 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
           )}
         </div>
         <div className="flex flex-shrink-0 gap-2">
+          {isPendingPayment && (
+            <Button size="sm" onClick={handleResume} disabled={isDeleting}>
+              Resume payment
+              <RiArrowRightLine className="ml-1 h-4 w-4" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={openEdit}>
             <RiPencilLine className="mr-1 h-4 w-4" />
             Edit
@@ -121,7 +164,7 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
             size="sm"
             onClick={handleDelete}
             disabled={isDeleting}
-            aria-label="Delete project"
+            aria-label={isPendingPayment ? "Cancel pending payment" : "Delete project"}
           >
             <RiDeleteBinLine className="h-4 w-4 text-red-500" />
           </Button>

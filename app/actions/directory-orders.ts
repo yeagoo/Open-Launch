@@ -170,6 +170,147 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
   return { orderId, redirectUrl }
 }
 
+/**
+ * Returns a redirect URL that reuses the latest `pending`
+ * directory_order for the given project (owned by the calling user)
+ * with the tier the user originally chose. Falls back to creating a
+ * fresh `basic` order if no pending row exists — but the dashboard
+ * Resume button is only shown for payment_pending projects, which
+ * always have one.
+ *
+ * Distinct from `createDirectoryOrder` because the dashboard doesn't
+ * know which tier the user picked at submit time — pulling it from
+ * the existing pending row preserves that choice instead of forcing
+ * Basic on resume.
+ */
+export async function resumePendingDirectoryOrder(
+  projectId: string,
+): Promise<{ redirectUrl: string }> {
+  const sess = await auth.api.getSession({ headers: await headers() })
+  if (!sess?.user?.id) throw new Error("Unauthenticated")
+
+  const [proj] = await db
+    .select({ id: project.id })
+    .from(project)
+    .where(and(eq(project.id, projectId), eq(project.createdBy, sess.user.id)))
+    .limit(1)
+  if (!proj) throw new Error("Project not found or not owned")
+
+  const [existing] = await db
+    .select({ id: directoryOrder.id, tier: directoryOrder.tier })
+    .from(directoryOrder)
+    .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
+    .orderBy(desc(directoryOrder.createdAt))
+    .limit(1)
+
+  if (existing && isDirectoryTier(existing.tier)) {
+    const paymentLink = getPaymentLinkUrl(existing.tier)
+    const ref = `${DIRECTORY_ORDER_REF_PREFIX}${existing.id}`
+    const sep = paymentLink.includes("?") ? "&" : "?"
+    return { redirectUrl: `${paymentLink}${sep}client_reference_id=${encodeURIComponent(ref)}` }
+  }
+
+  // No pending row — defensive fallback. Creates a fresh basic order.
+  const { redirectUrl } = await createDirectoryOrder({ projectId, tier: "basic" })
+  return { redirectUrl }
+}
+
+// ─── Pending-order cancellation ───
+
+interface CancelResult {
+  canceled: boolean
+  expiredSessions: number
+}
+
+/**
+ * Cancels any `pending` directory_order rows tied to the given project
+ * (owned by the calling user), expires any open Stripe Checkout
+ * Sessions for them, and deletes the project. Use this when a user
+ * abandons a pending-payment flow and wants to start over — it closes
+ * the Stripe-side door so the abandoned link can't later mint an
+ * orphan payment (project gone → directory_order CASCADE-gone →
+ * webhook 200s silently).
+ *
+ * Idempotent: zero-pending case returns canceled=true with 0 sessions
+ * touched (still deletes the project, which is the caller's intent).
+ */
+export async function cancelPendingDirectoryOrder(projectId: string): Promise<CancelResult> {
+  const sess = await auth.api.getSession({ headers: await headers() })
+  if (!sess?.user?.id) {
+    throw new Error("Unauthenticated")
+  }
+
+  // Ownership + state guard. Only payment_pending projects (which
+  // genuinely have a Stripe session in flight) need this dance. For
+  // payment_failed / SCHEDULED / launched the caller should use
+  // the normal delete path.
+  const [proj] = await db
+    .select({ id: project.id, launchStatus: project.launchStatus })
+    .from(project)
+    .where(and(eq(project.id, projectId), eq(project.createdBy, sess.user.id)))
+    .limit(1)
+  if (!proj) throw new Error("Project not found or not owned")
+  if (proj.launchStatus !== "payment_pending") {
+    throw new Error("Project is not in payment_pending state")
+  }
+
+  const pendingOrders = await db
+    .select({ id: directoryOrder.id })
+    .from(directoryOrder)
+    .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
+
+  let expiredSessions = 0
+  for (const order of pendingOrders) {
+    const ref = `${DIRECTORY_ORDER_REF_PREFIX}${order.id}`
+    try {
+      // Stripe search supports `client_reference_id` and `status`. Open
+      // sessions are the dangerous ones — a `complete`/`expired`
+      // session can't be paid against anymore so we don't care.
+      //
+      // `as any`: `checkout.sessions.search` is a live Stripe endpoint
+      // and works at runtime, but isn't in the v17 SDK typings.
+      const searchClient = stripe.checkout.sessions as unknown as {
+        search: (opts: {
+          query: string
+          limit?: number
+        }) => Promise<{ data: Array<{ id: string }> }>
+      }
+      const result = await searchClient.search({
+        query: `client_reference_id:'${ref}' AND status:'open'`,
+        limit: 5,
+      })
+      for (const s of result.data) {
+        try {
+          await stripe.checkout.sessions.expire(s.id)
+          expiredSessions++
+        } catch (err) {
+          // A session may already be expired by Stripe (24h auto-expiry)
+          // — log but don't fail the whole cancel flow.
+          console.error("⚠️ Failed to expire Stripe session", s.id, err)
+        }
+      }
+    } catch (err) {
+      // Search API can fail if the indexed copy is stale — proceed with
+      // local DB cleanup anyway. Worst case: a session stays open for
+      // up to 24h; the webhook's orphan-payment alert will catch any
+      // money that slips through.
+      console.error("⚠️ Stripe session search failed for ref", ref, err)
+    }
+    await db
+      .update(directoryOrder)
+      .set({ status: "canceled", updatedAt: new Date() })
+      .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "pending")))
+  }
+
+  // Project delete cascades the (now-canceled) directory_order rows;
+  // keeping them as `canceled` first means if a Stripe session somehow
+  // pays AFTER expire returned, the orphan alert + audit trail still
+  // surface the issue cleanly.
+  await db.delete(project).where(eq(project.id, projectId))
+
+  return { canceled: true, expiredSessions }
+}
+
 // ─── Sponsor slot accounting ───
 
 /**
