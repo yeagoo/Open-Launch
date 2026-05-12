@@ -59,6 +59,7 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const status = STATUS_LABELS[props.launchStatus] ?? null
+  const isPendingPayment = props.launchStatus === "payment_pending"
 
   async function openEdit() {
     setIsEditOpen(true)
@@ -75,8 +76,6 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
       setLoadingEdit(false)
     }
   }
-
-  const isPendingPayment = props.launchStatus === "payment_pending"
 
   async function handleDelete() {
     const message = isPendingPayment
