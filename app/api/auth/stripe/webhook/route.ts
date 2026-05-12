@@ -28,6 +28,36 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 })
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
+/**
+ * Stripe webhook is allowed to silently 200 on missing project / order
+ * (so Stripe doesn't retry forever), but we still need a human to look
+ * at the payment — otherwise customers paid for nothing and we never
+ * notice. Reuses the admin payment email template with an ORPHAN tag.
+ *
+ * Best-effort: a send failure just logs and falls through, so the
+ * webhook still returns 200.
+ */
+async function alertOrphanPayment(
+  session: Stripe.Checkout.Session,
+  reason: string,
+  ref: string | null,
+) {
+  try {
+    const userEmail = session.customer_details?.email ?? "unknown"
+    const amount = (session.amount_total ?? 0) / 100
+    const currency = session.currency ?? "usd"
+    await sendAdminPaymentNotification({
+      userEmail,
+      amount,
+      currency,
+      projectName: `⚠️ ORPHAN PAYMENT — ${reason}`,
+      websiteUrl: `Stripe session: ${session.id} | client_reference_id: ${ref ?? "(none)"}`,
+    })
+  } catch (err) {
+    console.error("⚠️ Failed to send orphan-payment alert:", err)
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // 检查环境变量是否配置
@@ -75,7 +105,8 @@ export async function POST(request: Request) {
       const projectId = ref
       if (!projectId) {
         console.error("⚠️ No project ID found in session metadata, session_id:", session.id)
-        // 返回 200 避免 Stripe 重试，但记录错误
+        // 返回 200 避免 Stripe 重试，但发管理员告警
+        await alertOrphanPayment(session, "no client_reference_id", null)
         return NextResponse.json({ received: true, warning: "No project ID" }, { status: 200 })
       }
 
@@ -98,7 +129,8 @@ export async function POST(request: Request) {
 
         if (!projectData) {
           console.error("⚠️ Project not found:", projectId)
-          // 返回 200 避免 Stripe 无限重试
+          // 返回 200 避免 Stripe 无限重试,同时发管理员告警
+          await alertOrphanPayment(session, `project ${projectId} not found`, projectId)
           return NextResponse.json(
             { received: true, warning: "Project not found" },
             { status: 200 },
@@ -351,6 +383,10 @@ async function handleDirectoryOrderCompleted(
 
   if (!order) {
     console.error("⚠️ Directory order not found:", orderId)
+    // Orphan — most likely the project (and its directory_order via
+    // CASCADE) was deleted between createDirectoryOrder + the buyer
+    // paying. Send admin alert so this $ doesn't fall into a hole.
+    await alertOrphanPayment(session, `directory_order ${orderId} not found (deleted?)`, ref)
     return NextResponse.json(
       { received: true, warning: "Directory order not found" },
       { status: 200 },

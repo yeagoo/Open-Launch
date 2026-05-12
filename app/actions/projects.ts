@@ -317,8 +317,16 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       return { success: false, error: "Missing required fields" }
     }
 
-    // If the URL belongs to a payment_pending/payment_failed project owned by this user,
-    // delete it so they can resubmit (check-url already treats these as "available")
+    // Resubmit guard for the same URL:
+    //  - payment_failed (own): silently delete the stale record so the
+    //    user can try again. The Stripe session is already burned.
+    //  - payment_pending (own): refuse with a structured error pointing
+    //    to the dashboard. Deleting here would orphan the Stripe
+    //    Checkout Session — the buyer can still pay it but the webhook
+    //    has no row to match, so the $ goes into a hole. See
+    //    `app/api/auth/stripe/webhook/route.ts:handleDirectoryOrderCompleted`
+    //    (we now alert admin on that path, but prevention > detection).
+    //  - any other URL collision: hard "already submitted".
     const [existingByUrl] = await db
       .select({ id: project.id, createdBy: project.createdBy, launchStatus: project.launchStatus })
       .from(project)
@@ -326,12 +334,17 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       .limit(1)
 
     if (existingByUrl) {
-      if (
-        existingByUrl.createdBy === session.user.id &&
-        (existingByUrl.launchStatus === "payment_pending" ||
-          existingByUrl.launchStatus === "payment_failed")
-      ) {
+      const isOwn = existingByUrl.createdBy === session.user.id
+      if (isOwn && existingByUrl.launchStatus === "payment_failed") {
         await db.delete(project).where(eq(project.id, existingByUrl.id))
+      } else if (isOwn && existingByUrl.launchStatus === "payment_pending") {
+        return {
+          success: false,
+          error:
+            "You have a pending payment for this URL. Resume or cancel it on your dashboard before submitting again.",
+          code: "pending_payment_exists",
+          pendingProjectId: existingByUrl.id,
+        }
       } else {
         return { success: false, error: "This website URL has already been submitted" }
       }
