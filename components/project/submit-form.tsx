@@ -59,6 +59,14 @@ import { UploadButton } from "@/lib/r2-upload"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -74,7 +82,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DrBadge, OverflowDrBadge } from "@/components/dr/dr-badge"
-import { createDirectoryOrder } from "@/app/actions/directory-orders"
+import { createDirectoryOrder, resumePendingDirectoryOrder } from "@/app/actions/directory-orders"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
 import {
   checkUserLaunchLimit,
@@ -231,6 +239,12 @@ export function SubmitProjectForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
+  // Surfaces when submitProject detects an existing payment_pending
+  // project for the same URL owned by this user — we refuse the delete
+  // path that orphaned $0.84 in May. Dialog gives the user Resume /
+  // Dashboard CTAs instead of a dead-end toast.
+  const [pendingPaymentProjectId, setPendingPaymentProjectId] = useState<string | null>(null)
+  const [isResumingPayment, setIsResumingPayment] = useState(false)
 
   function clearAllErrors() {
     setFieldErrors({})
@@ -774,6 +788,17 @@ export function SubmitProjectForm({
       const submissionResult = await submitProject(projectData)
 
       if (!submissionResult.success || !submissionResult.projectId || !submissionResult.slug) {
+        // The server refuses to delete a payment_pending project on re-submit
+        // (would orphan the in-flight Stripe session). Surface a dialog with
+        // Resume / Dashboard CTAs instead of a generic toast.
+        if (
+          submissionResult.code === "pending_payment_exists" &&
+          submissionResult.pendingProjectId
+        ) {
+          setPendingPaymentProjectId(submissionResult.pendingProjectId)
+          setIsPending(false)
+          return
+        }
         throw new Error(submissionResult.error || "Failed to submit project data.")
       }
 
@@ -2339,6 +2364,19 @@ export function SubmitProjectForm({
     }
   }
 
+  async function handleResumePendingPayment() {
+    if (!pendingPaymentProjectId) return
+    setIsResumingPayment(true)
+    try {
+      const { redirectUrl } = await resumePendingDirectoryOrder(pendingPaymentProjectId)
+      window.location.href = redirectUrl
+    } catch (err) {
+      console.error("Failed to resume pending payment:", err)
+      toast.error("Failed to resume payment — try the dashboard instead.")
+      setIsResumingPayment(false)
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {renderStepper()}
@@ -2350,6 +2388,36 @@ export function SubmitProjectForm({
           {formError}
         </div>
       )}
+
+      <Dialog
+        open={pendingPaymentProjectId !== null}
+        onOpenChange={(open) => {
+          if (!open && !isResumingPayment) setPendingPaymentProjectId(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pending payment for this URL</DialogTitle>
+            <DialogDescription>
+              You already started a paid launch for this website. Resume the Stripe checkout, or
+              cancel it from the dashboard before submitting again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/dashboard")}
+              disabled={isResumingPayment}
+            >
+              Go to dashboard
+            </Button>
+            <Button onClick={handleResumePendingPayment} disabled={isResumingPayment}>
+              {isResumingPayment ? <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Resume payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between border-t pt-6">
         <Button

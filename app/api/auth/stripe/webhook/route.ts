@@ -50,8 +50,9 @@ async function alertOrphanPayment(
       userEmail,
       amount,
       currency,
-      projectName: `⚠️ ORPHAN PAYMENT — ${reason}`,
+      projectName: reason,
       websiteUrl: `Stripe session: ${session.id} | client_reference_id: ${ref ?? "(none)"}`,
+      orphan: true,
     })
   } catch (err) {
     console.error("⚠️ Failed to send orphan-payment alert:", err)
@@ -427,7 +428,21 @@ async function handleDirectoryOrderCompleted(
     .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
 
   if (!updateResult.rowCount || updateResult.rowCount === 0) {
-    console.log("ℹ️ Directory order already processed, skipping:", orderId)
+    // Disambiguate idempotent (Stripe retry on already-paid order) vs
+    // stale (someone canceled/refunded the order between createCheckout
+    // and pay). The former is normal; the latter means money came in
+    // for an order the user explicitly killed — admin needs to refund.
+    const STALE_STATUSES: ReadonlyArray<string> = ["canceled", "refunded", "failed"]
+    if (STALE_STATUSES.includes(order.status)) {
+      console.error("⚠️ Paid webhook hit non-pending order:", orderId, "status was:", order.status)
+      await alertOrphanPayment(
+        session,
+        `directory_order ${orderId} was '${order.status}' when paid webhook arrived`,
+        ref,
+      )
+    } else {
+      console.log("ℹ️ Directory order already processed, skipping:", orderId)
+    }
     return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
   }
 

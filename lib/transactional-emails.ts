@@ -290,12 +290,19 @@ export async function sendAdminPaymentNotification({
   currency,
   projectName,
   websiteUrl,
+  orphan = false,
 }: {
   userEmail: string
   amount: number
   currency: string
   projectName: string
   websiteUrl: string
+  /**
+   * Webhook couldn't find a matching project/order. Swaps the email
+   * styling from green "✅ paid" to amber "⚠️ needs attention" so the
+   * admin can triage refunds / manual fulfilment quickly.
+   */
+  orphan?: boolean
 }) {
   const adminEmail = process.env.ADMIN_EMAIL || "cjwbbs@gmail.com"
   const safeCurrency = escapeHtml(currency.toUpperCase())
@@ -306,16 +313,21 @@ export async function sendAdminPaymentNotification({
     ? `<a href="${safeUrl}">${escapeHtml(safeUrl)}</a>`
     : escapeHtml(websiteUrl)
 
-  const subject = `💰 New Payment: ${amount} ${currency.toUpperCase()} - ${projectName}`
+  const subject = orphan
+    ? `⚠️ ORPHAN PAYMENT: ${amount} ${currency.toUpperCase()} — ${projectName}`
+    : `💰 New Payment: ${amount} ${currency.toUpperCase()} - ${projectName}`
+  const heading = orphan ? "Orphan Payment — needs review ⚠️" : "New Payment Received! 💰"
+  const accentColor = orphan ? "#d97706" : "#28a745" // amber-600 vs green-600
 
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="font-size: 22px; color: #1a1a1a;">New Payment Received! 💰</h1>
+      <h1 style="font-size: 22px; color: #1a1a1a;">${heading}</h1>
 
-      <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">
+      <div style="background-color: #f8f9fa; border-left: 4px solid ${accentColor}; padding: 15px; margin: 20px 0;">
         <p style="margin: 0; font-size: 18px; font-weight: bold;">
           Amount: ${amount} ${safeCurrency}
         </p>
+        ${orphan ? `<p style="margin: 8px 0 0; color: #92400e; font-size: 13px;">Stripe charged the buyer but no project/order matched — review in Stripe Dashboard and either refund or backfill.</p>` : ""}
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
