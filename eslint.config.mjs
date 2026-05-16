@@ -1,17 +1,41 @@
 import { dirname } from "path"
 import { fileURLToPath } from "url"
 
-import { FlatCompat } from "@eslint/eslintrc"
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals"
+import nextTypescript from "eslint-config-next/typescript"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-})
-
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
+  {
+    // React Compiler rules shipped in eslint-config-next 16. All flag
+    // real concerns but pre-existing call sites pre-date the rules —
+    // demote to warning so the Next 16 upgrade lands without unrelated
+    // refactors; sweep the call sites in a follow-up.
+    //
+    // - set-state-in-effect: setState inside useEffect body
+    // - purity:              Date.now()/Math.random() during render
+    // - static-components:   defining components during render
+    // - immutability:        const reassignment via TDZ-style access
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/immutability": "warn",
+    },
+  },
+  {
+    // Scripts and tests have lower bars than the main app code.
+    files: ["scripts/**", "**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+    },
+  },
   {
     // Anything under `components/` is a candidate to end up in the
     // client bundle. Block direct imports of server-only modules
@@ -57,6 +81,9 @@ const eslintConfig = [
         },
       ],
     },
+  },
+  {
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
   },
 ]
 

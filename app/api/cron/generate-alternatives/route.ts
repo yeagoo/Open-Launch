@@ -353,7 +353,7 @@ export async function GET(request: NextRequest) {
       // Detail pages cache their sidebar alternatives list per
       // project; bust the tag so freshly-written pages surface
       // without waiting for the 6h revalidate window.
-      revalidateTag(PROJECT_SIDEBAR_LINKS_TAG)
+      revalidateTag(PROJECT_SIDEBAR_LINKS_TAG, "max")
     }
 
     return NextResponse.json({
