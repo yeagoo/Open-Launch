@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
       // Detail pages cache their sidebar comparison list per project;
       // bust the tag so freshly-written comparisons surface without
       // waiting for the 6h revalidate window.
-      revalidateTag(PROJECT_SIDEBAR_LINKS_TAG)
+      revalidateTag(PROJECT_SIDEBAR_LINKS_TAG, "max")
     }
 
     return NextResponse.json({

@@ -1,8 +1,6 @@
 import type { NextConfig } from "next"
 
-import createMDX from "@next/mdx"
 import createNextIntlPlugin from "next-intl/plugin"
-import remarkGfm from "remark-gfm"
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
@@ -22,9 +20,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   /* config options here */
-
-  // Configuration pour MDX
-  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
   },
@@ -78,11 +73,7 @@ const nextConfig: NextConfig = {
   },
 }
 
-const withMDX = createMDX({
-  options: {
-    remarkPlugins: [remarkGfm],
-  },
-})
-
-// Combine MDX, next-intl, and Next.js config
-export default withNextIntl(withMDX(nextConfig))
+// MDX is consumed at runtime via `next-mdx-remote/rsc` (see app/[locale]/
+// blog and app/[locale]/reviews). No bundler-side @next/mdx wrap needed —
+// dropped to avoid the Turbopack "non-serializable loader options" error.
+export default withNextIntl(nextConfig)

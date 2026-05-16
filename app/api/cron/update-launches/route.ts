@@ -195,8 +195,8 @@ export async function GET(request: NextRequest) {
     // visible to users as "the 8 AM launch didn't show up."
     if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
       revalidatePath("/sitemap.xml")
-      revalidateTag(HOME_PROJECTS_TAG)
-      revalidateTag(TOP_CATEGORIES_TAG)
+      revalidateTag(HOME_PROJECTS_TAG, "max")
+      revalidateTag(TOP_CATEGORIES_TAG, "max")
       console.log("✅ Sitemap regenerated + home/category caches busted")
     }
 

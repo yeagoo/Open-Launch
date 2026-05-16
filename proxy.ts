@@ -29,7 +29,7 @@ function isNonLocalized(pathname: string): boolean {
   return NON_LOCALIZED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Session guards run first (cookie-only check; role/ban verified in layouts)
