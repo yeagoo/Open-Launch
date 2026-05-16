@@ -10,6 +10,46 @@ import { promisify } from "node:util"
 // the promisified wrapper on every call.
 const execFileAsync = promisify(execFile)
 
+/**
+ * Returns the UTC instants for 00:00:00 and 23:59:59.999 on the current
+ * calendar day in America/Los_Angeles, honoring DST automatically.
+ *
+ * Implementation: ask Intl.DateTimeFormat for the PT date components,
+ * then ask the same formatter for the same instant's hour/minute to
+ * derive the live UTC offset. Avoids hand-rolling DST rules.
+ */
+function ptDayBoundsUtc(now: Date): { todayStart: Date; todayEnd: Date } {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  })
+  const parts = fmt.formatToParts(now)
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value)
+  const ptYear = get("year")
+  const ptMonth = get("month") // 1-based
+  const ptDay = get("day")
+  const ptHour = get("hour") % 24 // Intl can emit 24 for midnight on some engines
+  const ptMinute = get("minute")
+  const ptSecond = get("second")
+
+  // Reconstruct what UTC ms the formatter THINKS we have, then subtract
+  // from the real UTC ms to get the live PT→UTC offset (in minutes,
+  // positive for behind-UTC zones like PT).
+  const ptAsUtcMs = Date.UTC(ptYear, ptMonth - 1, ptDay, ptHour, ptMinute, ptSecond)
+  const offsetMinutes = Math.round((now.getTime() - ptAsUtcMs) / 60_000)
+
+  const todayStart = new Date(Date.UTC(ptYear, ptMonth - 1, ptDay) + offsetMinutes * 60_000)
+  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1)
+  return { todayStart, todayEnd }
+}
+
 export interface ProductHuntTopic {
   name: string
 }
@@ -67,21 +107,15 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
     throw new Error("PRODUCTHUNT_API_KEY is not configured")
   }
 
-  // 获取 ProductHunt 的"今日"（基于太平洋时间 PST/PDT，UTC-8/-7）
-  // ProductHunt 的一天从太平洋时间 00:00 开始
-  // 正确做法：减去 8h 得到"太平洋日期"，再加回 8h 换算回 UTC
+  // 获取 ProductHunt 的"今日"（基于太平洋时间)。
+  // ProductHunt 的一天从太平洋时间 00:00 开始,实际帖子在 00:01 PT 上线。
+  //
+  // 之前用硬编码 8h (PST) 偏移忽略 DST,在 PDT (3–11 月) 期间窗口整体晚 1h,
+  // 正好把 00:01 PDT (= 07:01 UTC) 上线的帖子全部漏掉 → 2026-03-08 美国切 PDT
+  // 后每天 0 条。改用 ptDayBoundsUtc() 通过 Intl tzdata 计算真实 PT 日历日,
+  // DST 自动处理。
   const now = new Date()
-
-  const PT_OFFSET_MS = 8 * 60 * 60 * 1000 // PST = UTC-8 (忽略夏令时，误差 ≤1h，可接受)
-  // 将当前 UTC 时间偏移为太平洋时间，用 UTC 方法读取年月日
-  const pacificNow = new Date(now.getTime() - PT_OFFSET_MS)
-  const year = pacificNow.getUTCFullYear()
-  const month = pacificNow.getUTCMonth()
-  const day = pacificNow.getUTCDate()
-
-  // 太平洋时间 00:00 对应的 UTC 时间 = Date.UTC(y,m,d) + 8h
-  const todayStart = new Date(Date.UTC(year, month, day) + PT_OFFSET_MS)
-  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1)
+  const { todayStart, todayEnd } = ptDayBoundsUtc(now)
 
   const postedAfter = todayStart.toISOString()
   const postedBefore = todayEnd.toISOString()
