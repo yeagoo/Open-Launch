@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
   // rankings surface on detail pages without waiting for the
   // 6h revalidate window.
   if (written > 0) {
-    revalidateTag(PROJECT_RELATED_TAG)
+    revalidateTag(PROJECT_RELATED_TAG, "max")
   }
 
   // 5xx if every attempted subject errored (partial errors stay 200).

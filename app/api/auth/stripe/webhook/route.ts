@@ -24,7 +24,7 @@ import {
 // `stripe` npm SDK; the SDK's `LatestApiVersion` type tracks what
 // it knows about.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia",
+  apiVersion: "2026-04-22.dahlia",
 })
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -295,7 +295,7 @@ export async function POST(request: Request) {
         // A canceled Ultra vacates a sidebar slot — bust the cache
         // so the now-empty slot vanishes from the sidebar promptly
         // (same reason as the fulfilment path).
-        revalidateTag(ULTRA_SPONSORS_CACHE_TAG)
+        revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
       }
       return NextResponse.json({ success: true }, { status: 200 })
     } else if (event.type === "checkout.session.expired") {
@@ -450,7 +450,7 @@ async function handleDirectoryOrderCompleted(
   // visible on the sidebar at the next page request — without
   // waiting for the per-page `revalidate` window (≤1h).
   if (tier === "ultra") {
-    revalidateTag(ULTRA_SPONSORS_CACHE_TAG)
+    revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
   }
 
   // If this order was paid AT submit time (project still in
