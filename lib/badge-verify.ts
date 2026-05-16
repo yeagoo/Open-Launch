@@ -33,9 +33,9 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
 
   // Path 1: raw fetch. Most sites have no CF challenge so this is the
   // common case and finishes in <1s without spending a Tinyfish slot.
-  const rawHtml = await tryRawFetch(url)
-  if (rawHtml.kind === "ok") return containsBadgeLink(rawHtml.html)
-  if (rawHtml.kind === "deny") return false
+  const rawResult = await tryRawFetch(url)
+  if (rawResult.kind === "ok") return containsBadgeLink(rawResult.html)
+  if (rawResult.kind === "deny") return false
 
   // Path 2: Tinyfish fallback. Only reached when rawFetch returned a
   // challenge-shaped failure (403/429/503/network).
@@ -44,7 +44,7 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
     // Tinyfish reports `final_url` after JS+redirects; search both that
     // and the rendered markdown so anchor text like
     // `[Featured on aat.ee](https://www.aat.ee/?ref=badge)` matches.
-    const haystack = `${result.url ?? ""}\n${result.markdown ?? ""}`
+    const haystack = `${result.url}\n${result.markdown}`
     return containsBadgeLink(haystack)
   } catch {
     return false
@@ -96,7 +96,10 @@ async function tryRawFetch(url: URL): Promise<RawFetchOutcome> {
       break
     }
 
-    if (!finalResponse) return { kind: "challenge" } // exhausted redirects → try Tinyfish
+    // Exhausted the 5-hop redirect budget with no terminal 2xx/4xx/5xx —
+    // typically a misconfigured site or a redirect loop, not a CF
+    // challenge. Don't burn a Tinyfish slot on it.
+    if (!finalResponse) return { kind: "deny" }
 
     // 403 / 429 / 503 are the classic CF managed-challenge / rate-limit /
     // edge-block signatures. Any of those → defer to Tinyfish.
