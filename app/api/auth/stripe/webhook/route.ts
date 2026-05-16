@@ -298,6 +298,59 @@ export async function POST(request: Request) {
         revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
       }
       return NextResponse.json({ success: true }, { status: 200 })
+    } else if (event.type === "customer.subscription.updated") {
+      // Stripe fires `updated` for every state transition (trial → active,
+      // active → past_due → unpaid, plan changes, billing-anchor shifts).
+      // We only treat the "subscription has effectively died" terminal
+      // states as a cancel-equivalent for our Ultra directory order:
+      //
+      //   - `incomplete_expired`: initial charge failed and trial window
+      //                           lapsed; Stripe will never recover this.
+      //   - `unpaid`:             dunning gave up; Ultra no longer paying.
+      //   - `canceled`:           in case `subscription.deleted` was
+      //                           missed (Stripe sometimes only fires
+      //                           `updated` with status:'canceled').
+      //
+      // Healthy transitions (active, trialing, past_due-pending-retry,
+      // paused) are no-ops here — the order stays paid/fulfilled, and the
+      // sidebar slot keeps showing the sponsor until things resolve or
+      // die. If we kicked them out on past_due we'd punish customers
+      // mid-retry-window.
+      const sub = event.data.object as Stripe.Subscription
+      const DEAD_STATUSES: ReadonlyArray<Stripe.Subscription.Status> = [
+        "incomplete_expired",
+        "unpaid",
+        "canceled",
+      ]
+      if (!DEAD_STATUSES.includes(sub.status)) {
+        return NextResponse.json({ success: true, noop: true }, { status: 200 })
+      }
+      const subResult = await db
+        .update(directoryOrder)
+        .set({ status: "canceled", updatedAt: new Date() })
+        .where(
+          and(
+            eq(directoryOrder.stripeSubscriptionId, sub.id),
+            inArray(directoryOrder.status, ["paid", "fulfilled"]),
+          ),
+        )
+      if (!subResult.rowCount || subResult.rowCount === 0) {
+        console.log(
+          "ℹ️ subscription.updated dead-state for unknown sub:",
+          sub.id,
+          "status:",
+          sub.status,
+        )
+      } else {
+        console.log(
+          "✅ Subscription dead (status:",
+          sub.status,
+          "), marked order canceled:",
+          sub.id,
+        )
+        revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
+      }
+      return NextResponse.json({ success: true }, { status: 200 })
     } else if (event.type === "checkout.session.expired") {
       const session = event.data.object as Stripe.Checkout.Session
       const ref = session.client_reference_id
