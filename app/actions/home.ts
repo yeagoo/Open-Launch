@@ -14,7 +14,7 @@ import { endOfMonth, startOfMonth } from "date-fns"
 import { and, desc, eq, sql } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
-import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
 import { getCurrentUserId } from "@/lib/server-auth"
 
@@ -156,9 +156,9 @@ export async function getYesterdayProjects(
   limit: number = PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT,
 ) {
   const now = new Date()
-  const isBeforeLaunchTime = now.getUTCHours() < 8
+  const isBeforeLaunchTime = now.getUTCHours() < LAUNCH_SETTINGS.LAUNCH_HOUR_UTC
   const yesterdayStart = new Date(now)
-  yesterdayStart.setUTCHours(8, 0, 0, 0)
+  yesterdayStart.setUTCHours(LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0)
   if (isBeforeLaunchTime) {
     yesterdayStart.setDate(yesterdayStart.getDate() - 2)
   } else {
