@@ -27,6 +27,7 @@
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown",
+    "*.{ts,tsx,mjs,cjs,js,jsx}": "eslint --fix --max-warnings=999",
     "package.json": "sort-package-json"
   },
   "prettier": {
