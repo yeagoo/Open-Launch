@@ -2,16 +2,23 @@
  * Crawler entry point.
  *
  * Routes `crawlUrl` to one of two backends based on the CRAWLER env var:
- *   - "crawl4ai" (default) — self-hosted Crawl4AI service (legacy)
- *   - "tinyfish"            — hosted Tinyfish Fetch API, free tier, 25 URLs/min
+ *   - "tinyfish" (default) — hosted Tinyfish Fetch API, real-browser
+ *                            rendering, 25 URLs/min free tier. Passes
+ *                            Cloudflare managed challenges that raw
+ *                            HTTP clients now bounce off.
+ *   - "crawl4ai"            — self-hosted Crawl4AI service (legacy).
+ *                             Kept for ops escape hatch; will be
+ *                             removed once we're sure no one needs it.
  *
- * Default stays on crawl4ai during the rollout window so deployment is a
- * pure no-op until ops flips CRAWLER=tinyfish in Zeabur. After Tinyfish is
- * validated in prod we swap the default and delete the crawl4ai branch.
+ * Default flipped tinyfish-first after Cloudflare started challenging
+ * our Zeabur IP range — crawl4ai's self-hosted scraper started failing
+ * on the same protected targets (PH /r/, etc.). Tinyfish was validated
+ * end-to-end on PH /r/ (the hardest CF managed challenge we encounter)
+ * before the flip; everything else is easier.
  *
- * The cache layer (`getCachedOrCrawl` + `crawled_data` table) is unchanged
- * and works with either backend. Filename kept as `crawl4ai.ts` so the four
- * existing callers don't need touching during the rollout.
+ * The cache layer (`getCachedOrCrawl` + `crawled_data` table) is
+ * unchanged and works with either backend. Filename kept as
+ * `crawl4ai.ts` so existing callers don't need touching.
  */
 
 import { db } from "@/drizzle/db"
@@ -27,13 +34,14 @@ export { CrawlError, type CrawlOptions, type CrawlResult }
 type Backend = "tinyfish" | "crawl4ai"
 
 function activeBackend(): Backend {
-  const value = (process.env.CRAWLER ?? "crawl4ai").toLowerCase()
-  return value === "tinyfish" ? "tinyfish" : "crawl4ai"
+  // Default tinyfish — see file header for rationale.
+  const value = (process.env.CRAWLER ?? "tinyfish").toLowerCase()
+  return value === "crawl4ai" ? "crawl4ai" : "tinyfish"
 }
 
 export async function crawlUrl(url: string, options?: CrawlOptions): Promise<CrawlResult> {
-  if (activeBackend() === "crawl4ai") return crawl4aiCrawl(url, options)
-  return tinyfishCrawl(url, options)
+  if (activeBackend() === "tinyfish") return tinyfishCrawl(url, options)
+  return crawl4aiCrawl(url, options)
 }
 
 /**

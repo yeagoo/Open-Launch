@@ -1,3 +1,4 @@
+import { tinyfishCrawl } from "@/lib/tinyfish"
 import { isPrivateHostname } from "@/lib/utils"
 
 /**
@@ -7,6 +8,12 @@ import { isPrivateHostname } from "@/lib/utils"
  *
  * Returns true only on definitive confirmation. Network errors, redirects to
  * private hosts, non-2xx responses, etc. all yield false (deny by default).
+ *
+ * Two-tier fetch: raw HTTP first (cheap, doesn't burn Tinyfish quota), and
+ * if the response is a CF/edge-style block (403/429/503) or a network
+ * failure we retry through Tinyfish — which renders in a real browser and
+ * threads the challenge. Without this, a user installing the badge on a
+ * Cloudflare-protected site loses Fast-Track silently.
  */
 export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<boolean> {
   let url: URL
@@ -19,9 +26,42 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
   if (!["http:", "https:"].includes(url.protocol)) return false
   if (isPrivateHostname(url.hostname)) return false
 
+  // Reuse the same content check on both branches: rendered text or raw
+  // HTML, either way the URL string should be present somewhere.
+  const containsBadgeLink = (text: string): boolean =>
+    /www\.aat\.ee/i.test(text) || /aat\.ee\/\?ref=badge/i.test(text)
+
+  // Path 1: raw fetch. Most sites have no CF challenge so this is the
+  // common case and finishes in <1s without spending a Tinyfish slot.
+  const rawHtml = await tryRawFetch(url)
+  if (rawHtml.kind === "ok") return containsBadgeLink(rawHtml.html)
+  if (rawHtml.kind === "deny") return false
+
+  // Path 2: Tinyfish fallback. Only reached when rawFetch returned a
+  // challenge-shaped failure (403/429/503/network).
+  try {
+    const result = await tinyfishCrawl(websiteUrl, { timeout: 30_000 })
+    // Tinyfish reports `final_url` after JS+redirects; search both that
+    // and the rendered markdown so anchor text like
+    // `[Featured on aat.ee](https://www.aat.ee/?ref=badge)` matches.
+    const haystack = `${result.url ?? ""}\n${result.markdown ?? ""}`
+    return containsBadgeLink(haystack)
+  } catch {
+    return false
+  }
+}
+
+type RawFetchOutcome =
+  | { kind: "ok"; html: string }
+  // Definitively no badge — don't bother spending a Tinyfish call.
+  // Covers things like 404, hard 4xx, redirect to a private host.
+  | { kind: "deny" }
+  // Looks like a bot challenge or transient outage — Tinyfish may succeed.
+  | { kind: "challenge" }
+
+async function tryRawFetch(url: URL): Promise<RawFetchOutcome> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000)
-
   try {
     let currentUrl = url
     let finalResponse: Response | null = null
@@ -46,7 +86,7 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
           !["http:", "https:"].includes(nextUrl.protocol) ||
           isPrivateHostname(nextUrl.hostname)
         ) {
-          return false
+          return { kind: "deny" }
         }
         currentUrl = nextUrl
         continue
@@ -56,12 +96,17 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
       break
     }
 
-    if (!finalResponse || !finalResponse.ok) return false
+    if (!finalResponse) return { kind: "challenge" } // exhausted redirects → try Tinyfish
+
+    // 403 / 429 / 503 are the classic CF managed-challenge / rate-limit /
+    // edge-block signatures. Any of those → defer to Tinyfish.
+    if ([403, 429, 503].includes(finalResponse.status)) return { kind: "challenge" }
+    if (!finalResponse.ok) return { kind: "deny" }
 
     const html = await finalResponse.text()
-    return /www\.aat\.ee/i.test(html) || /aat\.ee\/\?ref=badge/i.test(html)
+    return { kind: "ok", html }
   } catch {
-    return false
+    return { kind: "challenge" }
   } finally {
     clearTimeout(timeoutId)
   }
