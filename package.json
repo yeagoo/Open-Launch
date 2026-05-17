@@ -5,7 +5,9 @@
   "scripts": {
     "build": "bun scripts/generate-avatar-pool.ts && next build",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "drizzle-kit migrate && bun scripts/apply-pending-sql.ts",
+    "db:migrate:bootstrap": "bun scripts/apply-pending-sql.ts --mark-all-applied",
+    "db:migrate:pending": "bun scripts/apply-pending-sql.ts --dry-run",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "dev": "next dev",
