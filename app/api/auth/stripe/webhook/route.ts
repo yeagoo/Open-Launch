@@ -64,6 +64,41 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
 }
 
 /**
+ * In-memory dedup so a webhook resend doesn't email admin twice for
+ * the same orphan. Lazy LRU semantics: cap entries, evict oldest on
+ * overflow. 1h TTL window — same orphan within the hour is treated as
+ * a duplicate (typical when admin resends a batch); outside the
+ * window the email re-fires (legitimate "this came back" signal).
+ *
+ * Refunds still always run — `stripe.refunds.create` is given an
+ * idempotency key on session.id, so Stripe handles dedup at its layer
+ * without our help. This map only suppresses the email noise.
+ *
+ * Lives in process memory: works for Zeabur's single-Node-process
+ * deployment. Multi-instance horizontal scaling would need a shared
+ * store (Redis) to remain effective; not relevant at current scale.
+ */
+const ORPHAN_DEDUP_TTL_MS = 60 * 60 * 1000 // 1h
+const ORPHAN_DEDUP_CAP = 200
+const orphanSessionSeen = new Map<string, number>()
+
+function shouldEmailOrphan(sessionId: string): boolean {
+  const now = Date.now()
+  const seen = orphanSessionSeen.get(sessionId)
+  if (seen !== undefined && now - seen < ORPHAN_DEDUP_TTL_MS) {
+    return false
+  }
+  orphanSessionSeen.set(sessionId, now)
+  if (orphanSessionSeen.size > ORPHAN_DEDUP_CAP) {
+    // Evict the oldest entry — `Map` iterates in insertion order, so
+    // `keys().next().value` is the oldest.
+    const oldest = orphanSessionSeen.keys().next().value
+    if (oldest !== undefined) orphanSessionSeen.delete(oldest)
+  }
+  return true
+}
+
+/**
  * Orphan payment handler: webhook got a paid checkout that doesn't
  * match any project or order in our DB. Two scenarios produce this:
  *   1. Customer hit a raw Stripe Payment Link without going through
@@ -122,18 +157,20 @@ async function handleOrphanPayment(
       if (!subId) {
         refundOutcome = "subscription mode but no subscription id on session — cannot act"
       } else {
-        // Cancel first — naturally idempotent, safe to retry.
-        await stripe.subscriptions.cancel(subId, { invoice_now: false, prorate: false })
-        refundOutcome = `subscription ${subId} canceled`
-
-        // First invoice's PaymentIntent is NOT on `session.payment_intent`
-        // in subscription mode (it's null). And dahlia (2026-04-22) API
-        // removed `invoice.payment_intent` direct field; the new path
-        // is `invoice.payments.data[0].payment.payment_intent`. Expand
-        // both to fetch in a single call.
-        const sub = await stripe.subscriptions.retrieve(subId, {
+        // Single call: cancel AND pull latest_invoice.payments in one
+        // round trip. Cancel is naturally idempotent (already-canceled
+        // returns as-is). First invoice's PaymentIntent isn't on
+        // `session.payment_intent` (null in sub mode); under the dahlia
+        // (2026-04-22) API `invoice.payment_intent` direct field is
+        // gone too — new path is `invoice.payments.data[0].payment
+        // .payment_intent`.
+        const sub = await stripe.subscriptions.cancel(subId, {
+          invoice_now: false,
+          prorate: false,
           expand: ["latest_invoice.payments"],
         })
+        refundOutcome = `subscription ${subId} canceled`
+
         const latestInvoice = sub.latest_invoice
         if (latestInvoice && typeof latestInvoice !== "string") {
           const firstPayment = latestInvoice.payments?.data[0]
@@ -141,6 +178,15 @@ async function handleOrphanPayment(
             const pi = firstPayment.payment.payment_intent
             paymentIntentId = typeof pi === "string" ? pi : (pi?.id ?? null)
           }
+        }
+        if (!paymentIntentId) {
+          // Subscription canceled successfully but we couldn't find a
+          // PaymentIntent on the first invoice. Make this explicit in
+          // the admin email — without this note, "subscription X
+          // canceled" reads like "fully handled" when in fact the
+          // first month's charge is still on the customer's card.
+          refundOutcome +=
+            " (no PaymentIntent on first invoice — MANUAL REFUND NEEDED for the initial charge)"
         }
       }
     } else {
@@ -171,9 +217,14 @@ async function handleOrphanPayment(
     console.error("⚠️ Orphan auto-refund failed:", err)
   }
 
-  // Always email admin even when refund succeeded — we want a paper
-  // trail of every orphan + which root cause (none-ref / project-gone /
-  // order-gone) hit production.
+  // Email admin — paper trail of every orphan + which root cause
+  // (none-ref / project-gone / order-gone) hit production. Suppress
+  // duplicate emails when the same session.id hits within the dedup
+  // window (typical when admin manually resends a webhook batch).
+  if (!shouldEmailOrphan(session.id)) {
+    console.log("ℹ️ Suppressed duplicate orphan alert email for session:", session.id)
+    return
+  }
   try {
     await sendAdminPaymentNotification({
       userEmail,
