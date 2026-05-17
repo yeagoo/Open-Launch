@@ -19,9 +19,15 @@
 //                                                          the named one as
 //                                                          applied; leave the
 //                                                          rest pending
+//   bun scripts/apply-pending-sql.ts --apply 0022_a.sql,0023_b.sql
+//                                                          apply only the
+//                                                          named files (and
+//                                                          record them); skip
+//                                                          everything else
 //
-// The two --mark-* modes are bootstraps for DBs whose hand migrations
-// were run manually before this runner existed.
+// The --mark-* modes are bootstraps for DBs whose hand migrations were
+// run manually before this runner existed. --apply is for surgical
+// one-off application when other pending files shouldn't run yet.
 import { createHash } from "node:crypto"
 import { readdir, readFile } from "node:fs/promises"
 import { join } from "node:path"
@@ -41,6 +47,11 @@ const markThroughIdx = argv.indexOf("--mark-applied-through")
 const MARK_THROUGH = markThroughIdx >= 0 ? argv[markThroughIdx + 1] : undefined
 if (markThroughIdx >= 0 && !MARK_THROUGH) {
   throw new Error("--mark-applied-through requires a filename argument")
+}
+const applyIdx = argv.indexOf("--apply")
+const APPLY_ONLY = applyIdx >= 0 ? argv[applyIdx + 1]?.split(",").filter(Boolean) : undefined
+if (applyIdx >= 0 && (!APPLY_ONLY || APPLY_ONLY.length === 0)) {
+  throw new Error("--apply requires a comma-separated list of filenames")
 }
 
 async function main() {
@@ -119,7 +130,20 @@ async function main() {
       return
     }
 
-    const pending = candidates.filter((f) => !tracked.has(f))
+    let pending: string[]
+    if (APPLY_ONLY) {
+      for (const f of APPLY_ONLY) {
+        if (!candidates.includes(f)) {
+          throw new Error(`--apply: ${f} not found among hand-written migrations`)
+        }
+        if (tracked.has(f)) {
+          console.log(`(skipping ${f} — already recorded as applied)`)
+        }
+      }
+      pending = APPLY_ONLY.filter((f) => !tracked.has(f))
+    } else {
+      pending = candidates.filter((f) => !tracked.has(f))
+    }
 
     // Warn if a tracked file's on-disk content has drifted from what we
     // recorded — usually means someone hand-edited an applied migration.
