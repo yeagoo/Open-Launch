@@ -80,9 +80,22 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
  * and they're forced back through the proper submit flow if they
  * actually want a listing. Then alert admin so we have a paper trail.
  *
- * For Ultra (subscription) orphans we also cancel the subscription
- * so it doesn't keep billing — refunding the first invoice isn't
- * enough.
+ * For subscription (Ultra) orphans we also cancel the subscription so
+ * it doesn't keep billing. The first invoice's `payment_intent` is on
+ * `invoice.payment_intent`, not `session.payment_intent` (which is
+ * null in subscription mode), so we fetch the invoice via the
+ * subscription's `latest_invoice` link.
+ *
+ * Cost note: Stripe keeps processing fees on refunds (~$0.30 fixed +
+ * 2.9% variable in most regions). We accept that as the cost of
+ * preventing customer-stuck-with-no-service.
+ *
+ * Idempotency: webhook retries can call this handler multiple times
+ * for the same session. `stripe.refunds.create` is given a stable
+ * idempotency key keyed off `session.id` so duplicate calls return
+ * the existing refund object instead of double-refunding.
+ * `subscriptions.cancel` is naturally idempotent (already-canceled
+ * subs return as-is).
  *
  * Best-effort: any sub-step failure logs and falls through. The
  * webhook still returns 200 so Stripe doesn't retry forever.
@@ -98,41 +111,60 @@ async function handleOrphanPayment(
 
   let refundOutcome: string
   try {
+    let paymentIntentId: string | null = null
+
     if (session.mode === "subscription") {
-      // Subscription orphan: cancel the subscription (which voids future
-      // invoices) AND refund the initial invoice's payment_intent.
+      // Subscription orphan: cancel the sub + refund the FIRST invoice.
       const subId =
         typeof session.subscription === "string"
           ? session.subscription
           : (session.subscription?.id ?? null)
-      if (subId) {
+      if (!subId) {
+        refundOutcome = "subscription mode but no subscription id on session — cannot act"
+      } else {
+        // Cancel first — naturally idempotent, safe to retry.
         await stripe.subscriptions.cancel(subId, { invoice_now: false, prorate: false })
         refundOutcome = `subscription ${subId} canceled`
-      } else {
-        refundOutcome = "subscription mode but no subscription id on session"
-      }
-      // The first invoice's payment intent may not be exposed on the
-      // session object; fetch the latest invoice and refund there.
-      const piId =
-        typeof session.payment_intent === "string"
-          ? session.payment_intent
-          : (session.payment_intent?.id ?? null)
-      if (piId) {
-        const refund = await stripe.refunds.create({ payment_intent: piId })
-        refundOutcome += ` + refund ${refund.id} for $${amount} ${currency.toUpperCase()}`
+
+        // First invoice's PaymentIntent is NOT on `session.payment_intent`
+        // in subscription mode (it's null). And dahlia (2026-04-22) API
+        // removed `invoice.payment_intent` direct field; the new path
+        // is `invoice.payments.data[0].payment.payment_intent`. Expand
+        // both to fetch in a single call.
+        const sub = await stripe.subscriptions.retrieve(subId, {
+          expand: ["latest_invoice.payments"],
+        })
+        const latestInvoice = sub.latest_invoice
+        if (latestInvoice && typeof latestInvoice !== "string") {
+          const firstPayment = latestInvoice.payments?.data[0]
+          if (firstPayment?.payment?.type === "payment_intent") {
+            const pi = firstPayment.payment.payment_intent
+            paymentIntentId = typeof pi === "string" ? pi : (pi?.id ?? null)
+          }
+        }
       }
     } else {
-      // One-shot payment (Basic/Plus/Pro): direct refund.
-      const piId =
+      // One-shot payment (Basic/Plus/Pro): payment_intent is right on the session.
+      paymentIntentId =
         typeof session.payment_intent === "string"
           ? session.payment_intent
           : (session.payment_intent?.id ?? null)
-      if (!piId) {
-        refundOutcome = "no payment_intent on session — cannot refund automatically"
-      } else {
-        const refund = await stripe.refunds.create({ payment_intent: piId })
-        refundOutcome = `refund ${refund.id} for $${amount} ${currency.toUpperCase()}`
-      }
+      refundOutcome = ""
+    }
+
+    if (paymentIntentId) {
+      // Idempotency key off session.id — webhook retries land on the
+      // same key, Stripe returns the existing refund instead of a
+      // second one. Format is opaque to Stripe; just needs to be
+      // stable per logical operation (max 255 chars).
+      const refund = await stripe.refunds.create(
+        { payment_intent: paymentIntentId },
+        { idempotencyKey: `orphan-refund-${session.id}` },
+      )
+      const refundLabel = `refund ${refund.id} for $${amount} ${currency.toUpperCase()}`
+      refundOutcome = refundOutcome ? `${refundOutcome} + ${refundLabel}` : refundLabel
+    } else if (!refundOutcome) {
+      refundOutcome = "no payment_intent resolvable — cannot refund automatically"
     }
   } catch (err) {
     refundOutcome = `AUTO-REFUND FAILED: ${err instanceof Error ? err.message : String(err)} — manual refund required`
