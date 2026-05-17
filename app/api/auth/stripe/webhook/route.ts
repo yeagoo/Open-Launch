@@ -64,33 +64,95 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
 }
 
 /**
- * Stripe webhook is allowed to silently 200 on missing project / order
- * (so Stripe doesn't retry forever), but we still need a human to look
- * at the payment — otherwise customers paid for nothing and we never
- * notice. Reuses the admin payment email template with an ORPHAN tag.
+ * Orphan payment handler: webhook got a paid checkout that doesn't
+ * match any project or order in our DB. Two scenarios produce this:
+ *   1. Customer hit a raw Stripe Payment Link without going through
+ *      `/projects/submit` → `createDirectoryOrder` → so no
+ *      `client_reference_id=dir_<uuid>` was set.
+ *   2. The matching project/order got deleted between Stripe accepting
+ *      the payment and the webhook landing (cascade-delete from a
+ *      `payment_pending` re-submit, already mitigated in
+ *      `submitProject`).
  *
- * Best-effort: a send failure just logs and falls through, so the
- * webhook still returns 200.
+ * Either way the customer paid for nothing renderable in our system.
+ * Hard fix: **auto-refund** so the money never sits in limbo, the
+ * customer sees a "refunded" notification from Stripe within seconds,
+ * and they're forced back through the proper submit flow if they
+ * actually want a listing. Then alert admin so we have a paper trail.
+ *
+ * For Ultra (subscription) orphans we also cancel the subscription
+ * so it doesn't keep billing — refunding the first invoice isn't
+ * enough.
+ *
+ * Best-effort: any sub-step failure logs and falls through. The
+ * webhook still returns 200 so Stripe doesn't retry forever.
  */
-async function alertOrphanPayment(
+async function handleOrphanPayment(
   session: Stripe.Checkout.Session,
   reason: string,
   ref: string | null,
 ) {
+  const userEmail = session.customer_details?.email ?? "unknown"
+  const amount = (session.amount_total ?? 0) / 100
+  const currency = session.currency ?? "usd"
+
+  let refundOutcome: string
   try {
-    const userEmail = session.customer_details?.email ?? "unknown"
-    const amount = (session.amount_total ?? 0) / 100
-    const currency = session.currency ?? "usd"
+    if (session.mode === "subscription") {
+      // Subscription orphan: cancel the subscription (which voids future
+      // invoices) AND refund the initial invoice's payment_intent.
+      const subId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : (session.subscription?.id ?? null)
+      if (subId) {
+        await stripe.subscriptions.cancel(subId, { invoice_now: false, prorate: false })
+        refundOutcome = `subscription ${subId} canceled`
+      } else {
+        refundOutcome = "subscription mode but no subscription id on session"
+      }
+      // The first invoice's payment intent may not be exposed on the
+      // session object; fetch the latest invoice and refund there.
+      const piId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null)
+      if (piId) {
+        const refund = await stripe.refunds.create({ payment_intent: piId })
+        refundOutcome += ` + refund ${refund.id} for $${amount} ${currency.toUpperCase()}`
+      }
+    } else {
+      // One-shot payment (Basic/Plus/Pro): direct refund.
+      const piId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null)
+      if (!piId) {
+        refundOutcome = "no payment_intent on session — cannot refund automatically"
+      } else {
+        const refund = await stripe.refunds.create({ payment_intent: piId })
+        refundOutcome = `refund ${refund.id} for $${amount} ${currency.toUpperCase()}`
+      }
+    }
+  } catch (err) {
+    refundOutcome = `AUTO-REFUND FAILED: ${err instanceof Error ? err.message : String(err)} — manual refund required`
+    console.error("⚠️ Orphan auto-refund failed:", err)
+  }
+
+  // Always email admin even when refund succeeded — we want a paper
+  // trail of every orphan + which root cause (none-ref / project-gone /
+  // order-gone) hit production.
+  try {
     await sendAdminPaymentNotification({
       userEmail,
       amount,
       currency,
-      projectName: reason,
+      projectName: `${reason} — ${refundOutcome}`,
       websiteUrl: `Stripe session: ${session.id} | client_reference_id: ${ref ?? "(none)"}`,
       orphan: true,
     })
   } catch (err) {
-    console.error("⚠️ Failed to send orphan-payment alert:", err)
+    console.error("⚠️ Failed to send orphan-payment alert email:", err)
   }
 }
 
@@ -142,7 +204,7 @@ export async function POST(request: Request) {
       if (!projectId) {
         console.error("⚠️ No project ID found in session metadata, session_id:", session.id)
         // 返回 200 避免 Stripe 重试，但发管理员告警
-        await alertOrphanPayment(session, "no client_reference_id", null)
+        await handleOrphanPayment(session, "no client_reference_id", null)
         return NextResponse.json({ received: true, warning: "No project ID" }, { status: 200 })
       }
 
@@ -166,7 +228,7 @@ export async function POST(request: Request) {
         if (!projectData) {
           console.error("⚠️ Project not found:", projectId)
           // 返回 200 避免 Stripe 无限重试,同时发管理员告警
-          await alertOrphanPayment(session, `project ${projectId} not found`, projectId)
+          await handleOrphanPayment(session, `project ${projectId} not found`, projectId)
           return NextResponse.json(
             { received: true, warning: "Project not found" },
             { status: 200 },
@@ -413,7 +475,7 @@ async function handleDirectoryOrderCompleted(
     // Orphan — most likely the project (and its directory_order via
     // CASCADE) was deleted between createDirectoryOrder + the buyer
     // paying. Send admin alert so this $ doesn't fall into a hole.
-    await alertOrphanPayment(session, `directory_order ${orderId} not found (deleted?)`, ref)
+    await handleOrphanPayment(session, `directory_order ${orderId} not found (deleted?)`, ref)
     return NextResponse.json(
       { received: true, warning: "Directory order not found" },
       { status: 200 },
@@ -461,7 +523,7 @@ async function handleDirectoryOrderCompleted(
     const STALE_STATUSES: ReadonlyArray<string> = ["canceled", "refunded", "failed"]
     if (STALE_STATUSES.includes(order.status)) {
       console.error("⚠️ Paid webhook hit non-pending order:", orderId, "status was:", order.status)
-      await alertOrphanPayment(
+      await handleOrphanPayment(
         session,
         `directory_order ${orderId} was '${order.status}' when paid webhook arrived`,
         ref,
