@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { directoryOrder, project } from "@/drizzle/db/schema"
+import { directoryOrder, project, webhookHealthCheck } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 import Stripe from "stripe"
 
@@ -160,6 +160,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Persist a snapshot of every run (healthy or degraded) so the
+    // /admin/webhook-health page can render history without re-running
+    // the cron.
+    const previewSessionIds = unmatched.slice(0, 5).map((u) => u.sessionId)
+    await db.insert(webhookHealthCheck).values({
+      status: unmatched.length === 0 ? "healthy" : "degraded",
+      windowHours: LOOKBACK_HOURS,
+      totalEvents: events.data.length,
+      directoryEvents: totalDirectoryEvents,
+      matched,
+      unmatched: unmatched.length,
+      skippedTooRecent,
+      previewSessionIds: previewSessionIds.length > 0 ? previewSessionIds : null,
+    })
+
     // No unmatched → healthy, no email noise.
     if (unmatched.length === 0) {
       return NextResponse.json({
@@ -216,6 +231,18 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     console.error("❌ webhook-health cron failed:", message)
+    // Persist the error too so admin sees it in the dashboard. Best
+    // effort — if THIS write also fails, fall through to the original
+    // 500 return rather than masking the original error.
+    try {
+      await db.insert(webhookHealthCheck).values({
+        status: "error",
+        windowHours: LOOKBACK_HOURS,
+        errorMessage: message,
+      })
+    } catch (persistErr) {
+      console.error("⚠️ webhook-health: also failed to persist error row:", persistErr)
+    }
     return NextResponse.json({ error: "webhook-health failed", details: message }, { status: 500 })
   }
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { format, parseISO } from "date-fns"
 import {
+  Activity,
   Award,
   Ban,
   Calendar,
@@ -296,6 +297,15 @@ export default function AdminDashboard() {
           >
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Flagged Tags</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push("/admin/webhook-health")}
+            className="h-8 gap-2"
+          >
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhook Health</span>
           </Button>
           <Button size="sm" variant="outline" onClick={fetchData} className="h-8 gap-2">
             <RefreshCw className="h-4 w-4" />

@@ -650,6 +650,32 @@ export const cronRunLog = pgTable(
   },
 )
 
+// One row per `/api/cron/webhook-health` run — richer than cron_run_log
+// (which only has status_code) so admin can see matched/unmatched
+// counts + sample session ids without re-running the cron. See
+// drizzle/migrations/0024_webhook_health_check.sql.
+export const webhookHealthCheck = pgTable(
+  "webhook_health_check",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ranAt: timestamp("ran_at").notNull().defaultNow(),
+    status: text("status").notNull(), // 'healthy' | 'degraded' | 'error'
+    windowHours: integer("window_hours").notNull(),
+    totalEvents: integer("total_events").notNull().default(0),
+    directoryEvents: integer("directory_events").notNull().default(0),
+    matched: integer("matched").notNull().default(0),
+    unmatched: integer("unmatched").notNull().default(0),
+    skippedTooRecent: integer("skipped_too_recent").notNull().default(0),
+    previewSessionIds: text("preview_session_ids").array(),
+    errorMessage: text("error_message"),
+  },
+  (table) => {
+    return {
+      ranAtIdx: index("webhook_health_check_ran_at_idx").on(table.ranAt),
+    }
+  },
+)
+
 // ─── AI usage log ────────────────────────────────────────────────────────────
 // One row per successful DeepSeek call so the admin dashboard can show
 // token spend over time, broken down by which library function made the call.
