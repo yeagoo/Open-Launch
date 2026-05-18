@@ -14,8 +14,8 @@
     "lint": "eslint .",
     "prepare": "npx simple-git-hooks",
     "start": "next start",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "test:watch": "node ./node_modules/vitest/vitest.mjs",
     "update-launches": "bash ./scripts/update-launches.sh"
   },
   "simple-git-hooks": {
