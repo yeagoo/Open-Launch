@@ -41,11 +41,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Rate limit: 20 uploads per hour per user
+    // Rate limit: 20 uploads per hour per user. fail-closed so a Redis
+    // outage doesn't let unlimited R2 uploads through.
     const { success: rateLimitOk, reset } = await checkRateLimit(
       `upload:${user.id}`,
       20,
       60 * 60 * 1000,
+      { onRedisError: "fail-closed" },
     )
     if (!rateLimitOk) {
       return NextResponse.json(

@@ -5,6 +5,8 @@
 
 import sharp from "sharp"
 
+import { safeFetch } from "@/lib/safe-fetch"
+
 import { uploadFileToR2 } from "./r2-client"
 
 interface DownloadImageResult {
@@ -38,12 +40,13 @@ export async function downloadAndUploadImage(
 
     console.log(`📥 Downloading image from: ${imageUrl}`)
 
-    // 下载图片
-    const response = await fetch(imageUrl, {
+    // 下载图片 — safeFetch validates each hop's hostname + resolved IP
+    // so a malicious URL can't redirect us into the internal network.
+    const response = await safeFetch(imageUrl, {
       headers: {
         "User-Agent": "aat.ee/1.0",
       },
-      signal: AbortSignal.timeout(10000), // 10 秒超时
+      timeoutMs: 10000,
     })
 
     if (!response.ok) {

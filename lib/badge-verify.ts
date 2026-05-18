@@ -1,3 +1,4 @@
+import { safeFetch, SafeFetchError } from "@/lib/safe-fetch"
 import { tinyfishCrawl } from "@/lib/tinyfish"
 import { isPrivateHostname } from "@/lib/utils"
 
@@ -60,57 +61,36 @@ type RawFetchOutcome =
   | { kind: "challenge" }
 
 async function tryRawFetch(url: URL): Promise<RawFetchOutcome> {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  let response: Response
   try {
-    let currentUrl = url
-    let finalResponse: Response | null = null
-
-    for (let hop = 0; hop <= 5; hop++) {
-      const r = await fetch(currentUrl.toString(), {
-        signal: controller.signal,
-        headers: { "User-Agent": "aat.ee Badge Verifier/1.0" },
-        redirect: "manual",
-      })
-
-      if (r.status >= 300 && r.status < 400) {
-        const location = r.headers.get("location")
-        if (!location) break
-        let nextUrl: URL
-        try {
-          nextUrl = new URL(location, currentUrl.toString())
-        } catch {
-          break
-        }
-        if (
-          !["http:", "https:"].includes(nextUrl.protocol) ||
-          isPrivateHostname(nextUrl.hostname)
-        ) {
-          return { kind: "deny" }
-        }
-        currentUrl = nextUrl
-        continue
+    response = await safeFetch(url, {
+      headers: { "User-Agent": "aat.ee Badge Verifier/1.0" },
+      timeoutMs: 10000,
+    })
+  } catch (err) {
+    // SSRF-shaped rejections (private host, bad protocol, too many
+    // redirects) are definitive denials — Tinyfish can't help.
+    if (err instanceof SafeFetchError) {
+      if (
+        err.code === "private_host" ||
+        err.code === "private_resolved_ip" ||
+        err.code === "protocol" ||
+        err.code === "invalid_redirect" ||
+        err.code === "too_many_redirects"
+      ) {
+        return { kind: "deny" }
       }
-
-      finalResponse = r
-      break
     }
-
-    // Exhausted the 5-hop redirect budget with no terminal 2xx/4xx/5xx —
-    // typically a misconfigured site or a redirect loop, not a CF
-    // challenge. Don't burn a Tinyfish slot on it.
-    if (!finalResponse) return { kind: "deny" }
-
-    // 403 / 429 / 503 are the classic CF managed-challenge / rate-limit /
-    // edge-block signatures. Any of those → defer to Tinyfish.
-    if ([403, 429, 503].includes(finalResponse.status)) return { kind: "challenge" }
-    if (!finalResponse.ok) return { kind: "deny" }
-
-    const html = await finalResponse.text()
-    return { kind: "ok", html }
-  } catch {
+    // Network/timeout/DNS-resolution failures look like a CF challenge
+    // shape — let Tinyfish try with its own browser+DNS path.
     return { kind: "challenge" }
-  } finally {
-    clearTimeout(timeoutId)
   }
+
+  // 403 / 429 / 503 are the classic CF managed-challenge / rate-limit /
+  // edge-block signatures. Any of those → defer to Tinyfish.
+  if ([403, 429, 503].includes(response.status)) return { kind: "challenge" }
+  if (!response.ok) return { kind: "deny" }
+
+  const html = await response.text()
+  return { kind: "ok", html }
 }

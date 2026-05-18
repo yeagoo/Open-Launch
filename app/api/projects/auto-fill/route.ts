@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { safeFetch } from "@/lib/safe-fetch"
 import { isPrivateHostname } from "@/lib/utils"
 import { getAllCategories } from "@/app/actions/projects"
 
@@ -22,11 +23,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Rate limit: 5 requests per minute per user
+    // Rate limit: 5 requests per minute per user. fail-closed so a
+    // Redis outage doesn't let unlimited Crawl4AI + DeepSeek calls
+    // through (both are paid externals).
     const { success: rateLimitOk } = await checkRateLimit(
       `auto-fill:${session.user.id}`,
       5,
       60 * 1000,
+      { onRedisError: "fail-closed" },
     )
     if (!rateLimitOk) {
       return NextResponse.json(
@@ -151,14 +155,21 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
       return null
     }
 
-    // Only allow HTTP/HTTPS and block private addresses to prevent SSRF
+    // Only allow HTTP/HTTPS and block private addresses to prevent SSRF.
+    // safeFetch re-checks each redirect hop and DNS-resolves to catch
+    // public hostnames that resolve to internal IPs.
     if (!["http:", "https:"].includes(resolvedUrl.protocol)) return null
     if (isPrivateHostname(resolvedUrl.hostname)) return null
 
-    const response = await fetch(resolvedUrl.toString(), {
-      signal: AbortSignal.timeout(10000),
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenLaunch/1.0)" },
-    })
+    let response: Response
+    try {
+      response = await safeFetch(resolvedUrl.toString(), {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenLaunch/1.0)" },
+        timeoutMs: 10000,
+      })
+    } catch {
+      return null
+    }
 
     if (!response.ok) return null
 

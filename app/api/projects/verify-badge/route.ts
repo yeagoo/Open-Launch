@@ -18,7 +18,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    const rateLimitResult = await checkRateLimit(`badge-verify:${session.user.id}`, 10, 60 * 1000)
+    // fail-closed: badge verify performs an external fetch on every
+    // call; without Redis we don't want unlimited outbound traffic.
+    const rateLimitResult = await checkRateLimit(`badge-verify:${session.user.id}`, 10, 60 * 1000, {
+      onRedisError: "fail-closed",
+    })
     if (!rateLimitResult.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
