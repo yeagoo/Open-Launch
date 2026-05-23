@@ -7,6 +7,7 @@ import { headers } from "next/headers"
 import { db } from "@/drizzle/db"
 import {
   category,
+  fumaComments,
   launchStatus,
   project,
   projectToCategory,
@@ -78,14 +79,22 @@ export const getProjectBySlug = cache(async (slug: string) => {
     .from(upvote)
     .where(eq(upvote.projectId, projectData.id))
 
-  // Ne plus récupérer les commentaires ici car ils seront gérés par Fuma Comment
+  // Get comment count — fumaComments.page is the project id (see
+  // fuma-comment integration in lib/comment.config.ts). Used by the
+  // structured-data interactionStatistic on the detail page.
+  const [commentCount] = await db
+    .select({
+      count: sql`count(*)`,
+    })
+    .from(fumaComments)
+    .where(sql`${fumaComments.page}::text = ${projectData.id}`)
 
   return {
     ...projectData,
     categories,
     upvoteCount: Number(upvoteCount?.count || 0),
+    commentCount: Number(commentCount?.count || 0),
     creator,
-    // Ne plus inclure les commentaires dans l'objet retourné
   }
 })
 

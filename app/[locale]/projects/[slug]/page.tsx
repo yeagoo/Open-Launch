@@ -178,6 +178,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         platforms={projectData.platforms || []}
         pricing={projectData.pricing}
         upvoteCount={projectData.upvoteCount}
+        commentCount={projectData.commentCount}
         scheduledLaunchDate={projectData.scheduledLaunchDate}
       />
 

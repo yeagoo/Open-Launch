@@ -52,6 +52,7 @@ interface ProductSchemaProps {
   platforms?: string[]
   pricing: string
   upvoteCount: number
+  commentCount: number
   scheduledLaunchDate?: Date | null
 }
 
@@ -63,8 +64,29 @@ export function ProductSchema({
   platforms,
   pricing,
   upvoteCount,
+  commentCount,
   scheduledLaunchDate,
 }: ProductSchemaProps) {
+  // We track upvotes + comments, not 1–5 star reviews, so emitting an
+  // AggregateRating would be fabricated data — Google flags that and
+  // strips rich-result eligibility. interactionStatistic is the honest
+  // way to report engagement (same field YouTube uses for likes/views).
+  const interactionStatistic: Array<Record<string, unknown>> = []
+  if (upvoteCount > 0) {
+    interactionStatistic.push({
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/LikeAction",
+      userInteractionCount: upvoteCount,
+    })
+  }
+  if (commentCount > 0) {
+    interactionStatistic.push({
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/CommentAction",
+      userInteractionCount: commentCount,
+    })
+  }
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -79,11 +101,7 @@ export function ProductSchema({
       price: pricing === "FREE" ? "0" : "varies",
       priceCurrency: "USD",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.5",
-      reviewCount: upvoteCount,
-    },
+    ...(interactionStatistic.length > 0 && { interactionStatistic }),
     author: {
       "@type": "Organization",
       name: "aat.ee",
