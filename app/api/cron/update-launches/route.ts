@@ -3,28 +3,25 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { crawledData, launchStatus, project, upvote } from "@/drizzle/db/schema"
-import { endOfDay, startOfDay, subDays, subHours } from "date-fns"
+import { subHours } from "date-fns"
 import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { getCurrentLaunchWindow, getLaunchWindowForDate } from "@/lib/launch-window"
 
 export async function GET(request: NextRequest) {
   try {
     const authError = verifyCronAuth(request)
     if (authError) return authError
 
-    // Date actuelle en UTC
     const now = new Date()
-    const today = startOfDay(now)
-    const yesterday = subDays(today, 1)
+    const { start: currentWindowStart, end: currentWindowEnd } = getCurrentLaunchWindow(now)
 
     // Date limite pour les paiements abandonnés (24 heures)
     const paymentDeadline = subHours(now, 24)
 
-    // Déclarer rankGroups ici pour qu'il soit accessible plus tard
-    let rankGroups: Array<Array<{ projectId: string; projectName: string; upvoteCount: number }>> =
-      []
+    let totalRanked = 0
 
     // 1. Update SCHEDULED -> ONGOING
     const scheduledToOngoing = await db
@@ -36,13 +33,15 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(project.launchStatus, launchStatus.SCHEDULED),
-          gte(project.scheduledLaunchDate, today),
-          lt(project.scheduledLaunchDate, endOfDay(today)),
+          gte(project.scheduledLaunchDate, currentWindowStart),
+          lt(project.scheduledLaunchDate, currentWindowEnd),
         ),
       )
       .returning({ id: project.id, name: project.name })
 
-    // 2. Update ONGOING -> LAUNCHED
+    // 2. Update every expired ONGOING -> LAUNCHED. This intentionally catches
+    // older stuck rows, not just yesterday, so a missed cron tick cannot keep
+    // old products on today's homepage or in the bot-vote pool forever.
     const ongoingToLaunched = await db
       .update(project)
       .set({
@@ -52,13 +51,16 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(project.launchStatus, launchStatus.ONGOING),
-          gte(project.scheduledLaunchDate, yesterday),
-          lt(project.scheduledLaunchDate, today),
+          lt(project.scheduledLaunchDate, currentWindowStart),
         ),
       )
-      .returning({ id: project.id, name: project.name })
+      .returning({
+        id: project.id,
+        name: project.name,
+        scheduledLaunchDate: project.scheduledLaunchDate,
+      })
 
-    // 3. Calculer les 3 projets les plus populaires
+    // 3. Calculate top projects for each launch window we just closed.
     const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
     console.log(
       `Projets passés à LAUNCHED: ${justLaunchedProjectIds.length}`,
@@ -66,88 +68,98 @@ export async function GET(request: NextRequest) {
     )
 
     if (justLaunchedProjectIds.length > 0) {
-      // Utiliser inArray pour la requête d'upvotes
-      const projectUpvotes = await db
-        .select({
-          projectId: upvote.projectId,
-          count: count(upvote.id),
-        })
-        .from(upvote)
-        .where(inArray(upvote.projectId, justLaunchedProjectIds))
-        .groupBy(upvote.projectId)
-        .orderBy(desc(count(upvote.id)))
-        .execute()
+      const launchedByWindow = new Map<string, typeof ongoingToLaunched>()
+      for (const proj of ongoingToLaunched) {
+        if (!proj.scheduledLaunchDate) continue
+        const windowKey = getLaunchWindowForDate(
+          new Date(proj.scheduledLaunchDate),
+        ).start.toISOString()
+        launchedByWindow.set(windowKey, [...(launchedByWindow.get(windowKey) ?? []), proj])
+      }
 
-      const projectsWithUpvotes = ongoingToLaunched
-        .map((proj) => {
-          const upvoteData = projectUpvotes.find((uv) => uv.projectId === proj.id)
-          return {
-            projectId: proj.id,
-            projectName: proj.name,
-            upvoteCount: upvoteData ? Number(upvoteData.count) : 0,
+      for (const [windowKey, launchedProjects] of launchedByWindow) {
+        const projectIds = launchedProjects.map((p) => p.id)
+        const projectUpvotes = await db
+          .select({
+            projectId: upvote.projectId,
+            count: count(upvote.id),
+          })
+          .from(upvote)
+          .where(inArray(upvote.projectId, projectIds))
+          .groupBy(upvote.projectId)
+          .orderBy(desc(count(upvote.id)))
+          .execute()
+
+        const projectsWithUpvotes = launchedProjects
+          .map((proj) => {
+            const upvoteData = projectUpvotes.find((uv) => uv.projectId === proj.id)
+            return {
+              projectId: proj.id,
+              projectName: proj.name,
+              upvoteCount: upvoteData ? Number(upvoteData.count) : 0,
+            }
+          })
+          .sort((a, b) => b.upvoteCount - a.upvoteCount)
+
+        console.log(`Projets avec des upvotes pour ${windowKey}:`, projectsWithUpvotes)
+
+        const rankGroups: Array<
+          Array<{ projectId: string; projectName: string; upvoteCount: number }>
+        > = []
+        let currentCount = -1
+        let currentGroup: Array<{
+          projectId: string
+          projectName: string
+          upvoteCount: number
+        }> = []
+
+        for (const projectData of projectsWithUpvotes) {
+          if (projectData.upvoteCount === 0) continue
+
+          if (projectData.upvoteCount !== currentCount) {
+            if (currentGroup.length > 0) {
+              rankGroups.push(currentGroup)
+            }
+            currentCount = projectData.upvoteCount
+            currentGroup = [projectData]
+          } else {
+            currentGroup.push(projectData)
           }
-        })
-        .sort((a, b) => b.upvoteCount - a.upvoteCount)
-
-      console.log("Projets avec des upvotes (triés):", projectsWithUpvotes)
-
-      // Réinitialiser rankGroups ici car il est déclaré à l'extérieur
-      rankGroups = []
-      let currentCount = -1
-      let currentGroup: Array<{
-        projectId: string
-        projectName: string
-        upvoteCount: number
-      }> = []
-
-      for (const projectData of projectsWithUpvotes) {
-        if (projectData.upvoteCount === 0) continue
-
-        if (projectData.upvoteCount !== currentCount) {
-          if (currentGroup.length > 0) {
-            rankGroups.push(currentGroup)
-          }
-          currentCount = projectData.upvoteCount
-          currentGroup = [projectData]
-        } else {
-          currentGroup.push(projectData)
         }
-      }
 
-      if (currentGroup.length > 0) {
-        rankGroups.push(currentGroup)
-      }
+        if (currentGroup.length > 0) {
+          rankGroups.push(currentGroup)
+        }
 
-      console.log(`Groupes de classement formés: ${rankGroups.length} groupes`)
+        console.log(`Groupes de classement formés pour ${windowKey}: ${rankGroups.length} groupes`)
 
-      let currentRank = 1
-      let projectsRanked = 0
-
-      for (const group of rankGroups) {
-        if (currentRank > 3) break
-
-        console.log(
-          `Groupe ${currentRank}: ${group.length} projets avec ${group[0].upvoteCount} upvotes chacun`,
-        )
-
-        for (const projectData of group) {
-          await db
-            .update(project)
-            .set({
-              dailyRanking: currentRank,
-              updatedAt: now,
-            })
-            .where(eq(project.id, projectData.projectId))
+        let currentRank = 1
+        for (const group of rankGroups) {
+          if (currentRank > 3) break
 
           console.log(
-            `Classé #${currentRank}: ${projectData.projectName} (${projectData.projectId}) avec ${projectData.upvoteCount} upvotes [ex-aequo: ${group.length > 1 ? "oui" : "non"}]`,
+            `Groupe ${currentRank}: ${group.length} projets avec ${group[0].upvoteCount} upvotes chacun`,
           )
 
-          projectsRanked++
+          for (const projectData of group) {
+            await db
+              .update(project)
+              .set({
+                dailyRanking: currentRank,
+                updatedAt: now,
+              })
+              .where(eq(project.id, projectData.projectId))
+
+            console.log(
+              `Classé #${currentRank}: ${projectData.projectName} (${projectData.projectId}) avec ${projectData.upvoteCount} upvotes [ex-aequo: ${group.length > 1 ? "oui" : "non"}]`,
+            )
+
+            totalRanked++
+          }
+          currentRank++
         }
-        currentRank++
       }
-      console.log(`Total de projets classés: ${projectsRanked}`)
+      console.log(`Total de projets classés: ${totalRanked}`)
     }
 
     // 4. Clean up abandoned PAYMENT_PENDING
@@ -161,24 +173,11 @@ export async function GET(request: NextRequest) {
       )
       .returning({ id: project.id, name: project.name })
 
-    // Ajouter les types explicites pour reduce
-    const totalRanked = rankGroups.reduce(
-      (
-        sum: number,
-        group: Array<{
-          projectId: string
-          projectName: string
-          upvoteCount: number
-        }>,
-      ) => sum + group.length,
-      0,
-    )
-
     console.log(`[${now.toISOString()}] Launch updates completed`)
     console.log(`- ${scheduledToOngoing.length} projects changed from SCHEDULED to ONGOING`)
     console.log(`- ${ongoingToLaunched.length} projects changed from ONGOING to LAUNCHED`)
     console.log(
-      `- Top ${rankGroups.length > 0 ? Math.min(3, totalRanked) : 0} calculated from ${justLaunchedProjectIds.length} projects launched yesterday`,
+      `- Top ${Math.min(3, totalRanked)} calculated from ${justLaunchedProjectIds.length} projects closed before the current window`,
     )
     console.log(`- ${abandonedPayments.length} abandoned payments deleted for projects`)
 
@@ -205,7 +204,7 @@ export async function GET(request: NextRequest) {
       details: {
         scheduledToOngoing: scheduledToOngoing.length,
         ongoingToLaunched: ongoingToLaunched.length,
-        topCalculated: rankGroups.length > 0 ? Math.min(3, totalRanked) : 0,
+        topCalculated: Math.min(3, totalRanked),
         totalLaunchedYesterday: justLaunchedProjectIds.length,
         abandonedPaymentsDeleted: abandonedPayments.length,
         expiredCacheDeleted: expiredCache.length,

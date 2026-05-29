@@ -19,6 +19,7 @@ import { getTranslations } from "next-intl/server"
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
+import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { sanitizeRichText } from "@/lib/sanitize"
 import { getCurrentUserId } from "@/lib/server-auth"
@@ -151,8 +152,12 @@ export async function toggleUpvote(projectId: string) {
   // this too — without it, a crafted request could vote on scheduled,
   // payment-pending, or already-launched projects, which would also bypass
   // the daily ranking logic that only counts active-window votes.
+  const { start: launchWindowStart, end: launchWindowEnd } = getCurrentLaunchWindow()
   const [proj] = await db
-    .select({ launchStatus: project.launchStatus })
+    .select({
+      launchStatus: project.launchStatus,
+      scheduledLaunchDate: project.scheduledLaunchDate,
+    })
     .from(project)
     .where(eq(project.id, projectId))
     .limit(1)
@@ -161,7 +166,12 @@ export async function toggleUpvote(projectId: string) {
     return { success: false, message: t("projectNotFound") }
   }
 
-  if (proj.launchStatus !== "ongoing") {
+  if (
+    proj.launchStatus !== "ongoing" ||
+    !proj.scheduledLaunchDate ||
+    proj.scheduledLaunchDate < launchWindowStart ||
+    proj.scheduledLaunchDate >= launchWindowEnd
+  ) {
     return { success: false, message: t("notOngoing") }
   }
 
@@ -219,12 +229,15 @@ export async function toggleUpvote(projectId: string) {
       .delete(upvote)
       .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
   } else {
-    await db.insert(upvote).values({
-      id: crypto.randomUUID(),
-      userId: session.user.id,
-      projectId,
-      createdAt: new Date(),
-    })
+    await db
+      .insert(upvote)
+      .values({
+        id: crypto.randomUUID(),
+        userId: session.user.id,
+        projectId,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing()
   }
 
   revalidatePath("/dashboard")

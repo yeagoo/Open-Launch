@@ -256,16 +256,23 @@ export const projectToCategory = pgTable(
 )
 
 // Interactions
-export const upvote = pgTable("upvote", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => project.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-})
+export const upvote = pgTable(
+  "upvote",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("upvote_user_project_unique_idx").on(table.userId, table.projectId),
+    index("upvote_project_id_idx").on(table.projectId),
+  ],
+)
 
 // Tables pour Fuma Comment
 export const fumaRoles = pgTable("fuma_roles", {

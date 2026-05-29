@@ -11,10 +11,11 @@ import {
   upvote,
 } from "@/drizzle/db/schema"
 import { endOfMonth, startOfMonth } from "date-fns"
-import { and, desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, gte, lt, sql } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
 import { getCurrentUserId } from "@/lib/server-auth"
 
@@ -45,13 +46,19 @@ const projectSummarySelect = {
 // public entry points below.
 
 const fetchTodayProjectsBase = unstable_cache(
-  async (limit: number) => {
+  async (limit: number, windowStartIso: string, windowEndIso: string) => {
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
       .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
       .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
-      .where(eq(projectTable.launchStatus, launchStatus.ONGOING))
+      .where(
+        and(
+          eq(projectTable.launchStatus, launchStatus.ONGOING),
+          gte(projectTable.scheduledLaunchDate, new Date(windowStartIso)),
+          lt(projectTable.scheduledLaunchDate, new Date(windowEndIso)),
+        ),
+      )
       .groupBy(projectTable.id)
       .orderBy(desc(sql`count(distinct ${upvote.id})`))
       .limit(limit)
@@ -60,9 +67,8 @@ const fetchTodayProjectsBase = unstable_cache(
   ["home-today-projects-v1"],
   // 10 minutes covers the "live counter" expectation — fresh
   // upvotes/comments lag by at most 10 min, acceptable for a
-  // launches feed. The 8 AM UTC `update-launches` cron explicitly
-  // busts HOME_PROJECTS_TAG so today/yesterday transitions go live
-  // instantly.
+  // launches feed. The `update-launches` cron explicitly busts
+  // HOME_PROJECTS_TAG so today/yesterday transitions go live instantly.
   { revalidate: 600, tags: [HOME_PROJECTS_TAG] },
 )
 
@@ -144,7 +150,11 @@ const fetchWinnersByDateBase = unstable_cache(
 // ─── Public entry points ────────────────────────────────────────────────────
 
 export async function getTodayProjects(limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT) {
-  const [base, userId] = await Promise.all([fetchTodayProjectsBase(limit), getCurrentUserId()])
+  const { start, end } = getCurrentLaunchWindow()
+  const [base, userId] = await Promise.all([
+    fetchTodayProjectsBase(limit, start.toISOString(), end.toISOString()),
+    getCurrentUserId(),
+  ])
   const upvoted = await getUpvotedSet(
     userId,
     base.map((p) => p.id),

@@ -2,33 +2,24 @@ import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { fumaComments, project, upvote, user } from "@/drizzle/db/schema"
-import { and, eq, gte, inArray, isNull, or, sql } from "drizzle-orm"
+import { fumaComments, launchStatus, project, upvote, user } from "@/drizzle/db/schema"
+import { and, eq, gte, inArray, lt, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { getCurrentLaunchWindow } from "@/lib/launch-window"
 
 // How many stale templated bot comments to rewrite per cron tick. The
 // historical backlog (~2.5k templated comments from the pre-diversity prompt)
 // is amortised across cron runs rather than blasted in one shot.
 const REWRITES_PER_RUN = 3
 
-// Upvote phase tuning. The cron is scheduled "0 */2 * * *" — every 2 hours —
-// so we look back exactly 2 hours when counting real-user upvotes to amplify.
-// AMP_LOOKBACK_HOURS matches the cron interval to avoid overlapping (which
-// would double-amp the same real vote) and to avoid gaps as long as the cron
-// fires on time. AMP_CAP caps how many bot votes a single project can earn
-// per tick so a HN-spike doesn't trigger a 100-vote bot avalanche.
-const AMP_LOOKBACK_HOURS = 2
-const AMP_CAP_PER_PROJECT = 32
-// Base cadence: pick a few ongoing projects and seed bot upvotes regardless
-// of real-user activity. Keeps cold-start projects feeling alive.
-const BASE_CADENCE_MAX_PROJECTS = 6
-// Global multiplier on bot-upvote counts (both the base cadence per-project
-// roll and the amp ratio). 1.6 = ~60% more bot upvotes overall vs the
-// pre-multiplier baseline. Tune here, no code-path edits.
-const BOT_UPVOTE_MULTIPLIER = 1.6
+// Daily bot-vote budget. Each bot can add at most one vote across the
+// current launch window, and assignment is shuffled across every active
+// project. With the default 80 seeded bots this yields roughly even
+// per-day distribution instead of pushing selected projects to 80 each.
+const DAILY_BOT_UPVOTE_BUDGET = 80
 
 export const dynamic = "force-dynamic"
 
@@ -55,6 +46,8 @@ export async function GET(request: Request) {
 
     console.log(`✅ Found ${bots.length} bot users`)
 
+    const { start: launchWindowStart, end: launchWindowEnd } = getCurrentLaunchWindow()
+
     // Both bot upvotes and bot comments now scope to today's active
     // launches only. Real users may comment on closed launches, but bot
     // chatter on yesterday's threads doesn't add credibility — it just
@@ -66,7 +59,14 @@ export async function GET(request: Request) {
     const ongoingProjects = await db
       .select()
       .from(project)
-      .where(and(eq(project.launchStatus, "ongoing"), eq(project.isLowQuality, false)))
+      .where(
+        and(
+          eq(project.launchStatus, launchStatus.ONGOING),
+          eq(project.isLowQuality, false),
+          gte(project.scheduledLaunchDate, launchWindowStart),
+          lt(project.scheduledLaunchDate, launchWindowEnd),
+        ),
+      )
 
     if (ongoingProjects.length === 0) {
       return NextResponse.json(
@@ -107,105 +107,42 @@ export async function GET(request: Request) {
       }
     }
 
-    // Helper: pick `count` bots from `bots` that haven't already upvoted
-    // `projectId`. Cuts down on duplicate-insert noise vs blind sampling.
-    async function pickAvailableBots(projectId: string, count: number) {
-      if (count <= 0) return []
-      const already = await db
+    // 3a. DAILY UPVOTE DISTRIBUTION — each bot casts at most one vote in the
+    // current launch window. Shuffle both bots and projects, then cycle the
+    // project list so all daily launches participate before any one project
+    // receives another bot assignment.
+    if (ongoingProjects.length > 0) {
+      const activeBots = shuffle(bots).slice(0, Math.min(DAILY_BOT_UPVOTE_BUDGET, bots.length))
+      const existingWindowBotVotes = await db
         .select({ userId: upvote.userId })
         .from(upvote)
+        .innerJoin(project, eq(project.id, upvote.projectId))
         .where(
           and(
-            eq(upvote.projectId, projectId),
             inArray(
               upvote.userId,
-              bots.map((b) => b.id),
+              activeBots.map((b) => b.id),
             ),
-          ),
-        )
-      const usedIds = new Set(already.map((r) => r.userId))
-      const available = bots.filter((b) => !usedIds.has(b.id))
-      return [...available].sort(() => 0.5 - Math.random()).slice(0, count)
-    }
-
-    // 3a. UPVOTE BASE CADENCE — only ongoing projects, 1-3 random bot votes
-    // each so cold-start launches feel populated even with no real traffic.
-    if (ongoingProjects.length > 0) {
-      const shuffledForUpvotes = [...ongoingProjects].sort(() => 0.5 - Math.random())
-      const projectsToUpvote = shuffledForUpvotes.slice(
-        0,
-        Math.min(BASE_CADENCE_MAX_PROJECTS, ongoingProjects.length),
-      )
-      console.log(`👍 Base cadence: ${projectsToUpvote.length} projects`)
-
-      for (const proj of projectsToUpvote) {
-        // 1..3 baseline, scaled by BOT_UPVOTE_MULTIPLIER. With 1.6 this
-        // becomes 2..5 (ceil(1*1.6)=2, ceil(2*1.6)=4, ceil(3*1.6)=5).
-        const baseCount = Math.ceil((Math.floor(Math.random() * 3) + 1) * BOT_UPVOTE_MULTIPLIER)
-        const selected = await pickAvailableBots(proj.id, baseCount)
-        for (const bot of selected) {
-          const ok = await castBotUpvote(bot.id, proj.id)
-          if (ok) {
-            results.upvotesAdded++
-            console.log(`  ✅ ${bot.name} upvoted ${proj.name}`)
-          }
-        }
-      }
-    }
-
-    // 3b. UPVOTE 1:1 AMPLIFICATION — for each ongoing project, count how many
-    // real-user upvotes landed in the last AMP_LOOKBACK_HOURS hours and add
-    // a matching number of bot upvotes (capped at AMP_CAP_PER_PROJECT). The
-    // 2-hour lookback equals the cron interval so windows neither overlap
-    // (avoiding double-amp) nor leave gaps when the cron fires on schedule.
-    if (ongoingProjects.length > 0) {
-      const since = new Date(Date.now() - AMP_LOOKBACK_HOURS * 60 * 60 * 1000)
-      const ongoingIds = ongoingProjects.map((p) => p.id)
-
-      const realUpvoteRows = await db
-        .select({ projectId: upvote.projectId })
-        .from(upvote)
-        .innerJoin(user, eq(user.id, upvote.userId))
-        .where(
-          and(
-            inArray(upvote.projectId, ongoingIds),
-            gte(upvote.createdAt, since),
-            // Treat NULL is_bot as "not a bot". Better Auth signups occasionally
-            // bypass the column default depending on adapter, so a strict
-            // `is_bot = false` would silently drop those users' real upvotes
-            // out of the amplification count.
-            or(eq(user.isBot, false), isNull(user.isBot)),
+            gte(project.scheduledLaunchDate, launchWindowStart),
+            lt(project.scheduledLaunchDate, launchWindowEnd),
           ),
         )
 
-      const realCounts = new Map<string, number>()
-      for (const r of realUpvoteRows) {
-        realCounts.set(r.projectId, (realCounts.get(r.projectId) ?? 0) + 1)
-      }
+      const usedBotIds = new Set(existingWindowBotVotes.map((r) => r.userId))
+      const availableBots = activeBots.filter((b) => !usedBotIds.has(b.id))
+      const projectAssignments = shuffle(ongoingProjects)
 
       console.log(
-        `🔁 Amp scan: ${realUpvoteRows.length} real upvotes in last ${AMP_LOOKBACK_HOURS}h across ${realCounts.size} projects`,
+        `👍 Daily distribution: ${availableBots.length}/${activeBots.length} bots across ${projectAssignments.length} projects (${launchWindowStart.toISOString()} → ${launchWindowEnd.toISOString()})`,
       )
 
-      for (const proj of ongoingProjects) {
-        const realCount = realCounts.get(proj.id) ?? 0
-        if (realCount === 0) continue
-        // Amp ratio scaled by the same multiplier as the base cadence so
-        // tuning happens in one place. Still capped per project to avoid
-        // a viral spike triggering a hundreds-of-votes bot avalanche.
-        const ampTarget = Math.min(
-          Math.ceil(realCount * BOT_UPVOTE_MULTIPLIER),
-          AMP_CAP_PER_PROJECT,
-        )
-        const selected = await pickAvailableBots(proj.id, ampTarget)
-        let amped = 0
-        for (const bot of selected) {
-          const ok = await castBotUpvote(bot.id, proj.id)
-          if (ok) amped++
-        }
-        if (amped > 0) {
-          results.upvotesAmplified += amped
-          console.log(`  ✨ ${proj.name}: real=${realCount} amped=${amped}`)
+      for (let i = 0; i < availableBots.length; i++) {
+        const bot = availableBots[i]
+        const proj = projectAssignments[i % projectAssignments.length]
+        const ok = await castBotUpvote(bot.id, proj.id)
+        if (ok) {
+          results.upvotesAdded++
+          console.log(`  ✅ ${bot.name} upvoted ${proj.name}`)
         }
       }
     }
@@ -408,4 +345,13 @@ export async function GET(request: Request) {
       { status: 500 },
     )
   }
+}
+
+function shuffle<T>(items: readonly T[]): T[] {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
 }

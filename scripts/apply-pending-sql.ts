@@ -25,6 +25,10 @@
 //                                                          record them); skip
 //                                                          everything else
 //
+// A migration file that starts with `-- migrate: no-transaction` runs each
+// statement without the wrapper transaction. Use this for PostgreSQL commands
+// such as `CREATE INDEX CONCURRENTLY` that are forbidden inside transactions.
+//
 // The --mark-* modes are bootstraps for DBs whose hand migrations were
 // run manually before this runner existed. --apply is for surgical
 // one-off application when other pending files shouldn't run yet.
@@ -38,6 +42,7 @@ import { Client } from "pg"
 
 const MIGRATIONS_DIR = "drizzle/migrations"
 const TRACKER_TABLE = "manual_migrations_applied"
+const NO_TRANSACTION_DIRECTIVE = /^\s*--\s*migrate:\s*no-transaction\b/im
 
 const argv = process.argv.slice(2)
 const argSet = new Set(argv)
@@ -177,30 +182,43 @@ async function main() {
       const path = join(MIGRATIONS_DIR, filename)
       const content = await readFile(path, "utf-8")
       const hash = createHash("sha256").update(content).digest("hex")
+      const noTransaction = NO_TRANSACTION_DIRECTIVE.test(content)
+      const statements = content
+        .split(/-->\s*statement-breakpoint/)
+        .map((s) => s.trim())
+        .filter(Boolean)
 
       process.stdout.write(`▶ ${filename} ... `)
       try {
-        await client.query("BEGIN")
-        // Match drizzle-kit's convention: split on `statement-breakpoint`
-        // so files containing several DDL statements run as separate
-        // queries (the pg driver doesn't accept multi-statement bodies
-        // with `$N` placeholders, and some statements need to commit
-        // their catalog effect before the next can see it).
-        const statements = content
-          .split(/-->\s*statement-breakpoint/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-        for (const stmt of statements) {
-          await client.query(stmt)
+        if (noTransaction) {
+          for (const stmt of statements) {
+            await client.query(stmt)
+          }
+          await client.query(
+            `INSERT INTO ${TRACKER_TABLE} (filename, content_hash) VALUES ($1, $2)`,
+            [filename, hash],
+          )
+        } else {
+          await client.query("BEGIN")
+          // Match drizzle-kit's convention: split on `statement-breakpoint`
+          // so files containing several DDL statements run as separate
+          // queries (the pg driver doesn't accept multi-statement bodies
+          // with `$N` placeholders, and some statements need to commit
+          // their catalog effect before the next can see it).
+          for (const stmt of statements) {
+            await client.query(stmt)
+          }
+          await client.query(
+            `INSERT INTO ${TRACKER_TABLE} (filename, content_hash) VALUES ($1, $2)`,
+            [filename, hash],
+          )
+          await client.query("COMMIT")
         }
-        await client.query(
-          `INSERT INTO ${TRACKER_TABLE} (filename, content_hash) VALUES ($1, $2)`,
-          [filename, hash],
-        )
-        await client.query("COMMIT")
         console.log("ok")
       } catch (err) {
-        await client.query("ROLLBACK")
+        if (!noTransaction) {
+          await client.query("ROLLBACK")
+        }
         console.log("FAILED")
         throw err
       }
