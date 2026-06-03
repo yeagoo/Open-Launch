@@ -2,7 +2,7 @@
 
 ## 📋 问题说明
 
-在迁移到统一的80个虚拟账号体系后，历史上通过 ProductHunt 自动发布的项目可能存在以下问题：
+在迁移到统一的300个虚拟账号体系后，历史上通过 ProductHunt 自动发布的项目可能存在以下问题：
 
 1. **创建者 ID 不存在** - `created_by` 字段指向已删除的旧账号
 2. **项目页面报错** - 无法显示创建者信息
@@ -65,7 +65,7 @@ const orphanProjects = await db
 ### 2. 轮询分配给虚拟账号
 
 ```typescript
-// 轮流分配给80个虚拟账号
+// 轮流分配给300个虚拟账号
 for (let i = 0; i < orphanProjects.length; i++) {
   const botUser = botUsers[i % botUsers.length]
   await db.update(project).set({ createdBy: botUser.id })
@@ -146,7 +146,7 @@ LIMIT 10;
 
 ### 运行前提条件
 
-1. ✅ 已生成80个虚拟账号
+1. ✅ 已生成300个虚拟账号
 
    ```bash
    npx tsx scripts/seed-bot-users.ts
@@ -180,12 +180,12 @@ pg_dump $DATABASE_URL > backup_before_fix_$(date +%Y%m%d).sql
 ```typescript
 // app/api/cron/import-producthunt/route.ts
 const botUsers = await db.select().from(user).where(eq(user.isBot, true))
-const botUser = botUsers[i % botUsers.length] // 轮询使用80个账号
+const botUser = botUsers[i % botUsers.length] // 轮询使用300个账号
 ```
 
 **这意味着：**
 
-- ✅ 新导入的项目会自动使用80个虚拟账号
+- ✅ 新导入的项目会自动使用300个虚拟账号
 - ✅ 轮询分配，自动负载均衡
 - ✅ 无需任何额外配置
 
@@ -197,7 +197,7 @@ const botUser = botUsers[i % botUsers.length] // 轮询使用80个账号
 # 1. 删除旧的机器人账号
 npx tsx scripts/delete-bot-users.ts
 
-# 2. 生成新的80个虚拟账号
+# 2. 生成新的300个虚拟账号
 npx tsx scripts/seed-bot-users.ts
 
 # 3. 修复历史项目的创建者
@@ -218,4 +218,4 @@ psql $DATABASE_URL -c "SELECT COUNT(*) FROM project WHERE created_by NOT IN (SEL
 - ✅ ProductHunt 自动导入使用新账号
 - ✅ 虚拟互动功能正常工作
 
-您的系统现在完全迁移到统一的80个虚拟账号体系了！🚀
+您的系统现在完全迁移到统一的300个虚拟账号体系了！🚀

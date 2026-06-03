@@ -7,8 +7,8 @@
 **之前的方案：**
 
 - 5个 ProductHunt 专用账号（ph-bot-1 ~ ph-bot-5）
-- 80个虚拟互动账号（engagement-bot-1 ~ engagement-bot-80）
-- 总计：85个账号
+- 虚拟互动账号（独立体系）
+- 总计：两套需分别维护的账号
 
 **问题：**
 
@@ -18,7 +18,7 @@
 
 **现在的方案：**
 
-- 80个统一的机器人账号
+- 300个统一的机器人账号
 - 同时用于 ProductHunt 导入和虚拟互动
 - 使用真实的国际化姓名
 
@@ -33,11 +33,11 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│          80个虚拟机器人账号                      │
-│     (engagement-bot-1 ~ engagement-bot-80)      │
+│          300个虚拟机器人账号                     │
+│        (bot-user-1 ~ bot-user-300)              │
 │                                                 │
-│  姓名: Alex Smith, Blake Wang, Casey Gonzalez  │
-│  邮箱: bot1@aat.ee ~ bot80@aat.ee              │
+│  姓名: Alex Moore, Blake Clark, Casey Wright    │
+│  邮箱: bot1@aat.ee ~ bot300@aat.ee             │
 └─────────────────────────────────────────────────┘
               │                    │
               │                    │
@@ -47,10 +47,10 @@
     └───────────────────┘   └────────────────┘
               │                    │
               │                    │
-    ┌─────────┴─────────┐   ┌─────┴──────────┐
-    │ 自动导入 Top 5    │   │ 点赞 + 评论     │
-    │ 每天运行1次       │   │ 每2小时运行1次  │
-    └───────────────────┘   └────────────────┘
+    ┌─────────┴─────────┐   ┌─────┴──────────────┐
+    │ 自动导入 Top 5    │   │ 按项目每日目标点赞  │
+    │ 每天运行1次       │   │ + 评论 每2小时1次   │
+    └───────────────────┘   └────────────────────┘
 ```
 
 ## 🔧 技术实现
@@ -72,54 +72,54 @@ for (let i = 0; i < posts.length; i++) {
 
 - 自动轮流分配
 - 每个导入的项目都有不同的"创建者"
-- 最多使用10个账号（从80个中取前10个）
+- 最多使用10个账号（从300个中取前10个）
 
 ### 虚拟互动逻辑
 
 ```typescript
-// app/api/cron/simulate-engagement/route.ts
+// app/api/cron/simulate-engagement/route.ts + lib/bot-upvote-plan.ts
 const bots = await db.select().from(user).where(eq(user.isBot, true))
 
-// 点赞：随机选择6个项目
-const shuffledProjects = [...recentProjects].sort(() => 0.5 - Math.random())
-const projectsToUpvote = shuffledProjects.slice(0, 6)
+// 点赞：每个项目一个确定性的当日目标，按 launch window 渐进爬升
+const target = dailyVoteTarget(proj.id, windowStartMs, isPaid) // 免费[50,200] / 付费[200,250]
+const due = votesDueByNow(target, windowStartMs, windowEndMs, nowMs) // 75%处爬满
+const need = Math.min(Math.max(due - current, 0), eligibleBots.length) // 只补缺口
 
-// 评论：随机选择3个用户
-const shuffledBots = [...bots].sort(() => 0.5 - Math.random())
-const commentingBots = shuffledBots.slice(0, 3)
+// 评论：5个独特机器人，覆盖2-5个项目
+const botsForComments = shuffle(bots).slice(0, 5)
 ```
 
 **特点：**
 
-- 随机选择，模拟真实用户
-- 每次运行都不同
-- AI 生成评论内容
+- 确定性目标 + 渐进爬升，数字自然、全天稳定
+- 付费项目保底更高（200-250）
+- 唯一索引保证一人一项目一票，无重复
+- AI 生成多语言评论内容
 
 ## 📊 账号规格
 
-| 属性           | 值                                                                       |
-| -------------- | ------------------------------------------------------------------------ |
-| **总数量**     | 80个                                                                     |
-| **ID 格式**    | `engagement-bot-1` ~ `engagement-bot-80`                                 |
-| **Email 格式** | `bot1@aat.ee` ~ `bot80@aat.ee`                                           |
-| **姓名生成**   | 80个名字 × 80个姓氏（质数偏移算法）                                      |
-| **姓氏分布**   | 欧美 30 / 亚洲 30 / 拉美 20                                              |
-| **角色**       | Developer, Designer, Entrepreneur, PM, Engineer, Founder, Maker, Creator |
-| **is_bot**     | `true`                                                                   |
+| 属性           | 值                                                 |
+| -------------- | -------------------------------------------------- |
+| **总数量**     | 300个                                              |
+| **ID 格式**    | `bot-user-1` ~ `bot-user-300`                      |
+| **Email 格式** | `bot1@aat.ee` ~ `bot300@aat.ee`                    |
+| **姓名生成**   | 80个名字 × 80个姓氏（质数偏移 + 错位，6400种组合） |
+| **姓氏分布**   | 欧美 30 / 亚洲 30 / 拉美 20                        |
+| **角色**       | `user`（auth 角色；persona 标签不入库）            |
+| **is_bot**     | `true`                                             |
 
 ### 姓名生成算法
 
 ```typescript
-// 使用质数偏移确保多样性
+// 质数偏移 + 错位：保证300个不重名
 const firstNameIndex = i % FIRST_NAMES.length // 0-79
-const lastNameIndex = (i * 7 + 13) % LAST_NAMES.length // 质数偏移
+const lastNameIndex = (i * 7 + 13 + Math.floor(i / FIRST_NAMES.length)) % LAST_NAMES.length
 ```
 
-**为什么用质数？**
+**为什么要加 `Math.floor(i / FIRST_NAMES.length)`？**
 
-- 避免重复模式
-- 确保姓氏均匀分布
-- 80个用户，80个不同的姓氏组合
+- 80×7 ≡ 0 (mod 80)，所以仅用 `i*7+13` 时 `i` 与 `i+80` 会撞名
+- 加上错位项后，前 6400 个 `i` 都能得到唯一的（名+姓）组合，足够 300 个不重名
 
 ## 🚀 使用方式
 
@@ -154,7 +154,7 @@ curl -X GET "https://www.aat.ee/api/cron/simulate-engagement?secret=SECRET"
 
 ```sql
 SELECT COUNT(*) FROM "user" WHERE is_bot = true;
--- 应该返回：80
+-- 应该返回：300
 ```
 
 ### 查看 ProductHunt 项目分布
@@ -208,7 +208,7 @@ npx tsx scripts/seed-bot-users.ts
 ```sql
 -- 将无效创建者的项目分配给新账号
 UPDATE project
-SET created_by = 'engagement-bot-1'
+SET created_by = 'bot-user-1'
 WHERE created_by NOT IN (SELECT id FROM "user");
 ```
 
@@ -222,7 +222,7 @@ WHERE created_by NOT IN (SELECT id FROM "user");
 
 统一的机器人账号系统提供了：
 
-1. **简化管理** - 只需维护一套80个账号
+1. **简化管理** - 只需维护一套300个账号
 2. **自然体验** - 使用真实的国际化姓名
 3. **灵活分配** - ProductHunt 轮询，虚拟互动随机
 4. **易于扩展** - 需要更多账号时只需修改数量
