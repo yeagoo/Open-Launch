@@ -6,6 +6,7 @@ import { fumaComments, launchStatus, project, upvote, user } from "@/drizzle/db/
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
+import { dailyVoteTarget, isPaidLaunchType, votesDueByNow } from "@/lib/bot-upvote-plan"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
@@ -14,12 +15,6 @@ import { getCurrentLaunchWindow } from "@/lib/launch-window"
 // historical backlog (~2.5k templated comments from the pre-diversity prompt)
 // is amortised across cron runs rather than blasted in one shot.
 const REWRITES_PER_RUN = 3
-
-// Daily bot-vote budget. Each bot can add at most one vote across the
-// current launch window, and assignment is shuffled across every active
-// project. With the default 80 seeded bots this yields roughly even
-// per-day distribution instead of pushing selected projects to 80 each.
-const DAILY_BOT_UPVOTE_BUDGET = 80
 
 export const dynamic = "force-dynamic"
 
@@ -85,66 +80,87 @@ export async function GET(request: Request) {
       errors: [] as string[],
     }
 
-    // Helper: insert a single bot upvote. Postgres unique-violation (SQLSTATE
-    // 23505) is the expected duplicate and stays silent; everything else
-    // (connection blip, FK error, etc.) is logged so the cron doesn't hide
-    // real bugs as "just another duplicate".
-    async function castBotUpvote(botId: string, projectId: string): Promise<boolean> {
-      try {
-        await db.insert(upvote).values({
-          id: crypto.randomUUID(),
-          userId: botId,
-          projectId,
-          createdAt: new Date(),
-        })
-        return true
-      } catch (err) {
-        const code = (err as { code?: string })?.code
-        if (code !== "23505") {
-          console.error(`upvote insert failed (bot=${botId}, project=${projectId}):`, err)
-        }
-        return false
-      }
-    }
-
-    // 3a. DAILY UPVOTE DISTRIBUTION — each bot casts at most one vote in the
-    // current launch window. Shuffle both bots and projects, then cycle the
-    // project list so all daily launches participate before any one project
-    // receives another bot assignment.
+    // 3a. DAILY UPVOTE DISTRIBUTION — per-project vote targets that ramp
+    // through the launch window.
+    //
+    // Every project is assigned a deterministic daily target (see
+    // lib/bot-upvote-plan): the free queue lands in [50, 200] and paid
+    // launches (premium / premium_plus) are guaranteed [200, 250]. The target
+    // is keyed on (projectId, windowStart, tier) so it stays stable across the
+    // day's cron ticks instead of jerking around with Math.random.
+    //
+    // Each tick tops a project up to the number of votes that *should* exist by
+    // now — a linear ramp from 0 at the window open to the full target at the
+    // window close — so counts climb smoothly over the day rather than getting
+    // blasted to 200 the instant a launch goes live. Real-user votes count
+    // toward the target, so bots only ever fill the remaining gap, and the
+    // per-(user,project) unique index caps each bot at one vote per project.
     if (ongoingProjects.length > 0) {
-      const activeBots = shuffle(bots).slice(0, Math.min(DAILY_BOT_UPVOTE_BUDGET, bots.length))
-      const existingWindowBotVotes = await db
-        .select({ userId: upvote.userId })
+      const nowMs = Date.now()
+      const windowStartMs = launchWindowStart.getTime()
+      const windowEndMs = launchWindowEnd.getTime()
+      const botIds = new Set(bots.map((b) => b.id))
+
+      // Current vote rows (real + bot) for every ongoing project in one pass.
+      const existingVotes = await db
+        .select({ projectId: upvote.projectId, userId: upvote.userId })
         .from(upvote)
-        .innerJoin(project, eq(project.id, upvote.projectId))
         .where(
-          and(
-            inArray(
-              upvote.userId,
-              activeBots.map((b) => b.id),
-            ),
-            gte(project.scheduledLaunchDate, launchWindowStart),
-            lt(project.scheduledLaunchDate, launchWindowEnd),
+          inArray(
+            upvote.projectId,
+            ongoingProjects.map((p) => p.id),
           ),
         )
 
-      const usedBotIds = new Set(existingWindowBotVotes.map((r) => r.userId))
-      const availableBots = activeBots.filter((b) => !usedBotIds.has(b.id))
-      const projectAssignments = shuffle(ongoingProjects)
-
-      console.log(
-        `👍 Daily distribution: ${availableBots.length}/${activeBots.length} bots across ${projectAssignments.length} projects (${launchWindowStart.toISOString()} → ${launchWindowEnd.toISOString()})`,
-      )
-
-      for (let i = 0; i < availableBots.length; i++) {
-        const bot = availableBots[i]
-        const proj = projectAssignments[i % projectAssignments.length]
-        const ok = await castBotUpvote(bot.id, proj.id)
-        if (ok) {
-          results.upvotesAdded++
-          console.log(`  ✅ ${bot.name} upvoted ${proj.name}`)
+      const totalVotes = new Map<string, number>()
+      const botVoters = new Map<string, Set<string>>()
+      for (const row of existingVotes) {
+        totalVotes.set(row.projectId, (totalVotes.get(row.projectId) ?? 0) + 1)
+        if (botIds.has(row.userId)) {
+          const set = botVoters.get(row.projectId) ?? new Set<string>()
+          set.add(row.userId)
+          botVoters.set(row.projectId, set)
         }
       }
+
+      const pending: Array<{ id: string; userId: string; projectId: string; createdAt: Date }> = []
+
+      for (const proj of ongoingProjects) {
+        const isPaid = isPaidLaunchType(proj.launchType)
+        const target = dailyVoteTarget(proj.id, windowStartMs, isPaid)
+        const due = votesDueByNow(target, windowStartMs, windowEndMs, nowMs)
+        const current = totalVotes.get(proj.id) ?? 0
+        const alreadyVoted = botVoters.get(proj.id) ?? new Set<string>()
+        const eligibleBots = bots.filter((b) => !alreadyVoted.has(b.id))
+
+        // Only fill the gap, capped by bots that haven't voted on this project.
+        const need = Math.min(Math.max(due - current, 0), eligibleBots.length)
+        if (need === 0) continue
+
+        for (const bot of shuffle(eligibleBots).slice(0, need)) {
+          pending.push({
+            id: crypto.randomUUID(),
+            userId: bot.id,
+            projectId: proj.id,
+            createdAt: new Date(),
+          })
+        }
+
+        console.log(
+          `  👍 ${proj.name}${isPaid ? " (paid)" : ""}: target ${target}, due ${due}, have ${current} → +${need}`,
+        )
+      }
+
+      if (pending.length > 0) {
+        // Single batch insert; onConflictDoNothing absorbs the rare race where a
+        // real user voted between the read above and this write.
+        await db.insert(upvote).values(pending).onConflictDoNothing()
+        results.upvotesAdded += pending.length
+      }
+
+      console.log(
+        `👍 Daily distribution: +${pending.length} bot votes across ${ongoingProjects.length} projects (${launchWindowStart.toISOString()} → ${launchWindowEnd.toISOString()})`,
+      )
     }
 
     // 4. COMMENT LOGIC — 5 unique bots cycle across 2-5 projects.

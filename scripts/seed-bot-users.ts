@@ -188,13 +188,18 @@ const ROLES = [
   "Creator",
 ]
 
-// 生成80个bot用户 - 使用质数偏移确保姓名组合多样化
-const BOT_USERS = Array.from({ length: 80 }, (_, i) => {
+// 生成 300 个 bot 用户 - 使用质数偏移确保姓名组合多样化。
+// 300 个池子让付费项目能爬到 200-250 票上限，并为真人票留出余量。
+const BOT_COUNT = 300
+
+const BOT_USERS = Array.from({ length: BOT_COUNT }, (_, i) => {
   const num = i + 1
 
-  // 使用质数偏移避免重复模式
+  // 使用质数偏移避免重复模式。注意 80*7 ≡ 0 (mod 80)，所以 i 和 i+80 的
+  // lastNameIndex 会撞车 —— 加上 floor(i / FIRST_NAMES.length) 错位后，
+  // 前 80*80=6400 个 i 都能得到唯一的 (first, last) 组合，足够 300 个不重名。
   const firstNameIndex = i % FIRST_NAMES.length
-  const lastNameIndex = (i * 7 + 13) % LAST_NAMES.length // 7和13是质数
+  const lastNameIndex = (i * 7 + 13 + Math.floor(i / FIRST_NAMES.length)) % LAST_NAMES.length
   const roleIndex = i % ROLES.length
 
   const firstName = FIRST_NAMES[firstNameIndex]
@@ -232,8 +237,14 @@ async function seedBotUsers() {
         })
         console.log(`✅ Created bot user: ${botUser.name} (${botUser.email})`)
       } catch (error) {
-        // 如果用户已存在，忽略错误
-        if (error instanceof Error && error.message.includes("duplicate")) {
+        // 如果用户已存在，忽略错误。Postgres 唯一冲突的标识是 SQLSTATE 23505，
+        // 但 drizzle 会把它包成 DrizzleQueryError，真正的 code 在 error.cause 上；
+        // 而且 message 不含 "duplicate" 字样。必须沿 cause 取 code，否则脚本会在
+        // 第一个已存在的 bot 上误抛、提前中止（幂等性失效）。
+        const code =
+          (error as { code?: string })?.code ??
+          (error as { cause?: { code?: string } })?.cause?.code
+        if (code === "23505" || (error instanceof Error && error.message.includes("duplicate"))) {
           console.log(`⏭️  Bot user already exists: ${botUser.name}`)
         } else {
           throw error
