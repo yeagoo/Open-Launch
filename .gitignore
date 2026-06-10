@@ -56,3 +56,9 @@ logs/
 
 # Pool avatars are regenerated at build time (scripts/generate-avatar-pool.ts)
 /public/avatars/pool/
+
+# Local tool artifacts — never commit DB dumps, Adminer exports, or dependency snapshots
+*.db
+*.sqlite
+admin-*.csv
+outdated.txt

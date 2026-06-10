@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto"
+
 import { NextResponse } from "next/server"
 
 export function verifyCronAuth(request: Request): NextResponse | null {
@@ -9,9 +11,14 @@ export function verifyCronAuth(request: Request): NextResponse | null {
   }
 
   const authHeader = request.headers.get("authorization")
-  const providedKey = authHeader?.replace("Bearer ", "")
+  const providedKey = authHeader?.replace("Bearer ", "") ?? ""
 
-  if (providedKey !== apiKey) {
+  // Constant-time comparison so response timing can't be used to
+  // recover the key byte-by-byte. timingSafeEqual requires equal
+  // lengths; the length check itself only leaks the key's length.
+  const provided = Buffer.from(providedKey)
+  const expected = Buffer.from(apiKey)
+  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

@@ -76,6 +76,42 @@ export type RateLimitOptions = {
   onRedisError?: "memory-fallback" | "fail-closed"
 }
 
+// In-memory fallback for `dedupeOnce` when Redis is unreachable —
+// per-process only, same trade-off as the rate-limit fallback above.
+const MAX_DEDUPE_KEYS = 1000
+const inMemorySeen = new Map<string, number>()
+
+/**
+ * Returns true exactly once per `key` within `ttlSeconds` (Redis
+ * `SET NX EX`), shared across instances and restarts. Use to suppress
+ * duplicate side effects (alert emails, notifications) on retried
+ * events. Falls back to a per-process map if Redis is down.
+ */
+export async function dedupeOnce(key: string, ttlSeconds: number): Promise<boolean> {
+  const fullKey = `dedupe:${key}`
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    const result = await client.set(fullKey, "1", "EX", ttlSeconds, "NX")
+    return result === "OK"
+  } catch (error) {
+    console.error("Redis error (dedupeOnce):", error)
+    const now = Date.now()
+    const seen = inMemorySeen.get(fullKey)
+    if (seen !== undefined && now - seen < ttlSeconds * 1000) {
+      return false
+    }
+    inMemorySeen.set(fullKey, now)
+    if (inMemorySeen.size > MAX_DEDUPE_KEYS) {
+      const oldest = inMemorySeen.keys().next().value
+      if (oldest !== undefined) inMemorySeen.delete(oldest)
+    }
+    return true
+  }
+}
+
 export async function checkRateLimit(
   identifier: string,
   limit: number,

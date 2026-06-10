@@ -51,6 +51,14 @@ export const auth = betterAuth({
     },
     expiresIn: 86400,
   },
+  session: {
+    // Explicit lifetime instead of relying on library defaults: a
+    // session lives 7 days, sliding — any request within the last
+    // day of validity extends it. Bounds the window a stolen session
+    // token stays usable.
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,

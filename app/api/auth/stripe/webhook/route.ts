@@ -12,6 +12,7 @@ import {
   isDirectoryTier,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
+import { dedupeOnce } from "@/lib/rate-limit"
 import { ULTRA_SPONSORS_CACHE_TAG } from "@/lib/sponsors"
 import {
   sendAdminPaymentNotification,
@@ -64,38 +65,21 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
 }
 
 /**
- * In-memory dedup so a webhook resend doesn't email admin twice for
- * the same orphan. Lazy LRU semantics: cap entries, evict oldest on
- * overflow. 1h TTL window — same orphan within the hour is treated as
- * a duplicate (typical when admin resends a batch); outside the
- * window the email re-fires (legitimate "this came back" signal).
+ * Dedup so a webhook resend doesn't email admin twice for the same
+ * orphan. Redis-backed (`dedupeOnce`) so it survives restarts and
+ * works across instances; degrades to a per-process map if Redis is
+ * down. 1h TTL window — same orphan within the hour is treated as a
+ * duplicate (typical when admin resends a batch); outside the window
+ * the email re-fires (legitimate "this came back" signal).
  *
  * Refunds still always run — `stripe.refunds.create` is given an
  * idempotency key on session.id, so Stripe handles dedup at its layer
- * without our help. This map only suppresses the email noise.
- *
- * Lives in process memory: works for Zeabur's single-Node-process
- * deployment. Multi-instance horizontal scaling would need a shared
- * store (Redis) to remain effective; not relevant at current scale.
+ * without our help. This only suppresses the email noise.
  */
-const ORPHAN_DEDUP_TTL_MS = 60 * 60 * 1000 // 1h
-const ORPHAN_DEDUP_CAP = 200
-const orphanSessionSeen = new Map<string, number>()
+const ORPHAN_DEDUP_TTL_S = 60 * 60 // 1h
 
-function shouldEmailOrphan(sessionId: string): boolean {
-  const now = Date.now()
-  const seen = orphanSessionSeen.get(sessionId)
-  if (seen !== undefined && now - seen < ORPHAN_DEDUP_TTL_MS) {
-    return false
-  }
-  orphanSessionSeen.set(sessionId, now)
-  if (orphanSessionSeen.size > ORPHAN_DEDUP_CAP) {
-    // Evict the oldest entry — `Map` iterates in insertion order, so
-    // `keys().next().value` is the oldest.
-    const oldest = orphanSessionSeen.keys().next().value
-    if (oldest !== undefined) orphanSessionSeen.delete(oldest)
-  }
-  return true
+function shouldEmailOrphan(sessionId: string): Promise<boolean> {
+  return dedupeOnce(`orphan-email:${sessionId}`, ORPHAN_DEDUP_TTL_S)
 }
 
 /**
@@ -221,7 +205,7 @@ async function handleOrphanPayment(
   // (none-ref / project-gone / order-gone) hit production. Suppress
   // duplicate emails when the same session.id hits within the dedup
   // window (typical when admin manually resends a webhook batch).
-  if (!shouldEmailOrphan(session.id)) {
+  if (!(await shouldEmailOrphan(session.id))) {
     console.log("ℹ️ Suppressed duplicate orphan alert email for session:", session.id)
     return
   }
@@ -580,20 +564,30 @@ async function handleDirectoryOrderCompleted(
   const customerId =
     typeof session.customer === "string" ? session.customer : (session.customer?.id ?? null)
 
+  // Guard against a Payment Link env var pointing at the wrong Stripe
+  // price: if the amount paid doesn't match the configured tier price,
+  // record the payment but hold all fulfilment for admin review.
+  // Promotion codes legitimately lower `amount_total`, so add the
+  // discount back before comparing.
+  const discountCents = session.total_details?.amount_discount ?? 0
+  const amountMismatch =
+    typeof session.amount_total === "number" &&
+    session.amount_total + discountCents !== cfg.amountCents
+
   // Atomic conditional update: only `pending` orders flip to `paid`.
   // Re-deliveries (Stripe retried after a 5xx) hit zero rows and we
   // skip the rest of the work below — keeps the operation idempotent.
   const updateResult = await db
     .update(directoryOrder)
     .set({
-      status: cfg.autoFulfil ? "fulfilled" : "paid",
+      status: cfg.autoFulfil && !amountMismatch ? "fulfilled" : "paid",
       amountCents: session.amount_total ?? cfg.amountCents,
       currency: session.currency ?? "usd",
       stripeSessionId: session.id,
       stripeSubscriptionId: subId,
       stripeCustomerId: customerId,
       paidAt: now,
-      fulfilledAt: cfg.autoFulfil ? now : null,
+      fulfilledAt: cfg.autoFulfil && !amountMismatch ? now : null,
       updatedAt: now,
     })
     .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
@@ -634,21 +628,16 @@ async function handleDirectoryOrderCompleted(
   // launched project, `launchStatus` is no longer `payment_pending`
   // and the WHERE clause guards skip this block — schedule data
   // stays untouched.
-  await scheduleProjectIfPendingPayment(order.projectId)
-
-  // Sanity check (post-write so re-deliveries don't spam the warn):
-  // log once if Stripe's amount differs from the configured tier
-  // price. Most likely cause is an env var pointing at the wrong
-  // Stripe Payment Link. We've already trusted Stripe's amount for
-  // the row — this just leaves a paper trail.
-  if (typeof session.amount_total === "number" && session.amount_total !== cfg.amountCents) {
-    console.warn(
-      `⚠️ Directory order amount mismatch — config=${cfg.amountCents}, stripe=${session.amount_total}, tier=${tier}, order=${orderId}`,
+  if (amountMismatch) {
+    console.error(
+      `⚠️ Directory order amount mismatch — fulfilment HELD for admin review. config=${cfg.amountCents}, stripe=${session.amount_total}, discount=${discountCents}, tier=${tier}, order=${orderId}`,
     )
+  } else {
+    await scheduleProjectIfPendingPayment(order.projectId)
   }
 
   console.log(
-    `✅ Directory order ${cfg.autoFulfil ? "auto-fulfilled" : "marked paid"}:`,
+    `✅ Directory order ${cfg.autoFulfil && !amountMismatch ? "auto-fulfilled" : "marked paid"}:`,
     orderId,
     "tier:",
     tier,
@@ -676,7 +665,11 @@ async function handleDirectoryOrderCompleted(
       userEmail: userEmail || "unknown@example.com",
       amount,
       currency,
-      projectName: `${projectName} — Directory ${tier.toUpperCase()}`,
+      projectName: `${projectName} — Directory ${tier.toUpperCase()}${
+        amountMismatch
+          ? ` — ⚠️ AMOUNT MISMATCH (expected ${cfg.amountCents}¢), fulfilment held`
+          : ""
+      }`,
       websiteUrl,
     })
     console.log("✅ Admin notification sent for directory order:", orderId)
