@@ -5,10 +5,15 @@ import sharp from "sharp"
 
 import { auth } from "@/lib/auth"
 import { uploadFileToR2 } from "@/lib/r2-client"
-import { checkRateLimit } from "@/lib/rate-limit"
+import { checkByteBudget, checkRateLimit } from "@/lib/rate-limit"
 
 // 文件大小限制（1MB）
 const MAX_FILE_SIZE = 1024 * 1024
+
+// 每用户每小时累计上传字节预算。按当前 1MB × 20 次/小时的限制不会
+// 触发——它的作用是兜底：将来上调单文件或次数限制时，存储消耗
+// 依然有硬上限。
+const BYTE_BUDGET_PER_HOUR = 50 * 1024 * 1024
 
 // 允许的文件类型
 const ALLOWED_TYPES = [
@@ -81,6 +86,20 @@ export async function POST(request: NextRequest) {
     // 验证文件大小
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json({ error: "File size exceeds 1MB limit" }, { status: 400 })
+    }
+
+    // 字节预算：在 sharp 转码（CPU）和 R2 上传（存储）之前检查
+    const byteBudget = await checkByteBudget(
+      `upload:${user.id}`,
+      file.size,
+      BYTE_BUDGET_PER_HOUR,
+      60 * 60 * 1000,
+    )
+    if (!byteBudget.success) {
+      return NextResponse.json(
+        { error: `Hourly upload volume exceeded. Try again in ${byteBudget.reset} seconds.` },
+        { status: 429 },
+      )
     }
 
     // 转换文件为 Buffer

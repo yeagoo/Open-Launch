@@ -76,6 +76,42 @@ export type RateLimitOptions = {
   onRedisError?: "memory-fallback" | "fail-closed"
 }
 
+/**
+ * Fixed-window byte budget (Redis INCRBY + TTL). Unlike
+ * `checkRateLimit` this meters a quantity, not a count — use it to
+ * cap cumulative upload volume per user. Rejected attempts still
+ * consume budget (conservative: keeps a prober blocked instead of
+ * letting them feel out the remaining headroom). Fail-closed on
+ * Redis errors: byte budgets guard expensive resources by nature.
+ */
+export async function checkByteBudget(
+  identifier: string,
+  bytes: number,
+  budgetBytes: number,
+  windowMs: number,
+): Promise<RateLimitResult> {
+  const key = `byte-budget:${identifier}`
+  const windowSeconds = Math.ceil(windowMs / 1000)
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    const total = await client.incrby(key, bytes)
+    if (total === bytes) {
+      await client.expire(key, windowSeconds)
+    }
+    if (total > budgetBytes) {
+      const ttl = await client.ttl(key)
+      return { success: false, remaining: 0, reset: ttl > 0 ? ttl : windowSeconds }
+    }
+    return { success: true, remaining: budgetBytes - total, reset: windowSeconds }
+  } catch (error) {
+    console.error("Redis error (checkByteBudget):", error)
+    return { success: false, remaining: 0, reset: windowSeconds }
+  }
+}
+
 // In-memory fallback for `dedupeOnce` when Redis is unreachable —
 // per-process only, same trade-off as the rate-limit fallback above.
 const MAX_DEDUPE_KEYS = 1000
