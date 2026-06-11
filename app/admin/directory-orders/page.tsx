@@ -70,7 +70,11 @@ export default async function DirectoryOrdersAdminPage() {
   // action so it goes first, then fulfilled history, then the rest
   // (failed / pending). `pending` rows are abandoned carts; we keep
   // them visible so you can spot patterns (e.g. broken Stripe link).
-  const paid = orders.filter((o) => o.status === "paid")
+  // Held = paid but amount-mismatch (amount_verified=false): surfaced
+  // separately because they must be reviewed, not fulfilled (and they're
+  // excluded from sponsors + syndication until cleared).
+  const paid = orders.filter((o) => o.status === "paid" && o.amountVerified)
+  const held = orders.filter((o) => o.status === "paid" && !o.amountVerified)
   const fulfilled = orders.filter((o) => o.status === "fulfilled")
   const other = orders.filter((o) => !["paid", "fulfilled"].includes(o.status))
 
@@ -84,6 +88,16 @@ export default async function DirectoryOrdersAdminPage() {
             placing the user&apos;s URL on partner sites; Basic auto-fulfils on payment.
           </p>
         </div>
+
+        {held.length > 0 && (
+          <Section
+            title="Held — amount mismatch (review before fulfilling)"
+            count={held.length}
+            accent
+          >
+            <OrderTable rows={held} />
+          </Section>
+        )}
 
         <Section title="Awaiting fulfilment" count={paid.length} accent>
           {paid.length === 0 ? (

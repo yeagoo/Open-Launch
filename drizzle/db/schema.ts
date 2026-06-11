@@ -799,6 +799,10 @@ export const directoryOrder = pgTable(
     fulfilledAt: timestamp("fulfilled_at"),
     fulfilledBy: text("fulfilled_by").references(() => user.id, { onDelete: "set null" }),
     adminNotes: text("admin_notes"),
+    // False when the amount paid didn't match the tier price (Payment Link
+    // misconfig / suspicious). Held orders are excluded from the sponsor
+    // sidebar and from launch syndication until an admin clears them.
+    amountVerified: boolean("amount_verified").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -806,4 +810,44 @@ export const directoryOrder = pgTable(
     statusIdx: index("directory_order_status_idx").on(table.status, table.paidAt),
     projectIdx: index("directory_order_project_idx").on(table.projectId),
   }),
+)
+
+// ─── Cross-site launch syndication queue ─────────────────────────────────────
+// One row per (paid directory_order × partner site). The Stripe webhook
+// enqueues rows for Plus/Pro/Ultra orders; `/api/cron/syndicate-launches`
+// drains them, POSTing each to the partner site's `/api/external/launch`
+// endpoint with retry/backoff, then flips the directory_order to
+// `fulfilled` once every site for that order succeeds. The (order_id, site)
+// unique index makes enqueue idempotent across Stripe retries.
+export const launchSyndication = pgTable(
+  "launch_syndication",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => directoryOrder.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    site: text("site").notNull(), // 'bigkr' | 'mf8' | 'hicyou'
+    tier: text("tier").notNull(), // snapshot: 'plus' | 'pro' | 'ultra'
+    status: text("status").notNull().default("pending"), // 'pending' | 'sent' | 'failed'
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    externalId: text("external_id"), // id returned by the partner site
+    externalUrl: text("external_url"), // public URL returned by the partner site
+    nextAttemptAt: timestamp("next_attempt_at"), // backoff gate for retries
+    sentAt: timestamp("sent_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      orderSiteUniq: uniqueIndex("launch_syndication_order_site_uniq").on(
+        table.orderId,
+        table.site,
+      ),
+      statusIdx: index("launch_syndication_status_idx").on(table.status, table.nextAttemptAt),
+    }
+  },
 )

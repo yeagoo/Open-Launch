@@ -2,7 +2,13 @@ import { revalidatePath, revalidateTag } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { directoryOrder, launchQuota, launchStatus, project } from "@/drizzle/db/schema"
+import {
+  directoryOrder,
+  launchQuota,
+  launchStatus,
+  launchSyndication,
+  project,
+} from "@/drizzle/db/schema"
 import { and, eq, inArray, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
@@ -12,6 +18,7 @@ import {
   isDirectoryTier,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
+import { enqueueLaunchSyndication } from "@/lib/launch-syndication"
 import { dedupeOnce } from "@/lib/rate-limit"
 import { ULTRA_SPONSORS_CACHE_TAG } from "@/lib/sponsors"
 import {
@@ -40,7 +47,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
  * and a customer can cancel before that step.
  */
 async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: string) {
-  const result = await db
+  const canceled = await db
     .update(directoryOrder)
     .set({ status: "canceled", updatedAt: new Date() })
     .where(
@@ -49,7 +56,8 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
         inArray(directoryOrder.status, ["paid", "fulfilled"]),
       ),
     )
-  if (!result.rowCount || result.rowCount === 0) {
+    .returning({ id: directoryOrder.id })
+  if (canceled.length === 0) {
     console.log(
       "ℹ️ subscription cancel signal for unknown / already-canceled order:",
       stripeSubscriptionId,
@@ -58,6 +66,17 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
     )
     return
   }
+  // Stop syndicating a canceled order: drop rows not yet posted. Already-`sent`
+  // partner listings are left live (Ultra cancel keeps existing listings).
+  await db.delete(launchSyndication).where(
+    and(
+      inArray(
+        launchSyndication.orderId,
+        canceled.map((r) => r.id),
+      ),
+      inArray(launchSyndication.status, ["pending", "failed"]),
+    ),
+  )
   console.log("✅ Subscription dead, marked order canceled:", stripeSubscriptionId, "via", reason)
   // A canceled Ultra vacates a sidebar slot — bust the cache so the
   // now-empty slot vanishes promptly.
@@ -588,6 +607,7 @@ async function handleDirectoryOrderCompleted(
       stripeCustomerId: customerId,
       paidAt: now,
       fulfilledAt: cfg.autoFulfil && !amountMismatch ? now : null,
+      amountVerified: !amountMismatch,
       updatedAt: now,
     })
     .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
@@ -614,7 +634,7 @@ async function handleDirectoryOrderCompleted(
   // Bust the sponsor-list cache so an Ultra subscription becomes
   // visible on the sidebar at the next page request — without
   // waiting for the per-page `revalidate` window (≤1h).
-  if (tier === "ultra") {
+  if (tier === "ultra" && !amountMismatch) {
     revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
   }
 
@@ -634,6 +654,16 @@ async function handleDirectoryOrderCompleted(
     )
   } else {
     await scheduleProjectIfPendingPayment(order.projectId)
+
+    // Cross-post Plus/Pro/Ultra listings to partner sites. This only
+    // ENQUEUES rows (idempotent on (order, site)); the actual HTTP push is
+    // done by /api/cron/syndicate-launches with retry/backoff, so a partner
+    // outage can never fail this webhook. No-op for Basic (aat.ee only).
+    try {
+      await enqueueLaunchSyndication(orderId, order.projectId, tier)
+    } catch (err) {
+      console.error("⚠️ Failed to enqueue launch syndication:", orderId, err)
+    }
   }
 
   console.log(

@@ -87,11 +87,13 @@ export const DIRECTORY_TIER_CONFIG: Record<DirectoryTier, TierConfig> = {
     paymentLinkEnvVar: "NEXT_PUBLIC_DIRECTORY_PAYMENT_LINK_ULTRA",
     amountCents: 1999,
     isSubscription: true,
-    // Ultra has no manual fulfilment work — the deliverable IS the
-    // sidebar slot, which is automated rendering. Marking fulfilled
-    // immediately on payment lets the sponsor card go live on the
-    // next page revalidation cycle without admin intervention.
-    autoFulfil: true,
+    // Ultra cross-posts to partner sites (it's a Plus/Pro/Ultra tier), so
+    // partner syndication is part of the deliverable. The order therefore
+    // stays `paid` at payment time and only flips to `fulfilled` once
+    // /api/cron/syndicate-launches confirms every partner site succeeded.
+    // The Ultra sponsor sidebar still goes live immediately because
+    // lib/sponsors.ts accepts both `paid` and `fulfilled`.
+    autoFulfil: false,
   },
 }
 

@@ -69,6 +69,8 @@ async function fetchActiveSponsors(): Promise<Sponsor[]> {
         and(
           eq(directoryOrder.tier, "ultra"),
           inArray(directoryOrder.status, ["paid", "fulfilled"]),
+          // Exclude amount-mismatch orders held for admin review.
+          eq(directoryOrder.amountVerified, true),
         ),
       )
       // FIFO: paid_at is set at the same time as fulfilled_at for

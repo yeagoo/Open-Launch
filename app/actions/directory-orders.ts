@@ -327,7 +327,12 @@ async function countActiveUltraSlots(): Promise<number> {
     .select({ n: count() })
     .from(directoryOrder)
     .where(
-      and(eq(directoryOrder.tier, "ultra"), inArray(directoryOrder.status, ["paid", "fulfilled"])),
+      and(
+        eq(directoryOrder.tier, "ultra"),
+        inArray(directoryOrder.status, ["paid", "fulfilled"]),
+        // Held (amount-mismatch) orders don't occupy a real sponsor slot.
+        eq(directoryOrder.amountVerified, true),
+      ),
     )
   return row?.n ?? 0
 }
@@ -483,6 +488,7 @@ export interface AdminDirectoryOrderRow {
   tier: string
   url: string
   status: string
+  amountVerified: boolean
   amountCents: number | null
   currency: string | null
   paidAt: Date | null
@@ -513,6 +519,7 @@ export async function listDirectoryOrders(): Promise<AdminDirectoryOrderRow[]> {
       tier: directoryOrder.tier,
       url: directoryOrder.url,
       status: directoryOrder.status,
+      amountVerified: directoryOrder.amountVerified,
       amountCents: directoryOrder.amountCents,
       currency: directoryOrder.currency,
       paidAt: directoryOrder.paidAt,
@@ -546,9 +553,27 @@ export async function markDirectoryOrderFulfilled(orderId: string): Promise<{ ok
       fulfilledBy: adminId,
       updatedAt: new Date(),
     })
-    .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "paid")))
+    .where(
+      and(
+        eq(directoryOrder.id, orderId),
+        eq(directoryOrder.status, "paid"),
+        // Don't let an admin fulfil an amount-mismatch order still held for review.
+        eq(directoryOrder.amountVerified, true),
+      ),
+    )
 
   if (!result.rowCount || result.rowCount === 0) {
+    // Give a specific message when the block is the held-for-review flag.
+    const [ord] = await db
+      .select({ status: directoryOrder.status, amountVerified: directoryOrder.amountVerified })
+      .from(directoryOrder)
+      .where(eq(directoryOrder.id, orderId))
+      .limit(1)
+    if (ord?.status === "paid" && ord.amountVerified === false) {
+      throw new Error(
+        "Order is held for review (amount mismatch) — verify the payment before fulfilling.",
+      )
+    }
     throw new Error("Order is not in a fulfillable state (must be `paid`)")
   }
 
