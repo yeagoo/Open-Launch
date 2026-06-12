@@ -10,7 +10,7 @@ import {
   tag as tagTable,
   user,
 } from "@/drizzle/db/schema"
-import { count, eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { downloadAndUploadImage } from "@/lib/image-upload"
@@ -181,40 +181,60 @@ export async function GET(request: Request) {
           }
         }
 
-        // 创建项目
-        await db.insert(project).values({
-          id: projectId,
-          createdBy: botUser.id,
-          name: post.name,
-          slug,
-          description,
-          websiteUrl: realWebsiteUrl,
-          logoUrl,
-          coverImageUrl: null,
-          productImage: productImageUrl,
-          githubUrl: null,
-          twitterUrl: null,
-          techStack: tags,
-          pricing: "free",
-          platforms: ["web"],
-          launchStatus: "scheduled",
-          scheduledLaunchDate: tomorrow,
-          launchType: "free",
-          featuredOnHomepage: false,
-          dailyRanking: null,
-          hasBadgeVerified: false,
-          badgeVerifiedAt: null,
-        })
+        // Persist the project, its categories AND the import dedup marker in
+        // ONE transaction. Previously these were separate writes, so a crash
+        // between the project insert and the marker insert left an orphaned
+        // project that got re-imported (duplicate) on the next run. The marker
+        // is moved ahead of the (non-critical) tag writes so it commits with
+        // the project. Image uploads stay outside — they're external.
+        await db.transaction(async (tx) => {
+          // 创建项目
+          await tx.insert(project).values({
+            id: projectId,
+            createdBy: botUser.id,
+            name: post.name,
+            slug,
+            description,
+            websiteUrl: realWebsiteUrl,
+            logoUrl,
+            coverImageUrl: null,
+            productImage: productImageUrl,
+            githubUrl: null,
+            twitterUrl: null,
+            techStack: tags,
+            pricing: "free",
+            platforms: ["web"],
+            launchStatus: "scheduled",
+            scheduledLaunchDate: tomorrow,
+            launchType: "free",
+            featuredOnHomepage: false,
+            dailyRanking: null,
+            hasBadgeVerified: false,
+            badgeVerifiedAt: null,
+          })
 
-        // 写入 categories
-        if (categoryIds.length > 0) {
-          await db
-            .insert(projectToCategory)
-            .values(categoryIds.map((categoryId) => ({ projectId, categoryId })))
-          console.log(`🏷️  Categories assigned: ${categoryIds.join(", ")}`)
-        } else {
-          console.log(`⚠️  No matching categories found for "${post.name}"`)
-        }
+          // 写入 categories
+          if (categoryIds.length > 0) {
+            await tx
+              .insert(projectToCategory)
+              .values(categoryIds.map((categoryId) => ({ projectId, categoryId })))
+            console.log(`🏷️  Categories assigned: ${categoryIds.join(", ")}`)
+          } else {
+            console.log(`⚠️  No matching categories found for "${post.name}"`)
+          }
+
+          // 记录导入 — dedup marker commits atomically with the project.
+          await tx.insert(productHuntImport).values({
+            id: crypto.randomUUID(),
+            productHuntId: post.id,
+            productHuntUrl: post.url,
+            projectId,
+            votesCount: post.votesCount,
+            rank,
+            importedAt: new Date(),
+            createdAt: new Date(),
+          })
+        })
 
         // 写入 tag 系统
         if (tags.length > 0) {
@@ -251,30 +271,19 @@ export async function GET(request: Request) {
                 .values(normalizedTags.map((t) => ({ projectId, tagId: t.id })))
 
               for (const t of normalizedTags) {
-                const countResult = await tx
-                  .select({ count: count() })
-                  .from(projectToTag)
-                  .where(eq(projectToTag.tagId, t.id))
+                // Atomic recount in one statement (see submitProject) instead
+                // of a read-then-write that concurrent imports could interleave.
                 await tx
                   .update(tagTable)
-                  .set({ projectCount: countResult[0]?.count || 0, updatedAt: new Date() })
+                  .set({
+                    projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
+                    updatedAt: new Date(),
+                  })
                   .where(eq(tagTable.id, t.id))
               }
             })
           }
         }
-
-        // 记录导入
-        await db.insert(productHuntImport).values({
-          id: crypto.randomUUID(),
-          productHuntId: post.id,
-          productHuntUrl: post.url,
-          projectId,
-          votesCount: post.votesCount,
-          rank,
-          importedAt: new Date(),
-          createdAt: new Date(),
-        })
 
         console.log(`✅ Imported #${rank}: "${post.name}" (${post.votesCount} votes)`)
         results.push({

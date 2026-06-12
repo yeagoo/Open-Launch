@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
     // Date limite pour les paiements abandonnés (24 heures)
     const paymentDeadline = subHours(now, 24)
 
-    let totalRanked = 0
-
-    // 1. Update SCHEDULED -> ONGOING
+    // 1. Update SCHEDULED -> ONGOING. Committed on its own (NOT inside the
+    // ranking transaction below) so a transient error in the later ranking
+    // work can't roll back today's go-lives — this job runs once a day, so a
+    // rolled-back go-live would hide the day's launches until tomorrow.
     const scheduledToOngoing = await db
       .update(project)
       .set({
@@ -39,128 +40,143 @@ export async function GET(request: NextRequest) {
       )
       .returning({ id: project.id, name: project.name })
 
-    // 2. Update every expired ONGOING -> LAUNCHED. This intentionally catches
-    // older stuck rows, not just yesterday, so a missed cron tick cannot keep
-    // old products on today's homepage or in the bot-vote pool forever.
-    const ongoingToLaunched = await db
-      .update(project)
-      .set({
-        launchStatus: launchStatus.LAUNCHED,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(project.launchStatus, launchStatus.ONGOING),
-          lt(project.scheduledLaunchDate, currentWindowStart),
-        ),
+    // 2+3. ONGOING -> LAUNCHED and its daily-ranking writes run in ONE
+    // transaction: if ranking dies mid-way, the status flip rolls back too,
+    // so a project is never stranded as LAUNCHED with dailyRanking = null
+    // (the source query only looks at ONGOING rows). A failed run retries
+    // cleanly — the LAUNCHED query re-catches the still-ONGOING rows.
+    const { ongoingToLaunched, totalRanked } = await db.transaction(async (tx) => {
+      let totalRanked = 0
+
+      // 2. Update every expired ONGOING -> LAUNCHED. This intentionally catches
+      // older stuck rows, not just yesterday, so a missed cron tick cannot keep
+      // old products on today's homepage or in the bot-vote pool forever.
+      const ongoingToLaunched = await tx
+        .update(project)
+        .set({
+          launchStatus: launchStatus.LAUNCHED,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(project.launchStatus, launchStatus.ONGOING),
+            lt(project.scheduledLaunchDate, currentWindowStart),
+          ),
+        )
+        .returning({
+          id: project.id,
+          name: project.name,
+          scheduledLaunchDate: project.scheduledLaunchDate,
+        })
+
+      // 3. Calculate top projects for each launch window we just closed.
+      const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
+      console.log(
+        `Projets passés à LAUNCHED: ${justLaunchedProjectIds.length}`,
+        justLaunchedProjectIds,
       )
-      .returning({
-        id: project.id,
-        name: project.name,
-        scheduledLaunchDate: project.scheduledLaunchDate,
-      })
 
-    // 3. Calculate top projects for each launch window we just closed.
-    const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
-    console.log(
-      `Projets passés à LAUNCHED: ${justLaunchedProjectIds.length}`,
-      justLaunchedProjectIds,
-    )
+      if (justLaunchedProjectIds.length > 0) {
+        const launchedByWindow = new Map<string, typeof ongoingToLaunched>()
+        for (const proj of ongoingToLaunched) {
+          if (!proj.scheduledLaunchDate) continue
+          const windowKey = getLaunchWindowForDate(
+            new Date(proj.scheduledLaunchDate),
+          ).start.toISOString()
+          launchedByWindow.set(windowKey, [...(launchedByWindow.get(windowKey) ?? []), proj])
+        }
 
-    if (justLaunchedProjectIds.length > 0) {
-      const launchedByWindow = new Map<string, typeof ongoingToLaunched>()
-      for (const proj of ongoingToLaunched) {
-        if (!proj.scheduledLaunchDate) continue
-        const windowKey = getLaunchWindowForDate(
-          new Date(proj.scheduledLaunchDate),
-        ).start.toISOString()
-        launchedByWindow.set(windowKey, [...(launchedByWindow.get(windowKey) ?? []), proj])
-      }
+        for (const [windowKey, launchedProjects] of launchedByWindow) {
+          const projectIds = launchedProjects.map((p) => p.id)
+          const projectUpvotes = await tx
+            .select({
+              projectId: upvote.projectId,
+              count: count(upvote.id),
+            })
+            .from(upvote)
+            .where(inArray(upvote.projectId, projectIds))
+            .groupBy(upvote.projectId)
+            .orderBy(desc(count(upvote.id)))
+            .execute()
 
-      for (const [windowKey, launchedProjects] of launchedByWindow) {
-        const projectIds = launchedProjects.map((p) => p.id)
-        const projectUpvotes = await db
-          .select({
-            projectId: upvote.projectId,
-            count: count(upvote.id),
-          })
-          .from(upvote)
-          .where(inArray(upvote.projectId, projectIds))
-          .groupBy(upvote.projectId)
-          .orderBy(desc(count(upvote.id)))
-          .execute()
+          const projectsWithUpvotes = launchedProjects
+            .map((proj) => {
+              const upvoteData = projectUpvotes.find((uv) => uv.projectId === proj.id)
+              return {
+                projectId: proj.id,
+                projectName: proj.name,
+                upvoteCount: upvoteData ? Number(upvoteData.count) : 0,
+              }
+            })
+            .sort((a, b) => b.upvoteCount - a.upvoteCount)
 
-        const projectsWithUpvotes = launchedProjects
-          .map((proj) => {
-            const upvoteData = projectUpvotes.find((uv) => uv.projectId === proj.id)
-            return {
-              projectId: proj.id,
-              projectName: proj.name,
-              upvoteCount: upvoteData ? Number(upvoteData.count) : 0,
+          console.log(`Projets avec des upvotes pour ${windowKey}:`, projectsWithUpvotes)
+
+          const rankGroups: Array<
+            Array<{ projectId: string; projectName: string; upvoteCount: number }>
+          > = []
+          let currentCount = -1
+          let currentGroup: Array<{
+            projectId: string
+            projectName: string
+            upvoteCount: number
+          }> = []
+
+          for (const projectData of projectsWithUpvotes) {
+            if (projectData.upvoteCount === 0) continue
+
+            if (projectData.upvoteCount !== currentCount) {
+              if (currentGroup.length > 0) {
+                rankGroups.push(currentGroup)
+              }
+              currentCount = projectData.upvoteCount
+              currentGroup = [projectData]
+            } else {
+              currentGroup.push(projectData)
             }
-          })
-          .sort((a, b) => b.upvoteCount - a.upvoteCount)
-
-        console.log(`Projets avec des upvotes pour ${windowKey}:`, projectsWithUpvotes)
-
-        const rankGroups: Array<
-          Array<{ projectId: string; projectName: string; upvoteCount: number }>
-        > = []
-        let currentCount = -1
-        let currentGroup: Array<{
-          projectId: string
-          projectName: string
-          upvoteCount: number
-        }> = []
-
-        for (const projectData of projectsWithUpvotes) {
-          if (projectData.upvoteCount === 0) continue
-
-          if (projectData.upvoteCount !== currentCount) {
-            if (currentGroup.length > 0) {
-              rankGroups.push(currentGroup)
-            }
-            currentCount = projectData.upvoteCount
-            currentGroup = [projectData]
-          } else {
-            currentGroup.push(projectData)
           }
-        }
 
-        if (currentGroup.length > 0) {
-          rankGroups.push(currentGroup)
-        }
-
-        console.log(`Groupes de classement formés pour ${windowKey}: ${rankGroups.length} groupes`)
-
-        let currentRank = 1
-        for (const group of rankGroups) {
-          if (currentRank > 3) break
+          if (currentGroup.length > 0) {
+            rankGroups.push(currentGroup)
+          }
 
           console.log(
-            `Groupe ${currentRank}: ${group.length} projets avec ${group[0].upvoteCount} upvotes chacun`,
+            `Groupes de classement formés pour ${windowKey}: ${rankGroups.length} groupes`,
           )
 
-          for (const projectData of group) {
-            await db
-              .update(project)
-              .set({
-                dailyRanking: currentRank,
-                updatedAt: now,
-              })
-              .where(eq(project.id, projectData.projectId))
+          let currentRank = 1
+          for (const group of rankGroups) {
+            if (currentRank > 3) break
 
             console.log(
-              `Classé #${currentRank}: ${projectData.projectName} (${projectData.projectId}) avec ${projectData.upvoteCount} upvotes [ex-aequo: ${group.length > 1 ? "oui" : "non"}]`,
+              `Groupe ${currentRank}: ${group.length} projets avec ${group[0].upvoteCount} upvotes chacun`,
             )
 
-            totalRanked++
+            for (const projectData of group) {
+              await tx
+                .update(project)
+                .set({
+                  dailyRanking: currentRank,
+                  updatedAt: now,
+                })
+                .where(eq(project.id, projectData.projectId))
+
+              console.log(
+                `Classé #${currentRank}: ${projectData.projectName} (${projectData.projectId}) avec ${projectData.upvoteCount} upvotes [ex-aequo: ${group.length > 1 ? "oui" : "non"}]`,
+              )
+
+              totalRanked++
+            }
+            currentRank++
           }
-          currentRank++
         }
+        console.log(`Total de projets classés: ${totalRanked}`)
       }
-      console.log(`Total de projets classés: ${totalRanked}`)
-    }
+
+      return { ongoingToLaunched, totalRanked }
+    })
+
+    const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
 
     // 4. Clean up abandoned PAYMENT_PENDING
     const abandonedPayments = await db

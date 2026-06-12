@@ -148,6 +148,27 @@ export async function dedupeOnce(key: string, ttlSeconds: number): Promise<boole
   }
 }
 
+/**
+ * Release a `dedupeOnce` lease early so a subsequent call with the same
+ * key can re-acquire it. Use when the work guarded by the lease FAILED
+ * and should be retryable (e.g. a cron dispatch that errored) — without
+ * this the key sits until its TTL and suppresses the retry. Best-effort:
+ * a Redis hiccup just leaves the key to expire on its own.
+ */
+export async function clearDedupe(key: string): Promise<void> {
+  const fullKey = `dedupe:${key}`
+  inMemorySeen.delete(fullKey)
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    await client.del(fullKey)
+  } catch (error) {
+    console.error("Redis error (clearDedupe):", error)
+  }
+}
+
 export async function checkRateLimit(
   identifier: string,
   limit: number,

@@ -26,23 +26,30 @@ import { getCurrentUserId } from "@/lib/server-auth"
 
 // Fonction pour générer un slug unique
 async function generateUniqueSlug(name: string): Promise<string> {
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+  const baseSlug =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "project" // fall back when the name has no slug-able chars
 
-  // Vérifier si le slug existe déjà dans la table project
-  const existingProject = await db.query.project.findFirst({
-    where: eq(projectTable.slug, baseSlug),
-  })
-
-  if (!existingProject) {
-    return baseSlug
+  // Try the bare slug first, then progressively-random suffixes. Checking
+  // several candidates up front makes a collision (and the resulting lost
+  // submission) far less likely than the previous single random suffix.
+  // A 23505 on project_slug_unique is still caught in submitProject as a
+  // last-resort safety net for the residual concurrent-insert race.
+  const candidates = [baseSlug]
+  for (let i = 0; i < 5; i++) {
+    candidates.push(`${baseSlug}-${Math.floor(Math.random() * 100000)}`)
+  }
+  for (const candidate of candidates) {
+    const existing = await db.query.project.findFirst({
+      where: eq(projectTable.slug, candidate),
+    })
+    if (!existing) return candidate
   }
 
-  // Si le slug existe, ajouter un nombre aléatoire
-  const randomSuffix = Math.floor(Math.random() * 10000)
-  return `${baseSlug}-${randomSuffix}`
+  // Effectively-guaranteed-unique fallback.
+  return `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`
 }
 
 // Get session helper
@@ -457,13 +464,17 @@ export async function submitProject(projectData: ProjectSubmissionData) {
           .values(normalizedTags.map((t) => ({ projectId: inserted.id, tagId: t.id })))
 
         for (const t of normalizedTags) {
-          const countResult = await tx
-            .select({ count: count() })
-            .from(projectToTag)
-            .where(eq(projectToTag.tagId, t.id))
+          // Atomic recount in a single statement: the correlated subquery
+          // re-derives the count from project_to_tag under the tag row's
+          // own write lock, instead of a read-then-write that two
+          // concurrent submissions touching the same tag could interleave
+          // into a stale value.
           await tx
             .update(tagTable)
-            .set({ projectCount: countResult[0]?.count || 0, updatedAt: new Date() })
+            .set({
+              projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
+              updatedAt: new Date(),
+            })
             .where(eq(tagTable.id, t.id))
         }
       }
@@ -474,9 +485,19 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     return { success: true, projectId: newProject.id, slug: newProject.slug }
   } catch (error) {
     console.error("Error submitting project:", error)
+    // Postgres surfaces the SQLSTATE on error.cause.code (not error.code)
+    // via the driver; constraint name is on error.cause.constraint.
+    const cause = (error as { cause?: { code?: string; constraint?: string } })?.cause
+    const constraint = cause?.constraint ?? (error instanceof Error ? error.message : "")
     // Unique constraint on websiteUrl
-    if (error instanceof Error && error.message.includes("project_website_url_unique")) {
+    if (constraint.includes("project_website_url_unique")) {
       return { success: false, error: "This website URL has already been submitted" }
+    }
+    // Residual slug race: two concurrent submissions of the same name both
+    // resolved a free slug, one lost the insert. Ask the user to retry —
+    // generateUniqueSlug will pick a fresh suffix next time.
+    if (constraint.includes("project_slug_unique")) {
+      return { success: false, error: "Please try submitting again (name conflict)" }
     }
     return { success: false, error: "Failed to submit project" }
   }

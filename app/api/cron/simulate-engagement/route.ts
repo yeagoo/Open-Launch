@@ -209,12 +209,26 @@ export async function GET(request: Request) {
         // Format and insert comment
         const commentContent = formatCommentContent(commentText)
 
-        await db.insert(fumaComments).values({
-          page: proj.id,
-          author: bot.id,
-          content: commentContent,
-          thread: null,
-        })
+        // onConflictDoNothing pairs with the partial unique index on
+        // (page, author) for bot authors: a retried/overlapping cron run
+        // can't post a duplicate bot comment on the same project. `returning`
+        // lets us count only rows actually inserted (a skipped conflict
+        // returns nothing) so metrics reflect real work.
+        const inserted = await db
+          .insert(fumaComments)
+          .values({
+            page: proj.id,
+            author: bot.id,
+            content: commentContent,
+            thread: null,
+          })
+          .onConflictDoNothing()
+          .returning({ id: fumaComments.id })
+
+        if (inserted.length === 0) {
+          console.log(`  ⏭️  ${bot.name} already commented on ${proj.name} (conflict, skipped)`)
+          continue
+        }
 
         results.commentsPosted++
         console.log(`  ✅ ${bot.name} commented on ${proj.name}`)

@@ -6,6 +6,7 @@ import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronMatches } from "@/lib/cron-match"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { clearDedupe, dedupeOnce } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
 // 5 min total cap. We give each fan-out 4 min and reserve 1 min for the
@@ -66,62 +67,98 @@ export async function GET(request: NextRequest) {
   const baseUrl = process.env.INTERNAL_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3000"}`
   const now = new Date()
 
-  const allTasks = await db
-    .select({
-      path: cronSchedule.path,
-      cronExpression: cronSchedule.cronExpression,
-      enabled: cronSchedule.enabled,
+  // Concurrency guard: cron-job.org can fire twice in a minute (retry,
+  // or an overlapping manual trigger), which would run every due task
+  // concurrently. Claim a per-minute lease (Redis SET NX, cross-instance)
+  // so only the first dispatch in a given minute fans out. 90s TTL > the
+  // 1-minute tick so the lease covers the whole window.
+  //
+  // IMPORTANT: the lease is RELEASED if this dispatch fails (a 500 status
+  // or a thrown error) — see the catch/failure paths below. Otherwise a
+  // failed run would hold the lease and cron-job.org's same-minute retry
+  // would be skipped, killing the only auto-retry for once-daily jobs
+  // (launch updates, ProductHunt import). A successful run keeps the lease
+  // so genuine duplicate fires in the same minute stay suppressed.
+  const minuteBucket = now.toISOString().slice(0, 16) // YYYY-MM-DDTHH:MM
+  const dedupeKey = `cron-dispatch:${minuteBucket}`
+  const claimed = await dedupeOnce(dedupeKey, 90)
+  if (!claimed) {
+    return NextResponse.json(
+      { skipped: true, reason: "dispatch already ran this minute", minuteBucket },
+      { status: 200 },
+    )
+  }
+
+  try {
+    const allTasks = await db
+      .select({
+        path: cronSchedule.path,
+        cronExpression: cronSchedule.cronExpression,
+        enabled: cronSchedule.enabled,
+      })
+      .from(cronSchedule)
+
+    const due: typeof allTasks = []
+    const skippedDisabled: string[] = []
+    for (const t of allTasks) {
+      if (!t.enabled) {
+        // We still note disabled tasks in the response, but don't fire them
+        // and don't write a log row (no work happened, no signal to record).
+        if (cronMatches(t.cronExpression, now)) skippedDisabled.push(t.path)
+        continue
+      }
+      if (cronMatches(t.cronExpression, now)) due.push(t)
+    }
+
+    const results = await Promise.all(due.map((t) => runTask(baseUrl, authHeader, t.path)))
+
+    // Persist run log. One row per attempted task. Done after fan-out so a
+    // slow log write doesn't delay the actual work.
+    if (results.length > 0) {
+      try {
+        await db.insert(cronRunLog).values(
+          results.map((r) => ({
+            dispatchedAt: now,
+            taskPath: r.path,
+            statusCode: r.statusCode,
+            durationMs: r.durationMs,
+            error: r.error,
+          })),
+        )
+      } catch (err) {
+        console.error("cron_run_log insert failed:", err)
+      }
+    }
+
+    const successCount = results.filter((r) => r.statusCode >= 200 && r.statusCode < 300).length
+    const failedCount = results.length - successCount
+    const status = cronStatusFromResult({
+      errorCount: failedCount,
+      successCount: successCount,
     })
-    .from(cronSchedule)
 
-  const due: typeof allTasks = []
-  const skippedDisabled: string[] = []
-  for (const t of allTasks) {
-    if (!t.enabled) {
-      // We still note disabled tasks in the response, but don't fire them
-      // and don't write a log row (no work happened, no signal to record).
-      if (cronMatches(t.cronExpression, now)) skippedDisabled.push(t.path)
-      continue
+    // Failed dispatch (some tasks were due and none succeeded → 500):
+    // release the lease so cron-job.org's retry isn't skipped.
+    if (status >= 500) {
+      await clearDedupe(dedupeKey)
     }
-    if (cronMatches(t.cronExpression, now)) due.push(t)
+
+    return NextResponse.json(
+      {
+        dispatchedAt: now.toISOString(),
+        ranCount: results.length,
+        successCount,
+        failedCount,
+        skippedDisabled,
+        results,
+      },
+      { status },
+    )
+  } catch (err) {
+    // Unexpected failure (e.g. schedule DB read threw): release the lease
+    // so the retry can run, then surface a 500 for cron-job.org to retry.
+    await clearDedupe(dedupeKey)
+    console.error("cron dispatch failed:", err)
+    return NextResponse.json({ error: "dispatch failed" }, { status: 500 })
   }
-
-  const results = await Promise.all(due.map((t) => runTask(baseUrl, authHeader, t.path)))
-
-  // Persist run log. One row per attempted task. Done after fan-out so a
-  // slow log write doesn't delay the actual work.
-  if (results.length > 0) {
-    try {
-      await db.insert(cronRunLog).values(
-        results.map((r) => ({
-          dispatchedAt: now,
-          taskPath: r.path,
-          statusCode: r.statusCode,
-          durationMs: r.durationMs,
-          error: r.error,
-        })),
-      )
-    } catch (err) {
-      console.error("cron_run_log insert failed:", err)
-    }
-  }
-
-  const successCount = results.filter((r) => r.statusCode >= 200 && r.statusCode < 300).length
-  const failedCount = results.length - successCount
-  const status = cronStatusFromResult({
-    errorCount: failedCount,
-    successCount: successCount,
-  })
-
-  return NextResponse.json(
-    {
-      dispatchedAt: now.toISOString(),
-      ranCount: results.length,
-      successCount,
-      failedCount,
-      skippedDisabled,
-      results,
-    },
-    { status },
-  )
 }
