@@ -11,7 +11,9 @@ export function verifyCronAuth(request: Request): NextResponse | null {
   }
 
   const authHeader = request.headers.get("authorization")
-  const providedKey = authHeader?.replace("Bearer ", "") ?? ""
+  // Strip the scheme prefix case-insensitively, anchored to the start, with
+  // any whitespace — so "Bearer KEY", "bearer KEY", etc. all yield "KEY".
+  const providedKey = authHeader?.replace(/^Bearer\s+/i, "") ?? ""
 
   // Constant-time comparison so response timing can't be used to
   // recover the key byte-by-byte. timingSafeEqual requires equal

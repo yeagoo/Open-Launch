@@ -47,29 +47,44 @@ function removeLinksFromContent(content: any): any {
 }
 
 /**
- * Traite une requête en supprimant les liens du contenu
- * @param req La requête originale
- * @returns Une nouvelle requête avec le contenu nettoyé
+ * Strip links from a comment request body and return a fresh request
+ * carrying the cleaned content, plus the parsed body (for notifications).
+ *
+ * Fails CLOSED: a non-empty body that isn't valid JSON throws so callers
+ * reject the request, instead of the old behaviour of forwarding the
+ * original (unstripped) request on parse error — which let a malformed
+ * payload bypass link removal. An empty body (e.g. a like/rate action
+ * that carries no JSON) passes through untouched.
  */
-async function processRequestWithLinkRemoval(req: NextRequest) {
-  try {
-    const body = await req.json()
-
-    // Supprimer les liens du contenu si présent
-    if (body && body.content) {
-      body.content = removeLinksFromContent(body.content)
+async function processRequestWithLinkRemoval(
+  req: NextRequest,
+): Promise<{ req: NextRequest; body: Record<string, any> | null }> {
+  const raw = await req.text()
+  if (!raw) {
+    return {
+      req: new NextRequest(req.url, { method: req.method, headers: req.headers }),
+      body: null,
     }
+  }
 
-    // Créer une nouvelle requête avec le contenu modifié
-    return new NextRequest(req.url, {
+  let body: Record<string, any>
+  try {
+    body = JSON.parse(raw)
+  } catch {
+    throw new Error("INVALID_JSON")
+  }
+
+  if (body && body.content) {
+    body.content = removeLinksFromContent(body.content)
+  }
+
+  return {
+    req: new NextRequest(req.url, {
       method: req.method,
       headers: req.headers,
       body: JSON.stringify(body),
-    })
-  } catch (error) {
-    console.error("Error processing request:", error)
-    // En cas d'erreur, retourner la requête originale
-    return req
+    }),
+    body,
   }
 }
 
@@ -91,11 +106,10 @@ export async function POST(req: NextRequest, context: any) {
     // Check if it's a new comment (only 1 segment = projectId)
     const isNewComment = commentParams.length === 1
 
-    // Only for new comments with authenticated users
+    // Rate-limit BEFORE reading/parsing the body, so an over-quota user
+    // can't force JSON parsing + link stripping on every rejected request.
     if (isNewComment && session) {
-      // Apply rate limiting for comments
       const rateLimit = await checkCommentRateLimit(session.id)
-
       if (!rateLimit.success) {
         return NextResponse.json(
           {
@@ -108,59 +122,61 @@ export async function POST(req: NextRequest, context: any) {
           { status: 429 },
         )
       }
-
-      // The project ID is the first segment in commentParams
-      const projectId = commentParams[0]
-
-      try {
-        // Lire le body de la requête
-        const body = await req.json()
-
-        // Supprimer les liens du contenu
-        if (body && body.content) {
-          body.content = removeLinksFromContent(body.content)
-
-          // Extract comment text and send notification
-          const commentText = extractTextFromContent(body.content)
-
-          // Send Discord notification asynchronously
-          void sendDiscordCommentNotification(projectId, session.id || "", commentText)
-        }
-
-        // Créer une nouvelle requête avec le contenu modifié
-        const modifiedReq = new NextRequest(req.url, {
-          method: req.method,
-          headers: req.headers,
-          body: JSON.stringify(body),
-        })
-
-        // Passer la nouvelle requête au handler
-        return commentHandler.POST(modifiedReq, context)
-      } catch (error) {
-        console.error("Error processing comment:", error)
-      }
     }
 
-    // Pour tous les autres cas (pas de rate limiting), traiter quand même les liens
-    const processedReq = await processRequestWithLinkRemoval(req)
-    return commentHandler.POST(processedReq, context)
+    // Strip links. Fail closed on a malformed body so it can't bypass link
+    // removal by being unparseable.
+    let processed: { req: NextRequest; body: Record<string, any> | null }
+    try {
+      processed = await processRequestWithLinkRemoval(req)
+    } catch {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
+    }
+
+    // Fire the Discord notification for new comments with the stripped content.
+    if (isNewComment && session && processed.body?.content) {
+      const projectId = commentParams[0]
+      const commentText = extractTextFromContent(processed.body.content)
+      void sendDiscordCommentNotification(projectId, session.id || "", commentText)
+    }
+
+    return commentHandler.POST(processed.req, context)
   } catch (error) {
     console.error("Error intercepting request:", error)
-    // En cas d'erreur, passer la requête originale
-    return commentHandler.POST(req, context)
+    return NextResponse.json({ message: "Failed to process comment" }, { status: 500 })
   }
 }
 
 // Intercept PATCH requests (édition de commentaires) pour aussi supprimer les liens
 export async function PATCH(req: NextRequest, context: any) {
   try {
-    // Traiter la requête pour supprimer les liens
-    const processedReq = await processRequestWithLinkRemoval(req)
-    return commentHandler.PATCH(processedReq, context)
+    // Rate-limit edits too (same per-user bucket as new comments) so the
+    // edit path can't be used to flood notifications / churn content.
+    const session = await commentAuth.getSession(req as any)
+    if (session) {
+      const rateLimit = await checkCommentRateLimit(session.id)
+      if (!rateLimit.success) {
+        return NextResponse.json(
+          {
+            message: "Too many edits. Please wait a moment before trying again.",
+            type: "rate_limit_exceeded",
+            resetInSeconds: rateLimit.reset,
+          },
+          { status: 429 },
+        )
+      }
+    }
+
+    let processed: { req: NextRequest; body: Record<string, any> | null }
+    try {
+      processed = await processRequestWithLinkRemoval(req)
+    } catch {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
+    }
+    return commentHandler.PATCH(processed.req, context)
   } catch (error) {
     console.error("Error intercepting PATCH request:", error)
-    // En cas d'erreur, passer la requête originale
-    return commentHandler.PATCH(req, context)
+    return NextResponse.json({ message: "Failed to process edit" }, { status: 500 })
   }
 }
 
