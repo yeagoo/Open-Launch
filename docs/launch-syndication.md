@@ -106,6 +106,31 @@ Partner listings are created with `enableBacklinkCheck=false` (bigkr/mf8) and
 `isDofollow=true` so the backlink-verification cron never auto-expires them —
 the source project has no backlink to the partner site.
 
+## Partner-site notes (per-site gotchas)
+
+Already baked into the receivers; documented here so a new partner site (or a
+redeploy that resets config) gets them right.
+
+- **hicyou — CSRF middleware exemption.** `hicyou-pravite/middleware.ts` runs an
+  Origin/Referer CSRF check on every mutating `/api/*` request. The worker POSTs
+  server-to-server (no Origin header), so `/api/external/` **must** be in
+  `CSRF_EXEMPT_PREFIXES` or the request is rejected with
+  `403 {"error":"Forbidden: bad origin"}` _before_ reaching the route. bigkr/mf8
+  have no such middleware.
+
+- **Dofollow backlinks.** The paid listing's value is a followed backlink, so
+  all three sites render the outbound link as a clean dofollow (no
+  `nofollow`/`ugc`/`sponsored`):
+  - **bigkr / mf8** store `linkRel = null` + `enableBacklinkCheck = false`, so the
+    product→website link renders `rel=""` and the backlink cron never downgrades
+    it to nofollow.
+  - **hicyou** stores `isDofollow = true` → a direct link
+    (`?utm_source=hicyou.com`, not the `/go` redirect) with
+    `rel="noopener noreferrer"`. `lib/link-utils.ts` `getBookmarkRel()` was
+    changed to drop `ugc` from the dofollow case (ugc is in the nofollow family
+    and passes no link equity); this applies to **every** dofollow bookmark on
+    hicyou, not just syndicated ones.
+
 ## Testing
 
 Smoke-test a receiver directly (replace host + key):
