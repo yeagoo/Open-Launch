@@ -76,6 +76,16 @@ export const auth = betterAuth({
   plugins: [
     stripe({
       stripeClient,
+      // ⚠️ The webhook this plugin mounts at /api/auth/stripe/webhook is
+      // INTENTIONALLY DEAD. Our explicit static route
+      // (app/api/auth/stripe/webhook/route.ts) sits at the same path and
+      // wins Next.js route precedence (static segments beat the [...all]
+      // catch-all), so this plugin's handler never runs. The custom route
+      // is authoritative — it knows about directoryOrder + project
+      // scheduling, which this plugin does not. DO NOT delete the static
+      // route: if it's removed, this no-op handler silently takes over and
+      // every payment becomes an orphan. The secret stays only because the
+      // plugin's type requires it (used for customer creation, not events).
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       createCustomerOnSignUp: true,
     }),

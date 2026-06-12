@@ -9,13 +9,15 @@ import {
   launchSyndication,
   project,
 } from "@/drizzle/db/schema"
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { and, count, eq, inArray, ne, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
+import { LAUNCH_SETTINGS } from "@/lib/constants"
 import {
   DIRECTORY_ORDER_REF_PREFIX,
   DIRECTORY_TIER_CONFIG,
   isDirectoryTier,
+  ULTRA_SPONSOR_SLOT_LIMIT,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
 import { enqueueLaunchSyndication } from "@/lib/launch-syndication"
@@ -35,6 +37,34 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-04-22.dahlia",
 })
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+
+// Expected charge for a legacy Premium Launch, in cents.
+const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
+
+// Arbitrary app-wide constant used as the key for a Postgres advisory
+// lock that serialises Ultra-slot fulfilment, so two concurrent paid
+// webhooks can't both believe a slot is free and overshoot the cap.
+const ULTRA_FULFIL_LOCK_KEY = 947213
+
+// All prices in this app are USD; `amount_total` is only meaningful as a
+// price check when the session is actually in USD (399 JPY would otherwise
+// satisfy a 399-USD-cent comparison).
+const EXPECTED_CURRENCY = "usd"
+
+/**
+ * True when the amount actually charged matches the expected price AND the
+ * session is in the expected currency. Promotion codes legitimately lower
+ * `amount_total`, so the discount is added back before comparing. A wrong
+ * currency, or a non-numeric `amount_total` (malformed / zero-amount
+ * session), is treated as a mismatch so it is held for review rather than
+ * silently trusted.
+ */
+function chargedAmountMatches(session: Stripe.Checkout.Session, expectedCents: number): boolean {
+  if (session.currency !== EXPECTED_CURRENCY) return false
+  if (typeof session.amount_total !== "number") return false
+  const discountCents = session.total_details?.amount_discount ?? 0
+  return session.amount_total + discountCents === expectedCents
+}
 
 /**
  * Cancel a directory_order tied to an Ultra subscription that's no longer
@@ -307,6 +337,7 @@ export async function POST(request: Request) {
             launchType: project.launchType,
             launchStatus: project.launchStatus,
             scheduledLaunchDate: project.scheduledLaunchDate,
+            premiumPriceCents: project.premiumPriceCents,
           })
           .from(project)
           .where(eq(project.id, projectId))
@@ -330,6 +361,40 @@ export async function POST(request: Request) {
         }
 
         console.log("✅ Project found, scheduled date:", projectData.scheduledLaunchDate)
+
+        // Server-side price guard. `client_reference_id` on a Stripe
+        // Payment Link is attacker-controllable (`?client_reference_id=`),
+        // so a paid session pointing at this project could have been
+        // created against any cheaper price. Verify the charged amount
+        // (discount added back for promo codes) before granting the paid
+        // launch. On mismatch: leave the project in PAYMENT_PENDING and
+        // alert admin instead of scheduling it.
+        //
+        // Gated on PAYMENT_PENDING so this only fires on FIRST processing:
+        // a replayed/already-processed session (project already SCHEDULED)
+        // is handled idempotently below instead of refunding a legitimate
+        // payment. Validate against the price captured at schedule time
+        // (premiumPriceCents) — falling back to the live constant only for
+        // legacy rows — so a later PREMIUM_PRICE change can't refund an
+        // in-flight session created at the old price.
+        const expectedPremiumCents = projectData.premiumPriceCents ?? PREMIUM_PRICE_CENTS
+        if (
+          projectData.launchStatus === launchStatus.PAYMENT_PENDING &&
+          !chargedAmountMatches(session, expectedPremiumCents)
+        ) {
+          console.error(
+            `⚠️ Premium amount mismatch — scheduling HELD. expected=${expectedPremiumCents}¢, stripe=${session.amount_total}, discount=${session.total_details?.amount_discount ?? 0}, project=${projectId}`,
+          )
+          await handleOrphanPayment(
+            session,
+            `premium amount mismatch (expected ${expectedPremiumCents}¢) for project ${projectId}`,
+            projectId,
+          )
+          return NextResponse.json(
+            { received: true, warning: "Amount mismatch — held for review" },
+            { status: 200 },
+          )
+        }
 
         // Atomic conditional update: only transition PAYMENT_PENDING → SCHEDULED
         // The WHERE clause ensures only the first writer (verify or webhook) succeeds
@@ -586,33 +651,80 @@ async function handleDirectoryOrderCompleted(
   // Guard against a Payment Link env var pointing at the wrong Stripe
   // price: if the amount paid doesn't match the configured tier price,
   // record the payment but hold all fulfilment for admin review.
-  // Promotion codes legitimately lower `amount_total`, so add the
-  // discount back before comparing.
+  // Promotion codes legitimately lower `amount_total` (added back inside
+  // the helper); a non-numeric `amount_total` is treated as a mismatch
+  // so a malformed/zero-amount session is held rather than auto-fulfilled.
   const discountCents = session.total_details?.amount_discount ?? 0
-  const amountMismatch =
-    typeof session.amount_total === "number" &&
-    session.amount_total + discountCents !== cfg.amountCents
+  const amountMismatch = !chargedAmountMatches(session, cfg.amountCents)
+
+  // Shared paid-write payload (used by both the Ultra and non-Ultra paths).
+  const paidSet = {
+    status: cfg.autoFulfil && !amountMismatch ? "fulfilled" : "paid",
+    amountCents: session.amount_total ?? cfg.amountCents,
+    currency: session.currency ?? "usd",
+    stripeSessionId: session.id,
+    stripeSubscriptionId: subId,
+    stripeCustomerId: customerId,
+    paidAt: now,
+    fulfilledAt: cfg.autoFulfil && !amountMismatch ? now : null,
+    amountVerified: !amountMismatch,
+    updatedAt: now,
+  }
 
   // Atomic conditional update: only `pending` orders flip to `paid`.
-  // Re-deliveries (Stripe retried after a 5xx) hit zero rows and we
-  // skip the rest of the work below — keeps the operation idempotent.
-  const updateResult = await db
-    .update(directoryOrder)
-    .set({
-      status: cfg.autoFulfil && !amountMismatch ? "fulfilled" : "paid",
-      amountCents: session.amount_total ?? cfg.amountCents,
-      currency: session.currency ?? "usd",
-      stripeSessionId: session.id,
-      stripeSubscriptionId: subId,
-      stripeCustomerId: customerId,
-      paidAt: now,
-      fulfilledAt: cfg.autoFulfil && !amountMismatch ? now : null,
-      amountVerified: !amountMismatch,
-      updatedAt: now,
+  // Re-deliveries (Stripe retried after a 5xx) hit zero rows and we skip the
+  // rest of the work below — keeps the operation idempotent.
+  //
+  // Ultra does BOTH the paid-write and the slot-cap check inside ONE
+  // advisory-locked transaction. The lock serialises Ultra fulfilment end to
+  // end, so two webhooks racing for the last slot can't each miss the other's
+  // not-yet-committed paid row: when the second acquires the lock the first
+  // has already committed and is counted, so exactly one survives. (Because
+  // of that strict ordering a plain count of active orders is sufficient — no
+  // FIFO predicate needed.)
+  let updateRowCount = 0
+  let ultraOverCap = false
+  if (tier === "ultra") {
+    const res = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ULTRA_FULFIL_LOCK_KEY})`)
+      const upd = await tx
+        .update(directoryOrder)
+        .set(paidSet)
+        .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
+      if (!upd.rowCount || upd.rowCount === 0) return { rowCount: 0, overCap: false }
+      // Amount-mismatch orders are held for review, not counted toward the cap.
+      if (amountMismatch) return { rowCount: upd.rowCount, overCap: false }
+      const [{ active }] = await tx
+        .select({ active: count() })
+        .from(directoryOrder)
+        .where(
+          and(
+            eq(directoryOrder.tier, "ultra"),
+            inArray(directoryOrder.status, ["paid", "fulfilled"]),
+            eq(directoryOrder.amountVerified, true),
+            ne(directoryOrder.id, orderId),
+          ),
+        )
+      if (Number(active) >= ULTRA_SPONSOR_SLOT_LIMIT) {
+        await tx
+          .update(directoryOrder)
+          .set({ status: "canceled", updatedAt: now })
+          .where(eq(directoryOrder.id, orderId))
+        return { rowCount: upd.rowCount, overCap: true }
+      }
+      return { rowCount: upd.rowCount, overCap: false }
     })
-    .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
+    updateRowCount = res.rowCount
+    ultraOverCap = res.overCap
+  } else {
+    const updateResult = await db
+      .update(directoryOrder)
+      .set(paidSet)
+      .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
+    updateRowCount = updateResult.rowCount ?? 0
+  }
 
-  if (!updateResult.rowCount || updateResult.rowCount === 0) {
+  if (updateRowCount === 0) {
     // Disambiguate idempotent (Stripe retry on already-paid order) vs
     // stale (someone canceled/refunded the order between createCheckout
     // and pay). The former is normal; the latter means money came in
@@ -631,9 +743,25 @@ async function handleDirectoryOrderCompleted(
     return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
   }
 
-  // Bust the sponsor-list cache so an Ultra subscription becomes
-  // visible on the sidebar at the next page request — without
-  // waiting for the per-page `revalidate` window (≤1h).
+  // Ultra over-cap: the order was already marked `canceled` inside the locked
+  // transaction above. Refund the charge + cancel the subscription + alert
+  // admin (external Stripe calls; idempotent) rather than charging for an
+  // invisible slot.
+  if (ultraOverCap) {
+    console.error(
+      `⚠️ Ultra over-cap: order ${orderId} exceeds ${ULTRA_SPONSOR_SLOT_LIMIT} active slots — refunding + canceling.`,
+    )
+    await handleOrphanPayment(
+      session,
+      `ultra over-cap — order ${orderId} beyond ${ULTRA_SPONSOR_SLOT_LIMIT}-slot limit`,
+      ref,
+    )
+    revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
+    return NextResponse.json({ received: true, overCap: true }, { status: 200 })
+  }
+
+  // Ultra accepted within cap: bust the sponsor-list cache so the new
+  // subscription shows on the sidebar at the next request (≤1h otherwise).
   if (tier === "ultra" && !amountMismatch) {
     revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
   }

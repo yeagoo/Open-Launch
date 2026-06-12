@@ -374,13 +374,19 @@ export async function scheduleLaunch(
         )
       }
 
-      // 5. Update project
+      // 5. Update project. For Premium, capture the expected charge (cents)
+      // now so payment validation later compares against the price that
+      // applied at schedule time, not a possibly-changed live constant.
       await tx
         .update(projectTable)
         .set({
           scheduledLaunchDate: launchDate,
           launchType: launchTypeValue as LaunchType,
           launchStatus: initialStatus,
+          premiumPriceCents:
+            launchTypeValue === LAUNCH_TYPES.PREMIUM
+              ? Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
+              : null,
           featuredOnHomepage: false,
           updatedAt: new Date(),
         })
