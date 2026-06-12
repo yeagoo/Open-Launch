@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   boolean,
   index,
@@ -130,6 +131,12 @@ export const project = pgTable(
     launchStatus: text("launch_status").notNull().default(launchStatus.SCHEDULED),
     scheduledLaunchDate: timestamp("scheduled_launch_date"),
     launchType: text("launch_type").default(launchType.FREE),
+    // Expected Premium-launch charge in cents, captured at schedule time
+    // (when the project enters PAYMENT_PENDING). The webhook / verify
+    // route validate the Stripe-charged amount against THIS stored value
+    // rather than the live PREMIUM_PRICE constant, so changing the price
+    // later doesn't refund in-flight sessions. Null for free/badge launches.
+    premiumPriceCents: integer("premium_price_cents"),
     featuredOnHomepage: boolean("featured_on_homepage").default(false),
     dailyRanking: integer("daily_ranking"),
     hasBadgeVerified: boolean("has_badge_verified").default(false),
@@ -150,6 +157,16 @@ export const project = pgTable(
   (table) => {
     return {
       nameIdx: index("project_name_idx").on(table.name),
+      // Nearly every listing/cron query filters on launch_status plus a
+      // scheduled_launch_date range (home today/yesterday/month, winners,
+      // category, the launch-window cron). Without this composite they
+      // sequentially scan the whole project table on each render.
+      statusDateIdx: index("project_status_date_idx").on(
+        table.launchStatus,
+        table.scheduledLaunchDate,
+      ),
+      // Dashboard / quota recount / admin queries filter by owner.
+      createdByIdx: index("project_created_by_idx").on(table.createdBy),
     }
   },
 )
@@ -281,14 +298,30 @@ export const fumaRoles = pgTable("fuma_roles", {
   canDelete: boolean("can_delete").notNull(),
 })
 
-export const fumaComments = pgTable("fuma_comments", {
-  id: serial("id").primaryKey().notNull(),
-  page: varchar("page", { length: 256 }).notNull(),
-  thread: integer("thread"),
-  author: varchar("author", { length: 256 }).notNull(),
-  content: json("content").notNull(),
-  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
-})
+export const fumaComments = pgTable(
+  "fuma_comments",
+  {
+    id: serial("id").primaryKey().notNull(),
+    page: varchar("page", { length: 256 }).notNull(),
+    thread: integer("thread"),
+    author: varchar("author", { length: 256 }).notNull(),
+    content: json("content").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    // Plain btree on `page` so the per-project comment-count join on
+    // every listing query (`fuma_comments.page = project.id`) can use an
+    // index instead of scanning the whole table.
+    index("fuma_comments_page_idx").on(table.page),
+    // Partial unique index scoped to bot authors only: one comment per
+    // bot per project. Stops cron retries / overlapping runs from posting
+    // duplicate bot comments. Real users (non-`bot-user-%` ids) are
+    // unaffected and can still post multiple comments per project.
+    uniqueIndex("fuma_comments_bot_page_author_uniq")
+      .on(table.page, table.author)
+      .where(sql`author LIKE 'bot-user-%'`),
+  ],
+)
 
 export const fumaRates = pgTable(
   "fuma_rates",
