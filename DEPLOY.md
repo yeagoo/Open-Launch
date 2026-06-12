@@ -6,12 +6,12 @@ directory listings from aat.ee to the partner sites **bigkr**, **mf8**, and
 
 Four repos, all on Zeabur:
 
-| Service | Repo           | Role                                   | Deploy branch | DB migration?        |
-| ------- | -------------- | -------------------------------------- | ------------- | -------------------- |
-| aat.ee  | Open-Launch    | sender (Stripe webhook + cron worker)  | `main`        | **yes** (0026, 0027) |
-| bigkr   | bigkr          | receiver (`POST /api/external/launch`) | `main`        | no                   |
-| mf8     | mf8            | receiver                               | `main`        | no                   |
-| hicyou  | hicyou-pravite | receiver                               | `main`        | no                   |
+| Service | Repo           | Role                                   | Deploy branch | DB migration?              |
+| ------- | -------------- | -------------------------------------- | ------------- | -------------------------- |
+| aat.ee  | Open-Launch    | sender (Stripe webhook + cron worker)  | `main`        | **yes** (0026, 0027, 0030) |
+| bigkr   | bigkr          | receiver (`POST /api/external/launch`) | `main`        | no                         |
+| mf8     | mf8            | receiver                               | `main`        | no                         |
+| hicyou  | hicyou-pravite | receiver                               | `main`        | no                         |
 
 ## 0. One shared secret
 
@@ -38,10 +38,19 @@ service shell):
 bun run db:migrate     # drizzle-kit migrate + apply-pending-sql.ts (idempotent)
 ```
 
-Applies (at least) `0026_launch_syndication.sql` (queue table + cron registration)
-and `0027_directory_order_amount_verified.sql` (held-order flag). The cron is
-auto-registered in `cron_schedule`; the existing `/api/cron/dispatch` picks it up
-— **no new Zeabur cron job needed**.
+Applies (at least) `0026_launch_syndication.sql` (queue table + cron registration),
+`0027_directory_order_amount_verified.sql` (held-order flag), and
+`0030_register_refresh_dr_cron.sql` (registers the DR refresh cron — see below).
+Crons are auto-registered in `cron_schedule`; the existing `/api/cron/dispatch`
+picks them up — **no new Zeabur cron job needed**.
+
+> 🔄 `0030` finally schedules `/api/cron/refresh-dr` (`0 4 */3 * *`), which had
+> existed since `0020` but was never registered, so the home + pricing DR badges
+> went stale. DR now primarily comes from Ahrefs' **free public endpoint** (no API
+> key) — `X_RAPIDAPI_KEY` is only a fallback and is **not required**. After the
+> migration, confirm the row exists
+> (`select * from cron_schedule where path = '/api/cron/refresh-dr'`) and
+> optionally force a first refresh with `bun run scripts/smoke-ahrefs.ts aat.ee`.
 
 > ⚠️ The new code references the `launch_syndication` table and the
 > `directory_order.amount_verified` column. **Run the migration before/with the
