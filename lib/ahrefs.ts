@@ -1,25 +1,33 @@
 /**
  * Ahrefs Domain Rating client.
  *
- * Both providers wrap the same upstream Ahrefs API but differ in
- * request shape and response field names. We keep a tiny adapter per
- * provider and pick between them based on monthly quota: stop using
- * a provider once it crosses 80% usage. If both are saturated, the
+ * Primary source is Ahrefs' own free public endpoint
+ * (api.ahrefs.com/v3/public/domain-rating-free) — no API key, no
+ * account quota, authoritative numbers straight from Ahrefs. The two
+ * RapidAPI providers stay as failover in case the public endpoint
+ * rate-limits us; they wrap the same upstream but rename / nest the
+ * field and burn a 250/mo quota, so we only reach for them when the
+ * free endpoint fails.
+ *
+ * Failover order: ahrefs-public → seodataset → apivantage. The
+ * RapidAPI providers are skipped when their monthly usage crosses
+ * 80%, or entirely when no key is set. If everything fails, the
  * caller falls back to the cached value.
  *
- * Single env var: X_RAPIDAPI_KEY (Underscored — `X-RapidAPI-Key` is
- * the header it gets sent as. RapidAPI uses one key across every
- * subscription on your account.)
+ * Optional env var (only for the RapidAPI fallbacks): X_RAPIDAPI_KEY
+ * (Underscored — `X-RapidAPI-Key` is the header it gets sent as.
+ * RapidAPI uses one key across every subscription on your account.)
  */
 
 import { db } from "@/drizzle/db"
 import { ahrefsProviderQuota } from "@/drizzle/db/schema"
 import { and, eq, sql } from "drizzle-orm"
 
-export type AhrefsProvider = "seodataset" | "apivantage"
+export type AhrefsProvider = "ahrefs-public" | "seodataset" | "apivantage"
 
-// Order is the failover preference: try A first, fall back to B.
-export const PROVIDER_ORDER: AhrefsProvider[] = ["seodataset", "apivantage"]
+// Order is the failover preference: free official endpoint first,
+// RapidAPI proxies only if it fails.
+export const PROVIDER_ORDER: AhrefsProvider[] = ["ahrefs-public", "seodataset", "apivantage"]
 
 // Stop using a provider once monthly usage exceeds this fraction.
 // Leaves headroom for the user's manual smoke checks + accidental
@@ -34,6 +42,10 @@ const FALLBACK_MONTHLY_LIMIT = 250
 
 interface ProviderConfig {
   host: string
+  // Whether this provider needs the X-RapidAPI-Key header + counts
+  // against a monthly quota. The official free endpoint sets this
+  // false: no key, no quota tracking.
+  requiresKey: boolean
   // Builder for the fetch call. Returns Request init plus a parser
   // for the response body. The parser extracts DR + raw body, hiding
   // the per-provider response shape from the rest of the codebase.
@@ -49,11 +61,30 @@ interface ProviderConfig {
 // endpoint each on the free tier; bumping to a new endpoint name
 // requires updating here.
 const PROVIDERS: Record<AhrefsProvider, ProviderConfig> = {
+  // Ahrefs' official free public endpoint. No API key, no account
+  // quota, numbers straight from Ahrefs.
+  // https://docs.ahrefs.com/en/api/reference/public/get-domain-rating-free
+  // Endpoint: GET /v3/public/domain-rating-free?target=<domain>
+  // Response: { domain_rating: { domain_rating: <number>, license } }
+  "ahrefs-public": {
+    host: "api.ahrefs.com",
+    requiresKey: false,
+    buildRequest: (domain) => ({
+      url: `https://api.ahrefs.com/v3/public/domain-rating-free?target=${encodeURIComponent(domain)}`,
+      init: { method: "GET", headers: { "Content-Type": "application/json" } },
+    }),
+    parseResponse: (raw) => ({
+      dr: pickDR(raw),
+      rawForLog: raw,
+    }),
+  },
+
   // https://rapidapi.com/seodataset/api/ahrefs-domain-research
   // Endpoint: GET /basic-metrics?url=<domain>
   // Free tier: 250 req/month. 80% ceiling → 200 effective.
   seodataset: {
     host: "ahrefs-domain-research.p.rapidapi.com",
+    requiresKey: true,
     buildRequest: (domain) => ({
       url: `https://ahrefs-domain-research.p.rapidapi.com/basic-metrics?url=${encodeURIComponent(domain)}`,
       init: { method: "GET", headers: { "Content-Type": "application/json" } },
@@ -69,6 +100,7 @@ const PROVIDERS: Record<AhrefsProvider, ProviderConfig> = {
   // Free tier: 250 req/month. 80% ceiling → 200 effective.
   apivantage: {
     host: "ahrefs-x.p.rapidapi.com",
+    requiresKey: true,
     buildRequest: (domain) => ({
       url: `https://ahrefs-x.p.rapidapi.com/check-dr-ar?domain=${encodeURIComponent(domain)}`,
       init: { method: "GET", headers: { "Content-Type": "application/json" } },
@@ -90,6 +122,11 @@ function pickDR(raw: unknown): number | null {
   const candidates: unknown[] = []
   const r = raw as Record<string, unknown>
   candidates.push(r.domain_rating, r.dr, r.domainRating)
+  // Official free endpoint nests it: { domain_rating: { domain_rating } }
+  if (typeof r.domain_rating === "object" && r.domain_rating) {
+    const dr = r.domain_rating as Record<string, unknown>
+    candidates.push(dr.domain_rating, dr.dr, dr.domainRating)
+  }
   if (typeof r.data === "object" && r.data) {
     const d = r.data as Record<string, unknown>
     candidates.push(d.domain_rating, d.dr, d.domainRating)
@@ -133,35 +170,34 @@ export interface FetchDrResult {
 export async function fetchDomainRating(domain: string): Promise<FetchDrResult> {
   // Accept either dash form (matches the literal RapidAPI header name)
   // or underscore form (matches typical 12-factor convention). Pick
-  // whichever the user has set.
+  // whichever the user has set. Only the RapidAPI fallbacks need it —
+  // the official free endpoint works without any key.
   const apiKey =
     process.env["X-RapidAPI-Key"] ?? process.env.X_RAPIDAPI_KEY ?? process.env.RAPIDAPI_KEY
-  if (!apiKey) {
-    return {
-      domain,
-      provider: null,
-      dr: null,
-      httpStatus: 0,
-      raw: null,
-      error: "X-RapidAPI-Key not set",
-    }
-  }
 
   const month = new Date().toISOString().slice(0, 7) // 'YYYY-MM' UTC
   let lastError: string | undefined
 
   for (const provider of PROVIDER_ORDER) {
-    const usable = await canUseProvider(provider, month)
-    if (!usable) {
-      lastError = `${provider}: at quota ceiling`
-      continue
+    const cfg = PROVIDERS[provider]
+
+    if (cfg.requiresKey) {
+      if (!apiKey) {
+        lastError = `${provider}: X-RapidAPI-Key not set`
+        continue
+      }
+      if (!(await canUseProvider(provider, month))) {
+        lastError = `${provider}: at quota ceiling`
+        continue
+      }
     }
 
-    const cfg = PROVIDERS[provider]
     const { url, init } = cfg.buildRequest(domain)
     const headers = new Headers(init.headers)
-    headers.set("X-RapidAPI-Key", apiKey)
-    headers.set("X-RapidAPI-Host", cfg.host)
+    if (cfg.requiresKey) {
+      headers.set("X-RapidAPI-Key", apiKey as string)
+      headers.set("X-RapidAPI-Host", cfg.host)
+    }
 
     try {
       const response = await fetch(url, {
@@ -170,11 +206,14 @@ export async function fetchDomainRating(domain: string): Promise<FetchDrResult> 
         signal: AbortSignal.timeout(20_000),
       })
 
-      // Sync local counter with whatever the response told us.
-      const limit = numHeader(response.headers, "x-ratelimit-requests-limit")
-      const remaining = numHeader(response.headers, "x-ratelimit-requests-remaining")
-      const used = limit !== null && remaining !== null ? limit - remaining : null
-      await bumpQuota(provider, month, { used, limit })
+      // Sync local counter with whatever the response told us — only
+      // the RapidAPI providers carry quota.
+      if (cfg.requiresKey) {
+        const limit = numHeader(response.headers, "x-ratelimit-requests-limit")
+        const remaining = numHeader(response.headers, "x-ratelimit-requests-remaining")
+        const used = limit !== null && remaining !== null ? limit - remaining : null
+        await bumpQuota(provider, month, { used, limit })
+      }
 
       let body: unknown = null
       try {

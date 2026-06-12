@@ -1,5 +1,6 @@
 /**
- * One-shot probe of both Ahrefs RapidAPI providers.
+ * One-shot probe of the DR providers in failover order
+ * (ahrefs-public → seodataset → apivantage).
  *
  * Usage:
  *   bun run scripts/smoke-ahrefs.ts                 # default: aat.ee
