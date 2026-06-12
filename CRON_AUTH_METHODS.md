@@ -1,288 +1,89 @@
 # Cron API 认证方式说明
 
-## 🔑 两种认证方式
+> ⚠️ **历史版本曾描述两种认证方式(`Authorization: Bearer` 与 `x-cron-secret` /
+> `?secret=`,以及 `CRON_SECRET` 变量)。这些都已废弃且不安全(`?secret=` 会把密钥
+> 泄露到访问日志 / Referer)。当前代码只有一种认证方式,见下文;按旧方式配置会得到
+> 401。请勿据旧描述"修正"代码。**
 
-Open-Launch 的 Cron API 使用两种不同的认证方式：
+## 🔑 唯一认证方式:`Authorization: Bearer <CRON_API_KEY>`
 
-### 方式 1: `Authorization: Bearer xxx` 🔐
+所有 `app/api/cron/*` 路由统一通过 `lib/cron-auth.ts` 的 `verifyCronAuth()` 校验:
 
-**使用此方式的 API：**
+- **只**从 `Authorization: Bearer <key>` 请求头读取密钥(**不**从 URL 查询参数读取)。
+- 使用 `crypto.timingSafeEqual` 做**恒定时间比较**,避免计时侧信道。
+- 环境变量名为 **`CRON_API_KEY`**(不是 `CRON_SECRET`);未配置时**拒绝**(fail-closed)。
 
-- ✅ ProductHunt 自动导入 (`/api/cron/import-producthunt`)
-- ✅ 更新项目状态 (`/api/cron/update-launches`)
-- ✅ 发送提醒邮件 (`/api/cron/send-ongoing-reminders`)
-- ✅ 通知周冠军 (`/api/cron/send-winner-notifications`)
-
-**配置方式：**
+**配置方式(cron-job.org → 任务 Advanced → Headers):**
 
 ```
-Key: Authorization
-Value: Bearer your-cron-secret-here
+Key:   Authorization
+Value: Bearer your-cron-api-key-here     （Bearer 和密钥之间有一个空格）
 ```
 
-**cURL 示例：**
+**cURL 示例:**
 
 ```bash
-curl -X GET "https://www.aat.ee/api/cron/import-producthunt" \
-  -H "Authorization: Bearer your-cron-secret-here"
+curl -X GET "https://www.aat.ee/api/cron/dispatch" \
+  -H "Authorization: Bearer your-cron-api-key-here"
 ```
 
-**代码实现：**
+**代码实现(权威来源):**
 
 ```typescript
-// app/api/cron/import-producthunt/route.ts
-const authHeader = request.headers.get("authorization")
-const cronSecret = process.env.CRON_SECRET
+// lib/cron-auth.ts
+import { timingSafeEqual } from "node:crypto"
 
-if (authHeader !== `Bearer ${cronSecret}`) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+export function verifyCronAuth(request: Request): NextResponse | null {
+  const apiKey = process.env.CRON_API_KEY
+  if (!apiKey) return NextResponse.json({ error: "..." }, { status: 500 })
+  const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? ""
+  const a = Buffer.from(provided)
+  const b = Buffer.from(apiKey)
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return null // authorized
 }
 ```
 
----
+## 🎯 单一入口:`/api/cron/dispatch`
 
-### 方式 2: `x-cron-secret: xxx` 🗝️
+实践中 cron-job.org **只需配置一个任务**:每分钟调用 `/api/cron/dispatch`(带上面的
+Bearer 头)。dispatcher 读取 `cron_schedule` 表,把当分钟到期的子任务在内部分发执行
+(详见 `drizzle/migrations/0016_cron_dispatcher.sql`)。无需为每个子任务单独配置 cron。
 
-**使用此方式的 API：**
-
-- ✅ 虚拟互动 (`/api/cron/simulate-engagement`)
-- ✅ 虚拟点赞 (`/api/cron/simulate-upvotes`) - 如果使用
-
-**配置方式：**
+## ⚠️ 常见错误:401 Unauthorized
 
 ```
-Key: x-cron-secret
-Value: your-cron-secret-here
-```
-
-**cURL 示例：**
-
-```bash
-curl -X GET "https://www.aat.ee/api/cron/simulate-engagement" \
-  -H "x-cron-secret: your-cron-secret-here"
-```
-
-**代码实现：**
-
-```typescript
-// app/api/cron/simulate-engagement/route.ts
-const { searchParams } = new URL(request.url)
-const secret = searchParams.get("secret") || request.headers.get("x-cron-secret")
-
-if (secret !== process.env.CRON_SECRET) {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-}
-```
-
-**额外支持：** 也支持 URL 参数 `?secret=xxx`
-
----
-
-## 📊 快速对比表
-
-| API 端点                              | 认证方式 | Header Key      | Header Value 格式 |
-| ------------------------------------- | -------- | --------------- | ----------------- |
-| `/api/cron/import-producthunt`        | Bearer   | `Authorization` | `Bearer <secret>` |
-| `/api/cron/simulate-engagement`       | Custom   | `x-cron-secret` | `<secret>`        |
-| `/api/cron/update-launches`           | Bearer   | `Authorization` | `Bearer <secret>` |
-| `/api/cron/send-ongoing-reminders`    | Bearer   | `Authorization` | `Bearer <secret>` |
-| `/api/cron/send-winner-notifications` | Bearer   | `Authorization` | `Bearer <secret>` |
-
-## 🎯 在 Cron-Job.org 中配置
-
-### 配置 Bearer 认证的任务
-
-1. 点击任务的 **"Advanced"** 设置
-2. 在 **Headers** 部分添加：
-   - **Key:** `Authorization`
-   - **Value:** `Bearer your-cron-secret-value`（注意 `Bearer` 和密钥之间有空格）
-
-### 配置自定义 Header 认证的任务
-
-1. 点击任务的 **"Advanced"** 设置
-2. 在 **Headers** 部分添加：
-   - **Key:** `x-cron-secret`
-   - **Value:** `your-cron-secret-value`（直接是密钥值，不需要前缀）
-
-## ⚠️ 常见错误
-
-### 错误 1: "401 Unauthorized" - Bearer API
-
-**原因：**
-
-- 忘记添加 `Bearer ` 前缀
-- `Bearer` 和密钥之间没有空格
-- 密钥值不正确
-
-**错误示例：**
-
-```
-❌ Authorization: your-secret
-❌ Authorization: Beareryour-secret
-❌ Authorization: bearer your-secret (小写)
-```
-
-**正确示例：**
-
-```
-✅ Authorization: Bearer your-secret
-```
-
-### 错误 2: "401 Unauthorized" - Custom Header API
-
-**原因：**
-
-- Header Key 拼写错误（`x-cron-secret` 而不是 `x-cron-secrets`）
-- 密钥值不正确
-- 意外添加了 `Bearer ` 前缀
-
-**错误示例：**
-
-```
-❌ x-cron-secrets: your-secret (多了 s)
-❌ x-cron-secret: Bearer your-secret (不需要 Bearer)
-```
-
-**正确示例：**
-
-```
-✅ x-cron-secret: your-secret
+❌ Authorization: your-key              （缺少 "Bearer " 前缀）
+❌ Authorization: Beareryour-key        （Bearer 与密钥之间缺空格）
+❌ Authorization: bearer your-key       （前缀匹配大小写不敏感,可接受,但请规范用 "Bearer"）
+❌ ?secret=your-key / x-cron-secret 头  （已不支持,返回 401）
+✅ Authorization: Bearer your-key
 ```
 
 ## 🔍 测试认证
 
-### 测试 Bearer 认证
-
 ```bash
-# 设置变量
-export CRON_SECRET="your-cron-secret-here"
+export CRON_API_KEY="your-cron-api-key-here"
 
-# 测试 ProductHunt 导入
-curl -v -X GET "https://www.aat.ee/api/cron/import-producthunt" \
-  -H "Authorization: Bearer $CRON_SECRET"
+curl -v -X GET "https://www.aat.ee/api/cron/dispatch" \
+  -H "Authorization: Bearer $CRON_API_KEY"
 
-# 成功返回: {"success": true, ...}
-# 失败返回: {"error": "Unauthorized"}
+# 成功: HTTP 200,返回 { dispatchedAt, ranCount, ... }
+# 失败: HTTP 401,返回 { "error": "Unauthorized" }
 ```
-
-### 测试自定义 Header 认证
-
-```bash
-# 测试虚拟互动
-curl -v -X GET "https://www.aat.ee/api/cron/simulate-engagement" \
-  -H "x-cron-secret: $CRON_SECRET"
-
-# 或者使用 URL 参数
-curl -v -X GET "https://www.aat.ee/api/cron/simulate-engagement?secret=$CRON_SECRET"
-
-# 成功返回: {"success": true, ...}
-# 失败返回: {"error": "Unauthorized"}
-```
-
-### 使用 `-v` 查看详细信息
-
-添加 `-v` 参数可以看到完整的请求和响应头：
-
-```bash
-curl -v -X GET "https://www.aat.ee/api/cron/import-producthunt" \
-  -H "Authorization: Bearer $CRON_SECRET"
-
-# 输出会包含：
-# > GET /api/cron/import-producthunt HTTP/2
-# > Authorization: Bearer xxx
-# < HTTP/2 200
-# < content-type: application/json
-```
-
-## 🛠️ 故障排除步骤
-
-### 步骤 1: 检查环境变量
-
-```bash
-# 在服务器或 Zeabur 控制台中
-echo $CRON_SECRET
-
-# 应该输出您的密钥值
-# 如果为空，说明环境变量未设置
-```
-
-### 步骤 2: 检查 Header 格式
-
-在 cron-job.org 中，点击任务 → **"Edit"** → **"Advanced"** 查看配置的 Headers。
-
-确认：
-
-- Key 拼写正确
-- Value 格式正确（Bearer API 需要 `Bearer ` 前缀）
-- 没有多余的空格或换行
-
-### 步骤 3: 查看执行日志
-
-在 cron-job.org 中，点击任务 → **"Execution history"** 查看最近的执行结果。
-
-**200 状态码** = 成功 ✅
-**401 状态码** = 认证失败 ❌
-**500 状态码** = 服务器错误 ❌
-
-### 步骤 4: 查看应用日志
-
-在 Zeabur 或您的服务器上查看应用日志：
-
-```bash
-# 查看最近的认证错误
-grep "Unauthorized" logs/app.log
-
-# 查看最近的 cron 任务日志
-grep "cron" logs/app.log | tail -20
-```
-
-## 💡 最佳实践
-
-### 1. 统一使用环境变量
-
-所有 API 都使用同一个 `CRON_SECRET` 环境变量，只是 Header 格式不同。
-
-```env
-# .env
-CRON_SECRET=your-secure-random-string-here
-```
-
-### 2. 使用强密钥
-
-生成一个强随机字符串作为密钥：
-
-```bash
-# 方式 1: 使用 openssl
-openssl rand -base64 32
-
-# 方式 2: 使用 Node.js
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-
-# 输出示例: J7x9K2mP5qR8sT1vW4yZ6aC3dF0gH9jL
-```
-
-### 3. 在 cron-job.org 中保存配置
-
-配置好 Headers 后，cron-job.org 会自动保存。您可以随时编辑和测试。
-
-### 4. 先本地测试，再部署
-
-在配置 cron-job.org 之前，先用 curl 测试 API 是否可以正常访问。
 
 ## 🔒 安全建议
 
-1. ✅ **不要将 `CRON_SECRET` 提交到 Git**
-2. ✅ **定期轮换密钥**（每 3-6 个月）
-3. ✅ **使用 HTTPS**（已配置 `https://www.aat.ee`）
-4. ✅ **监控失败的认证尝试**（查看 401 错误日志）
-5. ✅ **只在可信的 cron 服务上使用**（如 cron-job.org）
+1. ✅ **不要把 `CRON_API_KEY` 提交到 Git。**
+2. ✅ 使用强随机密钥:`openssl rand -base64 32`。
+3. ✅ 定期轮换(每 3–6 个月)。
+4. ✅ 全程 HTTPS(已配置 `https://www.aat.ee`)。
+5. ✅ 监控 401 日志,排查异常访问。
 
 ## 📚 相关文档
 
 - [CRON_JOB_ORG_SETUP.md](./CRON_JOB_ORG_SETUP.md) - 完整配置指南
 - [CRON_QUICK_REFERENCE.md](./CRON_QUICK_REFERENCE.md) - 快速参考卡片
 - [env.example.txt](./env.example.txt) - 环境变量示例
-
----
-
-**需要帮助？** 如果认证仍然失败，检查应用日志或联系支持。
