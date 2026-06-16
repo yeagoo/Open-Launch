@@ -35,8 +35,12 @@ import { DrBadge, DrBadgeRow, OverflowDrBadge } from "@/components/dr/dr-badge"
 import { AnimatedWord } from "@/components/pricing/animated-word"
 import { CopyPromoCode } from "@/components/pricing/copy-promo-code"
 
-export const dynamic = "force-static"
-export const revalidate = 3600 // 1h — DR badges are 3-day cached anyway
+// ISR: cache per-locale and regenerate hourly (DR badges are 3-day
+// cached anyway). NOT `force-static` — with no generateStaticParams it
+// emits a single default-locale render and serves it for every locale,
+// so /zh/pricing came out English. Plain revalidate lets each locale
+// generate on demand via setRequestLocale, matching every other page.
+export const revalidate = 3600
 
 export async function generateMetadata({
   params,
