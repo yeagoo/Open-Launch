@@ -29,7 +29,7 @@ import {
 
 import { ThemeToggle } from "../theme/theme-toggle"
 import { ThemeToggleMenu } from "../theme/theme-toggle-menu"
-import { Button } from "../ui/button"
+import { Button, buttonVariants } from "../ui/button"
 import { LanguageSwitcher } from "./language-switcher"
 import { NavMenu } from "./nav-menu"
 import { SearchCommand } from "./search-command"
@@ -91,10 +91,17 @@ export default async function Nav() {
             </Button>
           )}
           <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
-                <RiMenuLine className="h-5 w-5" />
-              </Button>
+            {/* Render the trigger as Radix's own <button> (not asChild +
+                <Button>). Nesting our Slot-based <Button> inside Radix's
+                Slot-based SheetTrigger fails to render on the server under
+                React 19 / Next 16, making the whole Sheet client-only and
+                triggering a hydration mismatch. Applying buttonVariants
+                directly keeps the identical ghost/icon styling while
+                rendering a single, SSR-safe element. */}
+            <SheetTrigger
+              className={buttonVariants({ variant: "ghost", size: "icon", className: "h-9 w-9" })}
+            >
+              <RiMenuLine className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="right">
               <div className="flex h-full flex-col">

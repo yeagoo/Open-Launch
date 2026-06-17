@@ -1,5 +1,3 @@
-import { formatDistanceToNow } from "date-fns"
-
 // Type-only — stripped at compile time so `lib/dr` here wouldn't
 // actually drag pg into the client bundle. Routing through the
 // pure-data module keeps the rule "client code never touches
@@ -33,7 +31,7 @@ export function DrBadge({ record, size = "md" }: DrBadgeProps) {
   const hasValue = record.dr !== null
   const tooltipLabel = hasValue
     ? record.fetchedAt
-      ? `Updated ${formatDistanceToNow(record.fetchedAt, { addSuffix: true })}`
+      ? `Updated ${record.fetchedAt.toISOString().slice(0, 10)}`
       : "Fetched"
     : "DR not yet fetched"
 
@@ -50,31 +48,30 @@ export function DrBadge({ record, size = "md" }: DrBadgeProps) {
     ? "bg-muted text-muted-foreground border-muted-foreground/10"
     : "bg-primary text-primary-foreground"
 
+  // Native `title` rather than a Radix Tooltip: `<TooltipTrigger asChild>`
+  // wrapping this non-button <span> hydration-mismatches under React 19 /
+  // Next 16 (the Slot clone diverges server vs client), and the pill must
+  // stay a non-focusable <span> — there are many per row, so we can't fall
+  // back to Trigger's default <button>. The label is a short freshness
+  // hint, so the OS tooltip is plenty. (OverflowDrBadge keeps the Radix
+  // tooltip — its trigger is a real <button> and its content is rich.)
   return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={`inline-flex items-stretch overflow-hidden rounded-md border ${sizing} font-medium tabular-nums`}
-            aria-label={`${record.domain} ${valueText}`}
-          >
-            <span
-              className={`flex items-center ${padX} bg-primary/10 text-primary border-primary/20 border-r font-mono lowercase ${
-                hasValue ? "" : "bg-muted text-muted-foreground border-muted-foreground/10"
-              }`}
-            >
-              {record.domain}
-            </span>
-            <span className={`flex items-center ${padX} ${missingFill} ${stalenessClass}`}>
-              {valueText}
-            </span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4}>
-          <p className="text-xs">{tooltipLabel}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <span
+      className={`inline-flex items-stretch overflow-hidden rounded-md border ${sizing} font-medium tabular-nums`}
+      aria-label={`${record.domain} ${valueText}`}
+      title={tooltipLabel}
+    >
+      <span
+        className={`flex items-center ${padX} bg-primary/10 text-primary border-primary/20 border-r font-mono lowercase ${
+          hasValue ? "" : "bg-muted text-muted-foreground border-muted-foreground/10"
+        }`}
+      >
+        {record.domain}
+      </span>
+      <span className={`flex items-center ${padX} ${missingFill} ${stalenessClass}`}>
+        {valueText}
+      </span>
+    </span>
   )
 }
 
