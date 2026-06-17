@@ -241,47 +241,189 @@
     }
   },
   "pricing": {
-    "title": "Tarifs",
-    "subtitle": "Choisissez le forfait adapté à votre lancement",
-    "free": "Gratuit",
-    "premium": "Premium",
-    "premiumPlus": "Premium Plus",
-    "perLaunch": "par lancement",
-    "getStarted": "Commencer",
-    "subscribe": "S'abonner",
-    "compareFeatures": "Comparer les fonctionnalités",
-    "hub": {
-      "kicker": "Tarifs",
-      "heading": "Toutes les façons de lancer sur aat.ee",
-      "subheading": "Gratuit pour un lancement standard. Forfaits payants si vous souhaitez passer devant la file, des backlinks dofollow sur notre réseau de 12 sites, ou un article SEO permanent — choisissez celui qui correspond à votre objectif.",
-      "free": {
-        "name": "Free",
-        "price": "0 $",
-        "billingNote": "Toujours gratuit",
-        "tagline": "Un lancement standard sur aat.ee.",
-        "features": {
-          "slots": "{n} créneaux de lancement par jour",
-          "schedule": "Planifiez jusqu'à {n} jours à l'avance",
-          "homepage": "Mis en avant sur la page d'accueil le jour du lancement",
-          "dofollow": "Backlink dofollow si vous êtes top 3 ou si vous affichez notre Badge"
-        },
-        "cta": "Lancer gratuitement"
+    "metadata": {
+      "title": "Tarifs — un lancement, deux moteurs SEO",
+      "description": "Paiement unique à partir de 3,99 $. Comparez chaque formule : 13 annuaires pour l'autorité de domaine et le trafic, plus des articles éditoriaux sur 26 sites d'autorité pour que les moteurs IA citent votre marque."
+    },
+    "hero": {
+      "badge": "Tarif unique et simple",
+      "heading": "Un lancement. Deux moteurs SEO. Choisissez votre formule.",
+      "subheading": "Classez-vous sur Google et faites-vous citer par les moteurs IA — des référencements en annuaire pour l'autorité de domaine, des publications éditoriales pour la visibilité LLM. Chaque formule est un paiement unique."
+    },
+    "tiers": {
+      "basic": {
+        "blurb": "Sautez la file — référencement dofollow instantané sur aat.ee.",
+        "cta": "Choisir Basic",
+        "features": [
+          "Sautez la file d'attente de validation sur aat.ee",
+          "Backlink dofollow permanent",
+          "En ligne sous ~1 jour (publication automatique)"
+        ]
       },
-      "boostSectionHeading": "Boost — forfaits payants",
-      "boostSectionSubheading": "Passez devant la file, des backlinks dofollow sur notre réseau de 12 annuaires, sponsoring de la barre latérale en option. Choisissez un forfait au moment de la soumission.",
-      "seoSectionHeading": "Besoin de trafic SEO à long terme ?",
-      "seoSectionSubheading": "Achetez un SEO Growth Package dédié — nous rédigeons et positionnons un article personnalisé \"avis sur [votre produit]\" sur aat.ee.",
-      "comparison": {
-        "heading": "Comparer côte à côte",
-        "tierColumn": "",
-        "free": "Free"
+      "plus": {
+        "blurb": "5 domaines indépendants que Google lit comme naturels.",
+        "cta": "Choisir Plus",
+        "features": [
+          "Tout ce qui est inclus dans Basic",
+          "5 annuaires avec DR 35+",
+          "5 domaines dofollow indépendants"
+        ]
       },
-      "deepLinkLabel": "Voir tous les détails",
-      "viewDirectoryPricing": "Ouvrir la tarification complète du Directory →",
-      "faqHeading": "Questions fréquentes",
-      "footerHeading": "Prêt à lancer ?",
-      "footerBody": "Soumettez votre projet et choisissez un forfait en chemin.",
-      "footerCta": "Soumettre un projet"
+      "pro": {
+        "blurb": "Tout notre réseau d'annuaires — l'autorité à pleine puissance.",
+        "cta": "Choisir Pro",
+        "badge": "Le plus populaire",
+        "features": [
+          "Tout ce qui est inclus dans Plus",
+          "Les 13 annuaires au complet",
+          "Portée multilingue et multi-pays"
+        ]
+      },
+      "ultra": {
+        "blurb": "Portée complète, plus des articles GEO que les moteurs IA citent.",
+        "cta": "Choisir Ultra",
+        "badge": "Ajoute le GEO",
+        "features": [
+          "Tout ce qui est inclus dans Pro",
+          "3 articles éditoriaux GEO/AIEO",
+          "Cité par ChatGPT, Claude, Perplexity et Gemini"
+        ]
+      },
+      "ultraPlus": {
+        "blurb": "Visibilité LLM maximale — deux fois plus d'articles GEO.",
+        "cta": "Choisir Ultra Plus",
+        "features": [
+          "Tout ce qui est inclus dans Ultra",
+          "6 articles éditoriaux GEO/AIEO (2× la portée)",
+          "Visibilité de marque LLM maximale"
+        ]
+      }
+    },
+    "pricingSub": "Toutes les formules sont un paiement unique. Aucun abonnement, aucun renouvellement.",
+    "lockInNote": "Tarif de lancement — à mesure que le DR et le trafic de notre réseau augmentent, ces prix grimpent. Bloquez le tarif d'aujourd'hui.",
+    "oneTime": "paiement unique",
+    "compare": {
+      "title": "Comparez chaque formule",
+      "sub": "Deux réseaux, deux mécanismes SEO — voici exactement ce que chaque formule débloque.",
+      "planLabel": "Formule",
+      "allWithCount": "tous ({n})",
+      "groups": {
+        "directory": "Réseau d'annuaires (SEO)",
+        "authority": "Réseau d'autorité (GEO/AIEO)",
+        "delivery": "Livraison et facturation"
+      },
+      "rows": {
+        "sites": "Annuaires",
+        "dr35": "Domaines avec DR 35+",
+        "dofollow": "Liens dofollow permanents",
+        "skipQueue": "Sauter la file de validation",
+        "multiLang": "Portée multilingue",
+        "articles": "Articles éditoriaux GEO/AIEO",
+        "cited": "Cité par ChatGPT, Claude, Perplexity, Gemini",
+        "delivery": "Livraison",
+        "billing": "Facturation"
+      },
+      "values": {
+        "auto1d": "Auto · ~1 jour",
+        "auto13d": "Auto · ~1 à 3 jours",
+        "autoEditorial": "Auto + éditorial",
+        "oneTime": "Paiement unique"
+      }
+    },
+    "networks": {
+      "directory": {
+        "eyebrow": "Moteur 1 · Annuaire",
+        "title": "Autorité de domaine et trafic",
+        "desc": "Des annuaires d'outils IA et de produits qui transmettent une véritable valeur de lien — indexation rapide, trafic de référence et meilleurs classements à travers les langues et les pays. Les référencements sont publiés automatiquement avec un lien dofollow, en ligne sous 1 à 3 jours."
+      },
+      "authority": {
+        "eyebrow": "Moteur 2 · Autorité (GEO)",
+        "title": "Faites-vous citer par les moteurs IA",
+        "desc": "Des articles éditoriaux rédigés à la main sur des sites de documentation technique de forte autorité font de votre marque une référence — pour que ChatGPT, Claude, Perplexity et Gemini vous mettent en avant et vous citent. Mis en relation et livrés manuellement."
+      }
+    },
+    "wall": {
+      "directoryLabel": "Annuaire · 13 sites",
+      "authorityLabel": "Autorité · 26 sites"
+    },
+    "evidence": {
+      "title": "Ce qui justifie le prix",
+      "sub": "Votre lancement repose sur deux réseaux distincts assurant deux missions SEO distinctes."
+    },
+    "outcomes": {
+      "traffic": {
+        "title": "Du vrai trafic de référence",
+        "desc": "Des visites de créateurs et d'adopteurs précoces qui cliquent réellement — pas des bots."
+      },
+      "dr": {
+        "title": "Hausse naturelle du Domain Rating",
+        "desc": "Un mélange équilibré de domaines à DR élevé et faible garde votre profil de backlinks naturel."
+      },
+      "indexing": {
+        "title": "Indexation Google plus rapide",
+        "desc": "Des domaines de confiance et indexés transmettent des signaux de crawl pour que votre URL soit découverte."
+      },
+      "ai": {
+        "title": "Visibilité dans la recherche IA",
+        "desc": "Cité par ChatGPT, Claude, Perplexity et Gemini lorsque les utilisateurs interrogent votre catégorie."
+      }
+    },
+    "faq": {
+      "title": "Questions",
+      "twoNetworks": {
+        "q": "Quelle est la différence entre les deux réseaux ?",
+        "a": "Le réseau d'annuaires transmet de la valeur de lien et stimule l'indexation, le trafic et les classements — c'est le SEO classique. Le réseau d'autorité place des articles éditoriaux sur des sites de documentation de forte autorité afin que les moteurs IA traitent votre marque comme une référence fiable et la citent — c'est le GEO/AIEO."
+      },
+      "geo": {
+        "q": "Qu'est-ce que le GEO / AIEO ?",
+        "a": "Generative Engine Optimization / AI Engine Optimization — optimiser pour que des assistants IA comme ChatGPT, Claude, Perplexity et Gemini mentionnent et recommandent votre produit dans leurs réponses."
+      },
+      "directoryPublish": {
+        "q": "Comment les référencements en annuaire sont-ils publiés ?",
+        "a": "Automatiquement sur l'ensemble de notre réseau avec un backlink dofollow permanent, généralement en ligne sous 1 à 3 jours. Plus sélectionne les 5 domaines les plus puissants (DR 35+) ; Pro et au-dessus publient sur les 13."
+      },
+      "geoArticles": {
+        "q": "Comment les articles GEO sont-ils produits ?",
+        "a": "Éditorialement, à la main. Nous associons votre produit aux sites d'autorité les plus pertinents thématiquement et rédigeons 3 articles (Ultra) ou 6 articles (Ultra Plus). Faits main, ils prennent plus de temps que les référencements automatisés."
+      },
+      "oneTime": {
+        "q": "S'agit-il de paiements uniques ?",
+        "a": "Oui — chaque formule est un paiement unique pour une publication unique. Aucun abonnement."
+      },
+      "retention": {
+        "q": "Combien de temps les référencements restent-ils en ligne ?",
+        "a": "Toutes les publications se veulent permanentes — nous ne faisons pas expirer automatiquement les achats. Dans le rare cas où nous cessons d'exploiter un site, nous vous en informerons par e-mail."
+      },
+      "upgrade": {
+        "q": "Puis-je passer à une formule supérieure plus tard ?",
+        "a": "Oui. Écrivez-nous dans les 30 jours suivant l'achat et nous créditons ce que vous avez payé sur la formule supérieure. Au-delà de 30 jours, achetez la mise à niveau au tarif en vigueur."
+      },
+      "refund": {
+        "q": "Quelle est la politique de remboursement ?",
+        "a": "Si nous n'avons pas encore placé votre référencement, remboursement intégral — écrivez-nous simplement. Une fois un référencement placé, la valeur de lien a été transférée, et les articles GEO ne sont pas remboursables une fois rédigés."
+      },
+      "multiple": {
+        "q": "Puis-je acheter pour plusieurs projets ?",
+        "a": "Oui — chaque projet est un achat distinct. Écrivez-nous directement pour des besoins en grand volume."
+      }
+    },
+    "footer": {
+      "heading": "Prêt à lancer ?",
+      "body": "Choisissez une formule et apparaissez dès aujourd'hui devant les moteurs de recherche comme devant les moteurs IA.",
+      "cta": "Aller au tableau de bord"
+    },
+    "promo": {
+      "label": "Promo phase de test",
+      "headline": "Appliquez ce code au paiement",
+      "warning": "Tarif limité de phase de test — susceptible de changer sans préavis.",
+      "copy": "Copier",
+      "copied": "Copié"
+    },
+    "solutionCta": {
+      "eyebrow": "Comment ça marche",
+      "heading": "Découvrez la solution complète",
+      "body": "Comment l'approche à deux réseaux transforme un lancement en autorité SEO durable et en citations par les moteurs d'IA.",
+      "cta": "Découvrir la solution"
     }
   },
   "search": {

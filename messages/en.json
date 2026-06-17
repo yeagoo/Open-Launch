@@ -241,47 +241,189 @@
     }
   },
   "pricing": {
-    "title": "Pricing",
-    "subtitle": "Choose the plan that fits your launch",
-    "free": "Free",
-    "premium": "Premium",
-    "premiumPlus": "Premium Plus",
-    "perLaunch": "per launch",
-    "getStarted": "Get started",
-    "subscribe": "Subscribe",
-    "compareFeatures": "Compare features",
-    "hub": {
-      "kicker": "Pricing",
-      "heading": "Every way to launch on aat.ee",
-      "subheading": "Free for a standard launch. Paid tiers if you want the queue skipped, dofollow backlinks across our 12-site network, or a permanent SEO article — pick the one that matches your goal.",
-      "free": {
-        "name": "Free",
-        "price": "$0",
-        "billingNote": "Always free",
-        "tagline": "A standard launch on aat.ee.",
-        "features": {
-          "slots": "{n} launch slots per day",
-          "schedule": "Schedule up to {n} days ahead",
-          "homepage": "Featured on the homepage on launch day",
-          "dofollow": "Dofollow backlink if you rank top-3 or display our badge"
-        },
-        "cta": "Launch for free"
+    "metadata": {
+      "title": "Pricing — one launch, two SEO engines",
+      "description": "One-time pricing from $3.99. Compare every tier: 13 directory sites for domain authority and traffic, plus editorial articles on 26 authority sites so AI engines cite your brand."
+    },
+    "hero": {
+      "badge": "Simple one-time pricing",
+      "heading": "One launch. Two SEO engines. Pick your tier.",
+      "subheading": "Rank on Google and get cited by the AI engines — directory listings for domain authority, editorial placements for LLM visibility. Every plan is a one-time payment."
+    },
+    "tiers": {
+      "basic": {
+        "blurb": "Skip the queue — instant dofollow listing on aat.ee.",
+        "cta": "Get Basic",
+        "features": [
+          "Skip the review queue on aat.ee",
+          "Permanent dofollow backlink",
+          "Live within ~1 day (auto-published)"
+        ]
       },
-      "boostSectionHeading": "Boost — paid tiers",
-      "boostSectionSubheading": "Skip the queue, dofollow backlinks across our 12-site directory network, optional sidebar sponsorship. Pick a tier at submission time.",
-      "seoSectionHeading": "Need long-term SEO traffic?",
-      "seoSectionSubheading": "Buy a dedicated SEO Growth Package — we write and rank a custom \"[your product] review\" article on aat.ee.",
-      "comparison": {
-        "heading": "Compare side by side",
-        "tierColumn": "",
-        "free": "Free"
+      "plus": {
+        "blurb": "5 independent domains Google reads as organic.",
+        "cta": "Get Plus",
+        "features": [
+          "Everything in Basic",
+          "5 directory sites with DR 35+",
+          "5 independent dofollow domains"
+        ]
       },
-      "deepLinkLabel": "See full details",
-      "viewDirectoryPricing": "Open the full Directory pricing →",
-      "faqHeading": "Frequently asked questions",
-      "footerHeading": "Ready to launch?",
-      "footerBody": "Submit your project and pick a tier on the way in.",
-      "footerCta": "Submit a project"
+      "pro": {
+        "blurb": "Our entire directory network — authority at full strength.",
+        "cta": "Get Pro",
+        "badge": "Most popular",
+        "features": [
+          "Everything in Plus",
+          "All 13 directory sites",
+          "Multi-language, multi-country reach"
+        ]
+      },
+      "ultra": {
+        "blurb": "Full reach, plus GEO articles AI engines cite.",
+        "cta": "Get Ultra",
+        "badge": "Adds GEO",
+        "features": [
+          "Everything in Pro",
+          "3 editorial GEO/AIEO articles",
+          "Cited by ChatGPT, Claude, Perplexity & Gemini"
+        ]
+      },
+      "ultraPlus": {
+        "blurb": "Maximum LLM visibility — double the GEO articles.",
+        "cta": "Get Ultra Plus",
+        "features": [
+          "Everything in Ultra",
+          "6 editorial GEO/AIEO articles (2× reach)",
+          "Maximum LLM brand visibility"
+        ]
+      }
+    },
+    "pricingSub": "All plans are a one-time payment. No subscription, no renewal.",
+    "lockInNote": "Launch pricing — as our network's DR and traffic grow, these prices adjust upward. Lock in today's rate.",
+    "oneTime": "one-time",
+    "compare": {
+      "title": "Compare every plan",
+      "sub": "Two networks, two SEO mechanisms — here's exactly what each tier unlocks.",
+      "planLabel": "Plan",
+      "allWithCount": "all ({n})",
+      "groups": {
+        "directory": "Directory network (SEO)",
+        "authority": "Authority network (GEO/AIEO)",
+        "delivery": "Delivery & billing"
+      },
+      "rows": {
+        "sites": "Directory sites",
+        "dr35": "Domains with DR 35+",
+        "dofollow": "Permanent dofollow links",
+        "skipQueue": "Skip the review queue",
+        "multiLang": "Multi-language reach",
+        "articles": "Editorial GEO/AIEO articles",
+        "cited": "Cited by ChatGPT, Claude, Perplexity, Gemini",
+        "delivery": "Delivery",
+        "billing": "Billing"
+      },
+      "values": {
+        "auto1d": "Auto · ~1 day",
+        "auto13d": "Auto · ~1–3 days",
+        "autoEditorial": "Auto + editorial",
+        "oneTime": "One-time"
+      }
+    },
+    "networks": {
+      "directory": {
+        "eyebrow": "Engine 1 · Directory",
+        "title": "Domain authority & traffic",
+        "desc": "AI-tool and product directories that pass real link equity — fast indexing, referral traffic, and higher rankings across languages and countries. Listings publish automatically with a dofollow link, live in 1–3 days."
+      },
+      "authority": {
+        "eyebrow": "Engine 2 · Authority (GEO)",
+        "title": "Get cited by the AI engines",
+        "desc": "Hand-written editorial articles on high-authority technical-docs sites make your brand an authoritative reference — so ChatGPT, Claude, Perplexity and Gemini surface and cite you. Matched and delivered manually."
+      }
+    },
+    "wall": {
+      "directoryLabel": "Directory · 13 sites",
+      "authorityLabel": "Authority · 26 sites"
+    },
+    "evidence": {
+      "title": "What's behind the price",
+      "sub": "Your launch runs on two distinct networks doing two distinct SEO jobs."
+    },
+    "outcomes": {
+      "traffic": {
+        "title": "Real referral traffic",
+        "desc": "Visits from makers and early adopters who actually click — not bots."
+      },
+      "dr": {
+        "title": "Natural Domain Rating lift",
+        "desc": "A balanced mix of high- and low-DR domains keeps your backlink profile organic."
+      },
+      "indexing": {
+        "title": "Faster Google indexing",
+        "desc": "Trusted, indexed domains pass crawl signals so your URL gets discovered."
+      },
+      "ai": {
+        "title": "AI search visibility",
+        "desc": "Cited by ChatGPT, Claude, Perplexity and Gemini when users ask about your category."
+      }
+    },
+    "faq": {
+      "title": "Questions",
+      "twoNetworks": {
+        "q": "What's the difference between the two networks?",
+        "a": "The directory network passes link equity and drives indexing, traffic and rankings — classic SEO. The authority network places editorial articles on high-authority docs sites so AI engines treat your brand as a trustworthy reference and cite it — that's GEO/AIEO."
+      },
+      "geo": {
+        "q": "What is GEO / AIEO?",
+        "a": "Generative Engine Optimization / AI Engine Optimization — optimizing so AI assistants like ChatGPT, Claude, Perplexity and Gemini mention and recommend your product in their answers."
+      },
+      "directoryPublish": {
+        "q": "How are directory listings published?",
+        "a": "Automatically across our network with a permanent dofollow backlink, typically live within 1–3 days. Plus picks the 5 strongest (DR 35+) domains; Pro and above publish to all 13."
+      },
+      "geoArticles": {
+        "q": "How are the GEO articles produced?",
+        "a": "Editorially, by hand. We match your product to the most topically relevant authority sites and write 3 (Ultra) or 6 (Ultra Plus) articles. Being hand-crafted, these take longer than the automated listings."
+      },
+      "oneTime": {
+        "q": "Are these one-time payments?",
+        "a": "Yes — every tier is a one-time payment for a one-time placement. No subscription."
+      },
+      "retention": {
+        "q": "How long do the listings stay up?",
+        "a": "All placements are intended to be permanent — we don't auto-expire purchases. In the rare case we stop operating a site, we'll email you."
+      },
+      "upgrade": {
+        "q": "Can I upgrade tiers later?",
+        "a": "Yes. Email us within 30 days of purchase and we'll credit what you paid toward the higher tier. After 30 days, buy the upgrade at the current rate."
+      },
+      "refund": {
+        "q": "What's the refund policy?",
+        "a": "If we haven't placed your listing yet, full refund — just email us. Once a listing is placed the link equity has transferred, and GEO articles are non-refundable once written."
+      },
+      "multiple": {
+        "q": "Can I buy for multiple projects?",
+        "a": "Yes — each project is a separate purchase. Email us directly for high-volume needs."
+      }
+    },
+    "footer": {
+      "heading": "Ready to launch?",
+      "body": "Choose a plan and get in front of both search engines and the AI engines today.",
+      "cta": "Go to dashboard"
+    },
+    "promo": {
+      "label": "Test-phase promo",
+      "headline": "Apply this code at checkout",
+      "warning": "Limited test-phase pricing — may change without notice.",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "solutionCta": {
+      "eyebrow": "How it works",
+      "heading": "See the full solution",
+      "body": "How the two-network approach turns one launch into lasting SEO authority and AI-engine citations.",
+      "cta": "Explore the solution"
     }
   },
   "search": {

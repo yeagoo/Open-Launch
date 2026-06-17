@@ -241,47 +241,189 @@
     }
   },
   "pricing": {
-    "title": "Hinnakiri",
-    "subtitle": "Vali oma käivitusele sobiv plaan",
-    "free": "Tasuta",
-    "premium": "Premium",
-    "premiumPlus": "Premium Plus",
-    "perLaunch": "käivituse kohta",
-    "getStarted": "Alusta",
-    "subscribe": "Telli",
-    "compareFeatures": "Võrdle funktsioone",
-    "hub": {
-      "kicker": "Hinnakiri",
-      "heading": "Kõik viisid aat.ee-s käivitamiseks",
-      "subheading": "Tavakäivitus on tasuta. Tasulised tasemed, kui soovid järjekorrast mööda minna, dofollow tagasilinke meie 12 saidi võrgustikus või püsivat SEO-artiklit — vali see, mis sinu eesmärgiga sobib.",
-      "free": {
-        "name": "Free",
-        "price": "0 $",
-        "billingNote": "Alati tasuta",
-        "tagline": "Tavakäivitus aat.ee-s.",
-        "features": {
-          "slots": "{n} käivituskohta päevas",
-          "schedule": "Planeeri kuni {n} päeva ette",
-          "homepage": "Esiletõstetud avalehel käivituspäeval",
-          "dofollow": "Dofollow tagasilink, kui jõuad top 3-sse või kuvad meie Badge'i"
-        },
-        "cta": "Käivita tasuta"
+    "metadata": {
+      "title": "Hinnastus — üks turule toomine, kaks SEO mootorit",
+      "description": "Ühekordne tasu alates $3.99. Võrdle iga taset: 13 kataloogisaiti domeeni autoriteedi ja liikluse jaoks ning toimetuse artiklid 26 autoriteetsel saidil, et AI-mootorid viitaksid sinu brändile."
+    },
+    "hero": {
+      "badge": "Lihtne ühekordne hinnastus",
+      "heading": "Üks turule toomine. Kaks SEO mootorit. Vali oma tase.",
+      "subheading": "Saavuta koht Google'is ja lase AI-mootoritel sind tsiteerida — kataloogikanded domeeni autoriteedi jaoks, toimetuse paigutused LLM-i nähtavuse jaoks. Iga pakett on ühekordne makse."
+    },
+    "tiers": {
+      "basic": {
+        "blurb": "Jäta järjekord vahele — kohene dofollow kanne aat.ee-l.",
+        "cta": "Vali Basic",
+        "features": [
+          "Jäta ülevaatusjärjekord aat.ee-l vahele",
+          "Püsiv dofollow tagasilink",
+          "Avaldatud ~1 päevaga (automaatselt)"
+        ]
       },
-      "boostSectionHeading": "Boost — tasulised tasemed",
-      "boostSectionSubheading": "Mine järjekorrast mööda, saa dofollow tagasilinke meie 12 kataloogi võrgustikus, valikuline külgriba sponsorlus. Vali tase projekti esitamisel.",
-      "seoSectionHeading": "Vajad pikaajalist SEO-liiklust?",
-      "seoSectionSubheading": "Osta spetsiaalne SEO Growth Package — kirjutame ja seame järjestusse kohandatud \"[sinu toote] arvustus\" artikli aat.ee-s.",
-      "comparison": {
-        "heading": "Võrdle kõrvuti",
-        "tierColumn": "",
-        "free": "Free"
+      "plus": {
+        "blurb": "5 sõltumatut domeeni, mida Google loeb orgaanilisteks.",
+        "cta": "Vali Plus",
+        "features": [
+          "Kõik, mis on Basicus",
+          "5 kataloogisaiti reitinguga DR 35+",
+          "5 sõltumatut dofollow domeeni"
+        ]
       },
-      "deepLinkLabel": "Vaata kõiki üksikasju",
-      "viewDirectoryPricing": "Ava Directory täielik hinnakiri →",
-      "faqHeading": "Korduma kippuvad küsimused",
-      "footerHeading": "Valmis käivitama?",
-      "footerBody": "Esita oma projekt ja vali tase teel.",
-      "footerCta": "Esita projekt"
+      "pro": {
+        "blurb": "Kogu meie kataloogivõrk — autoriteet täisvõimsusel.",
+        "cta": "Vali Pro",
+        "badge": "Kõige populaarsem",
+        "features": [
+          "Kõik, mis on Plusis",
+          "Kõik 13 kataloogisaiti",
+          "Mitmekeelne, mitut riiki hõlmav ulatus"
+        ]
+      },
+      "ultra": {
+        "blurb": "Täielik ulatus pluss GEO-artiklid, mida AI-mootorid tsiteerivad.",
+        "cta": "Vali Ultra",
+        "badge": "Lisab GEO",
+        "features": [
+          "Kõik, mis on Pros",
+          "3 toimetuse GEO/AIEO artiklit",
+          "Tsiteerivad ChatGPT, Claude, Perplexity ja Gemini"
+        ]
+      },
+      "ultraPlus": {
+        "blurb": "Maksimaalne LLM-i nähtavus — kahekordne GEO-artiklite hulk.",
+        "cta": "Vali Ultra Plus",
+        "features": [
+          "Kõik, mis on Ultras",
+          "6 toimetuse GEO/AIEO artiklit (2× ulatus)",
+          "Maksimaalne LLM-i brändi nähtavus"
+        ]
+      }
+    },
+    "pricingSub": "Kõik paketid on ühekordne makse. Ei tellimust, ei pikendamist.",
+    "lockInNote": "Käivitushind — kui meie võrgu DR ja liiklus kasvavad, tõusevad ka need hinnad. Lukusta tänane hind.",
+    "oneTime": "ühekordne",
+    "compare": {
+      "title": "Võrdle kõiki pakette",
+      "sub": "Kaks võrku, kaks SEO mehhanismi — siin on täpselt see, mida iga tase avab.",
+      "planLabel": "Pakett",
+      "allWithCount": "kõik ({n})",
+      "groups": {
+        "directory": "Kataloogivõrk (SEO)",
+        "authority": "Autoriteedivõrk (GEO/AIEO)",
+        "delivery": "Tarne ja arveldus"
+      },
+      "rows": {
+        "sites": "Kataloogisaidid",
+        "dr35": "Domeenid reitinguga DR 35+",
+        "dofollow": "Püsivad dofollow lingid",
+        "skipQueue": "Jäta ülevaatusjärjekord vahele",
+        "multiLang": "Mitmekeelne ulatus",
+        "articles": "Toimetuse GEO/AIEO artiklid",
+        "cited": "Tsiteerivad ChatGPT, Claude, Perplexity, Gemini",
+        "delivery": "Tarne",
+        "billing": "Arveldus"
+      },
+      "values": {
+        "auto1d": "Automaatne · ~1 päev",
+        "auto13d": "Automaatne · ~1–3 päeva",
+        "autoEditorial": "Automaatne + toimetuslik",
+        "oneTime": "Ühekordne"
+      }
+    },
+    "networks": {
+      "directory": {
+        "eyebrow": "Mootor 1 · Kataloog",
+        "title": "Domeeni autoriteet ja liiklus",
+        "desc": "AI-tööriistade ja toodete kataloogid, mis annavad edasi tegelikku lingiväärtust — kiire indekseerimine, viiteliiklus ja kõrgemad reitingud eri keeltes ja riikides. Kanded avaldatakse automaatselt koos dofollow lingiga ja lähevad eetrisse 1–3 päevaga."
+      },
+      "authority": {
+        "eyebrow": "Mootor 2 · Autoriteet (GEO)",
+        "title": "Lase AI-mootoritel end tsiteerida",
+        "desc": "Käsitsi kirjutatud toimetuse artiklid kõrge autoriteediga tehnilise dokumentatsiooni saitidel teevad sinu brändist autoriteetse viite — nii et ChatGPT, Claude, Perplexity ja Gemini toovad sind esile ja tsiteerivad. Sobitatud ja tarnitud käsitsi."
+      }
+    },
+    "wall": {
+      "directoryLabel": "Kataloog · 13 saiti",
+      "authorityLabel": "Autoriteet · 26 saiti"
+    },
+    "evidence": {
+      "title": "Mis on hinna taga",
+      "sub": "Sinu turule toomine töötab kahel eraldiseisval võrgul, mis teevad kahte erinevat SEO tööd."
+    },
+    "outcomes": {
+      "traffic": {
+        "title": "Tegelik viiteliiklus",
+        "desc": "Külastused loojatelt ja varajastelt kasutajatelt, kes tegelikult klikivad — mitte robotid."
+      },
+      "dr": {
+        "title": "Loomulik domeeni reitingu tõus",
+        "desc": "Tasakaalustatud segu kõrge ja madala DR-iga domeenidest hoiab sinu tagasilinkide profiili orgaanilisena."
+      },
+      "indexing": {
+        "title": "Kiirem Google'i indekseerimine",
+        "desc": "Usaldusväärsed, indekseeritud domeenid annavad edasi roomamissignaale, nii et sinu URL avastatakse."
+      },
+      "ai": {
+        "title": "AI-otsingu nähtavus",
+        "desc": "Tsiteerivad ChatGPT, Claude, Perplexity ja Gemini, kui kasutajad küsivad sinu kategooria kohta."
+      }
+    },
+    "faq": {
+      "title": "Küsimused",
+      "twoNetworks": {
+        "q": "Mis vahe on kahel võrgul?",
+        "a": "Kataloogivõrk annab edasi lingiväärtust ning kiirendab indekseerimist, liiklust ja reitinguid — klassikaline SEO. Autoriteedivõrk paigutab toimetuse artiklid kõrge autoriteediga dokumentatsioonisaitidele, nii et AI-mootorid käsitlevad sinu brändi usaldusväärse viitena ja tsiteerivad seda — see ongi GEO/AIEO."
+      },
+      "geo": {
+        "q": "Mis on GEO / AIEO?",
+        "a": "Generatiivse mootori optimeerimine / AI-mootori optimeerimine — optimeerimine nii, et AI-assistendid nagu ChatGPT, Claude, Perplexity ja Gemini mainivad ja soovitavad oma vastustes sinu toodet."
+      },
+      "directoryPublish": {
+        "q": "Kuidas kataloogikanded avaldatakse?",
+        "a": "Automaatselt kogu meie võrgus koos püsiva dofollow tagasilingiga, tavaliselt eetris 1–3 päeva jooksul. Plus valib 5 tugevaimat (DR 35+) domeeni; Pro ja kõrgemad avaldavad kõigil 13 saidil."
+      },
+      "geoArticles": {
+        "q": "Kuidas GEO-artiklid valmivad?",
+        "a": "Toimetuslikult, käsitsi. Sobitame sinu toote teemaliselt kõige asjakohasemate autoriteetsete saitidega ja kirjutame 3 (Ultra) või 6 (Ultra Plus) artiklit. Kuna need on käsitsi tehtud, võtavad need kauem aega kui automaatsed kanded."
+      },
+      "oneTime": {
+        "q": "Kas need on ühekordsed maksed?",
+        "a": "Jah — iga tase on ühekordne makse ühekordse paigutuse eest. Ei mingit tellimust."
+      },
+      "retention": {
+        "q": "Kui kaua kanded püsivad?",
+        "a": "Kõik paigutused on mõeldud püsivateks — me ei lase ostudel automaatselt aeguda. Harvadel juhtudel, kui lõpetame mõne saidi haldamise, teavitame sind e-postiga."
+      },
+      "upgrade": {
+        "q": "Kas saan hiljem taset tõsta?",
+        "a": "Jah. Saada meile e-kiri 30 päeva jooksul ostust ja arvestame makstud summa kõrgema taseme arvelt maha. Pärast 30 päeva osta täiendus kehtiva hinnaga."
+      },
+      "refund": {
+        "q": "Milline on tagasimakse poliitika?",
+        "a": "Kui me pole sinu kannet veel paigutanud, täielik tagasimakse — lihtsalt saada meile e-kiri. Kui kanne on paigutatud, on lingiväärtus üle kantud, ja GEO-artiklid ei kuulu pärast kirjutamist tagastamisele."
+      },
+      "multiple": {
+        "q": "Kas saan osta mitmele projektile?",
+        "a": "Jah — iga projekt on eraldi ost. Suuremahuliste vajaduste korral kirjuta meile otse."
+      }
+    },
+    "footer": {
+      "heading": "Valmis turule tulema?",
+      "body": "Vali pakett ja jõua juba täna nii otsingumootorite kui ka AI-mootorite ette.",
+      "cta": "Mine juhtpaneelile"
+    },
+    "promo": {
+      "label": "Testfaasi sooduspakkumine",
+      "headline": "Sisesta see kood kassas",
+      "warning": "Piiratud testfaasi hinnastus — võib muutuda ette teatamata.",
+      "copy": "Kopeeri",
+      "copied": "Kopeeritud"
+    },
+    "solutionCta": {
+      "eyebrow": "Kuidas see töötab",
+      "heading": "Tutvu täislahendusega",
+      "body": "Kuidas kahe võrgustiku lähenemine muudab ühe käivituse püsivaks SEO-autoriteediks ja viideteks AI-mootorites.",
+      "cta": "Uuri lahendust"
     }
   },
   "search": {

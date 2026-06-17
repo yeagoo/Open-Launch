@@ -241,47 +241,173 @@
     }
   },
   "pricing": {
-    "title": "定价",
-    "subtitle": "选择适合您发布的套餐",
-    "free": "免费",
-    "premium": "高级版",
-    "premiumPlus": "高级增强版",
-    "perLaunch": "每次发布",
-    "getStarted": "开始使用",
-    "subscribe": "订阅",
-    "compareFeatures": "比较功能",
-    "hub": {
-      "kicker": "定价",
-      "heading": "在 aat.ee 上发布的所有方式",
-      "subheading": "标准发布免费。如果想跳过排队、在 12 个站点的导航网络拿到 dofollow 反链、或者长期 SEO 文章，选下面对应的付费套餐就好。",
-      "free": {
-        "name": "Free",
-        "price": "$0",
-        "billingNote": "永久免费",
-        "tagline": "aat.ee 上的标准发布。",
-        "features": {
-          "slots": "每天 {n} 个发布名额",
-          "schedule": "最多可提前 {n} 天预约",
-          "homepage": "发布当日首页推荐",
-          "dofollow": "排名前 3 或在网站上挂我们 Badge 即获 Dofollow 反链"
-        },
-        "cta": "免费发布"
+    "metadata": {
+      "title": "定价 — 一次发布，两套 SEO 引擎",
+      "description": "一次性付费，$3.99 起。逐项对比每个套餐：13 个导航站带来域名权重与流量，26 个权威站编辑文章让 AI 引擎引用你的品牌。"
+    },
+    "hero": {
+      "badge": "简单的一次性定价",
+      "heading": "一次发布，两套 SEO 引擎。选择你的套餐。",
+      "subheading": "在 Google 取得排名，并被 AI 引擎引用——导航收录带来域名权重，编辑文章带来大模型曝光。每个套餐都是一次性付费。"
+    },
+    "tiers": {
+      "basic": {
+        "blurb": "免排队——在 aat.ee 即时获得 dofollow 收录。",
+        "cta": "选择 Basic",
+        "features": ["免审核，直接发布到 aat.ee", "永久 dofollow 外链", "约 1 天内自动上线"]
       },
-      "boostSectionHeading": "Boost — 付费套餐",
-      "boostSectionSubheading": "跳过排队，在 12 个站点的导航网络获得 dofollow 反链，可选侧栏赞助位。提交项目时直接在表单里选档位。",
-      "seoSectionHeading": "想要长期 SEO 流量？",
-      "seoSectionSubheading": "购买 SEO Growth Package — 我们为您写一篇定制的「您的产品 review」文章发布在 aat.ee，并把它排上 Google。",
-      "comparison": {
-        "heading": "横向对比",
-        "tierColumn": "",
-        "free": "Free"
+      "plus": {
+        "blurb": "5 个独立域名，Google 视作自然外链。",
+        "cta": "选择 Plus",
+        "features": ["包含 Basic 全部", "5 个 DR 35+ 的导航站", "5 个独立域名的 dofollow 外链"]
       },
-      "deepLinkLabel": "查看完整说明",
-      "viewDirectoryPricing": "查看完整 Directory 定价 →",
-      "faqHeading": "常见问题",
-      "footerHeading": "准备好发布了吗？",
-      "footerBody": "提交您的项目，在提交流程里选择档位。",
-      "footerCta": "提交项目"
+      "pro": {
+        "blurb": "整张导航网络——权重火力全开。",
+        "cta": "选择 Pro",
+        "badge": "最受欢迎",
+        "features": ["包含 Plus 全部", "全部 13 个导航站", "多语言、多国家覆盖"]
+      },
+      "ultra": {
+        "blurb": "完整覆盖，加上被 AI 引擎引用的 GEO 文章。",
+        "cta": "选择 Ultra",
+        "badge": "新增 GEO",
+        "features": [
+          "包含 Pro 全部",
+          "3 篇 GEO/AIEO 编辑文章",
+          "被 ChatGPT、Claude、Perplexity、Gemini 引用"
+        ]
+      },
+      "ultraPlus": {
+        "blurb": "最大化大模型曝光——GEO 文章数量翻倍。",
+        "cta": "选择 Ultra Plus",
+        "features": ["包含 Ultra 全部", "6 篇 GEO/AIEO 文章（覆盖翻倍）", "最大化大模型品牌曝光"]
+      }
+    },
+    "pricingSub": "所有套餐均为一次性付费。无订阅，无续费。",
+    "lockInNote": "上线优惠价——随着网络的 DR 与流量增长，价格会上调。现在锁定当前价。",
+    "oneTime": "一次性",
+    "compare": {
+      "title": "逐项对比所有套餐",
+      "sub": "两张网络，两套 SEO 机制——下面是每个套餐具体解锁的内容。",
+      "planLabel": "套餐",
+      "allWithCount": "全部（{n}）",
+      "groups": {
+        "directory": "导航网络（SEO）",
+        "authority": "权威网络（GEO/AIEO）",
+        "delivery": "交付与结算"
+      },
+      "rows": {
+        "sites": "导航站数量",
+        "dr35": "DR 35+ 域名",
+        "dofollow": "永久 dofollow 外链",
+        "skipQueue": "免审核发布",
+        "multiLang": "多语言覆盖",
+        "articles": "GEO/AIEO 编辑文章",
+        "cited": "被 ChatGPT / Claude / Perplexity / Gemini 引用",
+        "delivery": "交付方式",
+        "billing": "结算方式"
+      },
+      "values": {
+        "auto1d": "自动 · 约 1 天",
+        "auto13d": "自动 · 约 1–3 天",
+        "autoEditorial": "自动 + 人工撰稿",
+        "oneTime": "一次性"
+      }
+    },
+    "networks": {
+      "directory": {
+        "eyebrow": "引擎一 · 导航站",
+        "title": "域名权重与流量",
+        "desc": "AI 工具与产品导航站，传递真实链接权重——快速收录、引荐流量、跨语言跨国家的更高排名。自动发布并带 dofollow 外链，1–3 天内上线。"
+      },
+      "authority": {
+        "eyebrow": "引擎二 · 权威站（GEO）",
+        "title": "被 AI 引擎引用",
+        "desc": "在高权威技术文档站发布人工撰写的编辑文章，让你的品牌成为权威参考——使 ChatGPT、Claude、Perplexity、Gemini 主动提及并引用你。人工匹配与交付。"
+      }
+    },
+    "wall": {
+      "directoryLabel": "导航站 · 13 个",
+      "authorityLabel": "权威文档 · 26 个"
+    },
+    "evidence": {
+      "title": "价格背后是什么",
+      "sub": "你的发布运行在两张网络上，分别承担两种不同的 SEO 工作。"
+    },
+    "outcomes": {
+      "traffic": {
+        "title": "真实引荐流量",
+        "desc": "来自真正会点击的创造者与早期用户，而非机器人。"
+      },
+      "dr": {
+        "title": "自然的 DR 提升",
+        "desc": "高低 DR 搭配，让外链结构看起来自然，不像刷量。"
+      },
+      "indexing": {
+        "title": "更快被 Google 收录",
+        "desc": "可信且已被收录的域名传递抓取信号，让你的链接更快被发现。"
+      },
+      "ai": {
+        "title": "AI 搜索可见性",
+        "desc": "当用户问到你的品类时，被 ChatGPT、Claude、Perplexity、Gemini 引用。"
+      }
+    },
+    "faq": {
+      "title": "常见问题",
+      "twoNetworks": {
+        "q": "两类网络有什么区别？",
+        "a": "导航网络传递链接权重，带来收录、流量与排名——属于传统 SEO。权威网络在高权威文档站发布人工撰写的文章，让 AI 引擎把你的品牌当作可信参考并加以引用——这就是 GEO/AIEO。"
+      },
+      "geo": {
+        "q": "什么是 GEO / AIEO？",
+        "a": "生成式引擎优化 / AI 引擎优化——通过优化让 ChatGPT、Claude、Perplexity、Gemini 等 AI 助手在回答中提及并推荐你的产品。"
+      },
+      "directoryPublish": {
+        "q": "导航站收录是怎么发布的？",
+        "a": "通过我们的网络自动发布，附带永久 dofollow 外链，通常 1–3 天内上线。Plus 选取 5 个权重最高（DR 35+）的域名；Pro 及以上发布到全部 13 个站点。"
+      },
+      "geoArticles": {
+        "q": "GEO 文章是如何产出的？",
+        "a": "由人工编辑撰写。我们将你的产品匹配到主题最相关的权威站点，撰写 3 篇（Ultra）或 6 篇（Ultra Plus）文章。由于是人工创作，相比自动收录会需要更长时间。"
+      },
+      "oneTime": {
+        "q": "这些是一次性付款吗？",
+        "a": "是的——每个套餐都是一次性付款、一次性发布，没有订阅。"
+      },
+      "retention": {
+        "q": "收录会保留多久？",
+        "a": "所有发布都按永久保留——不会自动过期。万一我们将来不再运营某个站点，会邮件通知你。"
+      },
+      "upgrade": {
+        "q": "之后可以升级套餐吗？",
+        "a": "可以。购买后 30 天内邮件联系我们，已付款项可抵扣到更高套餐；超过 30 天按当前价购买升级。"
+      },
+      "refund": {
+        "q": "退款政策是怎样的？",
+        "a": "若尚未发布，全额退款——邮件即可。一旦发布，链接权重已转移；GEO 文章一经撰写不可退款。"
+      },
+      "multiple": {
+        "q": "可以为多个项目购买吗？",
+        "a": "可以——每个项目单独购买。大批量需求请直接邮件联系我们。"
+      }
+    },
+    "footer": {
+      "heading": "准备好发布了吗？",
+      "body": "选择套餐，今天就让你的产品同时出现在搜索引擎与 AI 引擎面前。",
+      "cta": "前往控制台"
+    },
+    "promo": {
+      "label": "测试期优惠",
+      "headline": "结账时填入此优惠码",
+      "warning": "测试期价格，可能随时调整。",
+      "copy": "复制",
+      "copied": "已复制"
+    },
+    "solutionCta": {
+      "eyebrow": "运作方式",
+      "heading": "了解完整解决方案",
+      "body": "看看这套双网络方法如何把一次发布变成持久的 SEO 权重与 AI 引擎引用。",
+      "cta": "查看解决方案"
     }
   },
   "search": {
