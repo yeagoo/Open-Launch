@@ -10,6 +10,8 @@
  * until the first fetch lands.
  */
 
+import { AUTHORITY_NETWORK_DOMAINS, DIRECTORY_NETWORK_DOMAINS } from "@/lib/site-network"
+
 // Typed as `readonly string[]` (not narrow tuple literals) so
 // callers can `.includes(someString)` without casting. The arrays
 // themselves are still frozen at runtime via the `as const` on the
@@ -35,7 +37,14 @@ export const DR_DOMAINS_PRO: readonly string[] = [
   "portcyou.com",
 ] as const
 
-export const ALL_TRACKED_DOMAINS = DR_DOMAINS_PRO
+// Every domain the refresh-dr cron fetches: the legacy Pro display set
+// plus the full directory + authority networks (lib/site-network.ts),
+// deduped (several network domains already appear in DR_DOMAINS_PRO).
+// Deliberately separate from the DR_DOMAINS_* display tiers — expanding
+// what we *track* must never change what the v1 /pricing page *shows*.
+export const ALL_TRACKED_DOMAINS: readonly string[] = Array.from(
+  new Set<string>([...DR_DOMAINS_PRO, ...DIRECTORY_NETWORK_DOMAINS, ...AUTHORITY_NETWORK_DOMAINS]),
+)
 
 // Three docs sites featured inline on the Pro/Ultra tier cards.
 // The other nine sites (4 directories + 5 docs) live behind a

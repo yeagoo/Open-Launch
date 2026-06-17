@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { db } from "@/drizzle/db"
-import { domainDrCache } from "@/drizzle/db/schema"
-import { sql } from "drizzle-orm"
-
 import { fetchDomainRating } from "@/lib/ahrefs"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
-import { ALL_TRACKED_DOMAINS } from "@/lib/dr"
+import { ALL_TRACKED_DOMAINS, writeDomainDr } from "@/lib/dr"
 
 export const dynamic = "force-dynamic"
-// 12 domains × ~5s/domain worst case = 60s. Keep slack.
-export const maxDuration = 120
+// ~39 tracked domains (directory + authority networks). The free
+// Ahrefs endpoint is fast, but a small inter-request delay keeps us
+// well under any rate limit; budget generously so the whole sweep
+// completes in one invocation.
+export const maxDuration = 300
+
+const INTER_REQUEST_DELAY_MS = 250
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * Refresh the DR cache for every tracked domain. Runs every 3 days
@@ -35,64 +37,18 @@ export async function GET(request: NextRequest) {
 
   for (const domain of ALL_TRACKED_DOMAINS) {
     const result = await fetchDomainRating(domain)
-    const now = new Date()
+    const stored = await writeDomainDr(result)
 
-    if (result.dr !== null && result.provider) {
-      await db
-        .insert(domainDrCache)
-        .values({
-          domain,
-          dr: result.dr,
-          fetchedAt: now,
-          lastAttemptAt: now,
-          source: result.provider,
-          httpStatus: result.httpStatus,
-          rawResponse: result.raw as never,
-          lastError: null,
-        })
-        .onConflictDoUpdate({
-          target: domainDrCache.domain,
-          set: {
-            dr: result.dr,
-            fetchedAt: now,
-            lastAttemptAt: now,
-            source: result.provider,
-            httpStatus: result.httpStatus,
-            rawResponse: result.raw as never,
-            lastError: null,
-          },
-        })
+    if (stored) {
       refreshed++
-      continue
+    } else {
+      failed++
+      errors.push(
+        `${domain}: ${result.error ?? `provider returned no DR (HTTP ${result.httpStatus})`}`,
+      )
     }
 
-    failed++
-    const errMsg = result.error ?? `provider returned no DR (HTTP ${result.httpStatus})`
-    errors.push(`${domain}: ${errMsg}`)
-    // Preserve previously-cached dr / fetched_at if any. Use sql
-    // EXCLUDED-style references in onConflictDoUpdate so we only
-    // touch attempt + error columns.
-    await db
-      .insert(domainDrCache)
-      .values({
-        domain,
-        lastAttemptAt: now,
-        lastError: errMsg.slice(0, 500),
-        httpStatus: result.httpStatus,
-      })
-      .onConflictDoUpdate({
-        target: domainDrCache.domain,
-        set: {
-          lastAttemptAt: now,
-          lastError: errMsg.slice(0, 500),
-          httpStatus: result.httpStatus,
-          // Do NOT clobber dr / fetchedAt / source — leave previous
-          // good values in place for the stale-data UI.
-          dr: sql`${domainDrCache.dr}`,
-          fetchedAt: sql`${domainDrCache.fetchedAt}`,
-          source: sql`${domainDrCache.source}`,
-        },
-      })
+    await sleep(INTER_REQUEST_DELAY_MS)
   }
 
   const status = cronStatusFromResult({ errorCount: failed, successCount: refreshed })
