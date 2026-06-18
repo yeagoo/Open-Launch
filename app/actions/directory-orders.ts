@@ -5,19 +5,16 @@ import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { directoryOrder, project, user } from "@/drizzle/db/schema"
-import { routing } from "@/i18n/routing"
-import { and, count, desc, eq, gt, inArray } from "drizzle-orm"
+import { and, desc, eq, gt } from "drizzle-orm"
 import { getLocale } from "next-intl/server"
 import Stripe from "stripe"
 
 import { logAdminAction } from "@/lib/admin-audit"
-import { resolveAppUrl } from "@/lib/app-url"
 import { auth } from "@/lib/auth"
 import {
   DIRECTORY_ORDER_REF_PREFIX,
   getPaymentLinkUrl,
   isDirectoryTier,
-  ULTRA_SPONSOR_SLOT_LIMIT,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
 
@@ -90,22 +87,6 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
   const url = (proj.websiteUrl ?? "").trim()
   if (!url) {
     throw new Error("Project has no website URL")
-  }
-
-  // Ultra has a hard cap (marketing page promises "Limited to 5
-  // active sponsors"). Enforce here at the checkout gate.
-  //
-  // This is best-effort: two parallel buyers passing the count
-  // check simultaneously would both create a pending row → both
-  // could pay → 6 active. The sidebar render still caps at 5 by
-  // FIFO, and the over-the-cap order would simply not surface,
-  // which is recoverable (admin can refund). Locking the row to
-  // make this strictly atomic is overkill for a low-volume tier.
-  if (tier === "ultra") {
-    const taken = await countActiveUltraSlots()
-    if (taken >= ULTRA_SPONSOR_SLOT_LIMIT) {
-      throw new Error("Sponsor slots full — try again next month")
-    }
   }
 
   // Resolve the payment link first so we don't write a pending row
@@ -309,164 +290,6 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
   await db.delete(project).where(eq(project.id, projectId))
 
   return { canceled: true, expiredSessions }
-}
-
-// ─── Sponsor slot accounting ───
-
-/**
- * How many Ultra orders are currently active (paid or fulfilled).
- * "Active" maps to a sidebar slot — canceled / refunded / failed
- * rows have already vacated their slot via webhook.
- *
- * Internal helper — not exported as a server action so we don't
- * widen the public surface. Public callers go through
- * `getUltraSlotInfo()` below.
- */
-async function countActiveUltraSlots(): Promise<number> {
-  const [row] = await db
-    .select({ n: count() })
-    .from(directoryOrder)
-    .where(
-      and(
-        eq(directoryOrder.tier, "ultra"),
-        inArray(directoryOrder.status, ["paid", "fulfilled"]),
-        // Held (amount-mismatch) orders don't occupy a real sponsor slot.
-        eq(directoryOrder.amountVerified, true),
-      ),
-    )
-  return row?.n ?? 0
-}
-
-interface UltraSlotInfo {
-  taken: number
-  limit: number
-  available: boolean
-}
-
-/**
- * Compact projection of slot state for the dashboard's Boost menu.
- * Cheap (`COUNT(*)`) so it's safe to call inline during dashboard
- * render.
- *
- * The numbers behind it are public-ish: the marketing page already
- * advertises the 5-slot cap, so leaking "taken: 3" via a server
- * action probe doesn't reveal anything sensitive.
- */
-export async function getUltraSlotInfo(): Promise<UltraSlotInfo> {
-  const taken = await countActiveUltraSlots()
-  return {
-    taken,
-    limit: ULTRA_SPONSOR_SLOT_LIMIT,
-    available: taken < ULTRA_SPONSOR_SLOT_LIMIT,
-  }
-}
-
-// ─── Subscription self-service ───
-
-/**
- * Returns project IDs (from the input list) that currently have an
- * active Ultra subscription order *and* are owned by the calling
- * user. "Active" = status in (`paid`, `fulfilled`) for tier `ultra`.
- * Used by the dashboard to decide whether to render the "Manage
- * subscription" button.
- *
- * The ownership join is critical: without it the action would let
- * any caller probe whether arbitrary project IDs hold an Ultra
- * subscription — a binary information leak.
- *
- * Empty input returns an empty Set without hitting the DB.
- */
-export async function getActiveUltraProjectIds(projectIds: string[]): Promise<Set<string>> {
-  if (projectIds.length === 0) return new Set()
-
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user?.id) {
-    throw new Error("Unauthenticated")
-  }
-
-  const rows = await db
-    .select({ projectId: directoryOrder.projectId })
-    .from(directoryOrder)
-    .innerJoin(project, eq(project.id, directoryOrder.projectId))
-    .where(
-      and(
-        inArray(directoryOrder.projectId, projectIds),
-        eq(project.createdBy, session.user.id),
-        eq(directoryOrder.tier, "ultra"),
-        inArray(directoryOrder.status, ["paid", "fulfilled"]),
-      ),
-    )
-    // GROUP BY projectId so a project with multiple historical Ultra
-    // orders (resubscribe / cancel / resubscribe) collapses to one
-    // row instead of N. Final Set dedup would catch this anyway, but
-    // shrinking the result set early avoids paying for the wasted
-    // bytes over the wire.
-    .groupBy(directoryOrder.projectId)
-
-  return new Set(rows.map((r) => r.projectId))
-}
-
-interface PortalResult {
-  redirectUrl: string
-}
-
-/**
- * Creates a Stripe Customer Portal session for the current user's
- * Ultra subscription on the given project, and returns the URL to
- * redirect the user to. The portal lets them cancel / change
- * payment method / view invoices without us building UI for any
- * of that.
- *
- * Best practice: use the Customer Portal for self-service
- * subscription management instead of building cancel buttons.
- *
- * Requires the Customer Portal to be configured in the Stripe
- * Dashboard (Settings → Customer Portal); the SDK call fails with
- * a clear error if it isn't.
- */
-export async function createCustomerPortalSession(projectId: string): Promise<PortalResult> {
-  const sess = await auth.api.getSession({ headers: await headers() })
-  if (!sess?.user?.id) {
-    throw new Error("Unauthenticated")
-  }
-
-  // Find the active Ultra order for this project owned by the
-  // current user. Joining through project enforces ownership.
-  const [row] = await db
-    .select({
-      stripeCustomerId: directoryOrder.stripeCustomerId,
-    })
-    .from(directoryOrder)
-    .innerJoin(project, eq(project.id, directoryOrder.projectId))
-    .where(
-      and(
-        eq(directoryOrder.projectId, projectId),
-        eq(directoryOrder.tier, "ultra"),
-        inArray(directoryOrder.status, ["paid", "fulfilled"]),
-        eq(project.createdBy, sess.user.id),
-      ),
-    )
-    .orderBy(desc(directoryOrder.createdAt))
-    .limit(1)
-
-  if (!row?.stripeCustomerId) {
-    throw new Error("No active Ultra subscription for this project")
-  }
-
-  // Build a return URL that preserves the user's locale. With
-  // `localePrefix: "as-needed"` the default locale ("en") has no
-  // prefix; everything else gets a `/<locale>` segment. Without
-  // this the user would be sent back to the English dashboard
-  // regardless of which language they were browsing in.
-  const baseUrl = resolveAppUrl()
-  const locale = await getLocale()
-  const localePath = locale === routing.defaultLocale ? "" : `/${locale}`
-  const portalSession = await stripe.billingPortal.sessions.create({
-    customer: row.stripeCustomerId,
-    return_url: `${baseUrl}${localePath}/dashboard`,
-  })
-
-  return { redirectUrl: portalSession.url }
 }
 
 // ─── Admin actions ───

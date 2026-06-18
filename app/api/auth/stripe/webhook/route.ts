@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -9,7 +9,7 @@ import {
   launchSyndication,
   project,
 } from "@/drizzle/db/schema"
-import { and, count, eq, inArray, ne, sql } from "drizzle-orm"
+import { and, eq, inArray, sql } from "drizzle-orm"
 import Stripe from "stripe"
 
 import { LAUNCH_SETTINGS } from "@/lib/constants"
@@ -17,12 +17,10 @@ import {
   DIRECTORY_ORDER_REF_PREFIX,
   DIRECTORY_TIER_CONFIG,
   isDirectoryTier,
-  ULTRA_SPONSOR_SLOT_LIMIT,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
 import { enqueueLaunchSyndication } from "@/lib/launch-syndication"
 import { dedupeOnce } from "@/lib/rate-limit"
-import { ULTRA_SPONSORS_CACHE_TAG } from "@/lib/sponsors"
 import {
   sendAdminPaymentNotification,
   sendBuyerDirectoryOrderConfirmation,
@@ -40,11 +38,6 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 // Expected charge for a legacy Premium Launch, in cents.
 const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
-
-// Arbitrary app-wide constant used as the key for a Postgres advisory
-// lock that serialises Ultra-slot fulfilment, so two concurrent paid
-// webhooks can't both believe a slot is free and overshoot the cap.
-const ULTRA_FULFIL_LOCK_KEY = 947213
 
 // All prices in this app are USD; `amount_total` is only meaningful as a
 // price check when the session is actually in USD (399 JPY would otherwise
@@ -67,8 +60,10 @@ function chargedAmountMatches(session: Stripe.Checkout.Session, expectedCents: n
 }
 
 /**
- * Cancel a directory_order tied to an Ultra subscription that's no longer
- * billable. Stripe fires both `subscription.deleted` AND
+ * Cancel a directory_order tied to a LEGACY Ultra subscription that's no
+ * longer billable. Ultra is now a one-time tier; these handlers remain only
+ * as a safety net for any pre-redesign subscription still active in Stripe.
+ * Stripe fires both `subscription.deleted` AND
  * `subscription.updated[status=canceled]` for a single cancel — the
  * WHERE clause restricts to paid/fulfilled so the second hit is a
  * 0-row no-op, and `revalidateTag` only runs when we actually changed
@@ -108,9 +103,6 @@ async function markUltraOrderCanceled(stripeSubscriptionId: string, reason: stri
     ),
   )
   console.log("✅ Subscription dead, marked order canceled:", stripeSubscriptionId, "via", reason)
-  // A canceled Ultra vacates a sidebar slot — bust the cache so the
-  // now-empty slot vanishes promptly.
-  revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
 }
 
 /**
@@ -513,9 +505,10 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ success: true }, { status: 200 })
     } else if (event.type === "customer.subscription.deleted") {
-      // Ultra is a subscription. When canceled (by user or admin via
-      // Stripe Dashboard), flip the matching order to `canceled` so
-      // the admin queue stops treating it as active.
+      // Legacy: Ultra used to be a subscription. For any pre-redesign Ultra
+      // subscription still active in Stripe, when it's canceled (by user or
+      // admin) flip the matching order to `canceled` so the admin queue stops
+      // treating it as active. New Ultra orders are one-time (no subscription).
       const sub = event.data.object as Stripe.Subscription
       await markUltraOrderCanceled(sub.id, "deleted")
       return NextResponse.json({ success: true }, { status: 200 })
@@ -656,73 +649,78 @@ async function handleDirectoryOrderCompleted(
   // so a malformed/zero-amount session is held rather than auto-fulfilled.
   const discountCents = session.total_details?.amount_discount ?? 0
   const amountMismatch = !chargedAmountMatches(session, cfg.amountCents)
+  // Fail closed: every tier is one-time now. If Stripe created a SUBSCRIPTION
+  // (the Payment Link env var still points at a recurring price), the customer
+  // would keep getting billed every cycle — so don't merely hold it, actively
+  // UNWIND it: cancel the subscription, refund the first charge, mark the order
+  // `refunded`, and alert admin to fix the link. Done before the paid flip so a
+  // recurring session never lands as a "paid" order. handleOrphanPayment
+  // already does the sub-cancel + first-invoice refund + admin email, all
+  // idempotent (refund keyed off session.id, cancel naturally idempotent).
+  if (!cfg.isSubscription && session.mode === "subscription") {
+    const refundFlip = await db
+      .update(directoryOrder)
+      .set({
+        status: "refunded",
+        amountCents: session.amount_total ?? cfg.amountCents,
+        currency: session.currency ?? "usd",
+        stripeSessionId: session.id,
+        stripeSubscriptionId: subId,
+        stripeCustomerId: customerId,
+        paidAt: now,
+        amountVerified: false,
+        updatedAt: now,
+      })
+      .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
+    if ((refundFlip.rowCount ?? 0) === 0) {
+      // Stripe retry on an already-handled order. handleOrphanPayment is
+      // idempotent, but skip it to avoid a duplicate alert (its email dedups
+      // too) and so we don't overwrite a terminal status set elsewhere.
+      console.log("ℹ️ Subscription-mode directory order already processed, skipping:", orderId)
+      return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
+    }
+    console.error(
+      `⚠️ Directory order REFUNDED — subscription-mode session for one-time tier=${tier}, order=${orderId}. Cancelling subscription + refunding first charge.`,
+    )
+    await handleOrphanPayment(
+      session,
+      `subscription-mode checkout for one-time directory tier ${tier} (Payment Link still recurring?) — order ${orderId}`,
+      ref,
+    )
+    return NextResponse.json({ received: true, refunded: true }, { status: 200 })
+  }
 
-  // Shared paid-write payload (used by both the Ultra and non-Ultra paths).
+  // Past the subscription-mode guard, the only remaining hold trigger is an
+  // amount mismatch: record the payment but keep all fulfilment for admin
+  // review (we deliberately RETAIN the money here rather than auto-refund — a
+  // mismatch can be a legitimate promo edge, so a human decides).
+  const held = amountMismatch
+
+  // Shared paid-write payload. `held` (amount OR mode mismatch) keeps the order
+  // unverified → not auto-fulfilled and not syndicated until an admin clears it.
   const paidSet = {
-    status: cfg.autoFulfil && !amountMismatch ? "fulfilled" : "paid",
+    status: cfg.autoFulfil && !held ? "fulfilled" : "paid",
     amountCents: session.amount_total ?? cfg.amountCents,
     currency: session.currency ?? "usd",
     stripeSessionId: session.id,
     stripeSubscriptionId: subId,
     stripeCustomerId: customerId,
     paidAt: now,
-    fulfilledAt: cfg.autoFulfil && !amountMismatch ? now : null,
-    amountVerified: !amountMismatch,
+    fulfilledAt: cfg.autoFulfil && !held ? now : null,
+    amountVerified: !held,
     updatedAt: now,
   }
 
   // Atomic conditional update: only `pending` orders flip to `paid`.
   // Re-deliveries (Stripe retried after a 5xx) hit zero rows and we skip the
-  // rest of the work below — keeps the operation idempotent.
-  //
-  // Ultra does BOTH the paid-write and the slot-cap check inside ONE
-  // advisory-locked transaction. The lock serialises Ultra fulfilment end to
-  // end, so two webhooks racing for the last slot can't each miss the other's
-  // not-yet-committed paid row: when the second acquires the lock the first
-  // has already committed and is counted, so exactly one survives. (Because
-  // of that strict ordering a plain count of active orders is sufficient — no
-  // FIFO predicate needed.)
-  let updateRowCount = 0
-  let ultraOverCap = false
-  if (tier === "ultra") {
-    const res = await db.transaction(async (tx) => {
-      await tx.execute(sql`SELECT pg_advisory_xact_lock(${ULTRA_FULFIL_LOCK_KEY})`)
-      const upd = await tx
-        .update(directoryOrder)
-        .set(paidSet)
-        .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
-      if (!upd.rowCount || upd.rowCount === 0) return { rowCount: 0, overCap: false }
-      // Amount-mismatch orders are held for review, not counted toward the cap.
-      if (amountMismatch) return { rowCount: upd.rowCount, overCap: false }
-      const [{ active }] = await tx
-        .select({ active: count() })
-        .from(directoryOrder)
-        .where(
-          and(
-            eq(directoryOrder.tier, "ultra"),
-            inArray(directoryOrder.status, ["paid", "fulfilled"]),
-            eq(directoryOrder.amountVerified, true),
-            ne(directoryOrder.id, orderId),
-          ),
-        )
-      if (Number(active) >= ULTRA_SPONSOR_SLOT_LIMIT) {
-        await tx
-          .update(directoryOrder)
-          .set({ status: "canceled", updatedAt: now })
-          .where(eq(directoryOrder.id, orderId))
-        return { rowCount: upd.rowCount, overCap: true }
-      }
-      return { rowCount: upd.rowCount, overCap: false }
-    })
-    updateRowCount = res.rowCount
-    ultraOverCap = res.overCap
-  } else {
-    const updateResult = await db
-      .update(directoryOrder)
-      .set(paidSet)
-      .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
-    updateRowCount = updateResult.rowCount ?? 0
-  }
+  // rest of the work below — keeps the operation idempotent. All tiers are
+  // one-time now, so there's no slot-cap transaction — every tier takes this
+  // single conditional update.
+  const updateResult = await db
+    .update(directoryOrder)
+    .set(paidSet)
+    .where(and(eq(directoryOrder.id, orderId), eq(directoryOrder.status, "pending")))
+  const updateRowCount = updateResult.rowCount ?? 0
 
   if (updateRowCount === 0) {
     // Disambiguate idempotent (Stripe retry on already-paid order) vs
@@ -743,29 +741,6 @@ async function handleDirectoryOrderCompleted(
     return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
   }
 
-  // Ultra over-cap: the order was already marked `canceled` inside the locked
-  // transaction above. Refund the charge + cancel the subscription + alert
-  // admin (external Stripe calls; idempotent) rather than charging for an
-  // invisible slot.
-  if (ultraOverCap) {
-    console.error(
-      `⚠️ Ultra over-cap: order ${orderId} exceeds ${ULTRA_SPONSOR_SLOT_LIMIT} active slots — refunding + canceling.`,
-    )
-    await handleOrphanPayment(
-      session,
-      `ultra over-cap — order ${orderId} beyond ${ULTRA_SPONSOR_SLOT_LIMIT}-slot limit`,
-      ref,
-    )
-    revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
-    return NextResponse.json({ received: true, overCap: true }, { status: 200 })
-  }
-
-  // Ultra accepted within cap: bust the sponsor-list cache so the new
-  // subscription shows on the sidebar at the next request (≤1h otherwise).
-  if (tier === "ultra" && !amountMismatch) {
-    revalidateTag(ULTRA_SPONSORS_CACHE_TAG, "max")
-  }
-
   // If this order was paid AT submit time (project still in
   // `payment_pending`), promote the project off the queue: flip to
   // SCHEDULED and burn a premium-quota slot. This unifies the
@@ -776,9 +751,9 @@ async function handleDirectoryOrderCompleted(
   // launched project, `launchStatus` is no longer `payment_pending`
   // and the WHERE clause guards skip this block — schedule data
   // stays untouched.
-  if (amountMismatch) {
+  if (held) {
     console.error(
-      `⚠️ Directory order amount mismatch — fulfilment HELD for admin review. config=${cfg.amountCents}, stripe=${session.amount_total}, discount=${discountCents}, tier=${tier}, order=${orderId}`,
+      `⚠️ Directory order HELD for admin review — amount mismatch: config=${cfg.amountCents}, stripe=${session.amount_total}, discount=${discountCents}. tier=${tier}, order=${orderId}`,
     )
   } else {
     await scheduleProjectIfPendingPayment(order.projectId)
@@ -795,7 +770,7 @@ async function handleDirectoryOrderCompleted(
   }
 
   console.log(
-    `✅ Directory order ${cfg.autoFulfil && !amountMismatch ? "auto-fulfilled" : "marked paid"}:`,
+    `✅ Directory order ${cfg.autoFulfil && !held ? "auto-fulfilled" : "marked paid"}:`,
     orderId,
     "tier:",
     tier,
@@ -824,9 +799,7 @@ async function handleDirectoryOrderCompleted(
       amount,
       currency,
       projectName: `${projectName} — Directory ${tier.toUpperCase()}${
-        amountMismatch
-          ? ` — ⚠️ AMOUNT MISMATCH (expected ${cfg.amountCents}¢), fulfilment held`
-          : ""
+        held ? ` — ⚠️ AMOUNT MISMATCH (expected ${cfg.amountCents}¢), fulfilment held` : ""
       }`,
       websiteUrl,
     })

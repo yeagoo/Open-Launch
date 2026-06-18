@@ -148,15 +148,20 @@ export async function sendLaunchReminderEmail({
   })
 }
 
+// Display label per tier — the new camelCase `ultraPlus` must render as
+// "Ultra Plus", not the naive capitalize-the-key "UltraPlus".
+const TIER_DISPLAY: Record<DirectoryTier, string> = {
+  basic: "Basic",
+  plus: "Plus",
+  pro: "Pro",
+  ultra: "Ultra",
+  ultraPlus: "Ultra Plus",
+}
+
 // Per-tier copy for the buyer confirmation email. Subject and the
-// "What's next" timeline differ; the rest of the email is shared.
-//
-// TODO: site names ("HiCyou, MF8.BIZ, BigKr") and counts are
-// hardcoded here. The authoritative list lives in `lib/dr.ts`
-// (DR_DOMAINS_PLUS / DR_DOMAINS_PRO). When the network expands or
-// renames a partner site, this copy goes stale silently. Either
-// derive from the constants (needs a domain→displayName map) or
-// keep the strings minimal enough that drift doesn't matter.
+// "What's next" timeline differ; the rest of the email is shared. Site
+// counts are kept generic ("5 directory sites", "full directory network")
+// so they don't go stale as the network changes.
 const BUYER_TIER_COPY: Record<
   DirectoryTier,
   { subjectSuffix: string; timeline: string; extra?: string }
@@ -168,23 +173,23 @@ const BUYER_TIER_COPY: Record<
   },
   plus: {
     subjectSuffix: "Plus order confirmed",
-    // Original copy promised a per-site go-live email — we don't
-    // currently have that flow wired, so soften to "we'll be in
-    // touch when fulfilment is complete" to avoid a false promise.
     timeline:
-      '<strong>aat.ee</strong> goes live within 1 business day. Your other 3 directory placements (HiCyou, MF8.BIZ, BigKr) roll out within 3 business days. Reach out to <a href="mailto:contact@aat.ee">contact@aat.ee</a> if anything looks off.',
+      '<strong>aat.ee</strong> goes live within 1 business day. Your listing also rolls out to <strong>5 of our directory sites</strong> within 1–3 business days. Reach out to <a href="mailto:contact@aat.ee">contact@aat.ee</a> if anything looks off.',
   },
   pro: {
     subjectSuffix: "Pro order confirmed",
     timeline:
-      '<strong>aat.ee</strong> goes live within 1 business day. The other 11 placements (3 directories + 8 high-DR documentation sites) roll out within 3 business days. Reach out to <a href="mailto:contact@aat.ee">contact@aat.ee</a> if anything looks off.',
+      '<strong>aat.ee</strong> goes live within 1 business day. Your listing also rolls out across our <strong>full directory network</strong> within 1–3 business days. Reach out to <a href="mailto:contact@aat.ee">contact@aat.ee</a> if anything looks off.',
   },
   ultra: {
-    subjectSuffix: "Ultra subscription active",
+    subjectSuffix: "Ultra order confirmed",
     timeline:
-      "Everything in Pro rolls out as above, AND your <strong>sponsor card is now visible in the sidebar across the network</strong>. The sidebar updates within an hour of payment.",
-    extra:
-      "You can cancel or update payment method anytime from your dashboard — see the <em>Manage subscription</em> button next to your project.",
+      "Everything in Pro (the full directory network), <strong>plus 3 editorial GEO/AIEO articles</strong> on topic-matched authority sites. The directory listings roll out within 1–3 business days; the hand-written articles follow over the next couple of weeks — we'll email you as they go live.",
+  },
+  ultraPlus: {
+    subjectSuffix: "Ultra Plus order confirmed",
+    timeline:
+      "Everything in Pro (the full directory network), <strong>plus 6 editorial GEO/AIEO articles</strong> on topic-matched authority sites. The directory listings roll out within 1–3 business days; the hand-written articles follow over the next couple of weeks — we'll email you as they go live.",
   },
 }
 
@@ -219,7 +224,7 @@ export async function sendBuyerDirectoryOrderConfirmation({
   locale?: string | null
 }) {
   const copy = BUYER_TIER_COPY[tier]
-  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1)
+  const tierLabel = TIER_DISPLAY[tier]
   const safeProjectName = escapeHtml(projectName)
   const greeting = escapeHtml(buyerName?.trim() || "there")
   // Subject lines are sanitised (CRLF stripped) inside `sendEmail`

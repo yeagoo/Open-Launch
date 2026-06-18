@@ -20,18 +20,15 @@ import { createDirectoryOrder } from "@/app/actions/directory-orders"
 
 interface BoostListingButtonProps {
   projectId: string
-  // Live slot accounting for the Ultra tier — the parent (server
-  // component) fetches this once for the whole dashboard and passes
-  // it in, so we don't show a "Slots full" flash after hydration.
-  ultraAvailable: boolean
 }
 
-function formatPrice(cents: number, isSubscription: boolean): string {
-  const amount = (cents / 100).toFixed(2)
-  return isSubscription ? `$${amount}/mo` : `$${amount}`
+// Every tier is a one-time payment now, so the price is a plain dollar
+// amount (no "/mo").
+function formatPrice(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`
 }
 
-export function BoostListingButton({ projectId, ultraAvailable }: BoostListingButtonProps) {
+export function BoostListingButton({ projectId }: BoostListingButtonProps) {
   const t = useTranslations("dashboardBoost")
   const [pending, startTransition] = useTransition()
   const [activeTier, setActiveTier] = useState<DirectoryTier | null>(null)
@@ -73,15 +70,12 @@ export function BoostListingButton({ projectId, ultraAvailable }: BoostListingBu
         {DIRECTORY_TIERS.map((tier) => {
           const cfg = DIRECTORY_TIER_CONFIG[tier]
           const isLoading = pending && activeTier === tier
-          const isUltraSoldOut = tier === "ultra" && !ultraAvailable
-          const itemDisabled = pending || isUltraSoldOut
           return (
             <DropdownMenuItem
               key={tier}
-              disabled={itemDisabled}
+              disabled={pending}
               onSelect={(e) => {
                 e.preventDefault()
-                if (isUltraSoldOut) return
                 handlePick(tier)
               }}
               className="flex cursor-pointer items-start justify-between gap-3 py-2.5 data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60"
@@ -89,32 +83,20 @@ export function BoostListingButton({ projectId, ultraAvailable }: BoostListingBu
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-semibold">{t(`tiers.${tier}.label`)}</span>
-                  {tier === "ultra" && (
+                  {(tier === "ultra" || tier === "ultraPlus") && (
                     <RiStarLine className="h-3 w-3 text-violet-500 dark:text-violet-300" />
                   )}
                 </div>
-                <p className="text-muted-foreground text-[11px]">
-                  {isUltraSoldOut ? t("ultraSlotsFull") : t(`tiers.${tier}.sublabel`)}
-                </p>
+                <p className="text-muted-foreground text-[11px]">{t(`tiers.${tier}.sublabel`)}</p>
               </div>
-              {/* When the Ultra slot is sold out the right-hand cell
-                  collapses to a dash — showing a price + arrow next
-                  to a disabled-looking row reads as "still clickable
-                  but oddly broken" instead of "unavailable". */}
               <div className="flex flex-col items-end">
-                {isUltraSoldOut ? (
-                  <span className="text-muted-foreground/60 text-xs">—</span>
+                <span className="font-mono text-sm tabular-nums">
+                  {formatPrice(cfg.amountCents)}
+                </span>
+                {isLoading ? (
+                  <span className="text-muted-foreground text-[10px]">…</span>
                 ) : (
-                  <>
-                    <span className="font-mono text-sm tabular-nums">
-                      {formatPrice(cfg.amountCents, cfg.isSubscription)}
-                    </span>
-                    {isLoading ? (
-                      <span className="text-muted-foreground text-[10px]">…</span>
-                    ) : (
-                      <RiArrowRightUpLine className="text-muted-foreground/60 h-3 w-3" />
-                    )}
-                  </>
+                  <RiArrowRightUpLine className="text-muted-foreground/60 h-3 w-3" />
                 )}
               </div>
             </DropdownMenuItem>

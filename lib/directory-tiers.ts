@@ -11,7 +11,7 @@
  * this file — keep the two in sync when prices change.
  */
 
-export const DIRECTORY_TIERS = ["basic", "plus", "pro", "ultra"] as const
+export const DIRECTORY_TIERS = ["basic", "plus", "pro", "ultra", "ultraPlus"] as const
 export type DirectoryTier = (typeof DIRECTORY_TIERS)[number]
 
 export const DIRECTORY_ORDER_STATUSES = [
@@ -28,12 +28,6 @@ export type DirectoryOrderStatus = (typeof DIRECTORY_ORDER_STATUSES)[number]
 // uses bare project IDs as `client_reference_id`, so we prefix
 // directory-order ids to disambiguate at webhook dispatch time.
 export const DIRECTORY_ORDER_REF_PREFIX = "dir_"
-
-// How many concurrent Ultra sponsorships we allow. The marketing
-// page promises "Limited to 5 active sponsors at any time" — this
-// constant is the single source of truth for that cap (checkout
-// gate, UI hint text, sidebar render limit).
-export const ULTRA_SPONSOR_SLOT_LIMIT = 5
 
 // Test-phase promo code displayed on /pricing. The
 // actual discount is configured server-side in the Stripe Dashboard
@@ -86,13 +80,17 @@ export const DIRECTORY_TIER_CONFIG: Record<DirectoryTier, TierConfig> = {
   ultra: {
     paymentLinkEnvVar: "NEXT_PUBLIC_DIRECTORY_PAYMENT_LINK_ULTRA",
     amountCents: 1999,
-    isSubscription: true,
-    // Ultra cross-posts to partner sites (it's a Plus/Pro/Ultra tier), so
-    // partner syndication is part of the deliverable. The order therefore
-    // stays `paid` at payment time and only flips to `fulfilled` once
-    // /api/cron/syndicate-launches confirms every partner site succeeded.
-    // The Ultra sponsor sidebar still goes live immediately because
-    // lib/sponsors.ts accepts both `paid` and `fulfilled`.
+    isSubscription: false,
+    // One-time: full directory network + 3 editorial GEO/AIEO articles.
+    // Stays `paid` until /api/cron/syndicate-launches confirms the partner
+    // sites; the GEO articles are fulfilled manually by an admin.
+    autoFulfil: false,
+  },
+  ultraPlus: {
+    paymentLinkEnvVar: "NEXT_PUBLIC_DIRECTORY_PAYMENT_LINK_ULTRA_PLUS",
+    amountCents: 2599,
+    isSubscription: false,
+    // One-time: full directory network + 6 editorial GEO/AIEO articles.
     autoFulfil: false,
   },
 }
