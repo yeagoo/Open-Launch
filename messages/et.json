@@ -263,11 +263,7 @@
       "plus": {
         "blurb": "5 sõltumatut domeeni, mida Google loeb orgaanilisteks.",
         "cta": "Vali Plus",
-        "features": [
-          "Kõik, mis on Basicus",
-          "5 kataloogisaiti reitinguga DR 35+",
-          "5 sõltumatut dofollow domeeni"
-        ]
+        "features": ["Kõik, mis on Basicus", "5 kataloogisaiti", "5 sõltumatut dofollow domeeni"]
       },
       "pro": {
         "blurb": "Kogu meie kataloogivõrk — autoriteet täisvõimsusel.",
@@ -380,7 +376,7 @@
       },
       "directoryPublish": {
         "q": "Kuidas kataloogikanded avaldatakse?",
-        "a": "Automaatselt kogu meie võrgus koos püsiva dofollow tagasilingiga, tavaliselt eetris 1–3 päeva jooksul. Plus valib 5 tugevaimat (DR 35+) domeeni; Pro ja kõrgemad avaldavad kõigil 13 saidil."
+        "a": "Automaatselt kogu meie võrgus koos püsiva dofollow tagasilingiga, tavaliselt eetris 1–3 päeva jooksul. Plus avaldab 5 kataloogisaidil; Pro ja kõrgemad avaldavad kõigil 13 saidil."
       },
       "geoArticles": {
         "q": "Kuidas GEO-artiklid valmivad?",
@@ -680,9 +676,10 @@
           "deliveryNote": "Basic läheb õhku automaatselt. Plus / Pro / Ultra paigutatakse kõikidele saitidele käsitsi — tavaliselt õhus 1–3 tööpäeva jooksul.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
-            "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 8 autoriteetset dokumentatsiooni saiti (võimendab GEO/AIEO)",
-            "ultra": "Pro + sponsori koht külgribal (aktiivne, kuni tellimus kestab)"
+            "plus": "Basic + 5 kataloogisaiti",
+            "pro": "Plus + täielik 13 saidi kataloogivõrk",
+            "ultra": "Pro + 3 GEO/AIEO-artiklit autoriteetsetel saitidel",
+            "ultraPlus": "Pro + 6 GEO/AIEO-artiklit autoriteetsetel saitidel"
           },
           "billing": {
             "oneOff": "Ühekordne makse",
@@ -795,15 +792,19 @@
       },
       "plus": {
         "label": "Pluss",
-        "sublabel": "4 saiti"
+        "sublabel": "aat.ee + 5 kataloogisaiti"
       },
       "pro": {
         "label": "Pro",
-        "sublabel": "12 saiti · kõige populaarsem"
+        "sublabel": "13 saiti · populaarseim"
       },
       "ultra": {
         "label": "Ultra",
-        "sublabel": "Sponsorikoht · igakuiselt"
+        "sublabel": "13 saiti + 3 GEO-artiklit"
+      },
+      "ultraPlus": {
+        "label": "Ultra Plus",
+        "sublabel": "13 saiti + 6 GEO-artiklit"
       }
     },
     "errors": {

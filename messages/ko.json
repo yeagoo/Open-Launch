@@ -263,11 +263,7 @@
       "plus": {
         "blurb": "Google이 오가닉으로 읽는 5개의 독립 도메인.",
         "cta": "Plus 선택",
-        "features": [
-          "Basic의 모든 기능",
-          "DR 35+ 디렉터리 사이트 5개",
-          "5개의 독립 dofollow 도메인"
-        ]
+        "features": ["Basic의 모든 기능", "디렉터리 사이트 5개", "5개의 독립 dofollow 도메인"]
       },
       "pro": {
         "blurb": "디렉터리 네트워크 전체 — 권위를 최대 출력으로.",
@@ -376,7 +372,7 @@
       },
       "directoryPublish": {
         "q": "디렉터리 등록은 어떻게 발행되나요?",
-        "a": "우리 네트워크 전반에 영구 dofollow 백링크와 함께 자동으로 발행되며, 일반적으로 1~3일 내 게재됩니다. Plus는 가장 강력한 5개(DR 35+) 도메인을 선택하고, Pro 이상은 13개 전체에 발행합니다."
+        "a": "우리 네트워크 전반에 영구 dofollow 백링크와 함께 자동으로 발행되며, 일반적으로 1~3일 내 게재됩니다. Plus는 디렉터리 사이트 5개에 발행하고, Pro 이상은 13개 전체에 발행합니다."
       },
       "geoArticles": {
         "q": "GEO 아티클은 어떻게 제작되나요?",
@@ -676,9 +672,10 @@
           "deliveryNote": "Basic은 자동으로 게시됩니다. Plus / Pro / Ultra는 모든 사이트에 수동으로 배치 — 일반적으로 1~3영업일 이내에 게시됩니다.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
-            "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 권위 있는 문서 사이트 8곳 (GEO/AIEO 강화)",
-            "ultra": "Pro + 사이드바 스폰서 슬롯 (구독 중에는 계속 노출)"
+            "plus": "Basic + 디렉터리 사이트 5개",
+            "pro": "Plus + 13개 사이트 전체 디렉터리 네트워크",
+            "ultra": "Pro + 권위 사이트 GEO/AIEO 아티클 3개",
+            "ultraPlus": "Pro + 권위 사이트 GEO/AIEO 아티클 6개"
           },
           "billing": {
             "oneOff": "일회성 결제",
@@ -791,15 +788,19 @@
       },
       "plus": {
         "label": "플러스",
-        "sublabel": "4개 사이트"
+        "sublabel": "aat.ee + 디렉터리 사이트 5개"
       },
       "pro": {
         "label": "프로",
-        "sublabel": "12개 사이트 · 가장 인기"
+        "sublabel": "13개 사이트 · 인기"
       },
       "ultra": {
         "label": "울트라",
-        "sublabel": "스폰서 슬롯 · 월간"
+        "sublabel": "13개 사이트 + GEO 아티클 3개"
+      },
+      "ultraPlus": {
+        "label": "Ultra Plus",
+        "sublabel": "13개 사이트 + GEO 아티클 6개"
       }
     },
     "errors": {

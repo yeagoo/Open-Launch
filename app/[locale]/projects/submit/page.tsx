@@ -4,7 +4,8 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
-import { DR_DOMAINS_PRO, getDRBatch } from "@/lib/dr"
+import { getDRBatch } from "@/lib/dr"
+import { DIRECTORY_NETWORK_DOMAINS } from "@/lib/site-network"
 import { SubmitProjectForm } from "@/components/project/submit-form"
 import { getAllTags } from "@/app/actions/tags"
 
@@ -25,10 +26,10 @@ export default async function SubmitProject() {
   const popularTagsRaw = await getAllTags(200)
   const popularTags = popularTagsRaw.map((t) => t.name)
 
-  // DR snapshot for the full 12-site network — passed to the form's
-  // Step 3 tier picker so each paid card can show the DR badges for
-  // the sites it covers. Cached every 3 days by the refresh-dr cron.
-  const drRecords = await getDRBatch(DR_DOMAINS_PRO)
+  // DR snapshot for the 13-site directory network — passed to the form's
+  // Step 3 tier picker so each paid card can show the DR badges for the
+  // sites it covers. Cached every 3 days by the refresh-dr cron.
+  const drRecords = await getDRBatch(DIRECTORY_NETWORK_DOMAINS)
 
   const t = await getTranslations("submitProject.page")
 

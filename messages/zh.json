@@ -259,7 +259,7 @@
       "plus": {
         "blurb": "5 个独立域名，Google 视作自然外链。",
         "cta": "选择 Plus",
-        "features": ["包含 Basic 全部", "5 个 DR 35+ 的导航站", "5 个独立域名的 dofollow 外链"]
+        "features": ["包含 Basic 全部", "5 个导航站", "5 个独立域名的 dofollow 外链"]
       },
       "pro": {
         "blurb": "整张导航网络——权重火力全开。",
@@ -364,7 +364,7 @@
       },
       "directoryPublish": {
         "q": "导航站收录是怎么发布的？",
-        "a": "通过我们的网络自动发布，附带永久 dofollow 外链，通常 1–3 天内上线。Plus 选取 5 个权重最高（DR 35+）的域名；Pro 及以上发布到全部 13 个站点。"
+        "a": "通过我们的网络自动发布，附带永久 dofollow 外链，通常 1–3 天内上线。Plus 发布到 5 个导航站；Pro 及以上发布到全部 13 个站点。"
       },
       "geoArticles": {
         "q": "GEO 文章是如何产出的？",
@@ -664,9 +664,10 @@
           "deliveryNote": "Basic 自动上线。Plus / Pro / Ultra 由人工添加到所有站点，通常 1-3 个工作日内全部完成。",
           "tiers": {
             "basic": "不用等待 · aat.ee 上获得 dofollow 反向链接",
-            "plus": "包含 Basic + 3 个合作导航站（人工上架）",
-            "pro": "包含 Plus + 8 个权威文档站（提升 GEO/AIEO）",
-            "ultra": "包含 Pro + 侧栏赞助位（订阅期内有效）"
+            "plus": "Basic + 5 个导航站",
+            "pro": "Plus + 完整 13 站导航网络",
+            "ultra": "Pro + 3 篇权威站 GEO/AIEO 文章",
+            "ultraPlus": "Pro + 6 篇权威站 GEO/AIEO 文章"
           },
           "billing": {
             "oneOff": "一次性付款",
@@ -779,15 +780,19 @@
       },
       "plus": {
         "label": "Plus",
-        "sublabel": "4 个站点"
+        "sublabel": "aat.ee + 5 个导航站"
       },
       "pro": {
         "label": "Pro",
-        "sublabel": "12 个站点 · 最受欢迎"
+        "sublabel": "13 个站点 · 最受欢迎"
       },
       "ultra": {
         "label": "Ultra",
-        "sublabel": "1 个广告位 · 月订阅"
+        "sublabel": "13 站 + 3 篇 GEO 文章"
+      },
+      "ultraPlus": {
+        "label": "Ultra Plus",
+        "sublabel": "13 站 + 6 篇 GEO 文章"
       }
     },
     "errors": {

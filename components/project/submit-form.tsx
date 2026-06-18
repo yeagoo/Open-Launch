@@ -47,12 +47,7 @@ import {
 // drag into the client bundle and fail to resolve Node-only `fs` /
 // `net` / `tls`. Type imports would survive (stripped at compile time)
 // but the value imports pull the whole module graph.
-import {
-  DR_DOMAINS_BASIC,
-  DR_DOMAINS_PLUS,
-  DR_DOMAINS_PRO_PREVIEW,
-  type DRRecord,
-} from "@/lib/dr-domains"
+import type { DRRecord } from "@/lib/dr-domains"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
 import { platformType, pricingType } from "@/lib/project-enums"
 import { UploadButton } from "@/lib/r2-upload"
@@ -101,6 +96,7 @@ const TIER_LABELS: Record<DirectoryTier, string> = {
   plus: "Plus",
   pro: "Pro",
   ultra: "Ultra",
+  ultraPlus: "Ultra Plus",
 }
 
 interface ProjectFormData {
@@ -178,20 +174,27 @@ export function SubmitProjectForm({
   )
 
   // Pre-slice DR records per tier. Memoised so we don't filter the
-  // 12-row array on every render of the Step-3 picker.
+  // directory-network array on every render of the Step-3 picker.
   //  - Basic: aat.ee (1)
-  //  - Plus: 4 directory sites
-  //  - Pro / Ultra: 3 docs-site preview + everything else into the
-  //    hover-revealed "+ N+ sites" overflow pill.
+  //  - Plus: a representative 5 partner sites. The actual 5 are chosen by the
+  //    syndication gateway at publish time (no DR filter), so this is just a
+  //    preview of the network the buyer draws from, on top of the aat.ee base.
+  //  - Pro / Ultra / Ultra Plus: 3-domain preview + everything else into the
+  //    hover-revealed "+ N sites" overflow pill.
   const tierDrs = useMemo(() => {
-    const inSet = (set: readonly string[]) => (r: DRRecord) => set.includes(r.domain)
-    const preview = drRecords.filter(inSet(DR_DOMAINS_PRO_PREVIEW))
-    const overflow = drRecords.filter((r) => !DR_DOMAINS_PRO_PREVIEW.includes(r.domain))
+    // drRecords carries the directory network (passed from the submit page).
+    // Sort high-DR first; preview shows the top 3, the rest go in overflow.
+    const sorted = [...drRecords].sort((a, b) => (b.dr ?? -1) - (a.dr ?? -1))
+    const split = (arr: DRRecord[]) => ({ preview: arr.slice(0, 3), overflow: arr.slice(3) })
+    const partners = sorted.filter((r) => r.domain !== "aat.ee")
     return {
-      basic: drRecords.filter(inSet(DR_DOMAINS_BASIC)),
-      plus: drRecords.filter(inSet(DR_DOMAINS_PLUS)),
-      pro: { preview, overflow },
-      ultra: { preview, overflow },
+      basic: drRecords.filter((r) => r.domain === "aat.ee"),
+      // Plus = aat.ee base + 5 partner sites picked by the gateway; preview the
+      // 5 strongest of the network as an illustrative sample.
+      plus: split(partners.slice(0, 5)),
+      pro: split(sorted),
+      ultra: split(sorted),
+      ultraPlus: split(sorted),
     }
   }, [drRecords])
 
@@ -1832,9 +1835,7 @@ export function SubmitProjectForm({
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {tierKey === "basic" &&
                           tierDrs.basic.map((r) => <DrBadge key={r.domain} record={r} size="sm" />)}
-                        {tierKey === "plus" &&
-                          tierDrs.plus.map((r) => <DrBadge key={r.domain} record={r} size="sm" />)}
-                        {(tierKey === "pro" || tierKey === "ultra") && (
+                        {tierKey !== "basic" && (
                           <>
                             {tierDrs[tierKey].preview.map((r) => (
                               <DrBadge key={r.domain} record={r} size="sm" />

@@ -265,7 +265,7 @@
         "cta": "Plus を選ぶ",
         "features": [
           "Basic のすべてを含む",
-          "DR 35+ のディレクトリサイト5件",
+          "ディレクトリサイト5件",
           "独立した dofollow ドメイン5つ"
         ]
       },
@@ -376,7 +376,7 @@
       },
       "directoryPublish": {
         "q": "ディレクトリ掲載はどのように公開されますか？",
-        "a": "当社のネットワーク全体で自動的に公開され、永久 dofollow バックリンクが付与されます。通常1〜3日で反映されます。Plus は最も強力な（DR 35+）ドメイン5件を選定し、Pro 以上は全13サイトに公開します。"
+        "a": "当社のネットワーク全体で自動的に公開され、永久 dofollow バックリンクが付与されます。通常1〜3日で反映されます。Plus はディレクトリサイト5件に公開し、Pro 以上は全13サイトに公開します。"
       },
       "geoArticles": {
         "q": "GEO 記事はどのように制作されますか？",
@@ -676,9 +676,10 @@
           "deliveryNote": "Basicは自動で公開されます。Plus / Pro / Ultraは全サイトに手動で掲載 — 通常1〜3営業日以内に反映されます。",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
-            "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 権威性の高いドキュメントサイト8件（GEO/AIEOを強化）",
-            "ultra": "Pro + サイドバーのスポンサー枠（サブスクリプション有効中は掲載）"
+            "plus": "Basic + ディレクトリサイト5件",
+            "pro": "Plus + 13 サイトのディレクトリネットワーク全体",
+            "ultra": "Pro + 権威サイトでの GEO/AIEO 記事 3 本",
+            "ultraPlus": "Pro + 権威サイトでの GEO/AIEO 記事 6 本"
           },
           "billing": {
             "oneOff": "一括払い",
@@ -791,15 +792,19 @@
       },
       "plus": {
         "label": "プラス",
-        "sublabel": "4サイト"
+        "sublabel": "aat.ee + ディレクトリサイト5件"
       },
       "pro": {
         "label": "プロ",
-        "sublabel": "12サイト · 最も人気"
+        "sublabel": "13 サイト · 人気"
       },
       "ultra": {
         "label": "ウルトラ",
-        "sublabel": "スポンサースロット · 月額"
+        "sublabel": "13 サイト + GEO 記事 3 本"
+      },
+      "ultraPlus": {
+        "label": "Ultra Plus",
+        "sublabel": "13 サイト + GEO 記事 6 本"
       }
     },
     "errors": {

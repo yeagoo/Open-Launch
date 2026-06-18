@@ -265,7 +265,7 @@
         "cta": "Choisir Plus",
         "features": [
           "Tout ce qui est inclus dans Basic",
-          "5 annuaires avec DR 35+",
+          "5 annuaires",
           "5 domaines dofollow indépendants"
         ]
       },
@@ -380,7 +380,7 @@
       },
       "directoryPublish": {
         "q": "Comment les référencements en annuaire sont-ils publiés ?",
-        "a": "Automatiquement sur l'ensemble de notre réseau avec un backlink dofollow permanent, généralement en ligne sous 1 à 3 jours. Plus sélectionne les 5 domaines les plus puissants (DR 35+) ; Pro et au-dessus publient sur les 13."
+        "a": "Automatiquement sur l'ensemble de notre réseau avec un backlink dofollow permanent, généralement en ligne sous 1 à 3 jours. Plus publie sur 5 annuaires ; Pro et au-dessus publient sur les 13."
       },
       "geoArticles": {
         "q": "Comment les articles GEO sont-ils produits ?",
@@ -680,9 +680,10 @@
           "deliveryNote": "Basic est mis en ligne automatiquement. Plus / Pro / Ultra sont placés manuellement sur tous les sites — généralement en ligne sous 1 à 3 jours ouvrés.",
           "tiers": {
             "basic": "Skip queue · dofollow link on aat.ee",
-            "plus": "Basic + 3 partner directories (manually placed)",
-            "pro": "Plus + 8 sites de docs autoritaires (booste GEO/AIEO)",
-            "ultra": "Pro + emplacement sponsor en sidebar (actif tant que l'abonnement est actif)"
+            "plus": "Basic + 5 annuaires",
+            "pro": "Plus + le réseau complet de 13 annuaires",
+            "ultra": "Pro + 3 articles GEO/AIEO sur des sites d'autorité",
+            "ultraPlus": "Pro + 6 articles GEO/AIEO sur des sites d'autorité"
           },
           "billing": {
             "oneOff": "Paiement unique",
@@ -795,15 +796,19 @@
       },
       "plus": {
         "label": "Plus",
-        "sublabel": "4 sites"
+        "sublabel": "aat.ee + 5 annuaires"
       },
       "pro": {
         "label": "Pro",
-        "sublabel": "12 sites · le plus populaire"
+        "sublabel": "13 sites · le plus populaire"
       },
       "ultra": {
         "label": "Ultra",
-        "sublabel": "Emplacement sponsor · mensuel"
+        "sublabel": "13 sites + 3 articles GEO"
+      },
+      "ultraPlus": {
+        "label": "Ultra Plus",
+        "sublabel": "13 sites + 6 articles GEO"
       }
     },
     "errors": {

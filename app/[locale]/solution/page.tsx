@@ -81,8 +81,8 @@ const SECTION1 = {
     zh: "13 个 AI 工具与产品导航站，会带着永久 dofollow 外链收录你的发布。每一个都传递真实的域名权重、加速收录、带来引荐流量——这正是经典 SEO 的复利循环。这些站点覆盖多语言、多国家，触达范围远超单一首页。",
   },
   body2: {
-    en: "It is hands-off: listings are published automatically and are typically live within one to three days. Basic seeds one site, Plus selects the five strongest domains, and Pro covers all thirteen.",
-    zh: "全程无需操心：收录自动发布，通常 1–3 天内上线。Basic 先布一站，Plus 精选 5 个权重最高的域名，Pro 则覆盖全部 13 个。",
+    en: "It is hands-off: listings are published automatically and are typically live within one to three days. Basic seeds one site, Plus covers five directory sites, and Pro covers all thirteen.",
+    zh: "全程无需操心：收录自动发布，通常 1–3 天内上线。Basic 先布一站，Plus 覆盖 5 个导航站，Pro 则覆盖全部 13 个。",
   },
   pull: {
     en: "Domain authority is borrowed before it is earned. A directory network lends you theirs on day one.",
@@ -160,13 +160,13 @@ const TIERS: TierDef[] = [
     price: "$6.99",
     original: "$9.99",
     tagline: {
-      en: "The five strongest domains in the network.",
-      zh: "网络中权重最高的 5 个域名。",
+      en: "Five domains from the directory network.",
+      zh: "导航网络中的 5 个域名。",
     },
-    reach: { en: "5 directory sites · DR 35+", zh: "5 个导航站 · DR 35+" },
+    reach: { en: "5 directory sites", zh: "5 个导航站" },
     features: [
       { en: "Everything in Basic", zh: "包含 Basic 全部" },
-      { en: "Published to 5 directory sites with DR 35+", zh: "发布到 5 个 DR 35+ 的导航站" },
+      { en: "Published to 5 directory sites", zh: "发布到 5 个导航站" },
       { en: "5 independent dofollow domains", zh: "5 个独立域名的 dofollow 外链" },
     ],
     badge: null,
@@ -311,8 +311,8 @@ const FAQ: { q: L; a: L }[] = [
   {
     q: { en: "How are directory listings published?", zh: "导航站收录是怎么发布的？" },
     a: {
-      en: "Automatically across our directory network with a permanent dofollow backlink, typically live within 1–3 days. Plus selects 5 of the strongest (DR 35+) domains; Pro and above publish to all 13.",
-      zh: "通过我们的导航网络自动发布，附带永久 dofollow 外链，通常 1–3 天内上线。Plus 选取 5 个权重最高（DR 35+）的域名；Pro 及以上发布到全部 13 个站点。",
+      en: "Automatically across our directory network with a permanent dofollow backlink, typically live within 1–3 days. Plus publishes to 5 directory sites; Pro and above publish to all 13.",
+      zh: "通过我们的导航网络自动发布，附带永久 dofollow 外链，通常 1–3 天内上线。Plus 发布到 5 个导航站；Pro 及以上发布到全部 13 个站点。",
     },
   },
   {

@@ -153,7 +153,6 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
     (d) => (drByDomain.get(d)?.dr ?? 0) >= 35,
   ).length
   const allDr35 = t("compare.allWithCount", { n: dr35Count })
-  const plusDr35 = String(Math.min(5, dr35Count))
 
   // Comparison matrix — values align positionally with TIERS. Booleans
   // render as check/cross; strings render as-is; the localized
@@ -162,8 +161,13 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
     {
       title: t("compare.groups.directory"),
       rows: [
-        { label: t("compare.rows.sites"), values: ["1", "5", "13", "13", "13"] },
-        { label: t("compare.rows.dr35"), values: ["—", plusDr35, allDr35, allDr35, allDr35] },
+        // Plus = aat.ee (the Basic listing, included) + 5 syndicated partner
+        // sites = 6 total. Counted consistently with Pro/Ultra (which include
+        // aat.ee in their 13). Plus sites are picked by the gateway without a
+        // DR filter, so the "DR 35+ domains" row shows "—" for Plus; Pro+ hit
+        // all 13, of which dr35Count currently clear DR 35.
+        { label: t("compare.rows.sites"), values: ["1", "6", "13", "13", "13"] },
+        { label: t("compare.rows.dr35"), values: ["—", "—", allDr35, allDr35, allDr35] },
         { label: t("compare.rows.dofollow"), values: [true, true, true, true, true] },
         { label: t("compare.rows.skipQueue"), values: [true, true, true, true, true] },
         { label: t("compare.rows.multiLang"), values: [false, false, true, true, true] },
