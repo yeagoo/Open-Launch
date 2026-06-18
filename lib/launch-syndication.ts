@@ -66,26 +66,40 @@ function mapPlatforms(platforms: string[] | null): string[] | null {
  * webhook (Stripe would retry the whole event).
  */
 
-export const SYNDICATION_SITES = ["bigkr", "mf8", "hicyou"] as const
+// Partner syndication targets. bigkr / mf8 / hicyou are standalone partner
+// sites (one endpoint each). `toolso` is a single GATEWAY in front of the
+// toolso-ai-open network (mifar / qoo / fastd / xlayers / upperstory / xemvip
+// / skachat / nexablocks / blackhawkgames / …): aat.ee posts once and the
+// gateway fans out to its own sites and returns each result, so adding toolso
+// domains needs no change here. `site` keys are stored on launch_syndication.site.
+export const SYNDICATION_SITES = ["bigkr", "mf8", "hicyou", "toolso"] as const
 export type SyndicationSite = (typeof SYNDICATION_SITES)[number]
 
-// Only these tiers cross-post. Basic stays on aat.ee only (we own that
-// dataset); Plus/Pro/Ultra are the ones that promise partner-site listings.
-export const SYNDICATED_TIERS: ReadonlySet<string> = new Set(["plus", "pro", "ultra"])
+// Only these tiers cross-post. Basic stays on aat.ee only. Plus posts to the
+// toolso gateway only (it publishes to PLUS_MAX_SITES of its own sites);
+// Pro / Ultra / Ultra Plus post to every target (the standalone sites + the
+// full toolso network).
+export const SYNDICATED_TIERS: ReadonlySet<string> = new Set(["plus", "pro", "ultra", "ultraPlus"])
 
-// Full endpoint URL per site, e.g. "https://bigkr.com/api/external/launch".
+// How many sites the toolso gateway publishes a Plus order to. Sent as
+// `maxSites`; the gateway randomly selects that many of its own sites.
+const PLUS_MAX_SITES = 5
+
+// Full /api/external/launch endpoint URL per target.
 const SITE_URL_ENV: Record<SyndicationSite, string> = {
   bigkr: "SYNDICATION_BIGKR_URL",
   mf8: "SYNDICATION_MF8_URL",
   hicyou: "SYNDICATION_HICYOU_URL",
+  toolso: "SYNDICATION_TOOLSO_URL",
 }
 
-// Per-site bearer key. Falls back to the shared EXTERNAL_LAUNCH_API_KEY so
-// ops can run a single shared secret across all sites, or rotate per-site.
+// Per-target bearer key. Falls back to the shared EXTERNAL_LAUNCH_API_KEY so
+// ops can run a single shared secret across all sites, or rotate per-target.
 const SITE_KEY_ENV: Record<SyndicationSite, string> = {
   bigkr: "SYNDICATION_BIGKR_API_KEY",
   mf8: "SYNDICATION_MF8_API_KEY",
   hicyou: "SYNDICATION_HICYOU_API_KEY",
+  toolso: "SYNDICATION_TOOLSO_API_KEY",
 }
 
 export function siteEndpoint(site: SyndicationSite): string | null {
@@ -125,10 +139,14 @@ export async function enqueueLaunchSyndication(
 ): Promise<void> {
   if (!SYNDICATED_TIERS.has(tier)) return
 
+  // Plus only hits the toolso gateway (which publishes to PLUS_MAX_SITES of
+  // its own sites); every other syndicated tier hits every target.
+  const sites: SyndicationSite[] = tier === "plus" ? ["toolso"] : [...SYNDICATION_SITES]
+
   await db
     .insert(launchSyndication)
     .values(
-      SYNDICATION_SITES.map((site) => ({
+      sites.map((site) => ({
         orderId,
         projectId,
         site,
@@ -231,6 +249,17 @@ export async function postLaunchToSite(
     }
   }
 
+  // The toolso gateway fans out to its own network and derives the site count
+  // from the tier; we pass maxSites for Plus to pin it to PLUS_MAX_SITES.
+  const body =
+    site === "toolso"
+      ? {
+          ...payload,
+          idempotencyKey: orderId,
+          maxSites: payload.tier === "plus" ? PLUS_MAX_SITES : undefined,
+        }
+      : { ...payload, idempotencyKey: orderId }
+
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -238,11 +267,18 @@ export async function postLaunchToSite(
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
-      body: JSON.stringify({ ...payload, idempotencyKey: orderId }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(20_000),
     })
 
-    let json: { ok?: boolean; id?: string | number; url?: string; error?: string } = {}
+    let json: {
+      ok?: boolean
+      id?: string | number
+      url?: string
+      error?: string
+      count?: number
+      sites?: Array<{ site?: string; id?: string | number; url?: string }>
+    } = {}
     try {
       json = await res.json()
     } catch {
@@ -254,6 +290,19 @@ export async function postLaunchToSite(
         ok: false,
         statusCode: res.status,
         error: json?.error || `HTTP ${res.status}`,
+      }
+    }
+
+    // The toolso gateway returns a multi-site result; collapse it to a single
+    // tracking record (site count + the first published URL). Standalone sites
+    // return one { id, url }.
+    if (site === "toolso") {
+      const published = json.sites ?? []
+      return {
+        ok: true,
+        statusCode: res.status,
+        externalId: `toolso:${json.count ?? published.length} sites`,
+        externalUrl: published[0]?.url,
       }
     }
 

@@ -10,7 +10,6 @@ import {
   enqueueLaunchSyndication,
   postLaunchToSite,
   SYNDICATED_TIERS,
-  SYNDICATION_SITES,
   type LaunchPayload,
   type PostResult,
   type SyndicationSite,
@@ -36,6 +35,10 @@ const RECONCILE_WINDOW_HOURS = 6
 const PROMOTE_WINDOW_HOURS = 24
 
 const SYNDICATED_TIER_LIST = [...SYNDICATED_TIERS]
+// Tiers whose fulfilment is fully automated (directory-only). Ultra /
+// Ultra Plus also owe manual GEO/AIEO articles, so they are NOT
+// auto-fulfilled here — an admin marks them fulfilled after writing them.
+const AUTO_FULFIL_TIERS = ["plus", "pro"]
 
 /**
  * Drains the launch_syndication queue and keeps directory_order fulfilment in
@@ -127,18 +130,26 @@ export async function GET(request: NextRequest) {
     // Build each project's payload once, sequentially — no cache race.
     const payloads = new Map<string, LaunchPayload | null>()
     for (const row of due) {
-      if (!payloads.has(row.projectId)) {
-        payloads.set(row.projectId, await buildLaunchPayload(row.projectId, row.tier))
+      // Key by (project, tier): the gateway derives reach from the payload tier
+      // (+ maxSites), so a Plus and a Pro row for the same project need distinct
+      // payloads.
+      const pkey = `${row.projectId}::${row.tier}`
+      if (!payloads.has(pkey)) {
+        payloads.set(pkey, await buildLaunchPayload(row.projectId, row.tier))
       }
     }
 
-    // Group rows by (site, projectId) so two orders for the same project can't
-    // race to insert the same listing on the same site within one tick. Post
-    // once per group and apply the outcome to every row in it (the receiver
-    // dedupes by URL anyway, so the result is identical).
+    // Group rows by (site, projectId, tier) so two orders for the same project
+    // can't race to insert the same listing on the same site within one tick.
+    // Tier is part of the key because the toolso gateway derives reach from the
+    // tier (Plus pins maxSites=5, others publish the full network): a Plus and a
+    // Pro row for the same project must post separately so neither is
+    // under-delivered. Post once per group and apply the outcome to every row in
+    // it (receivers dedupe by URL, so posting the same listing twice across
+    // tiers is harmless).
     const groups = new Map<string, typeof due>()
     for (const row of due) {
-      const key = `${row.site}::${row.projectId}`
+      const key = `${row.site}::${row.projectId}::${row.tier}`
       const g = groups.get(key)
       if (g) g.push(row)
       else groups.set(key, [row])
@@ -147,7 +158,7 @@ export async function GET(request: NextRequest) {
     await Promise.all(
       [...groups.values()].map(async (rows) => {
         const head = rows[0]
-        const payload = payloads.get(head.projectId) ?? null
+        const payload = payloads.get(`${head.projectId}::${head.tier}`) ?? null
         const result: PostResult = payload
           ? await postLaunchToSite(head.site as SyndicationSite, head.orderId, payload)
           : { ok: false, error: "project not found" }
@@ -198,16 +209,18 @@ export async function GET(request: NextRequest) {
 
   // 2. Promotion sweep — independent of the drain above, so an order whose rows
   // all turned `sent` in a previous tick (worker crashed before promoting) is
-  // still picked up. Promote `paid` → `fulfilled` only when EVERY configured
-  // site is `sent`; held/partial orders never qualify.
+  // still picked up. Promote `paid` → `fulfilled` only when EVERY enqueued site
+  // for that order is `sent` (per-order, since Plus enqueues a subset). Only
+  // directory-only tiers (plus/pro) auto-fulfil; Ultra / Ultra Plus also owe
+  // hand-written GEO articles and are fulfilled manually by an admin.
   let ordersFulfilled = 0
   const promoteCutoff = new Date(now.getTime() - PROMOTE_WINDOW_HOURS * 3_600_000)
   const promotable = await db
-    .select({ id: directoryOrder.id })
+    .select({ id: directoryOrder.id, tier: directoryOrder.tier })
     .from(directoryOrder)
     .where(
       and(
-        inArray(directoryOrder.tier, SYNDICATED_TIER_LIST),
+        inArray(directoryOrder.tier, AUTO_FULFIL_TIERS),
         eq(directoryOrder.status, "paid"),
         eq(directoryOrder.amountVerified, true),
         // By paidAt (when it became actionable), not createdAt — see reconcile.
@@ -217,11 +230,18 @@ export async function GET(request: NextRequest) {
     .limit(100)
   for (const order of promotable) {
     const rows = await db
-      .select({ site: launchSyndication.site, status: launchSyndication.status })
+      .select({ status: launchSyndication.status })
       .from(launchSyndication)
       .where(eq(launchSyndication.orderId, order.id))
-    const sentSites = new Set(rows.filter((r) => r.status === "sent").map((r) => r.site))
-    if (!SYNDICATION_SITES.every((s) => sentSites.has(s))) continue
+    // Promote once every row THIS order enqueued is `sent`. enqueue inserts all
+    // of an order's sites atomically, and the reconcile step backfills zero-row
+    // orders, so "all enqueued rows sent" == fully delivered for what was sold.
+    // Judging against the order's own rows (not the global SYNDICATION_SITES)
+    // keeps it robust when the target list changes: Plus enqueues only toolso,
+    // and an order enqueued under an older/larger list still settles correctly
+    // instead of being stranded forever waiting on a site it never had a row for.
+    const complete = rows.length > 0 && rows.every((r) => r.status === "sent")
+    if (!complete) continue
     const res = await db
       .update(directoryOrder)
       .set({
