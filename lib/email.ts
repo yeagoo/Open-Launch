@@ -47,7 +47,7 @@ export async function sendEmail(payload: EmailPayload) {
 
   try {
     const client = getResendClient()
-    const data = await client.emails.send({
+    const { data, error } = await client.emails.send({
       from: fromEmail,
       to,
       subject,
@@ -55,7 +55,18 @@ export async function sendEmail(payload: EmailPayload) {
       ...(effectiveReplyTo ? { replyTo: effectiveReplyTo } : {}),
     })
 
-    console.log("Email sent successfully:", { to, subject, data })
+    // Resend reports API-level failures (invalid recipient, rate limit,
+    // unverified domain, …) IN-BAND via `error` — `send()` does NOT throw on a
+    // 4xx. Surface it as a thrown error (the outer catch logs the details) so a
+    // failed send is never recorded as a false success.
+    if (error) {
+      throw new Error(`Resend API error: ${error.message ?? error.name ?? "unknown error"}`)
+    }
+
+    // Log only the id, not the raw response: the response always carries an
+    // `error` key (even when null), which makes log drains misclassify this
+    // success line as ERROR.
+    console.log("Email sent successfully:", { to, subject, id: data?.id })
     return { success: true, data }
   } catch (error) {
     console.error("Failed to send email:", error)
