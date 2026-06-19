@@ -65,6 +65,20 @@ export async function GET(request: NextRequest) {
       if (verdict.isLowQuality) flagged++
     } catch (err) {
       errors.push(`${cand.id}: ${err instanceof Error ? err.message : err}`)
+      // Stamp qualityCheckedAt even on failure so a persistently-failing
+      // project (dead URL, AI error) cools down to the back of the NULLS-FIRST
+      // queue instead of being re-selected every run and starving newer
+      // projects. It stays un-flagged (innocent until checked) and is retried
+      // after the cutoff window. Best-effort: a stamp failure must not abort
+      // the whole run.
+      try {
+        await db
+          .update(project)
+          .set({ qualityCheckedAt: new Date() })
+          .where(eq(project.id, cand.id))
+      } catch (stampErr) {
+        console.error(`quality-check: failed to cool down ${cand.id}`, stampErr)
+      }
     }
   }
 

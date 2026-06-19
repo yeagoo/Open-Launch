@@ -82,11 +82,20 @@ export async function GET(request: NextRequest) {
     const projectId = cand.projectId
     const sourceLocale = (cand.sourceLocale || "en") as ProjectLocale
 
-    // Load the source translation row (this is the canonical input)
+    // Load the source translation row (this is the canonical input). Must
+    // filter by sourceLocale: a project can have non-source rows already, and
+    // grabbing any row here (no locale filter) would (a) skip the backfill
+    // branch below even when the SOURCE row is missing, and (b) feed a
+    // translated row's text back in as the "canonical" source.
     const [src] = await db
       .select({ description: projectTranslation.description })
       .from(projectTranslation)
-      .where(eq(projectTranslation.projectId, projectId))
+      .where(
+        and(
+          eq(projectTranslation.projectId, projectId),
+          eq(projectTranslation.locale, sourceLocale),
+        ),
+      )
       .limit(1)
 
     if (!src) {
