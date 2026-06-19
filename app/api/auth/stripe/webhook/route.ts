@@ -766,7 +766,14 @@ async function handleDirectoryOrderCompleted(
         ref,
       )
     } else {
-      console.log("ℹ️ Directory order already processed, skipping:", orderId)
+      // Genuine Stripe retry (same session id). Re-run the idempotent project
+      // promotion: if the FIRST delivery flipped the order to paid but then
+      // threw before scheduling (e.g. a transient DB error), Stripe's retry
+      // would otherwise hit this skip branch and leave the project stranded in
+      // payment_pending forever. scheduleProjectIfPendingPayment is a no-op
+      // once the project is past payment_pending, so this is safe to repeat.
+      await scheduleProjectIfPendingPayment(order.projectId)
+      console.log("ℹ️ Directory order already processed, ensured scheduling:", orderId)
     }
     return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
   }
