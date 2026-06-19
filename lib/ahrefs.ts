@@ -138,7 +138,12 @@ function pickDR(raw: unknown): number | null {
   for (const c of candidates) {
     if (typeof c === "number" && c >= 0 && c <= 100) return Math.round(c)
     if (typeof c === "string") {
-      const n = Number(c)
+      // Number("") and Number("   ") are both 0, so a blank/whitespace value
+      // (the provider's "no data" sentinel) would parse as a valid DR 0 and
+      // clobber a previously cached good value. Treat blank as "no value".
+      const trimmed = c.trim()
+      if (trimmed === "") continue
+      const n = Number(trimmed)
       if (Number.isFinite(n) && n >= 0 && n <= 100) return Math.round(n)
     }
   }
