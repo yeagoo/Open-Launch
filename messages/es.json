@@ -424,6 +424,22 @@
       "heading": "Descubre la solución completa",
       "body": "Cómo el enfoque de dos redes convierte un lanzamiento en autoridad SEO duradera y citas en los motores de IA.",
       "cta": "Explorar la solución"
+    },
+    "freeOptions": {
+      "eyebrow": "¿Sin presupuesto? No pasa nada",
+      "title": "También puedes lanzar gratis",
+      "sub": "Los planes de pago son opcionales: todo producto puede publicarse en aat.ee sin coste.",
+      "free": {
+        "name": "Lanzamiento gratuito",
+        "tag": "Gratis · puede haber espera",
+        "desc": "Envía tu producto y únete a la cola diaria: cada día se abren plazas gratuitas limitadas. Cuando un día se llena, esperas a la siguiente plaza disponible, que puede tardar varios días."
+      },
+      "badge": {
+        "name": "Vía rápida con Badge",
+        "tag": "Gratis · sin espera",
+        "desc": "Añade nuestro badge a tu sitio y verifícalo para desbloquear un lote extra de plazas diarias: salta la cola y lanza antes. Sigue siendo totalmente gratis y te hace elegible para un backlink dofollow.",
+        "cta": "Enviar un producto"
+      }
     }
   },
   "search": {

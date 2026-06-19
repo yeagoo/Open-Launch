@@ -420,6 +420,22 @@
       "heading": "Tutvu täislahendusega",
       "body": "Kuidas kahe võrgustiku lähenemine muudab ühe käivituse püsivaks SEO-autoriteediks ja viideteks AI-mootorites.",
       "cta": "Uuri lahendust"
+    },
+    "freeOptions": {
+      "eyebrow": "Pole eelarvet? Pole muret",
+      "title": "Saad avaldada ka tasuta",
+      "sub": "Tasulised paketid on valikulised — iga toode saab aat.ee-s tasuta avaldada.",
+      "free": {
+        "name": "Tasuta avaldamine",
+        "tag": "Tasuta · võimalik ootamine",
+        "desc": "Esita oma toode ja liitu igapäevase järjekorraga — iga päev avaneb piiratud arv tasuta kohti. Kui päev on täis, ootad järgmist vaba kohta, mis võib olla mitme päeva kaugusel."
+      },
+      "badge": {
+        "name": "Badge'i kiirtee",
+        "tag": "Tasuta · ilma ootamiseta",
+        "desc": "Lisa oma saidile meie badge ja kinnita see, et avada täiendav hulk igapäevaseid kohti — jäta järjekord vahele ja avalda varem. Endiselt täiesti tasuta ning annab õiguse dofollow tagasilingile.",
+        "cta": "Esita toode"
+      }
     }
   },
   "search": {

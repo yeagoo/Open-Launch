@@ -420,6 +420,22 @@
       "heading": "See the full solution",
       "body": "How the two-network approach turns one launch into lasting SEO authority and AI-engine citations.",
       "cta": "Explore the solution"
+    },
+    "freeOptions": {
+      "eyebrow": "No budget? No problem",
+      "title": "You can launch for free",
+      "sub": "The paid tiers are optional — every product can go live on aat.ee at no cost.",
+      "free": {
+        "name": "Free Launch",
+        "tag": "Free · you may wait",
+        "desc": "Submit your product and join the daily queue — a limited number of free spots open each day. When a day fills up you wait for the next available slot, which can be several days out."
+      },
+      "badge": {
+        "name": "Badge Fast Track",
+        "tag": "Free · skip the wait",
+        "desc": "Add our badge to your site and verify it to unlock an extra batch of daily spots — skip the queue and launch sooner. Still completely free, and it makes you eligible for a dofollow backlink.",
+        "cta": "Submit a product"
+      }
     }
   },
   "search": {

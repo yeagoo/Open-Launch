@@ -5,11 +5,13 @@ import {
   RiArrowRightUpLine,
   RiCheckLine,
   RiCloseLine,
+  RiFlashlightLine,
   RiLineChartLine,
   RiSearchEyeLine,
   RiShieldStarLine,
   RiSparkling2Line,
   RiStarFill,
+  RiTimeLine,
 } from "@remixicon/react"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
@@ -274,6 +276,66 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
             </div>
           </section>
         )}
+
+        {/* ─── Free alternatives: paid is optional — free queue vs badge fast-track ─── */}
+        <section className="mb-20">
+          <div className="bg-muted/30 rounded-2xl border p-6 sm:p-8">
+            <div className="mb-6 text-center">
+              <p className="text-muted-foreground font-mono text-[11px] tracking-wider uppercase">
+                {t("freeOptions.eyebrow")}
+              </p>
+              <h2 className="font-editorial mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">
+                {t("freeOptions.title")}
+              </h2>
+              <p className="text-muted-foreground mx-auto mt-2 max-w-xl text-sm">
+                {t("freeOptions.sub")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Free launch — joins the queue, may wait */}
+              <div className="bg-card flex flex-col rounded-xl border p-5">
+                <div className="flex items-center gap-2">
+                  <RiTimeLine className="text-muted-foreground h-4 w-4 shrink-0" />
+                  <h3 className="font-editorial text-base font-semibold tracking-tight">
+                    {t("freeOptions.free.name")}
+                  </h3>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="mt-2 w-fit font-mono text-[10px] tracking-wide uppercase"
+                >
+                  {t("freeOptions.free.tag")}
+                </Badge>
+                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                  {t("freeOptions.free.desc")}
+                </p>
+              </div>
+
+              {/* Badge fast-track — skip the wait, still free */}
+              <div className="border-primary/30 bg-primary/[0.04] flex flex-col rounded-xl border p-5">
+                <div className="flex items-center gap-2">
+                  <RiFlashlightLine className="text-primary h-4 w-4 shrink-0" />
+                  <h3 className="font-editorial text-base font-semibold tracking-tight">
+                    {t("freeOptions.badge.name")}
+                  </h3>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="border-primary/30 text-primary mt-2 w-fit font-mono text-[10px] tracking-wide uppercase"
+                >
+                  {t("freeOptions.badge.tag")}
+                </Badge>
+                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                  {t("freeOptions.badge.desc")}
+                </p>
+                <Button asChild size="sm" variant="outline" className="mt-4 w-fit">
+                  <Link href="/projects/submit">{t("freeOptions.badge.cta")}</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ─── Primary content: full-width comparison table ─── */}
         <section className="mb-20">

@@ -420,6 +420,22 @@
       "heading": "Conheça a solução completa",
       "body": "Como a abordagem de duas redes transforma um lançamento em autoridade de SEO duradoura e citações nos motores de IA.",
       "cta": "Explorar a solução"
+    },
+    "freeOptions": {
+      "eyebrow": "Sem orçamento? Sem problema",
+      "title": "Você também pode lançar de graça",
+      "sub": "Os planos pagos são opcionais — todo produto pode entrar no ar na aat.ee sem custo.",
+      "free": {
+        "name": "Lançamento gratuito",
+        "tag": "Grátis · pode esperar",
+        "desc": "Envie seu produto e entre na fila diária: há vagas gratuitas limitadas a cada dia. Quando o dia lota, você aguarda a próxima vaga disponível, o que pode levar alguns dias."
+      },
+      "badge": {
+        "name": "Atalho com Badge",
+        "tag": "Grátis · sem espera",
+        "desc": "Adicione nosso badge ao seu site e verifique-o para desbloquear um lote extra de vagas diárias — pule a fila e lance mais cedo. Continua totalmente gratuito e te torna elegível para um backlink dofollow.",
+        "cta": "Enviar um produto"
+      }
     }
   },
   "search": {

@@ -424,6 +424,22 @@
       "heading": "Découvrez la solution complète",
       "body": "Comment l'approche à deux réseaux transforme un lancement en autorité SEO durable et en citations par les moteurs d'IA.",
       "cta": "Découvrir la solution"
+    },
+    "freeOptions": {
+      "eyebrow": "Pas de budget ? Pas de souci",
+      "title": "Vous pouvez aussi lancer gratuitement",
+      "sub": "Les offres payantes sont facultatives — chaque produit peut être publié sur aat.ee gratuitement.",
+      "free": {
+        "name": "Lancement gratuit",
+        "tag": "Gratuit · attente possible",
+        "desc": "Soumettez votre produit et rejoignez la file quotidienne : un nombre limité de places gratuites s'ouvre chaque jour. Quand une journée est complète, vous attendez le prochain créneau, parfois plusieurs jours plus tard."
+      },
+      "badge": {
+        "name": "Voie rapide Badge",
+        "tag": "Gratuit · sans attente",
+        "desc": "Ajoutez notre badge à votre site et vérifiez-le pour débloquer un lot supplémentaire de places quotidiennes — sautez la file et lancez plus tôt. Toujours entièrement gratuit, et cela vous rend éligible à un lien dofollow.",
+        "cta": "Soumettre un produit"
+      }
     }
   },
   "search": {
