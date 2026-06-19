@@ -123,7 +123,10 @@ export async function POST(request: NextRequest) {
     // Map AI category names to actual category IDs
     const matchedCategories = aiResult.categoryNames
       .map((name) => categories.find((c) => c.name.toLowerCase() === name.toLowerCase()))
-      .filter((c): c is NonNullable<typeof c> => c !== null)
+      // Array.find returns `undefined` (not null) when a name doesn't match;
+      // `!= null` drops both null and undefined so the `.id` map below can't
+      // deref undefined and throw a 500.
+      .filter((c): c is NonNullable<typeof c> => c != null)
       .map((c) => c.id)
 
     return NextResponse.json({
