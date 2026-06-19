@@ -546,17 +546,13 @@ ${wrapInput("website-content", truncateContent(crawledMarkdown, 6000))}`
       platforms: Array.isArray(parsed.platforms) ? parsed.platforms : [],
     }
   } catch (error) {
+    // Re-throw instead of returning an all-null fallback. The only caller
+    // (api/projects/auto-fill) already has a catch that returns 503 "AI
+    // extraction failed — please try again"; the silent fallback made it a
+    // misleading 200 with empty fields (looks like "the site had no info")
+    // and hid DeepSeek outages from the user.
     console.error("Project info extraction error:", error)
-    return {
-      name: crawledTitle || null,
-      tagline: null,
-      description: null,
-      logoUrl: null,
-      tags: [],
-      categoryNames: [],
-      pricing: null,
-      platforms: [],
-    }
+    throw error instanceof Error ? error : new Error(String(error))
   }
 }
 

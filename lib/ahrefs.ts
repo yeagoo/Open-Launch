@@ -233,6 +233,14 @@ export async function fetchDomainRating(domain: string): Promise<FetchDrResult> 
       }
 
       const { dr, rawForLog } = cfg.parseResponse(body)
+      // A 200 with no parseable DR (provider returned an error/changed body, or
+      // genuinely has no rating) must fall through to the next provider rather
+      // than short-circuit the failover with a null result. Only a real DR
+      // value ends the loop; if every provider yields null we return null below.
+      if (dr === null) {
+        lastError = `${provider}: HTTP ${response.status} but no DR in response`
+        continue
+      }
       return { domain, provider, dr, httpStatus: response.status, raw: rawForLog }
     } catch (err) {
       lastError = `${provider}: ${err instanceof Error ? err.message : String(err)}`

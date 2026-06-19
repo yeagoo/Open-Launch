@@ -117,8 +117,13 @@ const getSearchResults = unstable_cache(
       console.log(`[Search API] Found ${combinedResults.length} results`)
       return combinedResults
     } catch (error) {
+      // Re-throw rather than returning []: unstable_cache would otherwise
+      // cache the empty result for the full revalidate window, so users keep
+      // seeing "no results" for up to 60s after the DB recovers. A genuine
+      // no-match query returns [] above without reaching this catch; GET turns
+      // this throw into a clean 500 instead of a misleading empty 200.
       console.error("[Search API] Error searching:", error)
-      return []
+      throw error
     }
   },
   ["search-results"],
