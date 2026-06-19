@@ -8,6 +8,12 @@ import { commentAuth, commentStorage } from "@/lib/comment.config"
 import { extractTextFromContent } from "@/lib/content-utils"
 import { sendDiscordCommentNotification } from "@/lib/discord-notification"
 
+// Max comment request body. Comment payloads (Tiptap JSON) are small; this
+// caps the read an UNAUTHENTICATED client can force — the rate limit is
+// session-gated, so anonymous POSTs would otherwise reach req.text() +
+// JSON.parse unbounded before better-auth rejects them.
+const MAX_COMMENT_BODY_BYTES = 100_000
+
 /**
  * Supprime tous les liens du contenu en transformant les nœuds "link" en texte simple
  * @param content Le contenu JSON du commentaire
@@ -59,6 +65,13 @@ function removeLinksFromContent(content: any): any {
 async function processRequestWithLinkRemoval(
   req: NextRequest,
 ): Promise<{ req: NextRequest; body: Record<string, any> | null }> {
+  // Reject oversized bodies before buffering (callers turn this throw into a
+  // 400). A missing/non-numeric Content-Length falls through to the platform
+  // body limit; the common abuse case (a declared huge body) is cut here.
+  const declaredLen = Number(req.headers.get("content-length"))
+  if (Number.isFinite(declaredLen) && declaredLen > MAX_COMMENT_BODY_BYTES) {
+    throw new Error("BODY_TOO_LARGE")
+  }
   const raw = await req.text()
   if (!raw) {
     return {
