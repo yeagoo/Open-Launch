@@ -7,7 +7,6 @@ import { db } from "@/drizzle/db"
 import { directoryOrder, project, user } from "@/drizzle/db/schema"
 import { and, desc, eq, gt } from "drizzle-orm"
 import { getLocale } from "next-intl/server"
-import Stripe from "stripe"
 
 import { logAdminAction } from "@/lib/admin-audit"
 import { auth } from "@/lib/auth"
@@ -17,12 +16,6 @@ import {
   isDirectoryTier,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
-
-// Pinned alongside the webhook + verify route — see
-// `app/api/auth/stripe/webhook/route.ts` for the rationale.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
-})
 
 interface CreateInput {
   projectId: string
@@ -200,20 +193,21 @@ export async function resumePendingDirectoryOrder(
 
 interface CancelResult {
   canceled: boolean
-  expiredSessions: number
 }
 
 /**
  * Cancels any `pending` directory_order rows tied to the given project
- * (owned by the calling user), expires any open Stripe Checkout
- * Sessions for them, and deletes the project. Use this when a user
- * abandons a pending-payment flow and wants to start over — it closes
- * the Stripe-side door so the abandoned link can't later mint an
- * orphan payment (project gone → directory_order CASCADE-gone →
- * webhook 200s silently).
+ * (owned by the calling user) and deletes the project. Use this when a
+ * user abandons a pending-payment flow and wants to start over.
  *
- * Idempotent: zero-pending case returns canceled=true with 0 sessions
- * touched (still deletes the project, which is the caller's intent).
+ * We can't close the Stripe-side session here (Payment Links create it
+ * lazily, so we never hold its id, and there's no API to find it by
+ * `client_reference_id`). If the abandoned link is paid after cancel, the
+ * webhook catches it: the order is `canceled`, so it routes to
+ * `handleOrphanPayment` (auto-refund + admin alert) rather than fulfilling.
+ *
+ * Idempotent: the zero-pending case still returns canceled=true and deletes
+ * the project, which is the caller's intent.
  */
 export async function cancelPendingDirectoryOrder(projectId: string): Promise<CancelResult> {
   const sess = await auth.api.getSession({ headers: await headers() })
@@ -240,43 +234,15 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
     .from(directoryOrder)
     .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
 
-  let expiredSessions = 0
+  // We can't proactively expire the open Stripe Checkout Session here:
+  // Payment Links create the session only when the buyer opens the link, so
+  // we never learn its id, and Stripe has no API to look a session up by
+  // `client_reference_id` (Search doesn't cover Checkout Sessions, and
+  // `sessions.list` can't filter by it). We instead rely on two safety nets:
+  // Stripe auto-expires an unpaid session after 24h, and if a payment still
+  // lands on a now-`canceled` order the webhook routes it to
+  // `handleOrphanPayment` (auto-refund + admin alert). So just cancel locally.
   for (const order of pendingOrders) {
-    const ref = `${DIRECTORY_ORDER_REF_PREFIX}${order.id}`
-    try {
-      // Stripe search supports `client_reference_id` and `status`. Open
-      // sessions are the dangerous ones — a `complete`/`expired`
-      // session can't be paid against anymore so we don't care.
-      //
-      // `as any`: `checkout.sessions.search` is a live Stripe endpoint
-      // and works at runtime, but isn't in the v17 SDK typings.
-      const searchClient = stripe.checkout.sessions as unknown as {
-        search: (opts: {
-          query: string
-          limit?: number
-        }) => Promise<{ data: Array<{ id: string }> }>
-      }
-      const result = await searchClient.search({
-        query: `client_reference_id:'${ref}' AND status:'open'`,
-        limit: 5,
-      })
-      for (const s of result.data) {
-        try {
-          await stripe.checkout.sessions.expire(s.id)
-          expiredSessions++
-        } catch (err) {
-          // A session may already be expired by Stripe (24h auto-expiry)
-          // — log but don't fail the whole cancel flow.
-          console.error("⚠️ Failed to expire Stripe session", s.id, err)
-        }
-      }
-    } catch (err) {
-      // Search API can fail if the indexed copy is stale — proceed with
-      // local DB cleanup anyway. Worst case: a session stays open for
-      // up to 24h; the webhook's orphan-payment alert will catch any
-      // money that slips through.
-      console.error("⚠️ Stripe session search failed for ref", ref, err)
-    }
     await db
       .update(directoryOrder)
       .set({ status: "canceled", updatedAt: new Date() })
@@ -289,7 +255,7 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
   // surface the issue cleanly.
   await db.delete(project).where(eq(project.id, projectId))
 
-  return { canceled: true, expiredSessions }
+  return { canceled: true }
 }
 
 // ─── Admin actions ───

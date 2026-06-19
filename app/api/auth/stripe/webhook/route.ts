@@ -549,15 +549,26 @@ export async function POST(request: Request) {
       const projectId = ref
 
       if (projectId) {
-        // Mettre à jour le statut de la chaîne à PAYMENT_FAILED
-        await db
+        // Only a project genuinely awaiting payment may be failed. Stripe
+        // Payment Links accept an attacker-supplied `?client_reference_id=`,
+        // so without this PAYMENT_PENDING guard anyone could expire a session
+        // carrying a victim's projectId and flip a SCHEDULED/LAUNCHED project
+        // to PAYMENT_FAILED. Mirrors the atomic guard on the paid path and the
+        // directory branch above (which already guards status="pending").
+        const failResult = await db
           .update(project)
           .set({
             launchStatus: launchStatus.PAYMENT_FAILED,
             updatedAt: new Date(),
           })
-          .where(eq(project.id, projectId))
-        console.log("✅ Updated project status to PAYMENT_FAILED:", projectId)
+          .where(
+            and(eq(project.id, projectId), eq(project.launchStatus, launchStatus.PAYMENT_PENDING)),
+          )
+        if (failResult.rowCount && failResult.rowCount > 0) {
+          console.log("✅ Updated project status to PAYMENT_FAILED:", projectId)
+        } else {
+          console.log("ℹ️ Expired session for non-pending project, ignored:", projectId)
+        }
       }
 
       return NextResponse.json({ success: true }, { status: 200 })
@@ -733,6 +744,25 @@ async function handleDirectoryOrderCompleted(
       await handleOrphanPayment(
         session,
         `directory_order ${orderId} was '${order.status}' when paid webhook arrived`,
+        ref,
+      )
+    } else if (order.stripeSessionId && order.stripeSessionId !== session.id) {
+      // Already paid/fulfilled, but by a DIFFERENT checkout session — the buyer
+      // paid the same order twice (two sessions off one reusable Payment Link).
+      // Refund the duplicate + alert; never silently keep a second charge. (A
+      // genuine Stripe retry carries the SAME session id and falls through to
+      // the idempotent no-op below.)
+      console.error(
+        "⚠️ Duplicate payment for already-paid directory order:",
+        orderId,
+        "first session:",
+        order.stripeSessionId,
+        "duplicate:",
+        session.id,
+      )
+      await handleOrphanPayment(
+        session,
+        `directory_order ${orderId} paid twice — duplicate session ${session.id} (first ${order.stripeSessionId})`,
         ref,
       )
     } else {
