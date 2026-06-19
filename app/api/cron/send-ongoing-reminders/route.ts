@@ -6,6 +6,7 @@ import { endOfDay, startOfDay } from "date-fns"
 import { and, eq, gte, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { sendLaunchReminderEmail } from "@/lib/transactional-emails"
 
 export async function GET(request: NextRequest) {
@@ -103,14 +104,24 @@ export async function GET(request: NextRequest) {
     console.log(`- Emails sent successfully: ${emailsSentCount}`)
     console.log(`- Emails failed: ${emailsFailedCount}`)
 
-    return NextResponse.json({
-      message: "Launch reminder process completed.",
-      details: {
-        projectsFound: ongoingProjects.length,
-        emailsSent: emailsSentCount,
-        emailsFailed: emailsFailedCount,
+    // Total failure (reminders due, none sent) → 500 so cron monitoring alerts
+    // during a Resend outage/misconfig instead of showing green.
+    return NextResponse.json(
+      {
+        message: "Launch reminder process completed.",
+        details: {
+          projectsFound: ongoingProjects.length,
+          emailsSent: emailsSentCount,
+          emailsFailed: emailsFailedCount,
+        },
       },
-    })
+      {
+        status: cronStatusFromResult({
+          errorCount: emailsFailedCount,
+          successCount: emailsSentCount,
+        }),
+      },
+    )
   } catch (error) {
     console.error("Error in send-ongoing-reminders cron:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })

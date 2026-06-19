@@ -169,12 +169,14 @@ Return ONLY the JSON array, no other text.`
       }
     })
   } catch (error) {
+    // Re-throw on DeepSeek failure rather than returning a flag-everything
+    // fallback. The only caller (cron/moderate-tags) leaves the tags PENDING
+    // and returns 500, so they're auto-retried next run once DeepSeek recovers
+    // — this surfaces the outage to cron monitoring (instead of a green run)
+    // and avoids burying admins in manually-flagged tags from a transient blip.
+    // Still never auto-approves: untouched tags stay PENDING, not approved.
     console.error("Tag moderation error:", error)
-    // On failure, flag all for human review — safer than auto-approving
-    return tagNames.map(() => ({
-      verdict: "flagged" as const,
-      reason: "AI moderation unavailable — flagged for manual review",
-    }))
+    throw error instanceof Error ? error : new Error(String(error))
   }
 }
 

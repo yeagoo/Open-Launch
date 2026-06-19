@@ -13,6 +13,7 @@ import {
 import { eq, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { downloadAndUploadImage } from "@/lib/image-upload"
 import {
   cleanDescription,
@@ -306,9 +307,11 @@ export async function GET(request: Request) {
 
     console.log(`🎉 Import completed: ${imported} imported, ${skipped} skipped, ${errors} errors`)
 
+    // Total failure (posts present, none imported) → 500 so cron monitoring
+    // alerts instead of showing green. All-skipped (already imported) stays 200.
     return NextResponse.json(
       {
-        success: true,
+        success: errors === 0 || imported > 0,
         timestamp: new Date().toISOString(),
         summary: {
           total: posts.length,
@@ -318,7 +321,7 @@ export async function GET(request: Request) {
         },
         results,
       },
-      { status: 200 },
+      { status: cronStatusFromResult({ errorCount: errors, successCount: imported }) },
     )
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"

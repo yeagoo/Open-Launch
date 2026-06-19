@@ -17,6 +17,7 @@ import { generateComparisonContent } from "@/lib/ai-content"
 import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { getEnglishDescriptions } from "@/lib/get-project-translation"
 
 export const dynamic = "force-dynamic"
@@ -236,12 +237,17 @@ export async function GET(request: NextRequest) {
       revalidateTag(PROJECT_SIDEBAR_LINKS_TAG, "max")
     }
 
-    return NextResponse.json({
-      message: "Comparison generation complete",
-      generated,
-      skipped,
-      errors,
-    })
+    // Total failure (work attempted, nothing generated) → 500 so cron
+    // monitoring alerts during a DeepSeek outage instead of showing green.
+    return NextResponse.json(
+      {
+        message: "Comparison generation complete",
+        generated,
+        skipped,
+        errors,
+      },
+      { status: cronStatusFromResult({ errorCount: errors, successCount: generated }) },
+    )
   } catch (error) {
     console.error("Error in comparison generation cron:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

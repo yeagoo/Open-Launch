@@ -19,6 +19,7 @@ import {
 import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { getEnglishDescriptions } from "@/lib/get-project-translation"
 
 export const dynamic = "force-dynamic"
@@ -356,12 +357,18 @@ export async function GET(request: NextRequest) {
       revalidateTag(PROJECT_SIDEBAR_LINKS_TAG, "max")
     }
 
-    return NextResponse.json({
-      message: "Alternatives generation complete",
-      generated,
-      skipped,
-      errors,
-    })
+    // Surface a total failure (work attempted, nothing generated) as 500 so
+    // cron monitoring alerts during a DeepSeek/Tinyfish outage instead of
+    // showing green. Skips alone (not enough candidates) are not failures.
+    return NextResponse.json(
+      {
+        message: "Alternatives generation complete",
+        generated,
+        skipped,
+        errors,
+      },
+      { status: cronStatusFromResult({ errorCount: errors, successCount: generated }) },
+    )
   } catch (error) {
     console.error("Error in alternatives generation cron:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -6,6 +6,7 @@ import { endOfDay, startOfDay, subDays } from "date-fns"
 import { and, eq, gte, inArray, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronStatusFromResult } from "@/lib/cron-status"
 import { sendWinnerBadgeEmail } from "@/lib/transactional-emails"
 
 export async function GET(request: NextRequest) {
@@ -108,14 +109,24 @@ export async function GET(request: NextRequest) {
     console.log(`- Emails sent successfully: ${emailsSentCount}`)
     console.log(`- Emails failed: ${emailsFailedCount}`)
 
-    return NextResponse.json({
-      message: "Winner notification process completed.",
-      details: {
-        winnersFound: winners.length,
-        emailsSent: emailsSentCount,
-        emailsFailed: emailsFailedCount,
+    // Total failure (winners present, none notified) → 500 so cron monitoring
+    // alerts during a Resend outage/misconfig instead of showing green.
+    return NextResponse.json(
+      {
+        message: "Winner notification process completed.",
+        details: {
+          winnersFound: winners.length,
+          emailsSent: emailsSentCount,
+          emailsFailed: emailsFailedCount,
+        },
       },
-    })
+      {
+        status: cronStatusFromResult({
+          errorCount: emailsFailedCount,
+          successCount: emailsSentCount,
+        }),
+      },
+    )
   } catch (error) {
     console.error("Error in send-winner-notifications cron:", error)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
