@@ -608,3 +608,38 @@ ${wrapInput("recap-data", JSON.stringify(data, null, 2))}`
     maxTokens: 1500,
   })
 }
+
+// ─── "Best <category> tools" roundup (blog) ──────────────────────────────────
+
+export interface ToolRoundupInput {
+  category: string
+  tools: { name: string; tagline: string | null; pricing: string | null; url: string }[]
+}
+
+/**
+ * Generate a "Best <category> tools" roundup (MDX body) from a REAL list of
+ * products listed on aat.ee. The model only writes prose around the given tools
+ * — it must not invent tools, features, pricing, or URLs. Returns the MDX body
+ * (starts at ##). Stored as a DRAFT for human review before publishing.
+ */
+export async function generateToolRoundup(data: ToolRoundupInput): Promise<string> {
+  const systemPrompt = `You are a tech writer for aat.ee, a product-discovery platform. Write a "Best ${data.category} tools" roundup blog post in Markdown/MDX.
+
+STRICT RULES:
+- Use ONLY the tools in the provided data. Do NOT invent tools, features, pricing, or URLs. If a field is null or missing, omit it.
+- Start at H2 (##) — the page renders the title separately, so no H1.
+- Structure: a 2-sentence intro framing the category; "## The tools" with a "### <tool name>" subsection per tool — link the tool name to its url, describe it in 1-2 sentences using its tagline (don't fabricate beyond it), and mention pricing if given; a brief "## How we picked" note (curated from products listed on aat.ee); a closing "## Get your tool listed" CTA linking to /projects/submit and /pricing.
+- Present the list neutrally; do not assert a single "#1 best" or fabricate rankings. Factual and skimmable. Output ONLY the Markdown body.
+
+${INPUT_SAFETY_BLOCK}`
+  const userPrompt = `Category: ${data.category}
+
+Tools (the ONLY tools you may mention):
+${wrapInput("tools-data", JSON.stringify(data.tools, null, 2))}`
+
+  return callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "generate-tool-roundup",
+    temperature: 0.4,
+    maxTokens: 1800,
+  })
+}
