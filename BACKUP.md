@@ -15,9 +15,10 @@ already durable in R2, so only the database needs this.
   plus sequence values and a manifest. No `pg_dump` binary needed. The
   `drizzle.__drizzle_migrations` table is intentionally excluded — `db:migrate`
   re-establishes the schema on restore.
-- **Encrypt** — gzip, then envelope encryption: a random AES-256-GCM key per
-  backup, wrapped with `BACKUP_PUBLIC_KEY` (RSA-OAEP). The private key (offline)
-  is the only way to decrypt.
+- **Switch** — runs only when `BACKUP_ENABLED` is `true`. Off/unset is a clean
+  no-op (HTTP 200, no alert), so it stays dormant until configured.
+- **Encrypt** — gzip, then AES-256-GCM with a key scrypt-derived from
+  `BACKUP_PASSPHRASE` (per-backup random salt). The same passphrase decrypts.
 - **Store** — one object per run at
   `db/openlaunch/YYYY/MM/openlaunch-<utc-timestamp>.olbk.enc` in
   `BACKUP_R2_BUCKET`.
@@ -32,15 +33,16 @@ already durable in R2, so only the database needs this.
    `openlaunch-backups`, _not_ the public assets bucket) and an Access Key
    scoped to it. Set `BACKUP_R2_BUCKET`, `BACKUP_R2_ACCESS_KEY_ID`,
    `BACKUP_R2_SECRET_ACCESS_KEY` (the endpoint reuses `R2_ACCOUNT_ID`).
-2. **Encryption keypair** — generate once and keep the private key **offline**:
-   ```sh
-   openssl genpkey -algorithm RSA -pkcs8 -out backup-private.pem -pkeyopt rsa_keygen_bits:4096
-   openssl pkey -in backup-private.pem -pubout -out backup-public.pem
-   ```
-   Put `backup-public.pem` in `BACKUP_PUBLIC_KEY`. Store `backup-private.pem`
-   somewhere safe (password manager / offline vault). **Lose it and every
+2. **Passphrase** — generate a strong one and store it safely (password
+   manager). The same passphrase encrypts and restores — **lose it and every
    backup is unrecoverable.**
+   ```sh
+   openssl rand -base64 32
+   ```
+   Set it as `BACKUP_PASSPHRASE`.
 3. **Migrate** — `bun run db:migrate` applies `0032` and registers the cron.
+4. **Enable** — set `BACKUP_ENABLED=true` once the bucket + passphrase are in
+   place. Until then the cron is a no-op.
 
 ## Restore
 
@@ -55,7 +57,7 @@ bun scripts/restore-db-backup.ts --list
 bun scripts/restore-db-backup.ts \
   --source db/openlaunch/2026/06/openlaunch-2026-06-22_02-00-00.olbk.enc \
   --target "postgres://…/restore_db" \
-  --key ./backup-private.pem \
+  --passphrase "$BACKUP_PASSPHRASE" \
   --yes
 ```
 
@@ -71,4 +73,4 @@ manifest's `migrationTag` before `db:migrate`, so the schema matches the data.
 
 Backups are only real if they restore. After setup, do a dry restore into a
 throwaway DB and confirm the row-count check passes — then you know the
-encryption key, the dump, and the restore path all line up.
+passphrase, the dump, and the restore path all line up.

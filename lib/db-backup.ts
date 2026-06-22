@@ -33,8 +33,11 @@ import { to as copyTo } from "pg-copy-streams"
 // Container framing (plaintext, before gzip): MAGIC | metaLen(u32) | metaJSON |
 // then per table: nameLen(u16) | name | dataLen(u64) | copyBytes …
 const CONTAINER_MAGIC = Buffer.from("OLBK1\n")
-// Envelope framing: MAGIC | headerLen(u32) | headerJSON | ciphertext
-const ENVELOPE_MAGIC = Buffer.from("OLENC1\n")
+// Encryption framing: MAGIC | headerLen(u32) | headerJSON | ciphertext
+const ENC_MAGIC = Buffer.from("OLPW1\n")
+// scrypt KDF params, stored in each header so restore re-derives the same key.
+// maxmem must exceed 128*N*r (~32MB at N=2^15) — give it headroom.
+const SCRYPT = { N: 1 << 15, r: 8, p: 1, keylen: 32, maxmem: 64 * 1024 * 1024 }
 
 export const BACKUP_PREFIX = "db/openlaunch/"
 export const DEFAULT_RETENTION_DAYS = 30
@@ -71,24 +74,30 @@ export function backupBucket(): string {
   return b
 }
 
-// ─── Envelope encryption: random AES-256-GCM data key, RSA-OAEP-wrapped with
-//     the public key. The private key (offline) is required to restore. ──
-export function envelopeEncrypt(plaintext: Buffer, publicKeyPem: string): Buffer {
-  const aesKey = crypto.randomBytes(32)
+// ─── Password encryption: key = scrypt(passphrase, random salt) → AES-256-GCM.
+//     The same passphrase (BACKUP_PASSPHRASE) encrypts and restores. The salt +
+//     KDF params live in the header so restore re-derives the identical key. ──
+export function passphraseEncrypt(plaintext: Buffer, passphrase: string): Buffer {
+  const salt = crypto.randomBytes(16)
   const iv = crypto.randomBytes(12)
-  const cipher = crypto.createCipheriv("aes-256-gcm", aesKey, iv)
+  const key = crypto.scryptSync(passphrase, salt, SCRYPT.keylen, {
+    N: SCRYPT.N,
+    r: SCRYPT.r,
+    p: SCRYPT.p,
+    maxmem: SCRYPT.maxmem,
+  })
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const authTag = cipher.getAuthTag()
-  const wrappedKey = crypto.publicEncrypt(
-    { key: publicKeyPem, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" },
-    aesKey,
-  )
   const header = Buffer.from(
     JSON.stringify({
       v: 1,
       cipher: "aes-256-gcm",
-      keyWrap: "rsa-oaep-sha256",
-      wrappedKey: wrappedKey.toString("base64"),
+      kdf: "scrypt",
+      N: SCRYPT.N,
+      r: SCRYPT.r,
+      p: SCRYPT.p,
+      salt: salt.toString("base64"),
       iv: iv.toString("base64"),
       authTag: authTag.toString("base64"),
     }),
@@ -96,25 +105,28 @@ export function envelopeEncrypt(plaintext: Buffer, publicKeyPem: string): Buffer
   )
   const headerLen = Buffer.alloc(4)
   headerLen.writeUInt32BE(header.length, 0)
-  return Buffer.concat([ENVELOPE_MAGIC, headerLen, header, ciphertext])
+  return Buffer.concat([ENC_MAGIC, headerLen, header, ciphertext])
 }
 
-export function envelopeDecrypt(blob: Buffer, privateKeyPem: string): Buffer {
-  if (!blob.subarray(0, ENVELOPE_MAGIC.length).equals(ENVELOPE_MAGIC)) {
-    throw new Error("Not an OLENC1 backup envelope")
+export function passphraseDecrypt(blob: Buffer, passphrase: string): Buffer {
+  if (!blob.subarray(0, ENC_MAGIC.length).equals(ENC_MAGIC)) {
+    throw new Error("Not an OLPW1 backup")
   }
-  let off = ENVELOPE_MAGIC.length
+  let off = ENC_MAGIC.length
   const headerLen = blob.readUInt32BE(off)
   off += 4
   const header = JSON.parse(blob.subarray(off, off + headerLen).toString("utf8"))
   off += headerLen
   const ciphertext = blob.subarray(off)
-  const aesKey = crypto.privateDecrypt(
-    { key: privateKeyPem, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" },
-    Buffer.from(header.wrappedKey, "base64"),
-  )
-  const decipher = crypto.createDecipheriv("aes-256-gcm", aesKey, Buffer.from(header.iv, "base64"))
+  const key = crypto.scryptSync(passphrase, Buffer.from(header.salt, "base64"), SCRYPT.keylen, {
+    N: header.N,
+    r: header.r,
+    p: header.p,
+    maxmem: SCRYPT.maxmem,
+  })
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(header.iv, "base64"))
   decipher.setAuthTag(Buffer.from(header.authTag, "base64"))
+  // Wrong passphrase → GCM auth fails here with a clear error.
   return Buffer.concat([decipher.update(ciphertext), decipher.final()])
 }
 
@@ -170,7 +182,7 @@ function quoteIdent(name: string): string {
 }
 
 // ─── Build the encrypted backup blob from a live snapshot ──
-export async function createDatabaseBackup(publicKeyPem: string): Promise<{
+export async function createDatabaseBackup(passphrase: string): Promise<{
   body: Buffer
   manifest: BackupManifest
 }> {
@@ -254,7 +266,7 @@ export async function createDatabaseBackup(publicKeyPem: string): Promise<{
     await gzDone
 
     const gzipped = Buffer.concat(out)
-    const body = envelopeEncrypt(gzipped, publicKeyPem)
+    const body = passphraseEncrypt(gzipped, passphrase)
     return { body, manifest }
   } finally {
     await client.end()

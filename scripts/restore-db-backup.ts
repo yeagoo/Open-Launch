@@ -13,10 +13,10 @@
 //   bun scripts/restore-db-backup.ts \
 //       --source db/openlaunch/2026/06/openlaunch-....olbk.enc \
 //       --target "postgres://user:pass@host:5432/restore_db" \
-//       --key ./backup-private.pem --yes
+//       --passphrase "…" --yes
 //       Decrypt the backup and load it into --target. --source may also be a
-//       local file path. The private key may come from --key <file> or the
-//       BACKUP_PRIVATE_KEY env (escaped "\n" accepted).
+//       local file path. The passphrase comes from --passphrase or the
+//       BACKUP_PASSPHRASE env (must match the one used to create the backup).
 //
 // SAFETY: this TRUNCATEs every restored table in --target. It refuses to run
 // against the same URL as DATABASE_URL (prod) unless --force-prod is given,
@@ -34,9 +34,9 @@ import { from as copyFrom } from "pg-copy-streams"
 import {
   BACKUP_PREFIX,
   backupBucket,
-  envelopeDecrypt,
   getBackupR2Client,
   parseContainer,
+  passphraseDecrypt,
 } from "../lib/db-backup"
 
 function arg(name: string): string | undefined {
@@ -100,13 +100,10 @@ async function main() {
     )
   }
 
-  const keyFile = arg("--key")
-  const privateKey = (
-    keyFile ? await readFile(keyFile, "utf8") : (process.env.BACKUP_PRIVATE_KEY ?? "")
-  )
-    .replace(/\\n/g, "\n")
-    .trim()
-  if (!privateKey) throw new Error("Private key required: --key <file> or BACKUP_PRIVATE_KEY")
+  const passphrase = arg("--passphrase") ?? process.env.BACKUP_PASSPHRASE ?? ""
+  if (!passphrase) {
+    throw new Error("Passphrase required: --passphrase <pw> or BACKUP_PASSPHRASE")
+  }
 
   console.log(`Source : ${source}`)
   console.log(`Target : ${target.replace(/\/\/[^@]*@/, "//***@")}`)
@@ -116,7 +113,7 @@ async function main() {
 
   console.log("Downloading + decrypting…")
   const blob = await fetchSource(source)
-  const gzipped = envelopeDecrypt(blob, privateKey)
+  const gzipped = passphraseDecrypt(blob, passphrase)
   const { manifest, tableData } = parseContainer(gzipped)
   console.log(
     `Backup from ${manifest.createdAt} · ${manifest.tables.length} tables · ${manifest.sequences.length} sequences`,

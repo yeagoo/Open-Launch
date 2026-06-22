@@ -26,16 +26,22 @@ export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request)
   if (authError) return authError
 
-  // Env may carry the PEM with escaped "\n" (common in dashboards) — normalize.
-  const publicKey = (process.env.BACKUP_PUBLIC_KEY ?? "").replace(/\\n/g, "\n").trim()
-  if (!publicKey) {
-    console.error("[db-backup] BACKUP_PUBLIC_KEY not configured")
-    return NextResponse.json({ error: "BACKUP_PUBLIC_KEY not configured" }, { status: 500 })
+  // Master switch. Off (or unset) → no-op success, so the dispatcher records a
+  // healthy run and does NOT alert. This is an intentional disable, not a fault.
+  const enabled = (process.env.BACKUP_ENABLED ?? "").trim().toLowerCase()
+  if (enabled !== "true" && enabled !== "1") {
+    return NextResponse.json({ ok: true, skipped: "BACKUP_ENABLED is not set" }, { status: 200 })
+  }
+
+  const passphrase = process.env.BACKUP_PASSPHRASE ?? ""
+  if (!passphrase) {
+    console.error("[db-backup] BACKUP_PASSPHRASE not configured")
+    return NextResponse.json({ error: "BACKUP_PASSPHRASE not configured" }, { status: 500 })
   }
 
   const startedAt = Date.now()
   try {
-    const { body, manifest } = await createDatabaseBackup(publicKey)
+    const { body, manifest } = await createDatabaseBackup(passphrase)
     const key = buildObjectKey()
     await uploadBackup(body, key)
 
