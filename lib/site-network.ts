@@ -17,15 +17,13 @@
  *     Perplexity, Gemini) and search engines. Placements here are
  *     hand-written blog / docs articles, done editorially (manual).
  *
- * DR (Domain Rating) for the directory domains is read from the
- * `domain_dr_cache` via `getDRBatch` and refreshed by the refresh-dr
- * cron. New domains report DR `null` until the first fetch lands — add
- * them to `ALL_TRACKED_DOMAINS` (lib/dr-domains.ts) to have the cron
- * pick them up.
+ * DR (Domain Rating) for these domains is read via `getDRBatch` from the
+ * build-time directories-links snapshot (lib/directories-links.ts), refreshed
+ * daily upstream. A domain absent from the snapshot reports DR `null`.
  */
 
 export interface DirectorySite {
-  /** Bare host as tracked in domain_dr_cache — used to join DR data. */
+  /** Bare host — used to join DR data from the directories-links snapshot. */
   domain: string
   /** Brand / display name. */
   brand: string

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bun scripts/generate-avatar-pool.ts && next build",
+    "build": "bun scripts/sync-directories-links.ts && bun scripts/generate-avatar-pool.ts && next build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate && bun scripts/apply-pending-sql.ts",
     "db:migrate:bootstrap": "bun scripts/apply-pending-sql.ts --mark-all-applied",

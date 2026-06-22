@@ -10,6 +10,7 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { Toaster } from "sonner"
 
+import { footerNavSites } from "@/lib/directories-links"
 import Footer from "@/components/layout/footer"
 import Nav from "@/components/layout/nav"
 import { OrganizationSchema } from "@/components/seo/structured-data"
@@ -142,7 +143,7 @@ export default async function RootLayout({
             <div className="flex min-h-dvh flex-col">
               <Nav />
               <main className="flex-grow">{children}</main>
-              <Footer />
+              <Footer navSites={footerNavSites} />
             </div>
           </ThemeProvider>
           <Toaster />

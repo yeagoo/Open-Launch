@@ -29,33 +29,18 @@ const legalLinks = [
   { key: "privacyPolicy", href: "/legal/privacy" },
 ] as const
 
-const friendLinks = [
-  { title: "Debian.Club", href: "https://debian.club/" },
-  { title: "HestiaCP CN", href: "https://hestiacp.cn/" },
-  { title: "PortCyou", href: "https://portcyou.com/" },
-  { title: "CloudFan", href: "https://cloud.fan/" },
-  { title: "AlmaLinuxCN", href: "https://www.almalinux.com.cn/" },
-  { title: "P.Cafe", href: "https://p.cafe/" },
-  { title: "RankFan", href: "https://www.rank.fan/" },
-  { title: "APP on ARM", href: "https://www.apponarm.com/" },
-  { title: "ScreenHello", href: "https://www.screenhello.com/" },
-  { title: "MF8", href: "https://mf8.biz/" },
-  { title: "AAT.ee", href: "https://aat.ee/" },
-  { title: "II.Pe", href: "https://ii.pe/" },
-  { title: "FreeHost", href: "https://freehost.work/" },
-  { title: "BigKr", href: "https://bigkr.com/" },
-  { title: "EOL.Wiki", href: "https://eol.wiki/" },
-  { title: "GEO.Fan", href: "https://geo.fan/" },
-  { title: "WebCasa", href: "https://web.casa" },
-  { title: "LiteHTTPD", href: "https://litehttpd.com" },
-  { title: "LLStack", href: "https://llstack.com" },
-  { title: "HiEmdash", href: "https://hiemdash.com" },
-  { title: "QOO.IM", href: "https://qoo.im" },
-  { title: "Ubuntu.Fan", href: "https://ubuntu.fan/" },
-  { title: "RunEntLinux", href: "https://runentlinux.com/" },
-]
+// Footer nav links come from the build-time directories-links snapshot, passed
+// as a small serialized slice from the (server) root layout so the full ~138KB
+// snapshot never reaches the client bundle.
+type NavSite = {
+  name: string
+  url: string
+  domain: string
+  logo: string | null
+  deemphasized: boolean
+}
 
-export default function FooterSection() {
+export default function FooterSection({ navSites }: { navSites: NavSite[] }) {
   const pathname = usePathname()
   const isHomePage = pathname === "/" || /^\/[a-z]{2}$/.test(pathname)
   const t = useTranslations("footer")
@@ -159,19 +144,29 @@ export default function FooterSection() {
             <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
               {t("friends")}
             </h3>
-            <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              {friendLinks.map((link, i) => (
-                <span key={link.title} className="flex items-center gap-2">
-                  {i > 0 && <span>|</span>}
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary transition-colors"
-                  >
-                    {link.title}
-                  </a>
-                </span>
+            <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
+              {navSites.map((site) => (
+                <a
+                  key={site.domain}
+                  href={site.url}
+                  target="_blank"
+                  rel="noopener"
+                  className={`hover:text-primary inline-flex items-center gap-1.5 transition-colors ${
+                    site.deemphasized ? "opacity-50" : ""
+                  }`}
+                >
+                  {site.logo && (
+                    <img
+                      src={site.logo}
+                      alt=""
+                      width={14}
+                      height={14}
+                      loading="lazy"
+                      className="h-3.5 w-3.5 rounded-sm"
+                    />
+                  )}
+                  {site.name}
+                </a>
               ))}
             </div>
 
