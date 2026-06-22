@@ -49,6 +49,21 @@ function quoteIdent(name: string): string {
   return `"${name.replace(/"/g, '""')}"`
 }
 
+// Same physical database? Compare host + port + db name (ignoring user/pass/
+// query/scheme), so an equivalent-but-not-identical URL for prod still trips
+// the safety guard.
+function sameDatabase(a: string, b: string): boolean {
+  try {
+    const ua = new URL(a)
+    const ub = new URL(b)
+    const port = (u: URL) => u.port || "5432"
+    const dbName = (u: URL) => u.pathname.replace(/^\//, "")
+    return ua.hostname === ub.hostname && port(ua) === port(ub) && dbName(ua) === dbName(ub)
+  } catch {
+    return a === b
+  }
+}
+
 async function listBackups() {
   const client = getBackupR2Client()
   const bucket = backupBucket()
@@ -94,9 +109,14 @@ async function main() {
   if (!source || !target) {
     throw new Error("Required: --source <r2-key|file> and --target <postgres-url> (or --list)")
   }
-  if (target === process.env.DATABASE_URL && !has("--force-prod")) {
+  if (
+    process.env.DATABASE_URL &&
+    sameDatabase(target, process.env.DATABASE_URL) &&
+    !has("--force-prod")
+  ) {
     throw new Error(
-      "--target equals DATABASE_URL (prod). Refusing. Pass --force-prod ONLY if you really mean to overwrite it.",
+      "--target resolves to the same database as DATABASE_URL (prod). Refusing. " +
+        "Pass --force-prod ONLY if you really mean to overwrite it.",
     )
   }
 
@@ -123,71 +143,73 @@ async function main() {
   const client = new Client({ connectionString: target })
   await client.connect()
   try {
-    await client.query("SET session_replication_role = replica")
-
-    // Resolve which manifest tables exist in the target.
-    const present: { name: string; expected: number }[] = []
+    // Fail fast if the target is missing any backed-up table — restoring a
+    // subset and reporting success would silently drop a whole table's data.
+    // Provision the schema (bun run db:migrate at the manifest's migration)
+    // before restoring.
+    const missing: string[] = []
     for (const t of manifest.tables) {
       const exists = await client.query(`SELECT to_regclass($1) AS oid`, [`public.${t.name}`])
-      if (exists.rows[0].oid) present.push({ name: t.name, expected: t.rows })
-      else console.warn(`  ⚠ skip ${t.name}: not present in target (run db:migrate first?)`)
+      if (!exists.rows[0].oid) missing.push(t.name)
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `Target is missing ${missing.length} table(s) from the backup: ${missing.join(", ")}. ` +
+          "Run `bun run db:migrate` (matching the manifest's migration) first.",
+      )
     }
 
-    // Truncate ALL of them in ONE statement, up front. Doing it per-table with
-    // CASCADE would let a later table's truncate wipe an already-loaded table
-    // that references it; emptying everything together satisfies the FK checks
-    // and leaves only inserts in the load phase below.
-    if (present.length > 0) {
-      const list = present.map((t) => `public.${quoteIdent(t.name)}`).join(", ")
+    // One transaction for the whole restore: truncate → load → reset sequences
+    // → verify. Any error OR a row-count mismatch rolls everything back, so a
+    // failed restore can never leave the target truncated or half-loaded.
+    // SET LOCAL session_replication_role=replica is transaction-scoped (FK
+    // order/triggers ignored during load; reverts on COMMIT/ROLLBACK).
+    await client.query("BEGIN")
+    try {
+      await client.query("SET LOCAL session_replication_role = replica")
+
+      const list = manifest.tables.map((t) => `public.${quoteIdent(t.name)}`).join(", ")
       await client.query(`TRUNCATE ${list} CASCADE`)
-    }
 
-    // Load. session_replication_role=replica means insert order/FKs don't matter.
-    for (const t of present) {
-      const data = tableData.get(t.name)
-      if (!data) {
-        console.warn(`  ⚠ skip ${t.name}: no data section in backup`)
-        continue
+      for (const t of manifest.tables) {
+        const data = tableData.get(t.name)
+        if (!data) throw new Error(`backup has no data section for table ${t.name}`)
+        await new Promise<void>((resolve, reject) => {
+          const stream = client.query(copyFrom(`COPY public.${quoteIdent(t.name)} FROM STDIN`))
+          stream.on("finish", resolve)
+          stream.on("error", reject)
+          stream.end(data)
+        })
       }
-      await new Promise<void>((resolve, reject) => {
-        const stream = client.query(copyFrom(`COPY public.${quoteIdent(t.name)} FROM STDIN`))
-        stream.on("finish", resolve)
-        stream.on("error", reject)
-        stream.end(data)
-      })
-    }
 
-    for (const s of manifest.sequences) {
-      await client.query(`SELECT setval($1::regclass, $2::bigint, true)`, [
-        `public.${quoteIdent(s.name)}`,
-        s.value,
-      ])
-    }
+      for (const s of manifest.sequences) {
+        await client.query(`SELECT setval($1::regclass, $2::bigint, true)`, [
+          `public.${quoteIdent(s.name)}`,
+          s.value,
+        ])
+      }
 
-    await client.query("SET session_replication_role = DEFAULT")
+      // Verify BEFORE commit — a mismatch aborts the whole restore.
+      const mismatches: string[] = []
+      for (const t of manifest.tables) {
+        const { rows } = await client.query<{ n: string }>(
+          `SELECT count(*)::text AS n FROM public.${quoteIdent(t.name)}`,
+        )
+        const got = Number(rows[0].n)
+        console.log(`  ${got === t.rows ? "✓" : "✗"} ${t.name}: ${got} rows (expected ${t.rows})`)
+        if (got !== t.rows) mismatches.push(`${t.name}: got ${got}, expected ${t.rows}`)
+      }
+      if (mismatches.length > 0) {
+        throw new Error(`Row-count mismatch — rolling back:\n  ${mismatches.join("\n  ")}`)
+      }
 
-    // Verify AFTER every load + truncate is done — counting earlier would miss
-    // a later cascade.
-    const restored: { name: string; rows: number; expected: number }[] = []
-    for (const t of present) {
-      const { rows } = await client.query<{ n: string }>(
-        `SELECT count(*)::text AS n FROM public.${quoteIdent(t.name)}`,
-      )
-      const got = Number(rows[0].n)
-      restored.push({ name: t.name, rows: got, expected: t.expected })
+      await client.query("COMMIT")
       console.log(
-        `  ${got === t.expected ? "✓" : "✗"} ${t.name}: ${got} rows (expected ${t.expected})`,
+        `✓ Restore complete — all ${manifest.tables.length} tables match expected row counts.`,
       )
-    }
-
-    const mismatches = restored.filter((r) => r.rows !== r.expected)
-    if (mismatches.length) {
-      console.error("✗ Row-count mismatches:")
-      for (const m of mismatches)
-        console.error(`    ${m.name}: got ${m.rows}, expected ${m.expected}`)
-      process.exitCode = 1
-    } else {
-      console.log(`✓ Restore complete — all ${restored.length} tables match expected row counts.`)
+    } catch (err) {
+      await client.query("ROLLBACK")
+      throw err
     }
   } finally {
     await client.end()

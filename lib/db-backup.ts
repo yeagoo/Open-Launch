@@ -213,14 +213,30 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
          FROM pg_sequences WHERE schemaname = 'public' AND last_value IS NOT NULL`,
     )
 
+    // Schema-version tag for the manifest. Most migrations are applied via
+    // scripts/apply-pending-sql.ts into public.manual_migrations_applied, so
+    // that tracker is the real "latest schema" signal; drizzle.__drizzle_migrations
+    // only covers the generated journal (0000–0006) and never advances past it.
+    // Prefer the manual tracker, fall back to the drizzle hash. Best-effort.
     let migrationTag: string | null = null
     try {
-      const { rows } = await client.query<{ hash: string }>(
-        `SELECT hash FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 1`,
+      const { rows } = await client.query<{ filename: string }>(
+        `SELECT filename FROM public.manual_migrations_applied
+          ORDER BY applied_at DESC, filename DESC LIMIT 1`,
       )
-      migrationTag = rows[0]?.hash ?? null
+      migrationTag = rows[0]?.filename ?? null
     } catch {
-      // drizzle schema may not exist in some envs — best-effort metadata only.
+      // tracker table may not exist in some envs — fall through.
+    }
+    if (!migrationTag) {
+      try {
+        const { rows } = await client.query<{ hash: string }>(
+          `SELECT hash FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 1`,
+        )
+        migrationTag = rows[0]?.hash ?? null
+      } catch {
+        // drizzle schema may not exist either — leave null.
+      }
     }
 
     const { rows: verRows } = await client.query<{ v: string }>(`SELECT version() AS v`)
