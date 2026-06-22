@@ -48,6 +48,23 @@ async function main() {
 
     const now = new Date()
     const status = data.status === "draft" ? "draft" : "published"
+    // Only set publishedAt from frontmatter. On a reseed (conflict) WITHOUT an
+    // explicit date, preserve the existing published_at so re-running to refresh
+    // content doesn't reshuffle blog ordering / RSS dates.
+    const explicitPublishedAt = data.publishedAt ? new Date(data.publishedAt) : null
+    const updateSet = {
+      title: data.title,
+      description: data.description,
+      content: body,
+      image: data.image ?? null,
+      tags: Array.isArray(data.tags) ? data.tags : null,
+      author: data.author ?? "aat.ee Team",
+      status,
+      metaTitle: data.metaTitle ?? null,
+      metaDescription: data.metaDescription ?? null,
+      updatedAt: now,
+      ...(explicitPublishedAt ? { publishedAt: explicitPublishedAt } : {}),
+    }
     await db
       .insert(blogArticle)
       .values({
@@ -62,24 +79,9 @@ async function main() {
         status,
         metaTitle: data.metaTitle ?? null,
         metaDescription: data.metaDescription ?? null,
-        publishedAt: data.publishedAt ? new Date(data.publishedAt) : now,
+        publishedAt: explicitPublishedAt ?? now,
       })
-      .onConflictDoUpdate({
-        target: blogArticle.slug,
-        set: {
-          title: data.title,
-          description: data.description,
-          content: body,
-          image: data.image ?? null,
-          tags: Array.isArray(data.tags) ? data.tags : null,
-          author: data.author ?? "aat.ee Team",
-          status,
-          metaTitle: data.metaTitle ?? null,
-          metaDescription: data.metaDescription ?? null,
-          publishedAt: data.publishedAt ? new Date(data.publishedAt) : now,
-          updatedAt: now,
-        },
-      })
+      .onConflictDoUpdate({ target: blogArticle.slug, set: updateSet })
     upserted++
   }
   console.log(dryRun ? "Dry run complete." : `✓ Upserted ${upserted} article(s).`)

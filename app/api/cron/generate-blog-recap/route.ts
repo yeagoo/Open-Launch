@@ -8,7 +8,7 @@ import {
   project,
   projectToCategory,
 } from "@/drizzle/db/schema"
-import { and, count, desc, eq, gte, inArray, lt } from "drizzle-orm"
+import { and, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm"
 
 import { generateLaunchRecap, type LaunchRecapInput } from "@/lib/ai-content"
 import { verifyCronAuth } from "@/lib/cron-auth"
@@ -137,6 +137,10 @@ export async function GET(request: NextRequest) {
           status: "draft",
           updatedAt: nowDate,
         },
+        // Atomic no-clobber: if a reviewer published this recap while we were
+        // waiting on DeepSeek, the upsert must NOT revert it to draft. The
+        // earlier status check is a fast path; this where is the real guard.
+        setWhere: ne(blogArticle.status, "published"),
       })
 
     console.log(
