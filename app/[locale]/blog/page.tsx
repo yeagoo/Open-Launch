@@ -4,7 +4,7 @@ import Link from "next/link"
 
 import { db } from "@/drizzle/db"
 import { blogArticle } from "@/drizzle/db/schema"
-import { desc } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
@@ -59,7 +59,11 @@ function calculateReadingTime(content: string): string {
 }
 
 async function getArticles() {
-  const articles = await db.select().from(blogArticle).orderBy(desc(blogArticle.publishedAt))
+  const articles = await db
+    .select()
+    .from(blogArticle)
+    .where(eq(blogArticle.status, "published"))
+    .orderBy(desc(blogArticle.publishedAt))
 
   return articles.map((article) => ({
     ...article,

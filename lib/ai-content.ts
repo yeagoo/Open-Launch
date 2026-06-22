@@ -565,3 +565,46 @@ function trimTagline(value: unknown): string | null {
   if (!trimmed) return null
   return trimmed.length > 60 ? trimmed.slice(0, 60).trimEnd() : trimmed
 }
+
+// ─── Monthly launch recap (blog) ─────────────────────────────────────────────
+
+export interface LaunchRecapInput {
+  monthLabel: string // e.g. "May 2026"
+  totalLaunches: number
+  topProducts: {
+    name: string
+    tagline: string | null
+    category: string | null
+    rank: number | null
+  }[]
+  topCategories: { name: string; count: number }[]
+}
+
+/**
+ * Generate a monthly "launch recap" blog post (MDX body) from REAL aat.ee data.
+ * The model only writes prose around the facts passed in — it must not invent
+ * products, numbers, or categories. Returns the MDX body (starts at ##).
+ * The caller stores the result as a DRAFT for human review before publishing.
+ */
+export async function generateLaunchRecap(data: LaunchRecapInput): Promise<string> {
+  const systemPrompt = `You are a tech writer for aat.ee, a product-launch & discovery platform. Write a concise, engaging "monthly launch recap" blog post in Markdown/MDX.
+
+STRICT RULES:
+- Use ONLY the facts in the provided data. Do NOT invent products, numbers, taglines, or categories. If a field is null or missing, omit it.
+- Do not fabricate statistics beyond the given totals.
+- Start at H2 (##) — the page renders the title separately, so no H1.
+- Structure: a 2-sentence intro; "## Top launches" (reference the given products, with their category when present); "## Category highlights" (use the given category counts); a short "## Launch your product" closing CTA linking to /projects/submit and /pricing.
+- ~400-600 words, factual and skimmable. Output ONLY the Markdown body.
+
+${INPUT_SAFETY_BLOCK}`
+  const userPrompt = `Month: ${data.monthLabel}
+
+Data (the ONLY facts you may use):
+${wrapInput("recap-data", JSON.stringify(data, null, 2))}`
+
+  return callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "generate-launch-recap",
+    temperature: 0.4,
+    maxTokens: 1500,
+  })
+}

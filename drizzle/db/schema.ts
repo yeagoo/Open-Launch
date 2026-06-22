@@ -389,6 +389,9 @@ export const blogArticle = pgTable(
     image: text("image"), // URL de l'image principale
     tags: text("tags").array(), // Array des tags
     author: text("author").notNull().default("Open Launch Team"),
+    // 'published' (visible in list/feed) | 'draft' (unlisted; auto-generated
+    // recaps land here for human review before going live).
+    status: text("status").notNull().default("published"),
     metaTitle: text("meta_title"),
     metaDescription: text("meta_description"),
     publishedAt: timestamp("published_at").notNull(),

@@ -47,6 +47,7 @@ async function main() {
     if (dryRun) continue
 
     const now = new Date()
+    const status = data.status === "draft" ? "draft" : "published"
     await db
       .insert(blogArticle)
       .values({
@@ -58,6 +59,7 @@ async function main() {
         image: data.image ?? null,
         tags: Array.isArray(data.tags) ? data.tags : null,
         author: data.author ?? "aat.ee Team",
+        status,
         metaTitle: data.metaTitle ?? null,
         metaDescription: data.metaDescription ?? null,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : now,
@@ -71,6 +73,7 @@ async function main() {
           image: data.image ?? null,
           tags: Array.isArray(data.tags) ? data.tags : null,
           author: data.author ?? "aat.ee Team",
+          status,
           metaTitle: data.metaTitle ?? null,
           metaDescription: data.metaDescription ?? null,
           publishedAt: data.publishedAt ? new Date(data.publishedAt) : now,

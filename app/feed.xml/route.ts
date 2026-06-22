@@ -36,6 +36,7 @@ export async function GET() {
         updatedAt: blogArticle.updatedAt,
       })
       .from(blogArticle)
+      .where(eq(blogArticle.status, "published"))
       .orderBy(desc(blogArticle.publishedAt))
       .limit(20)
 
