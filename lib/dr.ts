@@ -1,4 +1,4 @@
-import { drByDomain, drUpdatedAt } from "@/lib/directories-links"
+import { drByDomain } from "@/lib/directories-links"
 import { FRESH_WINDOW_MS, type DRRecord } from "@/lib/dr-domains"
 
 // Re-export the pure-data constants + type so existing server-side
@@ -24,11 +24,19 @@ export {
  */
 export async function getDRBatch(domains: readonly string[]): Promise<DRRecord[]> {
   if (domains.length === 0) return []
-  const fetchedAt = drUpdatedAt
-  const windowFresh = fetchedAt ? Date.now() - fetchedAt.getTime() < FRESH_WINDOW_MS : true
+  const now = Date.now()
   return domains.map((domain) => {
-    const dr = drByDomain.get(domain) ?? null
-    return { domain, dr, fetchedAt, isFresh: dr != null && windowFresh }
+    const info = drByDomain.get(domain)
+    const dr = info?.dr ?? null
+    // Per-domain checked-at, so a domain the upstream hasn't re-checked recently
+    // is correctly shown stale even if other domains were just refreshed.
+    const fetchedAt = info?.checkedAt ?? null
+    return {
+      domain,
+      dr,
+      fetchedAt,
+      isFresh: dr != null && fetchedAt != null && now - fetchedAt.getTime() < FRESH_WINDOW_MS,
+    }
   })
 }
 

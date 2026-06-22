@@ -17,6 +17,7 @@ export interface FriendSite {
   category: string
   status: FriendSiteStatus
   dr: number | null
+  dr_last_checked_at: string | null
   logo_svg: string | null
   description: string | null
   description_i18n: Record<string, string>
@@ -42,16 +43,24 @@ export const authorityDocumentationSites: FriendSite[] = (
 ).filter(visible)
 export const allFriendLinks: FriendSite[] = (d.all_friend_links ?? []).filter(visible)
 
-// domain → DR across every site — the DR source for /pricing, footer, etc.
-export const drByDomain: ReadonlyMap<string, number> = new Map(
-  [...(d.footer_navigation_sites ?? []), ...(d.authority_documentation_sites ?? [])]
-    .filter((s) => typeof s.dr === "number")
-    .map((s) => [s.domain, s.dr as number]),
-)
+export interface DrInfo {
+  dr: number | null
+  // Per-domain "DR last checked" date from the upstream rotation. Use this
+  // (not a single global last-run) so freshness reflects each domain — the
+  // upstream only re-checks a few domains per day.
+  checkedAt: Date | null
+}
 
-export const drUpdatedAt: Date | null = d._dr_update_meta?.last_run_at
-  ? new Date(d._dr_update_meta.last_run_at)
-  : null
+// domain → DR info across every site — the DR source for /pricing, footer, etc.
+export const drByDomain: ReadonlyMap<string, DrInfo> = new Map(
+  [...(d.footer_navigation_sites ?? []), ...(d.authority_documentation_sites ?? [])].map((s) => [
+    s.domain,
+    {
+      dr: typeof s.dr === "number" ? s.dr : null,
+      checkedAt: s.dr_last_checked_at ? new Date(s.dr_last_checked_at) : null,
+    },
+  ]),
+)
 
 // Our app locale → the snapshot's locale key (descriptions + section titles).
 const LOCALE_MAP: Record<string, string> = {

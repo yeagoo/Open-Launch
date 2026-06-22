@@ -56,10 +56,12 @@ export const DR_DOMAINS_PRO_PREVIEW: readonly string[] = [
   "rank.fan",
 ] as const
 
-// A DR value is considered fresh for this many ms. Past this it
-// still renders (with a "Updated X days ago" hint) but the cron
-// will refresh on its next 3-day tick.
-export const FRESH_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
+// A DR value is considered fresh for this many ms (drives the DR badge's
+// "stale" ring). DR now comes from the directories-links snapshot, whose
+// upstream rotates ~6 of ~45 domains/day (≈8-day cycle, 7-day retry backoff).
+// The window matches that cadence so the stale ring only fires when a domain
+// genuinely falls behind its own refresh, not on every normal rotation gap.
+export const FRESH_WINDOW_MS = 10 * 24 * 60 * 60 * 1000
 
 export interface DRRecord {
   domain: string
