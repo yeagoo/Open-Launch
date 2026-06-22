@@ -102,7 +102,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`[${now.toISOString()}] Launch reminder process completed.`)
     console.log(`- Emails sent successfully: ${emailsSentCount}`)
-    console.log(`- Emails failed: ${emailsFailedCount}`)
+    // Only log failures when there are any — an always-on "failed: 0" line gets
+    // mis-tagged ERROR by log drains that key off the word "failed".
+    if (emailsFailedCount > 0) {
+      console.warn(`- Emails failed: ${emailsFailedCount}`)
+    }
 
     // Total failure (reminders due, none sent) → 500 so cron monitoring alerts
     // during a Resend outage/misconfig instead of showing green.
