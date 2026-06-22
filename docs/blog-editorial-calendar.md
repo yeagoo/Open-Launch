@@ -21,9 +21,9 @@ contextual CTA at the end. English-first; translate top performers later.
 | #   | Track | Title                                                                    | Slug                                | Primary keyword                    | Main CTA               | Status     |
 | --- | ----- | ------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------- | ---------------------- | ---------- |
 | 1   | GEO   | GEO & AIEO: How to Get Your Product Recommended by AI                    | `geo-aieo-get-recommended-by-ai`    | get recommended by AI / GEO        | submit + pricing       | ✅ drafted |
-| 2   | GEO   | How to Get ChatGPT, Claude, Perplexity & Gemini to Name Your Product     | `get-named-by-ai-assistants`        | get product recommended by ChatGPT | pricing                | todo       |
-| 3   | GEO   | Dofollow Directory Backlinks for SaaS in 2026                            | `dofollow-directory-backlinks-saas` | dofollow backlinks SaaS            | pricing + friends      | todo       |
-| 4   | GEO   | What Domain Rating (DR) Is and Why It Matters for AI Visibility          | `domain-rating-dr-ai-visibility`    | domain rating                      | pricing                | todo       |
+| 2   | GEO   | How to Get ChatGPT, Claude, Perplexity & Gemini to Name Your Product     | `get-named-by-ai-assistants`        | get product recommended by ChatGPT | pricing                | drafted    |
+| 3   | GEO   | Dofollow Directory Backlinks for SaaS in 2026                            | `dofollow-directory-backlinks-saas` | dofollow backlinks SaaS            | pricing + friends      | drafted    |
+| 4   | GEO   | What Domain Rating (DR) Is and Why It Matters for AI Visibility          | `domain-rating-dr-ai-visibility`    | domain rating                      | pricing                | drafted    |
 | 5   | PLAY  | The Pre-Launch Checklist: 3 Weeks to Launch Day                          | `pre-launch-checklist`              | product launch checklist           | submit                 | todo       |
 | 6   | PLAY  | How to Get Your First 100 Users After Launch                             | `first-100-users-after-launch`      | first 100 users                    | submit                 | todo       |
 | 7   | PLAY  | Where to Launch in 2026: Product Hunt and How to Choose Alternatives     | `where-to-launch-2026`              | product hunt alternatives          | submit + /alternatives | todo       |
