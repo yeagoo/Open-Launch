@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { db } from "@/drizzle/db"
-import { blogArticle } from "@/drizzle/db/schema"
+import { blogArticle, blogArticleTranslation } from "@/drizzle/db/schema"
 import { mdxComponents } from "@/mdx-components"
 import {
   RiArticleLine,
@@ -14,7 +14,7 @@ import {
   RiTrophyLine,
   RiUserStarLine,
 } from "@remixicon/react"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { ArrowLeft, Calendar, Clock } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 import { MDXRemote } from "next-mdx-remote/rsc"
@@ -35,6 +35,35 @@ import { TableOfContents } from "@/components/blog/table-of-contents"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/structured-data"
 
+// Fetch the article, merging a per-locale translation over the English source
+// when one exists. Falls back to English if the locale has no translation (or
+// the translation table isn't present yet — guarded so the blog never breaks).
+async function getLocalizedArticle(slug: string, locale: string) {
+  const [base] = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  if (!base) return null
+  if (locale === "en") return base
+  try {
+    const [tr] = await db
+      .select()
+      .from(blogArticleTranslation)
+      .where(and(eq(blogArticleTranslation.slug, slug), eq(blogArticleTranslation.locale, locale)))
+      .limit(1)
+    if (tr) {
+      return {
+        ...base,
+        title: tr.title,
+        description: tr.description,
+        content: tr.content,
+        metaTitle: tr.metaTitle ?? base.metaTitle,
+        metaDescription: tr.metaDescription ?? base.metaDescription,
+      }
+    }
+  } catch (err) {
+    console.error("[blog] translation lookup failed, using English:", err)
+  }
+  return base
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -42,35 +71,35 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug, locale } = await params
 
-  const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  const article = await getLocalizedArticle(slug, locale)
 
-  if (!article[0]) {
+  if (!article) {
     return {
       title: "Article not found | aat.ee",
       description: "The article you're looking for doesn't exist or has been removed.",
     }
   }
 
-  const { title, description, metaTitle, metaDescription } = article[0]
+  const { title, description, metaTitle, metaDescription } = article
   const path = `/blog/${slug}`
 
   return {
     title: metaTitle || `${title} | aat.ee`,
     description: metaDescription || description,
     keywords: "blog, insights, tutorials, product launch, entrepreneurship, technology, startup",
-    authors: [{ name: article[0].author || "aat.ee Team" }],
+    authors: [{ name: article.author || "aat.ee Team" }],
     category: "Technology",
     alternates: buildLocaleAlternates(path, locale),
     openGraph: {
       title: metaTitle || `${title} | aat.ee`,
       description: metaDescription || description,
       type: "article",
-      publishedTime: article[0].publishedAt.toISOString(),
-      modifiedTime: article[0].updatedAt.toISOString(),
-      authors: [article[0].author || "aat.ee Team"],
+      publishedTime: article.publishedAt.toISOString(),
+      modifiedTime: article.updatedAt.toISOString(),
+      authors: [article.author || "aat.ee Team"],
       ...buildLocaleOpenGraph(path, locale),
       siteName: "aat.ee",
-      ...(article[0].image && { images: [article[0].image] }),
+      ...(article.image && { images: [article.image] }),
     },
     twitter: {
       card: "summary_large_image",
@@ -78,7 +107,7 @@ export async function generateMetadata({
       description: metaDescription || description,
       creator: "@aat_ee",
       site: "@aat_ee",
-      ...(article[0].image && { images: [article[0].image] }),
+      ...(article.image && { images: [article.image] }),
     },
   }
 }
@@ -106,13 +135,13 @@ export default async function BlogArticlePage({
   const { slug, locale } = await params
   const tBreadcrumb = await getTranslations("breadcrumb")
 
-  const article = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  const article = await getLocalizedArticle(slug, locale)
 
-  if (!article[0]) {
+  if (!article) {
     notFound()
   }
 
-  const { title, description, content, publishedAt, updatedAt, tags } = article[0]
+  const { title, description, content, publishedAt, updatedAt, tags } = article
   const readingTime = calculateReadingTime(content)
 
   return (
@@ -121,10 +150,10 @@ export default async function BlogArticlePage({
       <ArticleSchema
         headline={title}
         description={description}
-        image={article[0].image}
+        image={article.image}
         datePublished={publishedAt}
         dateModified={updatedAt}
-        author={article[0].author || "aat.ee Team"}
+        author={article.author || "aat.ee Team"}
         slug={slug}
       />
 
@@ -195,13 +224,9 @@ export default async function BlogArticlePage({
                 )}
 
                 {/* Hero Image */}
-                {article[0].image && (
+                {article.image && (
                   <div className="bg-muted mb-8 aspect-[16/9] overflow-hidden rounded-lg">
-                    <img
-                      src={article[0].image}
-                      alt={title}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={article.image} alt={title} className="h-full w-full object-cover" />
                   </div>
                 )}
               </header>

@@ -406,6 +406,31 @@ export const blogArticle = pgTable(
   },
 )
 
+// Per-locale translations of a blog article. The English source stays in
+// blog_article (the canonical row); rows here hold the translated title /
+// description / content for non-English locales (slug + locale = PK). The blog
+// pages merge a translation over the English row, falling back to English when
+// a locale's translation is missing. Populated by the translate-blog cron.
+export const blogArticleTranslation = pgTable(
+  "blog_article_translation",
+  {
+    slug: text("slug").notNull(),
+    locale: text("locale").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    content: text("content").notNull(),
+    metaTitle: text("meta_title"),
+    metaDescription: text("meta_description"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      pk: primaryKey({ columns: [table.slug, table.locale] }),
+    }
+  },
+)
+
 /**
  * @deprecated since 2026-05-10
  *

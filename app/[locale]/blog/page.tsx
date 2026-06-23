@@ -3,8 +3,8 @@ import { Metadata } from "next"
 import Link from "next/link"
 
 import { db } from "@/drizzle/db"
-import { blogArticle } from "@/drizzle/db/schema"
-import { desc, eq } from "drizzle-orm"
+import { blogArticle, blogArticleTranslation } from "@/drizzle/db/schema"
+import { and, desc, eq, inArray } from "drizzle-orm"
 import { Calendar, Clock } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
@@ -58,22 +58,54 @@ function calculateReadingTime(content: string): string {
   return `${minutes} min read`
 }
 
-async function getArticles() {
+async function getArticles(locale: string) {
   const articles = await db
     .select()
     .from(blogArticle)
     .where(eq(blogArticle.status, "published"))
     .orderBy(desc(blogArticle.publishedAt))
 
-  return articles.map((article) => ({
-    ...article,
-    readingTime: calculateReadingTime(article.content),
-  }))
+  // Override title/description with the locale's translation where one exists;
+  // fall back to English (and to English entirely if the table isn't there yet).
+  let trMap = new Map<string, { title: string; description: string }>()
+  if (locale !== "en" && articles.length > 0) {
+    try {
+      const trs = await db
+        .select({
+          slug: blogArticleTranslation.slug,
+          title: blogArticleTranslation.title,
+          description: blogArticleTranslation.description,
+        })
+        .from(blogArticleTranslation)
+        .where(
+          and(
+            eq(blogArticleTranslation.locale, locale),
+            inArray(
+              blogArticleTranslation.slug,
+              articles.map((a) => a.slug),
+            ),
+          ),
+        )
+      trMap = new Map(trs.map((t) => [t.slug, { title: t.title, description: t.description }]))
+    } catch (err) {
+      console.error("[blog] list translation lookup failed, using English:", err)
+    }
+  }
+
+  return articles.map((article) => {
+    const tr = trMap.get(article.slug)
+    return {
+      ...article,
+      title: tr?.title ?? article.title,
+      description: tr?.description ?? article.description,
+      readingTime: calculateReadingTime(article.content),
+    }
+  })
 }
 
 export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
-  const articles = await getArticles()
+  const articles = await getArticles(locale)
 
   return (
     <div className="bg-background min-h-screen">
