@@ -30,6 +30,10 @@ async function runTask(baseUrl: string, authHeader: string, path: string): Promi
       headers: { Authorization: authHeader },
       signal: AbortSignal.timeout(SUBTASK_TIMEOUT_MS),
     })
+    // We only need the status, but the body must be consumed so undici can
+    // recycle the loopback connection. Abandoning it leaves a stream dangling
+    // on every tick; cancelling it corrupts the pool (see safe-fetch.ts).
+    await res.text().catch(() => {})
     return { path, statusCode: res.status, durationMs: Date.now() - start }
   } catch (err) {
     return {

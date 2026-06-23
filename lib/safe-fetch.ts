@@ -87,15 +87,15 @@ export async function safeFetch(
         if (!location) return response
 
         // Intentionally NOT calling `response.body.cancel()` on the
-        // intermediate redirect responses. Under Node 24 + undici,
-        // cancelling a fetch-returned ReadableStream while undici is
-        // still wiring up its internal Transform corrupts a process-
-        // wide stream pool, after which unrelated SSR streams crash
-        // with `controller[kState].transformAlgorithm is not a
-        // function` (digest repeats forever). The intermediate body
-        // is small and gets GC'd on its own once we abandon the
-        // reference — the few extra bytes per hop are cheaper than
-        // losing the worker.
+        // intermediate redirect responses. Under undici (seen on the
+        // deployed Node 22.23.0), cancelling a fetch-returned
+        // ReadableStream while undici is still wiring up its internal
+        // Transform corrupts a process-wide stream pool, after which
+        // unrelated SSR streams crash with
+        // `controller[kState].transformAlgorithm is not a function`
+        // (digest repeats forever). The intermediate body is small and
+        // gets GC'd on its own once we abandon the reference — the few
+        // extra bytes per hop are cheaper than losing the worker.
 
         let nextUrl: URL
         try {

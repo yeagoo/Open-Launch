@@ -166,7 +166,14 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
         headers,
         signal: AbortSignal.timeout(10_000),
       })
-      if (!statusResponse.ok) continue
+      if (!statusResponse.ok) {
+        // Drain the body before the next poll. Abandoning it leaves undici
+        // streams dangling across up to ~30 iterations; cancelling corrupts
+        // the process-wide stream pool (see safe-fetch.ts). Consuming is the
+        // clean path that lets undici recycle the connection.
+        await statusResponse.text().catch(() => {})
+        continue
+      }
       const statusData = await statusResponse.json()
       if (statusData.status === "completed") {
         const result = statusData.results?.[0] || statusData.result || statusData
