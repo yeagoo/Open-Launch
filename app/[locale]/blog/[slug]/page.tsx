@@ -54,8 +54,11 @@ async function getLocalizedArticle(slug: string, locale: string) {
         title: tr.title,
         description: tr.description,
         content: tr.content,
-        metaTitle: tr.metaTitle ?? base.metaTitle,
-        metaDescription: tr.metaDescription ?? base.metaDescription,
+        // Use the translated meta, or none — never the English meta, which would
+        // give a localized body an English <title>/OG. generateMetadata then
+        // falls back to the translated title/description.
+        metaTitle: tr.metaTitle,
+        metaDescription: tr.metaDescription,
       }
     }
   } catch (err) {

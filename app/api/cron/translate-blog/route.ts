@@ -4,6 +4,8 @@ import { db } from "@/drizzle/db"
 import { blogArticle, blogArticleTranslation } from "@/drizzle/db/schema"
 import { routing } from "@/i18n/routing"
 import { eq } from "drizzle-orm"
+import { serialize } from "next-mdx-remote/serialize"
+import remarkGfm from "remark-gfm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
@@ -12,9 +14,18 @@ import { translateBlogArticle, type BlogLocale } from "@/lib/translate-blog"
 export const dynamic = "force-dynamic"
 export const maxDuration = 300
 
-// Article-locale pairs translated per run (each = 3 DeepSeek calls). Bounded so
-// a run stays well inside maxDuration; the backfill spreads over a few runs.
+// Article-locale pairs translated per run (each = up to 5 DeepSeek calls).
+// Bounded so a run stays well inside maxDuration; backfill spreads over runs.
 const PAIRS_PER_RUN = 10
+
+// Auto-published translations skip the draft review the generation crons use, so
+// reject MDX that does not compile (the article page would otherwise throw or
+// render a fenced document for that locale). Throws → caught → pair skipped →
+// page falls back to English until a later run produces valid MDX.
+async function assertCompiles(content: string): Promise<void> {
+  if (!content.trim()) throw new Error("empty translated content")
+  await serialize(content, { mdxOptions: { remarkPlugins: [remarkGfm] } })
+}
 
 /**
  * Translate published English blog articles into every other locale. Each run
@@ -35,6 +46,8 @@ export async function GET(request: NextRequest) {
         title: blogArticle.title,
         description: blogArticle.description,
         content: blogArticle.content,
+        metaTitle: blogArticle.metaTitle,
+        metaDescription: blogArticle.metaDescription,
         updatedAt: blogArticle.updatedAt,
       })
       .from(blogArticle)
@@ -68,9 +81,13 @@ export async function GET(request: NextRequest) {
           title: article.title,
           description: article.description,
           content: article.content,
+          metaTitle: article.metaTitle,
+          metaDescription: article.metaDescription,
           sourceLocale: "en",
           targetLocale: locale,
         })
+        // Reject malformed MDX before it can reach MDXRemote on the live page.
+        await assertCompiles(tr.content)
         const now = new Date()
         await db
           .insert(blogArticleTranslation)
@@ -80,6 +97,8 @@ export async function GET(request: NextRequest) {
             title: tr.title,
             description: tr.description,
             content: tr.content,
+            metaTitle: tr.metaTitle,
+            metaDescription: tr.metaDescription,
             updatedAt: now,
           })
           .onConflictDoUpdate({
@@ -88,6 +107,8 @@ export async function GET(request: NextRequest) {
               title: tr.title,
               description: tr.description,
               content: tr.content,
+              metaTitle: tr.metaTitle,
+              metaDescription: tr.metaDescription,
               updatedAt: now,
             },
           })
