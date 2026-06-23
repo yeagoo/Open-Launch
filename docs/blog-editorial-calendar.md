@@ -30,7 +30,7 @@ contextual CTA at the end. English-first; translate top performers later.
 | 8   | BEST  | Best AI Writing Tools (2026)                                             | `best-ai-writing-tools`             | best AI writing tools              | /categories + submit   | todo       |
 | 9   | BEST  | Best Product Hunt Alternatives (2026)                                    | `best-product-hunt-alternatives`    | product hunt alternatives          | submit                 | todo       |
 | 10  | BEST  | Best [Category] Tools — repeatable template, seed from top `/categories` | `best-<category>-tools`             | best [category] tools              | /categories + submit   | template   |
-| 11  | DATA  | State of Product Launches 2026 (annual flagship)                         | `state-of-product-launches-2026`    | product launch trends              | submit                 | todo       |
+| 11  | DATA  | State of Product Launches 2026 (annual flagship)                         | `state-of-product-launches-2026`    | product launch trends              | submit                 | drafted    |
 | 12  | DATA  | Monthly Launch Recap: Top Products & Trends (recurring)                  | `launch-recap-<yyyy>-<mm>`          | monthly product launches           | submit                 | template   |
 
 ## Suggested 30-day rollout
