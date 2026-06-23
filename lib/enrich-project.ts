@@ -5,6 +5,7 @@
  *   - pickRelatedProjects: shortlist of candidates -> ordered list of related project IDs
  */
 
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
 import { sanitizeMarkdown } from "@/lib/sanitize-markdown"
 import { type ProjectLocale } from "@/lib/translate-project"
@@ -45,6 +46,7 @@ async function callDeepSeek(
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
+  assertAiAvailable()
 
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
@@ -62,6 +64,7 @@ async function callDeepSeek(
 
   if (!response.ok) {
     const text = await response.text().catch(() => "")
+    noteAiResponse(response.status, text)
     throw new Error(`DeepSeek API error ${response.status}: ${text}`)
   }
 

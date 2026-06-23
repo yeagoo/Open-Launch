@@ -10,6 +10,7 @@
  * The threshold lives here so admin code and the cron stay in sync.
  */
 
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
 
@@ -65,6 +66,7 @@ export async function classifyProjectQuality(input: {
 ${wrapInput("description", stripHtml(input.description, 1500))}
 ${wrapInput("website_url", input.websiteUrl ?? "")}`
 
+  assertAiAvailable()
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -81,6 +83,7 @@ ${wrapInput("website_url", input.websiteUrl ?? "")}`
 
   if (!response.ok) {
     const text = await response.text().catch(() => "")
+    noteAiResponse(response.status, text)
     throw new Error(`DeepSeek API error ${response.status}: ${text}`)
   }
 

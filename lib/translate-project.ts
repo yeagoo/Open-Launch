@@ -1,3 +1,4 @@
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
 import { sanitizeRichText } from "@/lib/sanitize"
 
@@ -83,6 +84,7 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
 
   const userPrompt = `<CONTENT>\n${description}\n</CONTENT>`
 
+  assertAiAvailable()
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -101,6 +103,7 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
 
   if (!response.ok) {
     const text = await response.text()
+    noteAiResponse(response.status, text)
     throw new Error(`DeepSeek API error ${response.status}: ${text}`)
   }
 
@@ -161,6 +164,7 @@ Rules:
 
   const userPrompt = trimmed
 
+  assertAiAvailable()
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -176,6 +180,7 @@ Rules:
 
   if (!response.ok) {
     const text = await response.text()
+    noteAiResponse(response.status, text)
     throw new Error(`DeepSeek API error ${response.status}: ${text}`)
   }
 

@@ -4,6 +4,7 @@
  * Follows the same DeepSeek API pattern as lib/ai-comment.ts
  */
 
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml as stripHtmlShared, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
 
@@ -60,6 +61,7 @@ async function callDeepSeek(
     throw new Error("DEEPSEEK_API_KEY environment variable is not set")
   }
 
+  assertAiAvailable()
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -79,6 +81,7 @@ async function callDeepSeek(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
+    noteAiResponse(response.status, JSON.stringify(errorData))
     throw new Error(`DeepSeek API error: ${response.status} ${JSON.stringify(errorData)}`)
   }
 

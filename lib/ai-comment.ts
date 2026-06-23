@@ -7,6 +7,7 @@
  * rest are spread across the 7 other site locales.
  */
 
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
 
@@ -251,6 +252,7 @@ async function callDeepSeek(
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY environment variable is not set")
 
+  assertAiAvailable()
   const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -272,6 +274,7 @@ async function callDeepSeek(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
+    noteAiResponse(response.status, JSON.stringify(errorData))
     throw new Error(`DeepSeek API error: ${response.status} ${JSON.stringify(errorData)}`)
   }
 

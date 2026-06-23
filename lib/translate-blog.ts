@@ -1,3 +1,4 @@
+import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
 
 // Translate blog articles via DeepSeek. Title/description are short text;
@@ -38,6 +39,7 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, fn: string
   const apiKey = process.env.DEEPSEEK_API_KEY
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
+  assertAiAvailable()
   const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -50,7 +52,11 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, fn: string
       temperature: 0.2,
     }),
   })
-  if (!res.ok) throw new Error(`DeepSeek API error ${res.status}: ${await res.text()}`)
+  if (!res.ok) {
+    const text = await res.text()
+    noteAiResponse(res.status, text)
+    throw new Error(`DeepSeek API error ${res.status}: ${text}`)
+  }
   const data = await res.json()
   await logAiUsage(fn, model, data?.usage)
   const content = data?.choices?.[0]?.message?.content

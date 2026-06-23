@@ -13,6 +13,7 @@ import {
 } from "@/drizzle/db/schema"
 import { and, count, desc, eq, gte, or, sql } from "drizzle-orm"
 
+import { aiCircuitOpen, AiUnavailableError, assertAiAvailable } from "@/lib/ai-circuit"
 import { generateComparisonContent } from "@/lib/ai-content"
 import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
@@ -151,6 +152,10 @@ export async function GET(request: NextRequest) {
               continue
             }
 
+            // Skip the (paid) crawl entirely if the AI breaker is already open
+            // — there's no point crawling for content we can't generate.
+            assertAiAvailable()
+
             // Crawl both websites
             const [crawlA, crawlB] = await Promise.all([
               getCachedOrCrawl(projA.id, projA.websiteUrl, 7, { timeout: CRAWL_TIMEOUT }),
@@ -198,6 +203,10 @@ export async function GET(request: NextRequest) {
             if (rows.length > 0) generated++
             else skipped++
           } catch (error) {
+            // A billing/AI outage isn't this pair's fault. Abort the whole run
+            // (rethrow to the outer catch) instead of recording a failure that
+            // would blacklist the pair for 24h and starve it after top-up.
+            if (error instanceof AiUnavailableError || aiCircuitOpen()) throw error
             console.error(`Error generating comparison ${projA.name} vs ${projB.name}:`, error)
             errors++
             // Record the failure so we skip this pair for the next 24h.
