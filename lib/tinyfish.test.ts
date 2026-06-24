@@ -45,6 +45,7 @@ function mockResponse(statusCode: number, payload: unknown) {
       },
       text: async () => text,
       dump: async () => {},
+      destroy: () => {},
     },
   }
 }

@@ -114,7 +114,13 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     throw new CrawlError(url, "Tinyfish 429: rate limit exceeded (25 URLs/min cap)")
   }
   if (statusCode < 200 || statusCode >= 300) {
-    const text = await withTimeout(body.text(), timeLeft(), `tinyfish ${url}`).catch(() => "")
+    let text = ""
+    try {
+      text = await withTimeout(body.text(), timeLeft(), `tinyfish ${url}`)
+    } catch {
+      // The abandoned read still holds the socket; tear it down to free it.
+      body.destroy()
+    }
     throw new CrawlError(url, `Tinyfish HTTP ${statusCode}: ${text.slice(0, 500)}`)
   }
 
@@ -123,7 +129,8 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     data = (await withTimeout(body.json(), timeLeft(), `tinyfish ${url}`)) as TinyfishResponse
   } catch (err) {
     // Release the connection if we bailed mid-read (timeout or parse failure).
-    void body.dump().catch(() => {})
+    // destroy() is safe whether the body was fully consumed or abandoned.
+    body.destroy()
     if (err instanceof FetchTimeoutError) throw new CrawlError(url, err.message)
     throw new CrawlError(
       url,
