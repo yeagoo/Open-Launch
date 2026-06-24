@@ -9,8 +9,9 @@
  * Docs: https://docs.tinyfish.ai/fetch-api
  */
 
+import { request, type Dispatcher } from "undici"
+
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
-import { fetchWithTimeout, withTimeout } from "./fetch-timeout"
 import { RateLimiter } from "./rate-limiter"
 
 // Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
@@ -62,53 +63,55 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   // it removes a whole class of release/race bugs.
   await fetchLimiter.acquire(2 * 60_000)
 
-  // One deadline for the whole call (headers + body read); reads are bounded
-  // with the remaining budget so a stalled body can't hang past `timeout`.
-  const deadline = Date.now() + timeout
-  const timeLeft = () => Math.max(1, deadline - Date.now())
-
-  let response: Response
+  // Use undici.request, NOT the global fetch. fetch's response.body is a
+  // web-streams ReadableStream; tearing one down (timeout / abort / GC) races
+  // with React SSR's TransformStream wiring and corrupts the process-wide
+  // web-streams pool, after which every SSR render crashes with
+  // `controller[kState].transformAlgorithm is not a function`. undici.request
+  // returns a Node Readable body and carries its own headers/body timeouts, so
+  // crawl I/O never touches the web-streams path.
+  let res: Dispatcher.ResponseData
   try {
-    // Non-aborting timeout: AbortSignal.timeout firing mid-stream corrupts
-    // undici's web-streams pool (see lib/fetch-timeout.ts).
-    response = await fetchWithTimeout(
-      baseUrl,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Tinyfish uses X-API-Key (raw key, no Bearer prefix). Verified
-          // against https://docs.tinyfish.ai/authentication and the OpenAPI
-          // spec at https://docs.tinyfish.ai/openapi/fetch.json.
-          "X-API-Key": apiKey,
-        },
-        body: JSON.stringify({ urls: [url], format: "markdown" }),
+    res = await request(baseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Tinyfish uses X-API-Key (raw key, no Bearer prefix). Verified
+        // against https://docs.tinyfish.ai/authentication and the OpenAPI
+        // spec at https://docs.tinyfish.ai/openapi/fetch.json.
+        "X-API-Key": apiKey,
       },
-      timeout,
-      `tinyfish ${url}`,
-    )
+      body: JSON.stringify({ urls: [url], format: "markdown" }),
+      headersTimeout: timeout,
+      bodyTimeout: timeout,
+    })
   } catch (err) {
-    // undici wraps low-level errors in TypeError("fetch failed") with the
-    // real cause (ETIMEDOUT / ENOTFOUND / SSL / abort) on `err.cause`.
-    // Surface both so the cron logs tell us *why*, not just "fetch failed".
+    // undici surfaces low-level errors with the real code (UND_ERR_*,
+    // ETIMEDOUT / ENOTFOUND / SSL) on the cause chain — formatFetchError
+    // walks it so the cron logs tell us *why*.
     throw new CrawlError(url, formatFetchError(err))
   }
 
+  const { statusCode, body } = res
+
   // Loud, distinct messages for the two operationally-meaningful failures.
-  if (response.status === 401) {
+  // The body must be consumed/dumped so undici can recycle the connection.
+  if (statusCode === 401) {
+    await body.dump().catch(() => {})
     throw new CrawlError(url, "Tinyfish 401: API key invalid or revoked")
   }
-  if (response.status === 429) {
+  if (statusCode === 429) {
+    await body.dump().catch(() => {})
     throw new CrawlError(url, "Tinyfish 429: rate limit exceeded (25 URLs/min cap)")
   }
-  if (!response.ok) {
-    const body = await withTimeout(response.text(), timeLeft(), `tinyfish ${url}`).catch(() => "")
-    throw new CrawlError(url, `Tinyfish HTTP ${response.status}: ${body.slice(0, 500)}`)
+  if (statusCode < 200 || statusCode >= 300) {
+    const text = await body.text().catch(() => "")
+    throw new CrawlError(url, `Tinyfish HTTP ${statusCode}: ${text.slice(0, 500)}`)
   }
 
   let data: TinyfishResponse
   try {
-    data = (await withTimeout(response.json(), timeLeft(), `tinyfish ${url}`)) as TinyfishResponse
+    data = (await body.json()) as TinyfishResponse
   } catch (err) {
     throw new CrawlError(
       url,
