@@ -27,7 +27,7 @@ import { addDays } from "date-fns"
 import { and, eq, gt } from "drizzle-orm"
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
-import { fetchWithTimeout } from "./fetch-timeout"
+import { fetchWithTimeout, withTimeout } from "./fetch-timeout"
 import { tinyfishCrawl } from "./tinyfish"
 
 export { CrawlError, type CrawlOptions, type CrawlResult }
@@ -144,11 +144,15 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
     )
 
     if (!submitResponse.ok) {
-      const errorBody = await submitResponse.text().catch(() => "")
+      const errorBody = await withTimeout(
+        submitResponse.text(),
+        timeout,
+        `crawl4ai submit ${url}`,
+      ).catch(() => "")
       throw new CrawlError(url, `API returned ${submitResponse.status}: ${errorBody}`)
     }
 
-    const submitData = await submitResponse.json()
+    const submitData = await withTimeout(submitResponse.json(), timeout, `crawl4ai submit ${url}`)
     const taskId = submitData.task_id
 
     if (!taskId) {
@@ -179,10 +183,16 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
         // streams dangling across up to ~30 iterations; cancelling corrupts
         // the process-wide stream pool (see safe-fetch.ts). Consuming is the
         // clean path that lets undici recycle the connection.
-        await statusResponse.text().catch(() => {})
+        await withTimeout(statusResponse.text(), 10_000, `crawl4ai status ${taskId}`).catch(
+          () => {},
+        )
         continue
       }
-      const statusData = await statusResponse.json()
+      const statusData = await withTimeout(
+        statusResponse.json(),
+        10_000,
+        `crawl4ai status ${taskId}`,
+      )
       if (statusData.status === "completed") {
         const result = statusData.results?.[0] || statusData.result || statusData
         const md = result.markdown

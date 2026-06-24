@@ -20,17 +20,21 @@ export class FetchTimeoutError extends Error {
   }
 }
 
-export async function fetchWithTimeout(
-  input: string | URL,
-  init: RequestInit,
+/**
+ * Race any promise against a timer WITHOUT aborting it. On timeout the promise
+ * is abandoned (its result/body is never read and gets GC'd) — abandoning,
+ * unlike cancelling, does not corrupt undici's stream pool. Use this to bound
+ * body reads (`.json()` / `.text()`) too: a fetch can resolve its headers fast
+ * and then stall the body, so the read needs its own deadline.
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
   timeoutMs: number,
-  label = "request",
-): Promise<Response> {
-  const fetchPromise = fetch(input, init)
-  // The abandoned fetch may settle after the timeout wins; swallow a late
-  // rejection so it doesn't surface as an unhandled rejection. The resolved
-  // body, if any, is simply never read and gets GC'd.
-  fetchPromise.catch(() => {})
+  label = "operation",
+): Promise<T> {
+  // The abandoned promise may settle after the timer wins; swallow a late
+  // rejection so it doesn't surface as an unhandled rejection.
+  promise.catch(() => {})
 
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<never>((_, reject) => {
@@ -42,9 +46,16 @@ export async function fetchWithTimeout(
     timer.unref?.()
   })
 
-  try {
-    return await Promise.race([fetchPromise, timeout])
-  } finally {
+  return Promise.race([promise, timeout]).finally(() => {
     if (timer) clearTimeout(timer)
-  }
+  })
+}
+
+export function fetchWithTimeout(
+  input: string | URL,
+  init: RequestInit,
+  timeoutMs: number,
+  label = "request",
+): Promise<Response> {
+  return withTimeout(fetch(input, init), timeoutMs, label)
 }

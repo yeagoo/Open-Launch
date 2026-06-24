@@ -6,7 +6,7 @@ import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronMatches } from "@/lib/cron-match"
 import { cronStatusFromResult } from "@/lib/cron-status"
-import { fetchWithTimeout } from "@/lib/fetch-timeout"
+import { fetchWithTimeout, withTimeout } from "@/lib/fetch-timeout"
 import { clearDedupe, dedupeOnce } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
@@ -30,13 +30,16 @@ async function runTask(baseUrl: string, authHeader: string, path: string): Promi
     // Non-aborting timeout: an AbortSignal firing mid-stream corrupts undici's
     // web-streams pool (see lib/fetch-timeout.ts). We only need the status, but
     // the body is then consumed so undici can recycle the loopback connection.
+    const deadline = Date.now() + SUBTASK_TIMEOUT_MS
     const res = await fetchWithTimeout(
       `${baseUrl}${path}`,
       { headers: { Authorization: authHeader } },
       SUBTASK_TIMEOUT_MS,
       `dispatch ${path}`,
     )
-    await res.text().catch(() => {})
+    await withTimeout(res.text(), Math.max(1, deadline - Date.now()), `dispatch ${path}`).catch(
+      () => {},
+    )
     return { path, statusCode: res.status, durationMs: Date.now() - start }
   } catch (err) {
     return {

@@ -10,7 +10,7 @@
  */
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
-import { fetchWithTimeout } from "./fetch-timeout"
+import { fetchWithTimeout, withTimeout } from "./fetch-timeout"
 import { RateLimiter } from "./rate-limiter"
 
 // Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
@@ -62,6 +62,11 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   // it removes a whole class of release/race bugs.
   await fetchLimiter.acquire(2 * 60_000)
 
+  // One deadline for the whole call (headers + body read); reads are bounded
+  // with the remaining budget so a stalled body can't hang past `timeout`.
+  const deadline = Date.now() + timeout
+  const timeLeft = () => Math.max(1, deadline - Date.now())
+
   let response: Response
   try {
     // Non-aborting timeout: AbortSignal.timeout firing mid-stream corrupts
@@ -97,13 +102,13 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     throw new CrawlError(url, "Tinyfish 429: rate limit exceeded (25 URLs/min cap)")
   }
   if (!response.ok) {
-    const body = await response.text().catch(() => "")
+    const body = await withTimeout(response.text(), timeLeft(), `tinyfish ${url}`).catch(() => "")
     throw new CrawlError(url, `Tinyfish HTTP ${response.status}: ${body.slice(0, 500)}`)
   }
 
   let data: TinyfishResponse
   try {
-    data = (await response.json()) as TinyfishResponse
+    data = (await withTimeout(response.json(), timeLeft(), `tinyfish ${url}`)) as TinyfishResponse
   } catch (err) {
     throw new CrawlError(
       url,
