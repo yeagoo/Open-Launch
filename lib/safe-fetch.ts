@@ -1,5 +1,6 @@
 import dns from "node:dns/promises"
 
+import { FetchTimeoutError, fetchWithTimeout } from "@/lib/fetch-timeout"
 import { isPrivateHostname } from "@/lib/utils"
 
 /**
@@ -51,6 +52,10 @@ export async function safeFetch(
 ): Promise<Response> {
   const maxRedirects = init.maxRedirects ?? DEFAULT_MAX_REDIRECTS
   const timeoutMs = init.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  // Deadline for the whole redirect chain. We enforce it WITHOUT aborting the
+  // fetch — an AbortSignal firing mid-stream corrupts undici's web-streams pool
+  // (see lib/fetch-timeout.ts). The caller's signal can still abort explicitly.
+  const deadline = Date.now() + timeoutMs
 
   const controller = new AbortController()
   const callerSignal = init.signal as AbortSignal | undefined
@@ -61,61 +66,64 @@ export async function safeFetch(
         once: true,
       })
   }
-  const timer = setTimeout(
-    () => controller.abort(new SafeFetchError("safeFetch: timed out", "timeout")),
-    timeoutMs,
-  )
 
+  let currentUrl: URL
   try {
-    let currentUrl: URL
-    try {
-      currentUrl = typeof input === "string" ? new URL(input) : new URL(input.toString())
-    } catch {
-      throw new SafeFetchError("safeFetch: invalid URL", "protocol")
-    }
-
-    for (let hop = 0; hop <= maxRedirects; hop++) {
-      await assertSafeUrl(currentUrl)
-      const response = await fetch(currentUrl.toString(), {
-        ...init,
-        signal: controller.signal,
-        redirect: "manual",
-      })
-
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("location")
-        if (!location) return response
-
-        // Intentionally NOT calling `response.body.cancel()` on the
-        // intermediate redirect responses. Under undici (seen on the
-        // deployed Node 22.23.0), cancelling a fetch-returned
-        // ReadableStream while undici is still wiring up its internal
-        // Transform corrupts a process-wide stream pool, after which
-        // unrelated SSR streams crash with
-        // `controller[kState].transformAlgorithm is not a function`
-        // (digest repeats forever). The intermediate body is small and
-        // gets GC'd on its own once we abandon the reference — the few
-        // extra bytes per hop are cheaper than losing the worker.
-
-        let nextUrl: URL
-        try {
-          nextUrl = new URL(location, currentUrl.toString())
-        } catch {
-          throw new SafeFetchError(
-            `safeFetch: invalid redirect target "${location}"`,
-            "invalid_redirect",
-          )
-        }
-        currentUrl = nextUrl
-        continue
-      }
-
-      return response
-    }
-    throw new SafeFetchError("safeFetch: too many redirects", "too_many_redirects")
-  } finally {
-    clearTimeout(timer)
+    currentUrl = typeof input === "string" ? new URL(input) : new URL(input.toString())
+  } catch {
+    throw new SafeFetchError("safeFetch: invalid URL", "protocol")
   }
+
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    await assertSafeUrl(currentUrl)
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) throw new SafeFetchError("safeFetch: timed out", "timeout")
+    let response: Response
+    try {
+      response = await fetchWithTimeout(
+        currentUrl.toString(),
+        { ...init, signal: controller.signal, redirect: "manual" },
+        remaining,
+        "safeFetch",
+      )
+    } catch (err) {
+      if (err instanceof FetchTimeoutError) {
+        throw new SafeFetchError("safeFetch: timed out", "timeout")
+      }
+      throw err
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location")
+      if (!location) return response
+
+      // Intentionally NOT calling `response.body.cancel()` on the
+      // intermediate redirect responses. Under undici (seen on the
+      // deployed Node 22.23.0), cancelling a fetch-returned
+      // ReadableStream while undici is still wiring up its internal
+      // Transform corrupts a process-wide stream pool, after which
+      // unrelated SSR streams crash with
+      // `controller[kState].transformAlgorithm is not a function`
+      // (digest repeats forever). The intermediate body is small and
+      // gets GC'd on its own once we abandon the reference — the few
+      // extra bytes per hop are cheaper than losing the worker.
+
+      let nextUrl: URL
+      try {
+        nextUrl = new URL(location, currentUrl.toString())
+      } catch {
+        throw new SafeFetchError(
+          `safeFetch: invalid redirect target "${location}"`,
+          "invalid_redirect",
+        )
+      }
+      currentUrl = nextUrl
+      continue
+    }
+
+    return response
+  }
+  throw new SafeFetchError("safeFetch: too many redirects", "too_many_redirects")
 }
 
 async function assertSafeUrl(url: URL): Promise<void> {

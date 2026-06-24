@@ -27,6 +27,7 @@ import { addDays } from "date-fns"
 import { and, eq, gt } from "drizzle-orm"
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
+import { fetchWithTimeout } from "./fetch-timeout"
 import { tinyfishCrawl } from "./tinyfish"
 
 export { CrawlError, type CrawlOptions, type CrawlResult }
@@ -130,12 +131,17 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
   if (apiToken) headers["Authorization"] = `Bearer ${apiToken}`
 
   try {
-    const submitResponse = await fetch(`${baseUrl}/crawl`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ urls: [url], word_count_threshold: 10, bypass_cache: false }),
-      signal: AbortSignal.timeout(timeout),
-    })
+    // Non-aborting timeout — see lib/fetch-timeout.ts for why abort corrupts.
+    const submitResponse = await fetchWithTimeout(
+      `${baseUrl}/crawl`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ urls: [url], word_count_threshold: 10, bypass_cache: false }),
+      },
+      timeout,
+      `crawl4ai submit ${url}`,
+    )
 
     if (!submitResponse.ok) {
       const errorBody = await submitResponse.text().catch(() => "")
@@ -162,10 +168,12 @@ export async function crawl4aiCrawl(url: string, options?: CrawlOptions): Promis
     const pollInterval = 2_000
     while (Date.now() - startTime < timeout) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval))
-      const statusResponse = await fetch(`${baseUrl}/task/${taskId}`, {
-        headers,
-        signal: AbortSignal.timeout(10_000),
-      })
+      const statusResponse = await fetchWithTimeout(
+        `${baseUrl}/task/${taskId}`,
+        { headers },
+        10_000,
+        `crawl4ai status ${taskId}`,
+      )
       if (!statusResponse.ok) {
         // Drain the body before the next poll. Abandoning it leaves undici
         // streams dangling across up to ~30 iterations; cancelling corrupts

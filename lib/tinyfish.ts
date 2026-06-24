@@ -10,6 +10,7 @@
  */
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
+import { fetchWithTimeout } from "./fetch-timeout"
 import { RateLimiter } from "./rate-limiter"
 
 // Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
@@ -63,18 +64,24 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
 
   let response: Response
   try {
-    response = await fetch(baseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Tinyfish uses X-API-Key (raw key, no Bearer prefix). Verified
-        // against https://docs.tinyfish.ai/authentication and the OpenAPI
-        // spec at https://docs.tinyfish.ai/openapi/fetch.json.
-        "X-API-Key": apiKey,
+    // Non-aborting timeout: AbortSignal.timeout firing mid-stream corrupts
+    // undici's web-streams pool (see lib/fetch-timeout.ts).
+    response = await fetchWithTimeout(
+      baseUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Tinyfish uses X-API-Key (raw key, no Bearer prefix). Verified
+          // against https://docs.tinyfish.ai/authentication and the OpenAPI
+          // spec at https://docs.tinyfish.ai/openapi/fetch.json.
+          "X-API-Key": apiKey,
+        },
+        body: JSON.stringify({ urls: [url], format: "markdown" }),
       },
-      body: JSON.stringify({ urls: [url], format: "markdown" }),
-      signal: AbortSignal.timeout(timeout),
-    })
+      timeout,
+      `tinyfish ${url}`,
+    )
   } catch (err) {
     // undici wraps low-level errors in TypeError("fetch failed") with the
     // real cause (ETIMEDOUT / ENOTFOUND / SSL / abort) on `err.cause`.
