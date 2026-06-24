@@ -12,6 +12,7 @@
 import { request, type Dispatcher } from "undici"
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
+import { FetchTimeoutError, withTimeout } from "./fetch-timeout"
 import { RateLimiter } from "./rate-limiter"
 
 // Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
@@ -63,6 +64,14 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   // it removes a whole class of release/race bugs.
   await fetchLimiter.acquire(2 * 60_000)
 
+  // Single end-to-end deadline. undici's headersTimeout/bodyTimeout are
+  // per-phase (idle) limits, so the body reads are additionally bounded by the
+  // remaining budget — otherwise a server that sends headers late then drips
+  // the body could overrun `timeout`. withTimeout is non-aborting; safe here
+  // because undici bodies are Node Readables, not web-streams.
+  const deadline = Date.now() + timeout
+  const timeLeft = () => Math.max(1, deadline - Date.now())
+
   // Use undici.request, NOT the global fetch. fetch's response.body is a
   // web-streams ReadableStream; tearing one down (timeout / abort / GC) races
   // with React SSR's TransformStream wiring and corrupts the process-wide
@@ -105,14 +114,17 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     throw new CrawlError(url, "Tinyfish 429: rate limit exceeded (25 URLs/min cap)")
   }
   if (statusCode < 200 || statusCode >= 300) {
-    const text = await body.text().catch(() => "")
+    const text = await withTimeout(body.text(), timeLeft(), `tinyfish ${url}`).catch(() => "")
     throw new CrawlError(url, `Tinyfish HTTP ${statusCode}: ${text.slice(0, 500)}`)
   }
 
   let data: TinyfishResponse
   try {
-    data = (await body.json()) as TinyfishResponse
+    data = (await withTimeout(body.json(), timeLeft(), `tinyfish ${url}`)) as TinyfishResponse
   } catch (err) {
+    // Release the connection if we bailed mid-read (timeout or parse failure).
+    void body.dump().catch(() => {})
+    if (err instanceof FetchTimeoutError) throw new CrawlError(url, err.message)
     throw new CrawlError(
       url,
       `Tinyfish returned 200 with invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
