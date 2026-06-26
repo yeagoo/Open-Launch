@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { directoryOrder, launchSyndication } from "@/drizzle/db/schema"
+import { directoryOrder, launchSyndication, project } from "@/drizzle/db/schema"
 import { and, eq, inArray, isNull, lt, lte, or, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { type DirectoryTier } from "@/lib/directory-tiers"
 import {
   buildLaunchPayload,
   enqueueLaunchSyndication,
@@ -14,6 +15,7 @@ import {
   type PostResult,
   type SyndicationSite,
 } from "@/lib/launch-syndication"
+import { sendListingLiveEmail } from "@/lib/transactional-emails"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -216,8 +218,16 @@ export async function GET(request: NextRequest) {
   let ordersFulfilled = 0
   const promoteCutoff = new Date(now.getTime() - PROMOTE_WINDOW_HOURS * 3_600_000)
   const promotable = await db
-    .select({ id: directoryOrder.id, tier: directoryOrder.tier })
+    .select({
+      id: directoryOrder.id,
+      tier: directoryOrder.tier,
+      locale: directoryOrder.locale,
+      buyerEmail: directoryOrder.buyerEmail,
+      buyerName: directoryOrder.buyerName,
+      projectName: project.name,
+    })
     .from(directoryOrder)
+    .leftJoin(project, eq(project.id, directoryOrder.projectId))
     .where(
       and(
         inArray(directoryOrder.tier, AUTO_FULFIL_TIERS),
@@ -230,7 +240,11 @@ export async function GET(request: NextRequest) {
     .limit(100)
   for (const order of promotable) {
     const rows = await db
-      .select({ status: launchSyndication.status })
+      .select({
+        status: launchSyndication.status,
+        site: launchSyndication.site,
+        externalUrl: launchSyndication.externalUrl,
+      })
       .from(launchSyndication)
       .where(eq(launchSyndication.orderId, order.id))
     // Promote once every row THIS order enqueued is `sent`. enqueue inserts all
@@ -251,7 +265,30 @@ export async function GET(request: NextRequest) {
         updatedAt: now,
       })
       .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "paid")))
-    if (res.rowCount && res.rowCount > 0) ordersFulfilled++
+    if (res.rowCount && res.rowCount > 0) {
+      ordersFulfilled++
+      // Best-effort: email the buyer the published partner URLs. Only the
+      // winning flip (rowCount>0, guarded on status='paid') reaches here, so
+      // the email is sent exactly once. A failure must not undo fulfilment.
+      try {
+        const listings = rows
+          .filter((r): r is typeof r & { externalUrl: string } => !!r.externalUrl)
+          .map((r) => ({ site: r.site, url: r.externalUrl }))
+        if (order.buyerEmail && listings.length > 0) {
+          await sendListingLiveEmail({
+            buyerEmail: order.buyerEmail,
+            buyerName: order.buyerName,
+            tier: order.tier as DirectoryTier,
+            projectName: order.projectName ?? "your project",
+            locale: order.locale,
+            listings,
+          })
+          console.log(`✅ Listing-live email sent for order ${order.id} (${listings.length} URLs)`)
+        }
+      } catch (err) {
+        console.error("⚠️ Failed to send listing-live email:", order.id, err)
+      }
+    }
   }
 
   return NextResponse.json({

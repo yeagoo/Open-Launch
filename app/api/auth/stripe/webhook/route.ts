@@ -713,6 +713,10 @@ async function handleDirectoryOrderCompleted(
     status: cfg.autoFulfil && !held ? "fulfilled" : "paid",
     amountCents: session.amount_total ?? cfg.amountCents,
     currency: session.currency ?? "usd",
+    // Persisted so the syndicate-launches cron can email the published partner
+    // URLs once delivery completes (the order is the only place we keep it).
+    buyerEmail: session.customer_details?.email ?? null,
+    buyerName: session.customer_details?.name ?? null,
     stripeSessionId: session.id,
     stripeSubscriptionId: subId,
     stripeCustomerId: customerId,

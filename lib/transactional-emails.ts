@@ -289,6 +289,90 @@ export async function sendBuyerDirectoryOrderConfirmation({
   })
 }
 
+/**
+ * "Your listing is live" email to the buyer, sent once a directory order is
+ * fully delivered across the partner network (every syndication row `sent`).
+ * Lists each published URL. Fired from /api/cron/syndicate-launches at the
+ * paid→fulfilled flip, so it's sent exactly once per order. Best-effort: a
+ * send failure must NOT undo or block fulfilment.
+ */
+export async function sendListingLiveEmail({
+  buyerEmail,
+  buyerName,
+  tier,
+  projectName,
+  locale,
+  listings,
+}: {
+  buyerEmail: string
+  buyerName: string | null
+  tier: DirectoryTier
+  projectName: string
+  locale?: string | null
+  // Published partner URLs. Caller filters out rows without a URL; we defend
+  // again here and render only valid http(s) links.
+  listings: Array<{ site: string; url: string }>
+}) {
+  const tierLabel = TIER_DISPLAY[tier]
+  const safeProjectName = escapeHtml(projectName)
+  const greeting = escapeHtml(buyerName?.trim() || "there")
+  const subject = `🚀 ${projectName} is now live across our directory network`
+
+  const validLocales = routing.locales as readonly string[]
+  const localePath =
+    locale && locale !== routing.defaultLocale && validLocales.includes(locale) ? `/${locale}` : ""
+  const dashboardUrl = `${resolveAppUrl()}${localePath}/dashboard`
+
+  // Render each valid URL as a list item; use the host as the visible label so
+  // the buyer recognises the site without us hardcoding partner brand names.
+  const items = listings
+    .map(({ url }) => {
+      const safeUrl = safeHttpUrl(url)
+      if (!safeUrl) return null
+      let host = safeUrl
+      try {
+        host = new URL(safeUrl).host
+      } catch {
+        /* keep full URL as label */
+      }
+      return `<li style="margin: 6px 0;"><a href="${safeUrl}">${escapeHtml(host)}</a> — <span style="color:#666;">${escapeHtml(safeUrl)}</span></li>`
+    })
+    .filter((x): x is string => x !== null)
+    .join("")
+
+  if (!items) {
+    // Nothing renderable — skip rather than send an empty "it's live" email.
+    return
+  }
+
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="font-size: 22px; color: #1a1a1a;">Hi ${greeting} 👋</h1>
+      <p>Good news — your <strong>Directory ${tierLabel}</strong> listing for <strong>${safeProjectName}</strong> is now live across our directory network.</p>
+
+      <h2 style="font-size: 16px; margin-top: 28px; color: #1a1a1a;">Your published listings</h2>
+      <ul style="padding-left: 20px;">${items}</ul>
+
+      <p style="text-align: center; margin: 28px 0;">
+        <a href="${dashboardUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          Open dashboard
+        </a>
+      </p>
+
+      <p style="color: #666; font-size: 13px; margin-top: 28px;">
+        Questions? Reply to this email or write to <a href="mailto:contact@aat.ee">contact@aat.ee</a>.
+      </p>
+    </div>
+  `
+
+  return sendEmail({
+    to: buyerEmail,
+    subject,
+    html: htmlBody,
+    replyTo: "contact@aat.ee",
+  })
+}
+
 export async function sendAdminPaymentNotification({
   userEmail,
   amount,

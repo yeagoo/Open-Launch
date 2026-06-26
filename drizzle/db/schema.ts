@@ -850,6 +850,12 @@ export const directoryOrder = pgTable(
     // post-payment confirmation email can land on the same-locale
     // dashboard instead of always English.
     locale: text("locale"),
+    // Buyer identity captured from the Stripe checkout session at payment
+    // time, so the syndicate-launches cron can email the published partner
+    // URLs once the order is fully delivered. Null for sessions without
+    // customer_details and for rows created before 0039.
+    buyerEmail: text("buyer_email"),
+    buyerName: text("buyer_name"),
     status: text("status").notNull().default("pending"), // 'pending' | 'paid' | 'fulfilled' | 'refunded' | 'failed' | 'canceled'
     amountCents: integer("amount_cents"),
     currency: text("currency").default("usd"),
