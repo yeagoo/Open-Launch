@@ -223,6 +223,10 @@ export interface PostResult {
   statusCode?: number
   externalId?: string
   externalUrl?: string
+  // Every published URL. For the toolso gateway this is the full fan-out set;
+  // for standalone sites it's the single URL. externalUrl stays the first one
+  // for back-compat / the tracking record.
+  externalUrls?: string[]
   error?: string
   // True when the failure is a LOCAL misconfiguration (endpoint/key not set)
   // rather than a partner-side error — the worker must not burn a retry on it.
@@ -298,11 +302,13 @@ export async function postLaunchToSite(
     // return one { id, url }.
     if (site === "toolso") {
       const published = json.sites ?? []
+      const urls = published.map((s) => s.url).filter((u): u is string => !!u)
       return {
         ok: true,
         statusCode: res.status,
         externalId: `toolso:${json.count ?? published.length} sites`,
-        externalUrl: published[0]?.url,
+        externalUrl: urls[0],
+        externalUrls: urls,
       }
     }
 
@@ -311,8 +317,37 @@ export async function postLaunchToSite(
       statusCode: res.status,
       externalId: json.id != null ? String(json.id) : undefined,
       externalUrl: json.url,
+      externalUrls: json.url ? [json.url] : undefined,
     }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) }
   }
+}
+
+/**
+ * Flatten the published URLs across a set of launch_syndication rows for the
+ * buyer's "listing is live" email. Prefers the full `externalUrls` JSON array
+ * (the toolso gateway fans out to many URLs); falls back to the single
+ * `externalUrl` for standalone sites and pre-0040 rows. Deduped, order-stable.
+ */
+export function collectPublishedUrls(
+  rows: Array<{ externalUrl: string | null; externalUrls: string | null }>,
+): string[] {
+  const urls: string[] = []
+  for (const r of rows) {
+    let added = false
+    if (r.externalUrls) {
+      try {
+        const parsed = JSON.parse(r.externalUrls)
+        if (Array.isArray(parsed)) {
+          for (const u of parsed) if (typeof u === "string" && u) urls.push(u)
+          added = true
+        }
+      } catch {
+        // Malformed JSON — fall back to externalUrl below.
+      }
+    }
+    if (!added && r.externalUrl) urls.push(r.externalUrl)
+  }
+  return [...new Set(urls)]
 }

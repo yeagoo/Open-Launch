@@ -903,6 +903,10 @@ export const launchSyndication = pgTable(
     lastError: text("last_error"),
     externalId: text("external_id"), // id returned by the partner site
     externalUrl: text("external_url"), // public URL returned by the partner site
+    // All published URLs as a JSON string array. The toolso gateway fans out to
+    // many sites; external_url keeps only the first, so the full set lives here
+    // for the buyer's "listing is live" email. Null on pre-0040 rows.
+    externalUrls: text("external_urls"),
     nextAttemptAt: timestamp("next_attempt_at"), // backoff gate for retries
     sentAt: timestamp("sent_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),

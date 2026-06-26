@@ -302,16 +302,15 @@ export async function sendListingLiveEmail({
   tier,
   projectName,
   locale,
-  listings,
+  urls,
 }: {
   buyerEmail: string
   buyerName: string | null
   tier: DirectoryTier
   projectName: string
   locale?: string | null
-  // Published partner URLs. Caller filters out rows without a URL; we defend
-  // again here and render only valid http(s) links.
-  listings: Array<{ site: string; url: string }>
+  // Published partner URLs. We defend here and render only valid http(s) links.
+  urls: string[]
 }) {
   const tierLabel = TIER_DISPLAY[tier]
   const safeProjectName = escapeHtml(projectName)
@@ -325,8 +324,8 @@ export async function sendListingLiveEmail({
 
   // Render each valid URL as a list item; use the host as the visible label so
   // the buyer recognises the site without us hardcoding partner brand names.
-  const items = listings
-    .map(({ url }) => {
+  const items = urls
+    .map((url) => {
       const safeUrl = safeHttpUrl(url)
       if (!safeUrl) return null
       let host = safeUrl

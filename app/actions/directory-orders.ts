@@ -16,6 +16,7 @@ import {
   isDirectoryTier,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
+import { collectPublishedUrls } from "@/lib/launch-syndication"
 import { sendListingLiveEmail } from "@/lib/transactional-emails"
 
 interface CreateInput {
@@ -403,20 +404,27 @@ export async function markDirectoryOrderFulfilled(orderId: string): Promise<{ ok
       .limit(1)
     if (ord?.buyerEmail) {
       const synRows = await db
-        .select({ site: launchSyndication.site, externalUrl: launchSyndication.externalUrl })
+        .select({
+          status: launchSyndication.status,
+          externalUrl: launchSyndication.externalUrl,
+          externalUrls: launchSyndication.externalUrls,
+        })
         .from(launchSyndication)
-        .where(and(eq(launchSyndication.orderId, orderId), eq(launchSyndication.status, "sent")))
-      const listings = synRows
-        .filter((r): r is typeof r & { externalUrl: string } => !!r.externalUrl)
-        .map((r) => ({ site: r.site, url: r.externalUrl }))
-      if (listings.length > 0) {
+        .where(eq(launchSyndication.orderId, orderId))
+      // Only send once syndication is fully delivered — otherwise the buyer
+      // would get a partial list and, since the order is now `fulfilled`, the
+      // cron would never send the completed one later. Mirrors the cron's
+      // `complete` check.
+      const allSent = synRows.length > 0 && synRows.every((r) => r.status === "sent")
+      const urls = allSent ? collectPublishedUrls(synRows) : []
+      if (urls.length > 0) {
         await sendListingLiveEmail({
           buyerEmail: ord.buyerEmail,
           buyerName: ord.buyerName,
           tier: ord.tier as DirectoryTier,
           projectName: ord.projectName ?? "your project",
           locale: ord.locale,
-          listings,
+          urls,
         })
       }
     }

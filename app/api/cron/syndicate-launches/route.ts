@@ -8,6 +8,7 @@ import { verifyCronAuth } from "@/lib/cron-auth"
 import { type DirectoryTier } from "@/lib/directory-tiers"
 import {
   buildLaunchPayload,
+  collectPublishedUrls,
   enqueueLaunchSyndication,
   postLaunchToSite,
   SYNDICATED_TIERS,
@@ -175,6 +176,7 @@ export async function GET(request: NextRequest) {
                 attempts: row.attempts + 1,
                 externalId: result.externalId ?? null,
                 externalUrl: result.externalUrl ?? null,
+                externalUrls: result.externalUrls ? JSON.stringify(result.externalUrls) : null,
                 lastError: null,
                 sentAt: now,
                 nextAttemptAt: null,
@@ -242,8 +244,8 @@ export async function GET(request: NextRequest) {
     const rows = await db
       .select({
         status: launchSyndication.status,
-        site: launchSyndication.site,
         externalUrl: launchSyndication.externalUrl,
+        externalUrls: launchSyndication.externalUrls,
       })
       .from(launchSyndication)
       .where(eq(launchSyndication.orderId, order.id))
@@ -271,19 +273,17 @@ export async function GET(request: NextRequest) {
       // winning flip (rowCount>0, guarded on status='paid') reaches here, so
       // the email is sent exactly once. A failure must not undo fulfilment.
       try {
-        const listings = rows
-          .filter((r): r is typeof r & { externalUrl: string } => !!r.externalUrl)
-          .map((r) => ({ site: r.site, url: r.externalUrl }))
-        if (order.buyerEmail && listings.length > 0) {
+        const urls = collectPublishedUrls(rows)
+        if (order.buyerEmail && urls.length > 0) {
           await sendListingLiveEmail({
             buyerEmail: order.buyerEmail,
             buyerName: order.buyerName,
             tier: order.tier as DirectoryTier,
             projectName: order.projectName ?? "your project",
             locale: order.locale,
-            listings,
+            urls,
           })
-          console.log(`✅ Listing-live email sent for order ${order.id} (${listings.length} URLs)`)
+          console.log(`✅ Listing-live email sent for order ${order.id} (${urls.length} URLs)`)
         }
       } catch (err) {
         console.error("⚠️ Failed to send listing-live email:", order.id, err)
