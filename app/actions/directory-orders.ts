@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
-import { directoryOrder, project, user } from "@/drizzle/db/schema"
+import { directoryOrder, launchSyndication, project, user } from "@/drizzle/db/schema"
 import { and, desc, eq, gt } from "drizzle-orm"
 import { getLocale } from "next-intl/server"
 
@@ -16,6 +16,7 @@ import {
   isDirectoryTier,
   type DirectoryTier,
 } from "@/lib/directory-tiers"
+import { sendListingLiveEmail } from "@/lib/transactional-emails"
 
 interface CreateInput {
   projectId: string
@@ -378,6 +379,49 @@ export async function markDirectoryOrderFulfilled(orderId: string): Promise<{ ok
     })
   } catch (err) {
     console.error("Failed to write admin audit log for directory_order.fulfill:", err)
+  }
+
+  // Best-effort: email the buyer the published partner URLs — the same email
+  // the auto-fulfil cron sends for plus/pro. This covers the manual path
+  // (Ultra / Ultra Plus, or a cleared held order). Only the winning flip
+  // reaches here (rowCount>0 guard above), so it's sent at most once, and
+  // plus/pro never reach this path — the cron fulfils them first. Sent only
+  // when syndication has actually produced URLs; if it hasn't finished yet
+  // there's nothing to send (rare for Ultra, fulfilled days later).
+  try {
+    const [ord] = await db
+      .select({
+        tier: directoryOrder.tier,
+        locale: directoryOrder.locale,
+        buyerEmail: directoryOrder.buyerEmail,
+        buyerName: directoryOrder.buyerName,
+        projectName: project.name,
+      })
+      .from(directoryOrder)
+      .leftJoin(project, eq(project.id, directoryOrder.projectId))
+      .where(eq(directoryOrder.id, orderId))
+      .limit(1)
+    if (ord?.buyerEmail) {
+      const synRows = await db
+        .select({ site: launchSyndication.site, externalUrl: launchSyndication.externalUrl })
+        .from(launchSyndication)
+        .where(and(eq(launchSyndication.orderId, orderId), eq(launchSyndication.status, "sent")))
+      const listings = synRows
+        .filter((r): r is typeof r & { externalUrl: string } => !!r.externalUrl)
+        .map((r) => ({ site: r.site, url: r.externalUrl }))
+      if (listings.length > 0) {
+        await sendListingLiveEmail({
+          buyerEmail: ord.buyerEmail,
+          buyerName: ord.buyerName,
+          tier: ord.tier as DirectoryTier,
+          projectName: ord.projectName ?? "your project",
+          locale: ord.locale,
+          listings,
+        })
+      }
+    }
+  } catch (err) {
+    console.error("Failed to send listing-live email on manual fulfil:", orderId, err)
   }
 
   revalidatePath("/admin/directory-orders")
