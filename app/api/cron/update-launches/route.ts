@@ -48,9 +48,28 @@ export async function GET(request: NextRequest) {
     const { ongoingToLaunched, totalRanked } = await db.transaction(async (tx) => {
       let totalRanked = 0
 
-      // 2. Update every expired ONGOING -> LAUNCHED. This intentionally catches
+      // 2. Update every expired launch -> LAUNCHED. This intentionally catches
       // older stuck rows, not just yesterday, so a missed cron tick cannot keep
       // old products on today's homepage or in the bot-vote pool forever.
+      //
+      // Catches BOTH still-ONGOING rows and SCHEDULED rows whose window has
+      // fully passed. The SCHEDULED case only happens when the daily cron
+      // didn't run on a project's launch day (e.g. a multi-day dispatcher
+      // outage): step 1 only promotes the *current* window's SCHEDULED rows to
+      // ONGOING, so a past-dated SCHEDULED row would otherwise never reach
+      // ONGOING and never get launched/ranked — stranded forever. Launching it
+      // straight to LAUNCHED here lets the ranking pass below settle it by its
+      // own launch-day window, so the system self-heals after an outage.
+      //
+      // The `< currentWindowStart` guard makes this safe — it can never
+      // prematurely close a launch that should still be ONGOING. The window
+      // for a timestamp before 08:00 UTC is shifted back a day
+      // (getLaunchWindowForDate), so any scheduledLaunchDate < currentWindowStart
+      // has a window that ENDS at or before currentWindowStart, i.e. already
+      // closed. In particular the ProductHunt importer's "tomorrow 00:00" rows
+      // belong to the window starting the prior 08:00, sit at/after the current
+      // window start, and so are still promoted to ONGOING by step 1 — never
+      // swept here during normal operation.
       const ongoingToLaunched = await tx
         .update(project)
         .set({
@@ -59,7 +78,7 @@ export async function GET(request: NextRequest) {
         })
         .where(
           and(
-            eq(project.launchStatus, launchStatus.ONGOING),
+            inArray(project.launchStatus, [launchStatus.ONGOING, launchStatus.SCHEDULED]),
             lt(project.scheduledLaunchDate, currentWindowStart),
           ),
         )
