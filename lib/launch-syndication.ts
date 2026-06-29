@@ -278,11 +278,13 @@ export async function postLaunchToSite(
     // a Node Readable body with native headers/body timeouts, off that path.
     // Mirrors lib/tinyfish.ts; see memory transform-algorithm-webstreams.
     const TIMEOUT_MS = 20_000
-    // Single end-to-end deadline. undici's headersTimeout/bodyTimeout are
-    // per-phase idle limits, so a partner that sends headers fast then drips
-    // the body could overrun the cron's maxDuration. withTimeout bounds the
-    // whole exchange; it's non-aborting (safe — undici body is a Node Readable,
-    // not web-streams), and we destroy() the body if we bail to free the socket.
+    // Per-phase bounds keep the POST inside the cron's 60s maxDuration without a
+    // single wall-clock timer: undici's connectTimeout (~10s default) bounds
+    // DNS/connect/TLS, headersTimeout bounds time-to-headers, and the body read
+    // is wrapped in withTimeout below. We deliberately do NOT wrap request()
+    // itself in withTimeout — abandoning a request promise on timeout would
+    // leave an unconsumed body holding the socket until GC (tinyfish, the
+    // reference, avoids it the same way).
     const deadline = Date.now() + TIMEOUT_MS
     const res = await request(url, {
       method: "POST",
@@ -296,6 +298,27 @@ export async function postLaunchToSite(
     })
 
     const statusCode = res.statusCode
+
+    // undici.request does NOT follow redirects (global fetch did). Don't add
+    // blind following: a 301/302/303 turns a POST into a GET and drops the JSON
+    // body, so the partner would receive an empty request while we might read a
+    // 2xx and wrongly mark it sent. A redirect on a configured POST endpoint is
+    // a config smell — surface it with an actionable message and let the
+    // retry/backoff hold while ops points SYNDICATION_*_URL at the final host.
+    if (statusCode >= 300 && statusCode < 400) {
+      const location = res.headers.location
+      // Close immediately rather than dump()-ing in the background — a slow
+      // redirect body could otherwise keep the socket alive past return.
+      res.body.destroy()
+      return {
+        ok: false,
+        statusCode,
+        error: `HTTP ${statusCode} redirect${
+          typeof location === "string" ? ` to ${location}` : ""
+        } — set ${SITE_URL_ENV[site]} to the final URL (POST bodies aren't preserved across redirects)`,
+      }
+    }
+
     let json: {
       ok?: boolean
       id?: string | number
