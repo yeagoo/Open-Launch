@@ -8,6 +8,9 @@ import {
 } from "@/drizzle/db/schema"
 import { and, eq } from "drizzle-orm"
 import { NodeHtmlMarkdown } from "node-html-markdown"
+import { request } from "undici"
+
+import { FetchTimeoutError, withTimeout } from "./fetch-timeout"
 
 // aat.ee stores project descriptions as sanitized HTML (Tiptap), but every
 // partner site renders the body as Markdown/MDX (bigkr/mf8 via MDXRemote,
@@ -265,16 +268,34 @@ export async function postLaunchToSite(
       : { ...payload, idempotencyKey: orderId }
 
   try {
-    const res = await fetch(url, {
+    // Use undici.request, NOT global fetch + AbortSignal.timeout. fetch's
+    // response.body is a web-streams ReadableStream; when the abort signal
+    // fires mid-flight it tears that stream down, which races React SSR's
+    // TransformStream wiring and corrupts the process-wide web-streams pool —
+    // after which EVERY subsequent SSR render crashes with
+    // `controller[kState].transformAlgorithm is not a function` (one timeout
+    // poisons the whole worker, not just this request). undici.request returns
+    // a Node Readable body with native headers/body timeouts, off that path.
+    // Mirrors lib/tinyfish.ts; see memory transform-algorithm-webstreams.
+    const TIMEOUT_MS = 20_000
+    // Single end-to-end deadline. undici's headersTimeout/bodyTimeout are
+    // per-phase idle limits, so a partner that sends headers fast then drips
+    // the body could overrun the cron's maxDuration. withTimeout bounds the
+    // whole exchange; it's non-aborting (safe — undici body is a Node Readable,
+    // not web-streams), and we destroy() the body if we bail to free the socket.
+    const deadline = Date.now() + TIMEOUT_MS
+    const res = await request(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20_000),
+      headersTimeout: TIMEOUT_MS,
+      bodyTimeout: TIMEOUT_MS,
     })
 
+    const statusCode = res.statusCode
     let json: {
       ok?: boolean
       id?: string | number
@@ -284,16 +305,27 @@ export async function postLaunchToSite(
       sites?: Array<{ site?: string; id?: string | number; url?: string }>
     } = {}
     try {
-      json = await res.json()
-    } catch {
-      // non-JSON body — fall through to the !res.ok handling
+      json = (await withTimeout(
+        res.body.json(),
+        Math.max(1, deadline - Date.now()),
+        `syndication ${site}`,
+      )) as typeof json
+    } catch (err) {
+      // Free the socket whether we timed out or hit a non-JSON/parse error —
+      // the abandoned read still holds the connection otherwise.
+      res.body.destroy()
+      if (err instanceof FetchTimeoutError) {
+        return { ok: false, error: err.message }
+      }
+      // non-JSON body — fall through to the !ok handling below with empty json.
     }
 
-    if (!res.ok || !json?.ok) {
+    const ok2xx = statusCode >= 200 && statusCode < 300
+    if (!ok2xx || !json?.ok) {
       return {
         ok: false,
-        statusCode: res.status,
-        error: json?.error || `HTTP ${res.status}`,
+        statusCode,
+        error: json?.error || `HTTP ${statusCode}`,
       }
     }
 
@@ -305,7 +337,7 @@ export async function postLaunchToSite(
       const urls = published.map((s) => s.url).filter((u): u is string => !!u)
       return {
         ok: true,
-        statusCode: res.status,
+        statusCode,
         externalId: `toolso:${json.count ?? published.length} sites`,
         externalUrl: urls[0],
         externalUrls: urls,
@@ -314,7 +346,7 @@ export async function postLaunchToSite(
 
     return {
       ok: true,
-      statusCode: res.status,
+      statusCode,
       externalId: json.id != null ? String(json.id) : undefined,
       externalUrl: json.url,
       externalUrls: json.url ? [json.url] : undefined,
