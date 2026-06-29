@@ -34,6 +34,26 @@ export function cronMatches(expression: string, now: Date = new Date()): boolean
 }
 
 /**
+ * Most recent scheduled fire-time at or before `now` for a cron expression,
+ * or null if the expression is invalid. Used by the cron-health monitor to
+ * answer "when should this task have last run?" so staleness is judged
+ * against each task's own cadence (a daily job and a 5-min job have very
+ * different acceptable gaps) instead of a single hardcoded threshold.
+ */
+export function previousFireTime(expression: string, now: Date = new Date()): Date | null {
+  if (!hasFiveFields(expression)) return null
+  try {
+    const interval = CronExpressionParser.parse(expression, {
+      currentDate: now,
+      tz: "UTC",
+    })
+    return interval.prev().toDate()
+  } catch {
+    return null
+  }
+}
+
+/**
  * Sanity-check a cron expression. Used by admin form server actions
  * before persisting an edit so we never store an unparseable schedule.
  */

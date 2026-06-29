@@ -153,6 +153,23 @@ export async function GET(request: NextRequest) {
       await clearDedupe(dedupeKey)
     }
 
+    // External dead-man heartbeat. Ping a healthcheck URL (healthchecks.io,
+    // Better Stack, etc.) on every successful dispatch. If the whole scheduler
+    // dies — the exact 2026-06-26 outage where the every-minute trigger stopped
+    // for 2.5 days — these pings stop and the external service alerts. This is
+    // the one failure the in-app cron-health monitor structurally CANNOT catch
+    // (it's dispatched by the same dead scheduler). Fire-and-forget and fully
+    // optional: a missing/broken URL never affects dispatch. Skipped on a 500
+    // dispatch so we don't signal "healthy" when nothing succeeded.
+    const heartbeatUrl = process.env.CRON_HEARTBEAT_URL
+    if (heartbeatUrl && status < 500) {
+      try {
+        await fetchWithTimeout(heartbeatUrl, { method: "GET" }, 5_000, "cron heartbeat")
+      } catch (err) {
+        console.error("cron heartbeat ping failed:", err)
+      }
+    }
+
     return NextResponse.json(
       {
         dispatchedAt: now.toISOString(),
