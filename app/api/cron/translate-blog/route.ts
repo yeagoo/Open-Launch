@@ -119,11 +119,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(
-      `[translate-blog] ${translated} translated, ${failed} failed, ${work.length - batch.length} remaining`,
-    )
+    const remaining = work.length - batch.length
+    // Keep the happy-path log free of alarm keywords ("failed"/"error"):
+    // Zeabur's log viewer classifies severity by substring, so a benign
+    // "0 failed" summary every hour shows up as a fake ERROR. Only mention
+    // failures when there actually were some — then it's a real error signal.
+    if (batch.length === 0) {
+      console.log("[translate-blog] up to date — no pending translations")
+    } else {
+      const parts = [`${translated} translated`]
+      if (failed > 0) parts.push(`${failed} failed`)
+      if (remaining > 0) parts.push(`${remaining} remaining`)
+      console.log(`[translate-blog] ${parts.join(", ")}`)
+    }
     return NextResponse.json(
-      { ok: failed === 0, translated, failed, remaining: work.length - batch.length },
+      { ok: failed === 0, translated, failed, remaining },
       { status: cronStatusFromResult({ errorCount: failed, successCount: translated }) },
     )
   } catch (err) {

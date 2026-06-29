@@ -305,7 +305,12 @@ export async function GET(request: Request) {
     const skipped = results.filter((r) => r.status === "skipped").length
     const errors = results.filter((r) => r.status === "error").length
 
-    console.log(`🎉 Import completed: ${imported} imported, ${skipped} skipped, ${errors} errors`)
+    // Only surface the error count when nonzero — keeps the happy-path
+    // summary free of the "errors" keyword that log viewers (Zeabur) flag
+    // as ERROR severity by substring match. A real error count still shows.
+    const summary = [`${imported} imported`, `${skipped} skipped`]
+    if (errors > 0) summary.push(`${errors} errors`)
+    console.log(`🎉 Import completed: ${summary.join(", ")}`)
 
     // Total failure (posts present, none imported) → 500 so cron monitoring
     // alerts instead of showing green. All-skipped (already imported) stays 200.
