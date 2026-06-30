@@ -112,3 +112,56 @@ export const footerNavSites: FooterNavSite[] = footerNavigationSites.map((s) => 
   // De-emphasize sites the upstream flags as not-currently-reachable.
   deemphasized: s.status === "pending_dns" || s.status === "unreachable",
 }))
+
+export interface PromoDirectorySite {
+  name: string
+  domain: string
+  logo: string | null
+  dr: number | null
+}
+
+/**
+ * The highest-DR directories to showcase in the home "get listed in N
+ * directories" promo, always including aat.ee. Built from the live snapshot so
+ * the lineup tracks DR as the upstream refreshes it, rather than a hardcoded
+ * list that goes stale.
+ *
+ * Rule: take the top active sites by DR, then guarantee aat.ee is present — if
+ * it didn't make the cut (or isn't in the snapshot at all) it's injected via a
+ * static fallback, replacing the lowest-DR pick so the count is preserved.
+ * Returns up to `count` sites (fewer only if the snapshot has fewer than
+ * `count - 1` other active sites), always sorted DR-desc with aat.ee included.
+ */
+export function promoDirectorySites(count: number): PromoDirectorySite[] {
+  if (count <= 0) return []
+
+  const toPromo = (s: FriendSite): PromoDirectorySite => ({
+    name: s.name,
+    domain: s.domain,
+    logo: logoUrl(s),
+    dr: typeof s.dr === "number" ? s.dr : null,
+  })
+
+  const seen = new Set<string>()
+  const active = [...footerNavigationSites, ...authorityDocumentationSites]
+    .filter((s) => s.status === "active")
+    .filter((s) => (seen.has(s.domain) ? false : (seen.add(s.domain), true)))
+    .sort((a, b) => (b.dr ?? -1) - (a.dr ?? -1))
+
+  const picked = active.slice(0, count).map(toPromo)
+
+  // Guarantee aat.ee — it's our own domain, so fall back to a static entry if
+  // the snapshot somehow lacks it or marks it inactive.
+  if (!picked.some((s) => s.domain === "aat.ee")) {
+    const aatSite = active.find((s) => s.domain === "aat.ee")
+    const aat: PromoDirectorySite = aatSite
+      ? toPromo(aatSite)
+      : { name: "aat.ee", domain: "aat.ee", logo: "/partner-logos/aat-ee.svg", dr: null }
+    // Replace the lowest-DR pick (keeps the count) when the list is already
+    // full; otherwise just append.
+    if (picked.length >= count) picked[picked.length - 1] = aat
+    else picked.push(aat)
+  }
+
+  return picked
+}
