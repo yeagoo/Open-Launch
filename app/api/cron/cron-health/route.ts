@@ -37,14 +37,9 @@ import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
 export const dynamic = "force-dynamic"
 export const maxDuration = 30
 
-// A task is stale once the gap since its last successful run exceeds this
-// multiple of its nominal interval. >1 absorbs normal jitter (the dispatcher
-// fires on a minute boundary, runs take time) and the occasional single missed
-// tick; 3× means a 5-min job alerts after ~15 min, a daily job after ~3 days.
-const STALE_FACTOR = 3
 // Floor on the tolerated gap so high-frequency jobs (every 1–5 min) don't
 // alert on a single hiccup. A run is only "missed" if it's been quiet longer
-// than this AND longer than STALE_FACTOR× its interval.
+// than this AND past its second-most-recent scheduled fire (see the loop).
 const MIN_GRACE_MS = 20 * 60 * 1000 // 20 min
 // Total-silence detector: if the entire cron_run_log has no rows newer than
 // this, the dispatcher itself is almost certainly down.
@@ -117,13 +112,22 @@ export async function GET(request: NextRequest) {
 
     const stale: StaleTask[] = []
     for (const t of enabled) {
-      // Two consecutive scheduled fire-times before now; their gap is the
-      // task's nominal interval (a duration — timezone-independent).
+      // Staleness is judged against the SECOND-most-recent scheduled fire, not a
+      // synthetic uniform interval. A task is stale only if it hasn't succeeded
+      // since `prevPrev` — which means it missed its most recent fire (`prev`)
+      // by a full additional gap. Using prevPrev directly (rather than
+      // prev−prevPrev × factor) makes irregular schedules correct for free:
+      // the DeepSeek off-peak crons pause for hours (e.g. `*/5 0,4,5,10-23`
+      // skips 01:00–04:00), and moderate-tags has a 12h overnight gap. The gap
+      // back to prevPrev already encodes those planned pauses, so the monitor
+      // won't false-alert during them while still catching a genuinely stuck job
+      // one full interval after its last expected run.
       const prev = previousFireTime(t.cronExpression, now)
       if (!prev) continue // unparseable expression — skip, not our alarm to raise
       const prevPrev = previousFireTime(t.cronExpression, new Date(prev.getTime() - 1))
-      const intervalMs = prevPrev ? prev.getTime() - prevPrev.getTime() : MIN_GRACE_MS
-      const graceMs = Math.max(MIN_GRACE_MS, intervalMs * STALE_FACTOR)
+      const graceMs = prevPrev
+        ? Math.max(MIN_GRACE_MS, now.getTime() - prevPrev.getTime())
+        : MIN_GRACE_MS
 
       // null ⇒ no successful run on record (within the 90d retention) ⇒
       // effectively infinite gap.
