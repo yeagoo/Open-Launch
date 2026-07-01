@@ -26,7 +26,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BoostListingButton } from "@/components/dashboard/boost-listing-button"
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card"
 import { DraftProjectRow } from "@/components/dashboard/draft-project-row"
+import { SkillApiKeysCard } from "@/components/dashboard/skill-api-keys-card"
 import { getUserCreatedProjects, getUserUpvotedProjects } from "@/app/actions/projects"
+import { listSkillApiKeys } from "@/app/actions/skill-api-keys"
 
 // Base project type that matches the actual structure from the database
 interface BaseProject {
@@ -70,6 +72,7 @@ export default async function Dashboard({
   // Get data from actions
   const upvotedProjectsData = await getUserUpvotedProjects()
   const createdProjectsData = await getUserCreatedProjects()
+  const skillApiKeys = await listSkillApiKeys()
 
   // Process the data to match our expected formats
   const upvotedProjects = upvotedProjectsData.map((item) => item.project) as BaseProject[]
@@ -360,6 +363,8 @@ export default async function Dashboard({
 
           {/* Right Column - Profile and Actions */}
           <div className="space-y-6">
+            <SkillApiKeysCard initialKeys={skillApiKeys} />
+
             <Card className="border dark:border-zinc-800">
               <CardHeader className="pb-3">
                 <CardTitle className="font-heading text-xl font-semibold">Profile</CardTitle>

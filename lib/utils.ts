@@ -51,23 +51,27 @@ export function isPrivateHostname(hostname: string): boolean {
   // Localhost names
   if (host === "localhost" || host.endsWith(".localhost") || host === "0") return true
 
-  // IPv6 loopback / unspecified / link-local / unique-local
-  if (
-    host === "::1" ||
-    host === "::" ||
-    host.startsWith("fe80:") ||
-    host.startsWith("fc") ||
-    host.startsWith("fd")
-  ) {
-    return true
-  }
-
   // IPv4-mapped / -compatible IPv6: extract the embedded IPv4 and fall
   // through to the IPv4 check. Handles BOTH the dotted form
   // (::ffff:127.0.0.1, ::127.0.0.1) and the hex form (::ffff:7f00:1,
   // ::7f00:1) — the latter still reaches 127.0.0.1, so it must be caught.
   let candidate = host
-  if (host.startsWith("::ffff:") || host.startsWith("::")) {
+  if (host.includes(":")) {
+    // IPv6 loopback / unspecified / link-local / unique-local. Only apply
+    // these prefix checks to IPv6 literals; public DNS names can start with
+    // "fc" or "fd" (for example fdroid.org).
+    if (
+      host === "::1" ||
+      host === "::" ||
+      host.startsWith("fe80:") ||
+      host.startsWith("fc") ||
+      host.startsWith("fd")
+    ) {
+      return true
+    }
+
+    if (!host.startsWith("::ffff:") && !host.startsWith("::")) return false
+
     if (host.includes(".")) {
       // dotted tail, e.g. ::ffff:127.0.0.1 -> 127.0.0.1
       candidate = host.slice(host.lastIndexOf(":") + 1)
