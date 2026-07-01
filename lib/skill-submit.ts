@@ -6,10 +6,17 @@ import {
   verifiedDomain,
 } from "@/drizzle/db/schema"
 import { routing } from "@/i18n/routing"
-import { and, eq, isNotNull } from "drizzle-orm"
+import { and, asc, eq, gte, isNotNull, sql } from "drizzle-orm"
 import * as z from "zod"
 
-import { checkRateLimit, clearDedupe, dedupeOnce, type RateLimitResult } from "@/lib/rate-limit"
+import { countInt } from "@/lib/db-utils"
+import {
+  clearDedupe,
+  dedupeOnce,
+  releaseRateLimitSlot,
+  reserveRateLimitSlot,
+  type RateLimitReservationResult,
+} from "@/lib/rate-limit"
 import { normalizeSkillDomain } from "@/lib/skill-domains"
 import {
   isSkillReviewRejected,
@@ -27,6 +34,7 @@ import { isPrivateHostname } from "@/lib/utils"
 
 export const SKILL_MONTHLY_QUOTA = 3
 export const SKILL_MONTHLY_QUOTA_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
+export const SKILL_QUOTA_RESERVATION_TTL_MS = 5 * 60 * 1000
 export const SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS = 15 * 60
 
 const skillSubmitVariantSchema = z
@@ -138,7 +146,8 @@ export interface SkillSubmitDependencies {
   targetSites(now: Date): SkillPublicationScheduleRow[]
   findVerifiedDomain(accountId: string, domain: string): Promise<boolean>
   findExistingSubmission(domain: string): Promise<{ id: string; status: string } | null>
-  checkQuota(accountId: string): Promise<RateLimitResult>
+  checkQuota(accountId: string, now: Date): Promise<RateLimitReservationResult>
+  releaseQuotaReservation(accountId: string, token: string): Promise<void>
   reserveDomain(domain: string): Promise<boolean>
   releaseDomainReservation(domain: string): Promise<void>
   review(input: {
@@ -157,6 +166,7 @@ const defaultSkillSubmitDependencies: SkillSubmitDependencies = {
   findVerifiedDomain: findVerifiedSkillDomain,
   findExistingSubmission,
   checkQuota: checkMonthlyQuota,
+  releaseQuotaReservation: releaseMonthlyQuotaReservation,
   reserveDomain: reserveSkillDomain,
   releaseDomainReservation: releaseSkillDomainReservation,
   review: reviewSkillSubmission,
@@ -257,8 +267,21 @@ export async function submitSkillSubmission(
     }
   }
 
+  let quotaReservationToken: string | undefined
+  async function releaseQuotaReservation() {
+    if (!quotaReservationToken) return
+
+    const token = quotaReservationToken
+    quotaReservationToken = undefined
+    try {
+      await deps.releaseQuotaReservation(accountId, token)
+    } catch (error) {
+      console.error("[skill-submit] quota reservation release failed:", error)
+    }
+  }
+
   try {
-    const quota = await deps.checkQuota(accountId)
+    const quota = await deps.checkQuota(accountId, now)
     if (!quota.success) {
       await deps.releaseDomainReservation(domain)
       return {
@@ -269,6 +292,7 @@ export async function submitSkillSubmission(
         reset: quota.reset,
       }
     }
+    quotaReservationToken = quota.token
 
     const review = await deps.review({ domain, websiteUrl, variants: orderedVariants })
     const status: SkillSubmissionStatus = isSkillReviewRejected(review) ? "rejected" : "publishing"
@@ -283,6 +307,7 @@ export async function submitSkillSubmission(
       schedule,
       now,
     })
+    await releaseQuotaReservation()
 
     return {
       ok: true,
@@ -292,6 +317,19 @@ export async function submitSkillSubmission(
       reviewReasons: review.reasons,
     }
   } catch (error) {
+    await releaseQuotaReservation()
+
+    if (error instanceof SkillMonthlyQuotaExceededError) {
+      await deps.releaseDomainReservation(domain)
+      return {
+        ok: false,
+        httpStatus: 429,
+        code: "monthly_quota_exceeded",
+        error: "Monthly free skill submission quota exceeded",
+        reset: error.reset,
+      }
+    }
+
     if (isUniqueViolation(error)) {
       return {
         ok: false,
@@ -421,15 +459,46 @@ async function findExistingSubmission(
   return row ?? null
 }
 
-function checkMonthlyQuota(accountId: string): Promise<RateLimitResult> {
-  return checkRateLimit(
+async function checkMonthlyQuota(
+  accountId: string,
+  now: Date,
+): Promise<RateLimitReservationResult> {
+  const windowStart = skillMonthlyQuotaWindowStart(now)
+  const [row] = await db
+    .select({ total: countInt() })
+    .from(skillSubmission)
+    .where(
+      and(eq(skillSubmission.accountId, accountId), gte(skillSubmission.createdAt, windowStart)),
+    )
+
+  const total = row?.total ?? 0
+  if (total >= SKILL_MONTHLY_QUOTA) {
+    const [oldest] = await db
+      .select({ createdAt: skillSubmission.createdAt })
+      .from(skillSubmission)
+      .where(
+        and(eq(skillSubmission.accountId, accountId), gte(skillSubmission.createdAt, windowStart)),
+      )
+      .orderBy(asc(skillSubmission.createdAt))
+      .limit(1)
+
+    return {
+      success: false,
+      remaining: 0,
+      reset: skillMonthlyQuotaResetSeconds(now, oldest?.createdAt),
+    }
+  }
+
+  return reserveRateLimitSlot(
     `skill-quota:${accountId}`,
     SKILL_MONTHLY_QUOTA,
-    SKILL_MONTHLY_QUOTA_WINDOW_MS,
-    {
-      onRedisError: "fail-closed",
-    },
+    total,
+    SKILL_QUOTA_RESERVATION_TTL_MS,
   )
+}
+
+function releaseMonthlyQuotaReservation(accountId: string, token: string): Promise<void> {
+  return releaseRateLimitSlot(`skill-quota:${accountId}`, token)
 }
 
 function reserveSkillDomain(domain: string): Promise<boolean> {
@@ -446,6 +515,39 @@ async function persistSkillSubmission(
   const reviewReason = input.review.reasons.join("; ").slice(0, 1000)
 
   return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtext(${`skill-quota:${input.accountId}`}))`,
+    )
+
+    const windowStart = skillMonthlyQuotaWindowStart(input.now)
+    const [quota] = await tx
+      .select({ total: countInt() })
+      .from(skillSubmission)
+      .where(
+        and(
+          eq(skillSubmission.accountId, input.accountId),
+          gte(skillSubmission.createdAt, windowStart),
+        ),
+      )
+
+    if ((quota?.total ?? 0) >= SKILL_MONTHLY_QUOTA) {
+      const [oldest] = await tx
+        .select({ createdAt: skillSubmission.createdAt })
+        .from(skillSubmission)
+        .where(
+          and(
+            eq(skillSubmission.accountId, input.accountId),
+            gte(skillSubmission.createdAt, windowStart),
+          ),
+        )
+        .orderBy(asc(skillSubmission.createdAt))
+        .limit(1)
+
+      throw new SkillMonthlyQuotaExceededError(
+        skillMonthlyQuotaResetSeconds(input.now, oldest?.createdAt),
+      )
+    }
+
     const [submission] = await tx
       .insert(skillSubmission)
       .values({
@@ -502,4 +604,23 @@ async function persistSkillSubmission(
       status: submission.status as SkillSubmissionStatus,
     }
   })
+}
+
+function skillMonthlyQuotaWindowStart(now: Date): Date {
+  return new Date(now.getTime() - SKILL_MONTHLY_QUOTA_WINDOW_MS)
+}
+
+function skillMonthlyQuotaResetSeconds(now: Date, oldestCreatedAt: Date | undefined): number {
+  const resetAt =
+    oldestCreatedAt !== undefined
+      ? oldestCreatedAt.getTime() + SKILL_MONTHLY_QUOTA_WINDOW_MS
+      : now.getTime() + SKILL_MONTHLY_QUOTA_WINDOW_MS
+  return Math.max(1, Math.ceil((resetAt - now.getTime()) / 1000))
+}
+
+export class SkillMonthlyQuotaExceededError extends Error {
+  constructor(readonly reset: number) {
+    super("Monthly free skill submission quota exceeded")
+    this.name = "SkillMonthlyQuotaExceededError"
+  }
 }

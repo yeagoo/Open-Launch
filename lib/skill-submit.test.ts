@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { SkillPublicationScheduleRow } from "./skill-sites"
 import {
   SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS,
+  SkillMonthlyQuotaExceededError,
   submitSkillSubmission,
   type SkillSubmitDependencies,
   type SkillSubmitInput,
@@ -56,7 +57,13 @@ function input(overrides: Partial<SkillSubmitInput> = {}): SkillSubmitInput {
 
 function deps(overrides: Partial<SkillSubmitDependencies> = {}) {
   const calls = {
-    quota: vi.fn(async () => ({ success: true, remaining: 2, reset: 60 })),
+    quota: vi.fn(async () => ({
+      success: true as const,
+      remaining: 2,
+      reset: 60,
+      token: "quota-token",
+    })),
+    quotaRelease: vi.fn(async () => undefined),
     reserve: vi.fn(async () => true),
     release: vi.fn(async () => undefined),
     review: vi.fn(async () => ({ score: 85, reasons: ["Clear product"] })),
@@ -69,6 +76,7 @@ function deps(overrides: Partial<SkillSubmitDependencies> = {}) {
     findVerifiedDomain: vi.fn(async () => true),
     findExistingSubmission: vi.fn(async () => null),
     checkQuota: calls.quota,
+    releaseQuotaReservation: calls.quotaRelease,
     reserveDomain: calls.reserve,
     releaseDomainReservation: calls.release,
     review: calls.review,
@@ -102,7 +110,7 @@ describe("submitSkillSubmission", () => {
 
   it("rejects the 4th monthly submission and releases the domain reservation", async () => {
     const { deps: fakeDeps, calls } = deps({
-      checkQuota: vi.fn(async () => ({ success: false, remaining: 0, reset: 123 })),
+      checkQuota: vi.fn(async () => ({ success: false as const, remaining: 0, reset: 123 })),
     })
 
     const result = await submitSkillSubmission(ACCOUNT_ID, input(), fakeDeps)
@@ -115,6 +123,7 @@ describe("submitSkillSubmission", () => {
     })
     expect(calls.reserve).toHaveBeenCalledTimes(1)
     expect(calls.release).toHaveBeenCalledTimes(1)
+    expect(calls.quotaRelease).not.toHaveBeenCalled()
     expect(calls.review).not.toHaveBeenCalled()
   })
 
@@ -180,6 +189,25 @@ describe("submitSkillSubmission", () => {
     )
   })
 
+  it("does not persist when automated review is temporarily unavailable", async () => {
+    const { deps: fakeDeps, calls } = deps({
+      review: vi.fn(async () => {
+        throw new Error("DeepSeek timeout")
+      }),
+    })
+
+    const result = await submitSkillSubmission(ACCOUNT_ID, input(), fakeDeps)
+
+    expect(result).toMatchObject({
+      ok: false,
+      httpStatus: 503,
+      code: "review_unavailable",
+    })
+    expect(calls.release).toHaveBeenCalledTimes(1)
+    expect(calls.quotaRelease).toHaveBeenCalledWith(ACCOUNT_ID, "quota-token")
+    expect(calls.persist).not.toHaveBeenCalled()
+  })
+
   it("returns a domain dedupe conflict when the database unique index wins a race", async () => {
     const uniqueViolation = Object.assign(new Error("duplicate key value"), { code: "23505" })
     const { deps: fakeDeps, calls } = deps({
@@ -196,6 +224,26 @@ describe("submitSkillSubmission", () => {
       code: "domain_already_submitted",
     })
     expect(calls.release).not.toHaveBeenCalled()
+    expect(calls.quotaRelease).toHaveBeenCalledWith(ACCOUNT_ID, "quota-token")
+  })
+
+  it("returns quota exceeded when the transactional quota check wins a race", async () => {
+    const { deps: fakeDeps, calls } = deps({
+      persist: vi.fn(async () => {
+        throw new SkillMonthlyQuotaExceededError(456)
+      }),
+    })
+
+    const result = await submitSkillSubmission(ACCOUNT_ID, input(), fakeDeps)
+
+    expect(result).toMatchObject({
+      ok: false,
+      httpStatus: 429,
+      code: "monthly_quota_exceeded",
+      reset: 456,
+    })
+    expect(calls.release).toHaveBeenCalledTimes(1)
+    expect(calls.quotaRelease).toHaveBeenCalledWith(ACCOUNT_ID, "quota-token")
   })
 
   it("persists publishing submissions with ordered variants and schedule", async () => {
@@ -225,5 +273,6 @@ describe("submitSkillSubmission", () => {
     expect(persisted.variants.map((variant) => variant.site)).toEqual(
       schedule.map((row) => row.site),
     )
+    expect(calls.quotaRelease).toHaveBeenCalledWith(ACCOUNT_ID, "quota-token")
   })
 })

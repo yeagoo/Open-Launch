@@ -28,6 +28,10 @@ export type RateLimitResult = {
   reset: number
 }
 
+export type RateLimitReservationResult =
+  | (RateLimitResult & { success: true; token: string })
+  | (RateLimitResult & { success: false; token?: undefined })
+
 // In-memory sliding-window fallback. Used when Redis is unreachable so
 // we don't fail-open on abuse. Bounded by `MAX_IN_MEMORY_KEYS` so a
 // flood of unique identifiers (e.g. one per user id) can't OOM the
@@ -114,6 +118,34 @@ if consume then
 end
 
 return {1, limit - count, math.ceil(window_ms / 1000)}
+`
+
+const RATE_LIMIT_RESERVATION_LUA = `
+redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+
+local limit = tonumber(ARGV[2])
+local used = tonumber(ARGV[3])
+local now = tonumber(ARGV[4])
+local ttl_ms = tonumber(ARGV[5])
+local token = ARGV[6]
+local ttl_seconds = tonumber(ARGV[7])
+local available = limit - used
+
+if available <= 0 then
+  return {0, 0, ttl_seconds, ""}
+end
+
+local count = redis.call("ZCARD", KEYS[1])
+
+if count >= available then
+  local oldest = redis.call("ZRANGE", KEYS[1], 0, 0, "WITHSCORES")
+  local reset_at = oldest[2] and tonumber(oldest[2]) + ttl_ms or now + ttl_ms
+  return {0, 0, math.max(1, math.ceil((reset_at - now) / 1000)), ""}
+end
+
+redis.call("ZADD", KEYS[1], now, token)
+redis.call("EXPIRE", KEYS[1], ttl_seconds)
+return {1, available - count - 1, ttl_seconds, token}
 `
 
 /**
@@ -206,6 +238,78 @@ export async function clearDedupe(key: string): Promise<void> {
     await client.del(fullKey)
   } catch (error) {
     console.error("Redis error (clearDedupe):", error)
+  }
+}
+
+export async function reserveRateLimitSlot(
+  identifier: string,
+  limit: number,
+  used: number,
+  ttlMs: number,
+): Promise<RateLimitReservationResult> {
+  const key = `rate-limit-reservation:${identifier}`
+  const now = Date.now()
+  const ttlSeconds = Math.ceil(ttlMs / 1000)
+  const token = `${now}:${randomUUID()}`
+
+  try {
+    const client = getRedisClient()
+
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+
+    const result = (await client.eval(
+      RATE_LIMIT_RESERVATION_LUA,
+      1,
+      key,
+      String(now - ttlMs),
+      String(limit),
+      String(Math.max(0, used)),
+      String(now),
+      String(ttlMs),
+      token,
+      String(ttlSeconds),
+    )) as [number | string, number | string, number | string, string | null | undefined]
+
+    const success = Number(result[0]) === 1
+    const reservedToken = typeof result[3] === "string" && result[3] ? result[3] : undefined
+    if (!success || !reservedToken) {
+      return {
+        success: false,
+        remaining: Number(result[1]),
+        reset: Number(result[2]),
+      }
+    }
+
+    return {
+      success: true,
+      remaining: Number(result[1]),
+      reset: Number(result[2]),
+      token: reservedToken,
+    }
+  } catch (error) {
+    console.error("Redis error (reserveRateLimitSlot):", error)
+    return {
+      success: false,
+      remaining: 0,
+      reset: ttlSeconds,
+    }
+  }
+}
+
+export async function releaseRateLimitSlot(identifier: string, token: string): Promise<void> {
+  const key = `rate-limit-reservation:${identifier}`
+  try {
+    const client = getRedisClient()
+
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+
+    await client.zrem(key, token)
+  } catch (error) {
+    console.error("Redis error (releaseRateLimitSlot):", error)
   }
 }
 
