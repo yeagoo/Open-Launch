@@ -1,92 +1,111 @@
 /**
  * Tinyfish adapter tests.
  *
- * Mocks undici's `request` (the crawler deliberately uses undici.request, not
- * the global fetch — see lib/tinyfish.ts) so we can assert on the request shape
- * (auth header, body) and exercise the response/error branches without a live
- * API key.
+ * Runs a local HTTP server for the crawler (which deliberately uses
+ * undici.request, not the global fetch — see lib/tinyfish.ts) so we can assert
+ * on the request shape and exercise response/error branches without a live API
+ * key or external network.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
+import type { AddressInfo } from "node:net"
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { CrawlError } from "./crawler-types"
-// Imported after the mock is registered.
-import { tinyfishCrawl } from "./tinyfish"
+import { tinyfishCrawl, tinyfishFetchLimiter } from "./tinyfish"
 
-const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }))
-vi.mock("undici", () => ({ request: requestMock }))
+type TestHandler = (req: IncomingMessage, res: ServerResponse, body: string) => void | Promise<void>
 
-const ENDPOINT = "https://api.fetch.tinyfish.ai"
+let server: Server
+let handler: TestHandler | null = null
 
-beforeEach(() => {
+async function closeTestServer() {
+  if (!server.listening) return
+  await new Promise<void>((resolve, reject) => {
+    server.close((err) => (err ? reject(err) : resolve()))
+  })
+}
+
+beforeEach(async () => {
   process.env.TINYFISH_API_KEY = "test-key-123"
-  requestMock.mockReset()
+  server = createServer(async (req, res) => {
+    let body = ""
+    req.setEncoding("utf8")
+    for await (const chunk of req) body += chunk
+    if (!handler) {
+      res.statusCode = 500
+      res.end("test handler not configured")
+      return
+    }
+    await handler(req, res, body)
+  })
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject)
+    server.listen(0, "127.0.0.1", () => {
+      server.off("error", reject)
+      resolve()
+    })
+  })
+  const { port } = server.address() as AddressInfo
+  process.env.TINYFISH_BASE_URL = `http://127.0.0.1:${port}`
 })
 
-afterEach(() => {
-  vi.restoreAllMocks()
+afterEach(async () => {
+  handler = null
+  delete process.env.TINYFISH_BASE_URL
+  await closeTestServer()
 })
 
-// A mock undici ResponseData whose body exposes the BodyMixin methods the
-// crawler uses (json / text / dump). `payload` is returned as-is from text();
-// json() parses it and throws on non-JSON (mirroring undici).
-function mockResponse(statusCode: number, payload: unknown) {
-  const text = typeof payload === "string" ? payload : JSON.stringify(payload)
-  return {
-    statusCode,
-    headers: {},
-    body: {
-      json: async () => {
-        try {
-          return JSON.parse(text)
-        } catch {
-          throw new SyntaxError("Unexpected token in JSON")
-        }
-      },
-      text: async () => text,
-      dump: async () => {},
-      destroy: () => {},
-    },
+function mockResponse(statusCode: number, payload: object | string) {
+  handler = (_req, res) => {
+    res.statusCode = statusCode
+    if (typeof payload === "string") {
+      res.end(payload)
+    } else {
+      res.setHeader("content-type", "application/json")
+      res.end(JSON.stringify(payload))
+    }
   }
 }
 
 describe("tinyfishCrawl", () => {
   it("posts the URL with markdown format and X-API-Key auth", async () => {
-    requestMock.mockImplementation(async () =>
-      mockResponse(200, {
-        results: [
-          { url: "https://example.com", final_url: "https://example.com/", text: "# Example" },
-        ],
-      }),
-    )
+    handler = (req, res, body) => {
+      expect(req.url).toBe("/")
+      expect(req.method).toBe("POST")
+      expect(req.headers["x-api-key"]).toBe("test-key-123") // raw key, no Bearer prefix
+      expect(JSON.parse(body)).toEqual({
+        urls: ["https://example.com"],
+        format: "markdown",
+      })
+      res.setHeader("content-type", "application/json")
+      res.end(
+        JSON.stringify({
+          results: [
+            { url: "https://example.com", final_url: "https://example.com/", text: "# Example" },
+          ],
+        }),
+      )
+    }
 
     const result = await tinyfishCrawl("https://example.com")
 
-    expect(requestMock).toHaveBeenCalledTimes(1)
-    const [calledUrl, opts] = requestMock.mock.calls[0] as [
-      string,
-      { headers: Record<string, string>; body: string },
-    ]
-    expect(calledUrl).toBe(ENDPOINT)
-    expect(opts.headers["X-API-Key"]).toBe("test-key-123") // raw key, no Bearer prefix
-    expect(JSON.parse(opts.body)).toEqual({ urls: ["https://example.com"], format: "markdown" })
     expect(result.markdown).toBe("# Example")
     expect(result.url).toBe("https://example.com/") // final_url wins
   })
 
   it("uses final_url over the original URL when present", async () => {
-    requestMock.mockImplementation(async () =>
-      mockResponse(200, {
-        results: [
-          {
-            url: "https://example.com",
-            final_url: "https://example.com/redirected",
-            title: "Redirect target",
-            text: "body",
-          },
-        ],
-      }),
-    )
+    mockResponse(200, {
+      results: [
+        {
+          url: "https://example.com",
+          final_url: "https://example.com/redirected",
+          title: "Redirect target",
+          text: "body",
+        },
+      ],
+    })
 
     const result = await tinyfishCrawl("https://example.com")
     expect(result.url).toBe("https://example.com/redirected")
@@ -94,28 +113,26 @@ describe("tinyfishCrawl", () => {
   })
 
   it("throws a distinct error on 401", async () => {
-    requestMock.mockImplementation(async () => mockResponse(401, "unauthorized"))
+    mockResponse(401, "unauthorized")
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/401.*invalid or revoked/)
   })
 
   it("throws a distinct error on 429 with the rate-limit hint", async () => {
-    requestMock.mockImplementation(async () => mockResponse(429, "too many"))
+    mockResponse(429, "too many")
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/429.*25 URLs\/min/)
   })
 
   it("propagates per-URL errors from the response body", async () => {
-    requestMock.mockImplementation(async () =>
-      mockResponse(200, {
-        errors: [{ url: "https://blocked.example", error: "blocked by robots.txt" }],
-      }),
-    )
+    mockResponse(200, {
+      errors: [{ url: "https://blocked.example", error: "blocked by robots.txt" }],
+    })
     await expect(tinyfishCrawl("https://blocked.example")).rejects.toThrow(
       /per-URL error: blocked by robots/,
     )
   })
 
   it("throws when the API responds with no text content", async () => {
-    requestMock.mockImplementation(async () => mockResponse(200, { results: [{ url: "x" }] }))
+    mockResponse(200, { results: [{ url: "x" }] })
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/no text content/)
   })
 
@@ -125,14 +142,14 @@ describe("tinyfishCrawl", () => {
   })
 
   it("wraps network errors in CrawlError", async () => {
-    requestMock.mockImplementation(async () => {
-      throw new TypeError("fetch failed")
-    })
-    await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/fetch failed/)
+    await closeTestServer()
+    await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(
+      /ECONNREFUSED|connect|closed|fetch failed/i,
+    )
   })
 
   it("wraps malformed JSON (HTTP 200 with non-JSON body) in CrawlError", async () => {
-    requestMock.mockImplementation(async () => mockResponse(200, "<html>cdn error page</html>"))
+    mockResponse(200, "<html>cdn error page</html>")
     await expect(tinyfishCrawl("https://example.com")).rejects.toBeInstanceOf(CrawlError)
     await expect(tinyfishCrawl("https://example.com")).rejects.toThrow(/invalid JSON/)
   })
@@ -141,11 +158,8 @@ describe("tinyfishCrawl", () => {
     // Sanity check that tinyfishCrawl actually goes through fetchLimiter.
     // We don't drive 25 concurrent calls (would be brittle in a unit suite),
     // we just verify a successful call increments the limiter's slot count.
-    const { tinyfishFetchLimiter } = await import("./tinyfish")
     const before = tinyfishFetchLimiter.slotsInWindow()
-    requestMock.mockImplementation(async () =>
-      mockResponse(200, { results: [{ url: "x", text: "ok" }] }),
-    )
+    mockResponse(200, { results: [{ url: "x", text: "ok" }] })
     await tinyfishCrawl("https://example.com")
     expect(tinyfishFetchLimiter.slotsInWindow()).toBe(before + 1)
   })

@@ -104,13 +104,14 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
   const { statusCode, body } = res
 
   // Loud, distinct messages for the two operationally-meaningful failures.
-  // The body must be consumed/dumped so undici can recycle the connection.
+  // Close immediately on early returns; a slow error body should not outlive
+  // the crawl or keep the socket occupied.
   if (statusCode === 401) {
-    await body.dump().catch(() => {})
+    destroyBody(body)
     throw new CrawlError(url, "Tinyfish 401: API key invalid or revoked")
   }
   if (statusCode === 429) {
-    await body.dump().catch(() => {})
+    destroyBody(body)
     throw new CrawlError(url, "Tinyfish 429: rate limit exceeded (25 URLs/min cap)")
   }
   if (statusCode < 200 || statusCode >= 300) {
@@ -155,6 +156,11 @@ export async function tinyfishCrawl(url: string, options?: CrawlOptions): Promis
     title: result.title,
     crawledAt: new Date(),
   }
+}
+
+function destroyBody(body: Dispatcher.ResponseData["body"]) {
+  body.on("error", () => {})
+  body.destroy()
 }
 
 function formatFetchError(err: unknown): string {
