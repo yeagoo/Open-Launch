@@ -76,10 +76,16 @@ aside and a timeout so it cannot hang indefinitely.
 
 ## Remaining Work
 
-In this repo, the planned feature phases are complete after the review fixes
-are committed and pushed.
+In this repo, the planned feature phases are complete and pushed.
 
-Cross-repo receiver work remains outside this tree:
+Cross-repo receiver work completed for the three currently wired partner repos:
 
-- each receiver `POST /api/external/launch` must honor `rel: "nofollow"`
-- each receiver must expose an idempotent `POST /api/external/unpublish`
+- `~/bigkr` — `b3b94ee fix(external): harden receiver idempotency`
+- `~/mf8` — `50c7018 fix(external): harden receiver idempotency`
+- `~/hicyou-receiver-work` — `05926b0 feat: add external launch receiver`
+  (clean clone; original `~/hicyou` was not touched)
+
+If more receiver repos are added later, repeat the same receiver contract:
+`POST /api/external/launch` must honor `rel: "nofollow"` and persist the
+idempotency key, and `POST /api/external/unpublish` must be idempotent by that
+key.

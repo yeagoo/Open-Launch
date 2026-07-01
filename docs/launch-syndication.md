@@ -66,9 +66,10 @@ Content-Type: application/json
 Response `200`: `{ "ok": true, "id": "...", "slug": "...", "url": "...", "deduped": false }`.
 Errors: `401` bad/missing key, `400` invalid payload, `500` server/config.
 
-**Idempotency on the receiver too:** each site dedupes by normalized website
-URL (`bookmarks.url` is UNIQUE on hicyou; bigkr/mf8 look up before insert), so
-a re-post returns the existing listing with `deduped: true`.
+**Idempotency on the receiver too:** each site now requires the
+`idempotencyKey`. A re-post with the same key returns the existing listing with
+`deduped: true`; a same-URL post with a different key returns `409` so takedown
+can stay key-based instead of accidentally claiming an unrelated listing.
 
 ## Setup
 
@@ -139,7 +140,8 @@ Smoke-test a receiver directly (replace host + key):
 curl -sS -X POST https://bigkr.com/api/external/launch \
   -H "Authorization: Bearer $EXTERNAL_LAUNCH_API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"source":"aat.ee","name":"Test Tool","tagline":"hi",
+  -d '{"idempotencyKey":"smoke-test-2026-07-02","source":"aat.ee",
+       "name":"Test Tool","tagline":"hi",
        "websiteUrl":"https://example.com","pricing":"freemium","tier":"plus"}'
 ```
 
