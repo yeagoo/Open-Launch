@@ -12,6 +12,7 @@ export type AdminAction =
   | "tag.approve"
   | "tag.reject"
   | "directory_order.fulfill"
+  | "skill_submission.takedown"
 
 interface LogAdminActionParams {
   adminUserId: string

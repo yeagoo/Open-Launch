@@ -21,6 +21,21 @@ export interface SkillReviewInput {
   variants: readonly SkillReviewVariant[]
 }
 
+export interface SkillCanaryReviewPage {
+  site: string
+  url: string
+  intendedTitle: string
+  intendedTagline: string
+  intendedBodyMd: string
+  liveMarkdown: string
+}
+
+export interface SkillCanaryReviewInput {
+  domain: string
+  websiteUrl: string
+  pages: readonly SkillCanaryReviewPage[]
+}
+
 export interface SkillReviewVerdict {
   score: number
   reasons: string[]
@@ -53,11 +68,64 @@ Hard rules:
 
 ${INPUT_SAFETY_BLOCK}`
 
+const CANARY_SYSTEM_PROMPT = `You are a strict automated canary reviewer for a nofollow directory publication system.
+
+You receive the intended submitted content and the live rendered markdown from canary directory pages. Decide whether the live pages render the intended, clean product listing and whether the content remains safe to continue distributing.
+
+Output a JSON object exactly:
+{
+  "score": 0-100 integer (higher = safe to continue rollout),
+  "reasons": ["one to three short English reasons"]
+}
+
+Score guidance:
+- 80-100: Live pages clearly contain the intended product/listing and no high-risk content.
+- 50-79: Mostly correct but minor rendering/content issues.
+- 30-49: Significant mismatch or low-quality rendering; pause rather than continue.
+- 0-29: Reject and takedown. Missing intended listing, spam/scam/adult/illegal content, malware, impersonation, or a materially different page.
+
+Hard rules:
+- Output only the JSON object, no markdown fences or commentary.
+- Be strict on content mismatch: if the live page does not clearly contain the intended listing, score below 30.
+- Do not require exact wording; directory templates can wrap or reorder content.
+
+${INPUT_SAFETY_BLOCK}`
+
 export function isSkillReviewRejected(verdict: SkillReviewVerdict): boolean {
   return verdict.score < SKILL_REVIEW_REJECT_THRESHOLD
 }
 
 export async function reviewSkillSubmission(input: SkillReviewInput): Promise<SkillReviewVerdict> {
+  return callDeepSeekReview({
+    systemPrompt: SYSTEM_PROMPT,
+    userPrompt: buildUserPrompt(input),
+    functionName: "skill-submission-review",
+    maxTokens: 220,
+  })
+}
+
+export async function reviewSkillCanaryPages(
+  input: SkillCanaryReviewInput,
+): Promise<SkillReviewVerdict> {
+  return callDeepSeekReview({
+    systemPrompt: CANARY_SYSTEM_PROMPT,
+    userPrompt: buildCanaryUserPrompt(input),
+    functionName: "skill-canary-review",
+    maxTokens: 220,
+  })
+}
+
+async function callDeepSeekReview({
+  systemPrompt,
+  userPrompt,
+  functionName,
+  maxTokens,
+}: {
+  systemPrompt: string
+  userPrompt: string
+  functionName: string
+  maxTokens: number
+}): Promise<SkillReviewVerdict> {
   const apiKey = process.env.DEEPSEEK_API_KEY
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
@@ -74,11 +142,11 @@ export async function reviewSkillSubmission(input: SkillReviewInput): Promise<Sk
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: buildUserPrompt(input) },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.1,
-      max_tokens: 220,
+      max_tokens: maxTokens,
     }),
     headersTimeout: SKILL_REVIEW_TIMEOUT_MS,
     bodyTimeout: SKILL_REVIEW_TIMEOUT_MS,
@@ -112,7 +180,7 @@ export async function reviewSkillSubmission(input: SkillReviewInput): Promise<Sk
     usage?: DeepSeekUsage
     choices?: Array<{ message?: { content?: unknown } }>
   }
-  await logAiUsage("skill-submission-review", model, data?.usage)
+  await logAiUsage(functionName, model, data?.usage)
 
   const raw = data?.choices?.[0]?.message?.content
   if (typeof raw !== "string" || !raw.trim()) {
@@ -149,6 +217,26 @@ function buildUserPrompt(input: SkillReviewInput): string {
 ${wrapInput("website_url", input.websiteUrl)}
 
 ${variants}`
+}
+
+function buildCanaryUserPrompt(input: SkillCanaryReviewInput): string {
+  const pages = input.pages
+    .map((page, index) => {
+      return [
+        `Canary page ${index + 1} (${page.site})`,
+        wrapInput("live_url", page.url),
+        wrapInput("intended_title", page.intendedTitle),
+        wrapInput("intended_tagline", page.intendedTagline),
+        wrapInput("intended_body_md_excerpt", stripHtml(page.intendedBodyMd, 800)),
+        wrapInput("live_markdown_excerpt", stripHtml(page.liveMarkdown, 1600)),
+      ].join("\n")
+    })
+    .join("\n\n")
+
+  return `${wrapInput("domain", input.domain)}
+${wrapInput("website_url", input.websiteUrl)}
+
+${pages}`
 }
 
 function stripOptionalJsonFence(raw: string): string {

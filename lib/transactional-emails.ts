@@ -372,6 +372,101 @@ export async function sendListingLiveEmail({
   })
 }
 
+export async function sendSkillSubmissionCompletedEmail({
+  userEmail,
+  userName,
+  projectName,
+  locale,
+  urls,
+  statusUrl,
+}: {
+  userEmail: string
+  userName: string | null
+  projectName: string
+  locale?: string | null
+  urls: string[]
+  statusUrl: string
+}) {
+  const safeProjectName = escapeHtml(projectName)
+  const greeting = escapeHtml(userName?.trim() || "there")
+  const subject = `${projectName} is live across the free directory queue`
+
+  const validLocales = routing.locales as readonly string[]
+  const localePath =
+    locale && locale !== routing.defaultLocale && validLocales.includes(locale) ? `/${locale}` : ""
+  const upgradeUrl = `${resolveAppUrl()}${localePath}/pricing`
+  const safeStatusUrl = safeHttpUrl(statusUrl)
+
+  const items = urls
+    .map((url) => {
+      const safeUrl = safeHttpUrl(url)
+      if (!safeUrl) return null
+      let host = safeUrl
+      try {
+        host = new URL(safeUrl).host
+      } catch {
+        /* keep full URL as label */
+      }
+      return `<li style="margin: 6px 0;"><a href="${safeUrl}">${escapeHtml(host)}</a> — <span style="color:#666;">${escapeHtml(safeUrl)}</span></li>`
+    })
+    .filter((item): item is string => item !== null)
+    .join("")
+
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="font-size: 22px; color: #1a1a1a;">Hi ${greeting}</h1>
+      <p>Your free nofollow directory submission for <strong>${safeProjectName}</strong> has completed.</p>
+
+      ${items ? `<h2 style="font-size: 16px; margin-top: 28px; color: #1a1a1a;">Published listings</h2><ul style="padding-left: 20px;">${items}</ul>` : ""}
+
+      <p style="text-align: center; margin: 28px 0;">
+        ${safeStatusUrl ? `<a href="${safeStatusUrl}" style="background-color: #111827; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View status</a>` : ""}
+      </p>
+
+      <p>Want faster rollout and dofollow links next time? The paid directory option is available here: <a href="${upgradeUrl}">${upgradeUrl}</a>.</p>
+    </div>
+  `
+
+  return sendEmail({
+    to: userEmail,
+    subject,
+    html: htmlBody,
+    replyTo: "contact@aat.ee",
+  })
+}
+
+export async function sendSkillAdminAlert({
+  subject,
+  message,
+  submissionId,
+  domain,
+}: {
+  subject: string
+  message: string
+  submissionId: string
+  domain: string
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL || "cjwbbs@gmail.com"
+  const safeSubject = subject.replace(/[\r\n\t]+/g, " ")
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="font-size: 20px; color: #991b1b;">${escapeHtml(safeSubject)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Submission</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">${escapeHtml(submissionId)}</td></tr>
+        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Domain</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">${escapeHtml(domain)}</td></tr>
+      </table>
+    </div>
+  `
+
+  return sendEmail({
+    to: adminEmail,
+    subject: safeSubject,
+    html: htmlBody,
+    replyTo: "contact@aat.ee",
+  })
+}
+
 export async function sendAdminPaymentNotification({
   userEmail,
   amount,
