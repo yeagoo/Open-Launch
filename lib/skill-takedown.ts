@@ -21,6 +21,7 @@ export async function takedownSkillSubmission(
     .select({
       id: skillSubmission.id,
       domain: skillSubmission.domain,
+      websiteUrl: skillSubmission.websiteUrl,
       status: skillSubmission.status,
     })
     .from(skillSubmission)
@@ -48,7 +49,7 @@ export async function takedownSkillSubmission(
   await Promise.all(
     sentRows.map(async (row) => {
       const idempotencyKey = skillPublicationIdempotencyKey(row.submissionId, row.site)
-      const result = await postSkillUnpublishToSite(row.site, idempotencyKey)
+      const result = await postSkillUnpublishToSite(row.site, idempotencyKey, submission.websiteUrl)
 
       if (result.ok) {
         unpublished++

@@ -21,6 +21,24 @@ export interface SkillPostResult {
   configError?: boolean
 }
 
+export interface SkillLaunchRequestBody extends SkillLaunchPayload {
+  idempotencyKey: string
+  targetSiteId: string
+}
+
+export interface SkillUnpublishRequestBody {
+  source: "aat.ee"
+  idempotencyKey: string
+  targetSiteId: string
+  websiteUrl: string
+}
+
+type SkillPostJson = {
+  id?: string | number
+  url?: string | null
+  sites?: Array<{ id?: string | number | null; url?: string | null }>
+}
+
 const TIMEOUT_MS = 20_000
 
 export function buildSkillLaunchPayload(input: {
@@ -62,6 +80,46 @@ export function skillSiteApiKey(site: string): string | null {
   )
 }
 
+export function buildSkillLaunchRequestBody(
+  site: string,
+  idempotencyKey: string,
+  payload: SkillLaunchPayload,
+): SkillLaunchRequestBody {
+  return {
+    ...payload,
+    idempotencyKey,
+    targetSiteId: site,
+  }
+}
+
+export function buildSkillUnpublishRequestBody(input: {
+  site: string
+  idempotencyKey: string
+  websiteUrl: string
+}): SkillUnpublishRequestBody {
+  return {
+    source: "aat.ee",
+    idempotencyKey: input.idempotencyKey,
+    targetSiteId: input.site,
+    websiteUrl: input.websiteUrl,
+  }
+}
+
+export function extractSkillPostExternalFields(json: SkillPostJson): {
+  externalId?: string
+  externalUrl?: string
+} {
+  const firstSite = Array.isArray(json.sites)
+    ? json.sites.find((site) => site?.id != null || site?.url)
+    : undefined
+
+  return {
+    externalId:
+      json.id != null ? String(json.id) : firstSite?.id != null ? String(firstSite.id) : undefined,
+    externalUrl: json.url ?? firstSite?.url ?? undefined,
+  }
+}
+
 export async function postSkillLaunchToSite(
   site: string,
   idempotencyKey: string,
@@ -76,15 +134,13 @@ export async function postSkillLaunchToSite(
     }
   }
 
-  return postSkillJson(site, url, {
-    ...payload,
-    idempotencyKey,
-  })
+  return postSkillJson(site, url, buildSkillLaunchRequestBody(site, idempotencyKey, payload))
 }
 
 export async function postSkillUnpublishToSite(
   site: string,
   idempotencyKey: string,
+  websiteUrl: string,
 ): Promise<SkillPostResult> {
   const url = skillSiteUnpublishEndpoint(site)
   if (!url) {
@@ -95,17 +151,14 @@ export async function postSkillUnpublishToSite(
     }
   }
 
-  return postSkillJson(site, url, {
-    source: "aat.ee",
-    idempotencyKey,
-  })
+  return postSkillJson(
+    site,
+    url,
+    buildSkillUnpublishRequestBody({ site, idempotencyKey, websiteUrl }),
+  )
 }
 
-async function postSkillJson(
-  site: string,
-  url: string,
-  body: Record<string, unknown>,
-): Promise<SkillPostResult> {
+async function postSkillJson(site: string, url: string, body: object): Promise<SkillPostResult> {
   const key = skillSiteApiKey(site)
   if (!key) {
     return {
@@ -139,7 +192,7 @@ async function postSkillJson(
       }
     }
 
-    let json: { ok?: boolean; id?: string | number; url?: string; error?: string } = {}
+    let json: SkillPostJson & { ok?: boolean; error?: string } = {}
     try {
       json = (await withTimeout(
         res.body.json(),
@@ -163,8 +216,7 @@ async function postSkillJson(
     return {
       ok: true,
       statusCode,
-      externalId: json.id != null ? String(json.id) : undefined,
-      externalUrl: json.url,
+      ...extractSkillPostExternalFields(json),
     }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
