@@ -5,6 +5,7 @@ import {
   buildSkillLaunchRequestBody,
   buildSkillUnpublishRequestBody,
   extractSkillPostExternalFields,
+  isSuccessfulSkillPostResponse,
   skillSiteApiKey,
   skillSiteEndpoint,
   skillSiteUnpublishEndpoint,
@@ -77,6 +78,30 @@ describe("skill publishing configuration", () => {
       externalId: "tool_1",
       externalUrl: "https://qoo.im/tools/acme",
     })
+  })
+
+  it("accepts direct and gateway receiver success responses without requiring ok:true", () => {
+    expect(
+      isSuccessfulSkillPostResponse(200, {
+        id: 123,
+        url: "https://bigkr.com/product/acme",
+      }),
+    ).toBe(true)
+    expect(
+      isSuccessfulSkillPostResponse(200, {
+        sites: [{ id: "tool_1", url: "https://qoo.im/tools/acme" }],
+      }),
+    ).toBe(true)
+    expect(isSuccessfulSkillPostResponse(200, { ok: true })).toBe(true)
+    expect(isSuccessfulSkillPostResponse(200, { ok: false })).toBe(false)
+    expect(isSuccessfulSkillPostResponse(200, { id: 123 })).toBe(false)
+    expect(isSuccessfulSkillPostResponse(200, {})).toBe(false)
+    expect(
+      isSuccessfulSkillPostResponse(500, {
+        id: 123,
+        url: "https://bigkr.com/product/acme",
+      }),
+    ).toBe(false)
   })
 
   it("resolves per-site publish and unpublish endpoints", () => {

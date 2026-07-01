@@ -120,6 +120,18 @@ export function extractSkillPostExternalFields(json: SkillPostJson): {
   }
 }
 
+export function isSuccessfulSkillPostResponse(
+  statusCode: number,
+  json: SkillPostJson & { ok?: boolean },
+): boolean {
+  if (statusCode < 200 || statusCode >= 300) return false
+  if (json.ok === false) return false
+  if (json.ok === true) return true
+
+  const external = extractSkillPostExternalFields(json)
+  return Boolean(external.externalUrl)
+}
+
 export async function postSkillLaunchToSite(
   site: string,
   idempotencyKey: string,
@@ -204,8 +216,7 @@ async function postSkillJson(site: string, url: string, body: object): Promise<S
       if (error instanceof FetchTimeoutError) return { ok: false, error: error.message }
     }
 
-    const ok2xx = statusCode >= 200 && statusCode < 300
-    if (!ok2xx || !json?.ok) {
+    if (!isSuccessfulSkillPostResponse(statusCode, json)) {
       return {
         ok: false,
         statusCode,
@@ -213,10 +224,11 @@ async function postSkillJson(site: string, url: string, body: object): Promise<S
       }
     }
 
+    const external = extractSkillPostExternalFields(json)
     return {
       ok: true,
       statusCode,
-      ...extractSkillPostExternalFields(json),
+      ...external,
     }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
