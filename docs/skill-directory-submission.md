@@ -39,7 +39,7 @@ day rollout, $6.99+. This one is free, nofollow, user-generated, slow. See
 | 6   | Cooperating sites      | All 14 are **our own** sites → no partner-acceptance blocker.                                                                                                |
 | 7   | Receiver contract      | Submission payload carries a `rel` field (`nofollow` for this channel).                                                                                      |
 | 8   | Identity               | **Must be logged in + per-user API key** (generated in dashboard).                                                                                           |
-| 9   | Quota                  | Per-account monthly cap **+ global ≤10 site-publishes/day** (rest queue). Want it faster → pay on the site.                                                  |
+| 9   | Quota                  | **3 projects/account/month** + per-domain permanent dedupe + global ≤10 site-publishes/day (rest queue). No free top-up; more/faster → pay on the site.      |
 | 10  | Takedown               | Every receiver site implements an **unpublish/delete API**; aat.ee can pull a listing from all 14.                                                           |
 | 11  | uuid status page       | **noindex** (don't dilute aat.ee authority; don't expose pre-review content).                                                                                |
 | 12  | Domain verification    | **One-time, domain-level** (HTML file / DNS TXT / meta tag). First step of the Skill, runs in parallel with content gen, hard-gated at submit.               |
@@ -72,11 +72,15 @@ Because放行 is fully automatic (decision #1), the safety net is layered:
    generating content.
 3. **Similarity guard (local, decision #4).** Reject if the 14 variants are
    near-duplicates — lenient threshold. No AI; a local shingle/Jaccard or
-   trigram-cosine over the variant bodies.
+   trigram-cosine over the variant bodies. **Starting default: reject only when
+   pairwise similarity > 0.9** (i.e. near-identical); tune down from real data.
+   The goal is merely "a search engine sees a difference", not originality.
 4. **Canary + AI re-check (decision #3).** Day 1 publishes only the 2
    lowest-DR sites. Before advancing, an AI re-check reads the **live** pages
    (via `lib/tinyfish.ts`) and confirms they rendered the intended, clean
-   content. Any anomaly → pause the submission + alert admin.
+   content. Failure → **auto-takedown**: unpublish everything already sent for
+   that submission (the 2 canary sites), mark it `taken_down`, alert admin, and
+   never advance to day 2. Fully automatic, no human gate (decision #1).
 5. **Rate/dedupe limits.** Per-account monthly quota, per-domain permanent
    dedupe, global daily throttle. Reuses `lib/rate-limit.ts` (`dedupeOnce`,
    `checkRateLimit`).
@@ -194,8 +198,9 @@ All endpoints are API-key authenticated (decision #8): `Authorization: Bearer
 POST /api/skill/domains                 → register a domain, get {token, methods}
 POST /api/skill/domains/:id/verify      → aat.ee fetches/looks up, marks verified
 GET  /api/skill/domains                 → list caller's verified domains
-POST /api/skill/submit                  → {domain, website_url, variants[14]}
+POST /api/skill/submit                  → {domain, website_url, variants[14], tosAccepted:true}
                                           server re-checks domain verification,
+                                          rejects if tosAccepted!=true,
                                           runs AI score + similarity guard,
                                           creates skill_submission + rows,
                                           returns {uuid, statusUrl}
@@ -259,12 +264,15 @@ find-replace clones — the server's similarity guard enforces a lenient floor.
 
 ## Open items to finalize before build
 
-- Exact monthly per-account quota number (decision #9 says "small", value TBD).
-- Similarity threshold value (decision #4 — start lenient, tune).
-- Whether free quota is buyable à la carte vs only upgrade-to-dofollow.
-- ToS acceptance checkbox in the Skill submit (user attests ownership + content
-  legality + liability).
-- Canary re-check failure policy: auto-pause + admin alert vs auto-takedown.
+_All resolved (2026-07) — recorded below and folded into the sections above._
+
+| Item                      | Decision                                                                                                                                                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monthly per-account quota | **3 projects / account / month** (per-domain permanent dedupe on top).                                                                                                                                                                        |
+| Free quota top-up         | **No à-la-carte free top-up** — running out points to paid dofollow only (cleanest separation).                                                                                                                                               |
+| Canary re-check failure   | **Auto-takedown**: if the AI re-check fails on the 2 canary sites, automatically unpublish everything already sent for that submission and mark it `taken_down` + alert admin. Matches the fully-automatic, zero-human posture (decision #1). |
+| ToS acceptance            | **Required** — the Skill submit must carry an explicit ToS acceptance (user attests domain + content ownership, content legality, and liability). Server rejects a submit without it.                                                         |
+| Similarity threshold      | Not a launch-blocking constant — **start lenient and tune from real data**. Documented default in the similarity-guard section; adjustable without a schema change.                                                                           |
 
 ## Quality guardrails & CI
 
