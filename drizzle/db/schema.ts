@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm"
 import {
   boolean,
+  date,
   index,
   integer,
   json,
@@ -921,4 +922,126 @@ export const launchSyndication = pgTable(
       statusIdx: index("launch_syndication_status_idx").on(table.status, table.nextAttemptAt),
     }
   },
+)
+
+// ─── Skill-driven free directory submission ─────────────────────────────────
+// Separate from paid launch_syndication: the free channel has its own keys,
+// verification rows, review state, variants, and nofollow publication queue.
+export const skillApiKey = pgTable(
+  "skill_api_key",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    keyHash: text("key_hash").notNull(),
+    keyPrefix: text("key_prefix").notNull(),
+    label: text("label").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    lastUsedAt: timestamp("last_used_at"),
+    revokedAt: timestamp("revoked_at"),
+  },
+  (table) => ({
+    keyHashUniq: uniqueIndex("skill_api_key_hash_uniq").on(table.keyHash),
+    accountIdx: index("skill_api_key_account_idx").on(table.accountId),
+  }),
+)
+
+export const verifiedDomain = pgTable(
+  "verified_domain",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    method: text("method").notNull(), // 'html' | 'dns' | 'meta'
+    token: text("token").notNull(),
+    verifiedAt: timestamp("verified_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    accountDomainUniq: uniqueIndex("verified_domain_account_domain_uniq").on(
+      table.accountId,
+      table.domain,
+    ),
+  }),
+)
+
+export const skillSubmission = pgTable(
+  "skill_submission",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    websiteUrl: text("website_url").notNull(),
+    status: text("status").notNull().default("pending_review"), // 'pending_review' | 'rejected' | 'publishing' | 'completed' | 'paused' | 'taken_down'
+    reviewScore: integer("review_score"),
+    reviewReason: text("review_reason"),
+    locale: text("locale").notNull().default("en"),
+    tosAcceptedAt: timestamp("tos_accepted_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    accountIdx: index("skill_submission_account_idx").on(table.accountId, table.createdAt),
+    statusIdx: index("skill_submission_status_idx").on(table.status, table.createdAt),
+  }),
+)
+
+export const skillSubmissionVariant = pgTable(
+  "skill_submission_variant",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id")
+      .notNull()
+      .references(() => skillSubmission.id, { onDelete: "cascade" }),
+    site: text("site").notNull(),
+    title: text("title").notNull(),
+    tagline: text("tagline").notNull(),
+    bodyMd: text("body_md").notNull(),
+    lang: text("lang").notNull(),
+  },
+  (table) => ({
+    submissionSiteUniq: uniqueIndex("skill_submission_variant_submission_site_uniq").on(
+      table.submissionId,
+      table.site,
+    ),
+  }),
+)
+
+export const skillPublication = pgTable(
+  "skill_publication",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    submissionId: uuid("submission_id")
+      .notNull()
+      .references(() => skillSubmission.id, { onDelete: "cascade" }),
+    site: text("site").notNull(),
+    rel: text("rel").notNull().default("nofollow"),
+    batchDay: integer("batch_day").notNull(),
+    scheduledFor: date("scheduled_for").notNull(),
+    status: text("status").notNull().default("scheduled"), // 'scheduled' | 'sent' | 'failed' | 'unpublished'
+    attempts: integer("attempts").notNull().default(0),
+    externalId: text("external_id"),
+    externalUrl: text("external_url"),
+    lastError: text("last_error"),
+    nextAttemptAt: timestamp("next_attempt_at"),
+    sentAt: timestamp("sent_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    submissionSiteUniq: uniqueIndex("skill_publication_submission_site_uniq").on(
+      table.submissionId,
+      table.site,
+    ),
+    statusScheduledIdx: index("skill_publication_status_scheduled_idx").on(
+      table.status,
+      table.scheduledFor,
+    ),
+    submissionIdx: index("skill_publication_submission_idx").on(table.submissionId),
+  }),
 )
