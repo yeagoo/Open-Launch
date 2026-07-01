@@ -13,6 +13,13 @@ import { resolveAppUrl } from "@/lib/app-url"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { checkRateLimit } from "@/lib/rate-limit"
 import {
+  SKILL_GLOBAL_DAILY_LIMIT,
+  SKILL_GLOBAL_DAILY_WINDOW_MS,
+  SKILL_PUBLISH_BATCH_SIZE,
+  SKILL_PUBLISH_MAX_ATTEMPTS,
+  skillPublishBackoffMinutes,
+} from "@/lib/skill-publish-policy"
+import {
   buildSkillLaunchPayload,
   postSkillLaunchToSite,
   type SkillPostResult,
@@ -29,11 +36,6 @@ import { sendSkillSubmissionCompletedEmail } from "@/lib/transactional-emails"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
-
-const MAX_ATTEMPTS = 8
-const BATCH = 25
-const GLOBAL_DAILY_LIMIT = 10
-const GLOBAL_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000
 
 type DueRow = Awaited<ReturnType<typeof loadDueRows>>[number]
 
@@ -68,8 +70,8 @@ export async function GET(request: NextRequest) {
 
     const budget = await checkRateLimit(
       "skill-global",
-      GLOBAL_DAILY_LIMIT,
-      GLOBAL_DAILY_WINDOW_MS,
+      SKILL_GLOBAL_DAILY_LIMIT,
+      SKILL_GLOBAL_DAILY_WINDOW_MS,
       { onRedisError: "fail-closed" },
     )
     if (!budget.success) {
@@ -142,7 +144,7 @@ async function loadDueRows(now: Date, today: string) {
           eq(skillPublication.status, "scheduled"),
           and(
             eq(skillPublication.status, "failed"),
-            lt(skillPublication.attempts, MAX_ATTEMPTS),
+            lt(skillPublication.attempts, SKILL_PUBLISH_MAX_ATTEMPTS),
             or(isNull(skillPublication.nextAttemptAt), lte(skillPublication.nextAttemptAt, now)),
           ),
         ),
@@ -153,7 +155,7 @@ async function loadDueRows(now: Date, today: string) {
       asc(skillPublication.batchDay),
       asc(skillPublication.createdAt),
     )
-    .limit(BATCH)
+    .limit(SKILL_PUBLISH_BATCH_SIZE)
 }
 
 type CanaryGate = "pass" | "wait" | "taken_down"
@@ -267,7 +269,7 @@ async function recordPublishResult(
   }
 
   const attempts = row.attempts + 1
-  const backoffMin = Math.min(2 ** attempts, 120)
+  const backoffMin = skillPublishBackoffMinutes(attempts)
   await db
     .update(skillPublication)
     .set({
