@@ -72,7 +72,7 @@ export async function getSkillStatusView(uuid: string): Promise<SkillStatusView 
     scheduledFor: row.scheduledFor,
     status: row.status,
     externalUrl: row.externalUrl,
-    lastError: row.lastError,
+    lastError: publicSkillPublicationError(row.status, row.lastError),
     sentAt: row.sentAt?.toISOString() ?? null,
   }))
 
@@ -93,4 +93,11 @@ export async function getSkillStatusView(uuid: string): Promise<SkillStatusView 
     unpublished: publications.filter((row) => row.status === "unpublished").length,
     publications,
   }
+}
+
+export function publicSkillPublicationError(status: string, error: string | null): string | null {
+  if (!error) return null
+  if (status === "failed") return "Publication attempt failed."
+  if (status === "unpublished") return "Listing was unpublished."
+  return "Publication is temporarily deferred."
 }

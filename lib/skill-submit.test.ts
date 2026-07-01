@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import type { SkillPublicationScheduleRow } from "./skill-sites"
 import {
+  SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS,
   submitSkillSubmission,
   type SkillSubmitDependencies,
   type SkillSubmitInput,
@@ -79,7 +80,27 @@ function deps(overrides: Partial<SkillSubmitDependencies> = {}) {
 }
 
 describe("submitSkillSubmission", () => {
-  it("rejects the 4th monthly submission before reserving the domain", async () => {
+  it("uses a short pending domain lock; the database unique index is the permanent dedupe", () => {
+    expect(SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS).toBe(15 * 60)
+  })
+
+  it("rejects when the domain reservation is already held without consuming quota", async () => {
+    const { deps: fakeDeps, calls } = deps({
+      reserveDomain: vi.fn(async () => false),
+    })
+
+    const result = await submitSkillSubmission(ACCOUNT_ID, input(), fakeDeps)
+
+    expect(result).toMatchObject({
+      ok: false,
+      httpStatus: 409,
+      code: "domain_already_submitted",
+    })
+    expect(calls.quota).not.toHaveBeenCalled()
+    expect(calls.review).not.toHaveBeenCalled()
+  })
+
+  it("rejects the 4th monthly submission and releases the domain reservation", async () => {
     const { deps: fakeDeps, calls } = deps({
       checkQuota: vi.fn(async () => ({ success: false, remaining: 0, reset: 123 })),
     })
@@ -92,7 +113,8 @@ describe("submitSkillSubmission", () => {
       code: "monthly_quota_exceeded",
       reset: 123,
     })
-    expect(calls.reserve).not.toHaveBeenCalled()
+    expect(calls.reserve).toHaveBeenCalledTimes(1)
+    expect(calls.release).toHaveBeenCalledTimes(1)
     expect(calls.review).not.toHaveBeenCalled()
   })
 
@@ -156,6 +178,24 @@ describe("submitSkillSubmission", () => {
         variants: [],
       }),
     )
+  })
+
+  it("returns a domain dedupe conflict when the database unique index wins a race", async () => {
+    const uniqueViolation = Object.assign(new Error("duplicate key value"), { code: "23505" })
+    const { deps: fakeDeps, calls } = deps({
+      persist: vi.fn(async () => {
+        throw uniqueViolation
+      }),
+    })
+
+    const result = await submitSkillSubmission(ACCOUNT_ID, input(), fakeDeps)
+
+    expect(result).toMatchObject({
+      ok: false,
+      httpStatus: 409,
+      code: "domain_already_submitted",
+    })
+    expect(calls.release).not.toHaveBeenCalled()
   })
 
   it("persists publishing submissions with ordered variants and schedule", async () => {

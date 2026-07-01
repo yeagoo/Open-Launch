@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { isSkillReviewRejected, parseSkillReviewResponse } from "./skill-review"
+import {
+  isSkillCanaryReviewRejected,
+  isSkillReviewRejected,
+  parseSkillReviewResponse,
+} from "./skill-review"
 
 describe("parseSkillReviewResponse", () => {
   it("parses score and reasons from plain JSON", () => {
@@ -20,5 +24,11 @@ describe("parseSkillReviewResponse", () => {
 
     expect(verdict).toEqual({ score: 12, reasons: ["Gambling spam"] })
     expect(isSkillReviewRejected(verdict)).toBe(true)
+  })
+
+  it("uses a stricter canary threshold so borderline live pages do not continue rollout", () => {
+    expect(isSkillReviewRejected({ score: 49, reasons: ["Rendering mismatch"] })).toBe(false)
+    expect(isSkillCanaryReviewRejected({ score: 49, reasons: ["Rendering mismatch"] })).toBe(true)
+    expect(isSkillCanaryReviewRejected({ score: 50, reasons: ["Mostly correct"] })).toBe(false)
   })
 })

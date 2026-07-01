@@ -8,6 +8,7 @@ import {
   isSuccessfulSkillPostResponse,
   skillSiteApiKey,
   skillSiteEndpoint,
+  skillSiteLaunchConfigError,
   skillSiteUnpublishEndpoint,
 } from "./skill-publishing"
 
@@ -93,6 +94,16 @@ describe("skill publishing configuration", () => {
       }),
     ).toBe(true)
     expect(isSuccessfulSkillPostResponse(200, { ok: true })).toBe(true)
+    expect(isSuccessfulSkillPostResponse(200, { ok: true }, { requireExternalUrl: true })).toBe(
+      false,
+    )
+    expect(
+      isSuccessfulSkillPostResponse(
+        200,
+        { ok: true, url: "https://bigkr.com/product/acme" },
+        { requireExternalUrl: true },
+      ),
+    ).toBe(true)
     expect(isSuccessfulSkillPostResponse(200, { ok: false })).toBe(false)
     expect(isSuccessfulSkillPostResponse(200, { id: 123 })).toBe(false)
     expect(isSuccessfulSkillPostResponse(200, {})).toBe(false)
@@ -109,6 +120,20 @@ describe("skill publishing configuration", () => {
 
     expect(skillSiteEndpoint("bigkr")).toBe("https://bigkr.com/api/external/launch")
     expect(skillSiteUnpublishEndpoint("bigkr")).toBe("https://bigkr.com/api/external/unpublish")
+  })
+
+  it("detects local publish misconfiguration before spending global budget", () => {
+    vi.stubEnv("EXTERNAL_LAUNCH_API_KEY", "")
+
+    expect(skillSiteLaunchConfigError("bigkr")).toBe("SKILL_PUBLISH_BIGKR_URL not configured")
+
+    vi.stubEnv("SKILL_PUBLISH_BIGKR_URL", "https://bigkr.com/api/external/launch")
+    expect(skillSiteLaunchConfigError("bigkr")).toBe(
+      "No API key for bigkr (set SKILL_PUBLISH_BIGKR_API_KEY, SKILL_PUBLISH_API_KEY, or EXTERNAL_LAUNCH_API_KEY)",
+    )
+
+    vi.stubEnv("SKILL_PUBLISH_API_KEY", "shared")
+    expect(skillSiteLaunchConfigError("bigkr")).toBeNull()
   })
 
   it("prefers per-site API keys and falls back to the shared skill key", () => {

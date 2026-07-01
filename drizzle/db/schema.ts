@@ -988,6 +988,7 @@ export const skillSubmission = pgTable(
   (table) => ({
     accountIdx: index("skill_submission_account_idx").on(table.accountId, table.createdAt),
     statusIdx: index("skill_submission_status_idx").on(table.status, table.createdAt),
+    domainUniq: uniqueIndex("skill_submission_domain_uniq").on(table.domain),
   }),
 )
 

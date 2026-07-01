@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto"
+
 import Redis from "ioredis"
 
 let redis: Redis | null = null
@@ -33,7 +35,13 @@ export type RateLimitResult = {
 const MAX_IN_MEMORY_KEYS = 5000
 const inMemoryHits = new Map<string, number[]>()
 
-function inMemoryCheck(key: string, limit: number, windowMs: number, now: number): RateLimitResult {
+function inMemoryCheck(
+  key: string,
+  limit: number,
+  windowMs: number,
+  now: number,
+  consume: boolean,
+): RateLimitResult {
   let hits = inMemoryHits.get(key)
   if (!hits) {
     if (inMemoryHits.size >= MAX_IN_MEMORY_KEYS) {
@@ -56,7 +64,7 @@ function inMemoryCheck(key: string, limit: number, windowMs: number, now: number
     return { success: false, remaining: 0, reset }
   }
 
-  hits.push(now)
+  if (consume) hits.push(now)
   return {
     success: true,
     remaining: limit - hits.length,
@@ -74,7 +82,39 @@ export type RateLimitOptions = {
    *     unlimited traffic through is worse than dropping it.
    */
   onRedisError?: "memory-fallback" | "fail-closed"
+  /**
+   * Whether a successful check consumes one slot. Set false for a preflight
+   * before expensive work, then call again with the default before the capped
+   * side effect.
+   */
+  consume?: boolean
 }
+
+const RATE_LIMIT_LUA = `
+redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+
+local limit = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+local window_ms = tonumber(ARGV[4])
+local member = ARGV[5]
+local expire_seconds = tonumber(ARGV[6])
+local consume = ARGV[7] == "1"
+local count = redis.call("ZCARD", KEYS[1])
+
+if count >= limit then
+  local oldest = redis.call("ZRANGE", KEYS[1], 0, 0, "WITHSCORES")
+  local reset_at = oldest[2] and tonumber(oldest[2]) + window_ms or now + window_ms
+  return {0, 0, math.ceil((reset_at - now) / 1000)}
+end
+
+if consume then
+  redis.call("ZADD", KEYS[1], now, member)
+  redis.call("EXPIRE", KEYS[1], expire_seconds)
+  return {1, limit - count - 1, math.ceil(window_ms / 1000)}
+end
+
+return {1, limit - count, math.ceil(window_ms / 1000)}
+`
 
 /**
  * Fixed-window byte budget (Redis INCRBY + TTL). Unlike
@@ -178,6 +218,7 @@ export async function checkRateLimit(
   const key = `rate-limit:${identifier}`
   const now = Date.now()
   const windowStart = now - window
+  const consume = options.consume ?? true
 
   try {
     const client = getRedisClient()
@@ -186,27 +227,23 @@ export async function checkRateLimit(
       await client.connect()
     }
 
-    await client.zremrangebyscore(key, 0, windowStart)
-    const requestCount = await client.zcard(key)
-
-    if (requestCount >= limit) {
-      const oldestRequest = await client.zrange(key, 0, 0, "WITHSCORES")
-      const reset = oldestRequest.length ? parseInt(oldestRequest[1]) + window : now + window
-
-      return {
-        success: false,
-        remaining: 0,
-        reset: Math.ceil((reset - now) / 1000),
-      }
-    }
-
-    await client.zadd(key, now, now.toString())
-    await client.expire(key, Math.ceil(window / 1000))
+    const result = (await client.eval(
+      RATE_LIMIT_LUA,
+      1,
+      key,
+      String(windowStart),
+      String(limit),
+      String(now),
+      String(window),
+      `${now}:${randomUUID()}`,
+      String(Math.ceil(window / 1000)),
+      consume ? "1" : "0",
+    )) as [number | string, number | string, number | string]
 
     return {
-      success: true,
-      remaining: limit - requestCount - 1,
-      reset: Math.ceil(window / 1000),
+      success: Number(result[0]) === 1,
+      remaining: Number(result[1]),
+      reset: Number(result[2]),
     }
   } catch (error) {
     console.error("Redis error:", error)
@@ -218,6 +255,6 @@ export async function checkRateLimit(
         reset: Math.ceil(window / 1000),
       }
     }
-    return inMemoryCheck(key, limit, window, now)
+    return inMemoryCheck(key, limit, window, now, consume)
   }
 }

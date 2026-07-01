@@ -6,6 +6,7 @@ import { logAiUsage, type DeepSeekUsage } from "@/lib/ai-usage"
 import { FetchTimeoutError, withTimeout } from "@/lib/fetch-timeout"
 
 export const SKILL_REVIEW_REJECT_THRESHOLD = 30
+export const SKILL_CANARY_REVIEW_REJECT_THRESHOLD = 50
 
 export interface SkillReviewVariant {
   site: string
@@ -93,6 +94,10 @@ ${INPUT_SAFETY_BLOCK}`
 
 export function isSkillReviewRejected(verdict: SkillReviewVerdict): boolean {
   return verdict.score < SKILL_REVIEW_REJECT_THRESHOLD
+}
+
+export function isSkillCanaryReviewRejected(verdict: SkillReviewVerdict): boolean {
+  return verdict.score < SKILL_CANARY_REVIEW_REJECT_THRESHOLD
 }
 
 export async function reviewSkillSubmission(input: SkillReviewInput): Promise<SkillReviewVerdict> {

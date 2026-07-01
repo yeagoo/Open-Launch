@@ -27,7 +27,7 @@ import { isPrivateHostname } from "@/lib/utils"
 
 export const SKILL_MONTHLY_QUOTA = 3
 export const SKILL_MONTHLY_QUOTA_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
-export const SKILL_DOMAIN_DEDUPE_TTL_SECONDS = 365 * 24 * 60 * 60
+export const SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS = 15 * 60
 
 const skillSubmitVariantSchema = z
   .object({
@@ -247,17 +247,6 @@ export async function submitSkillSubmission(
     }
   }
 
-  const quota = await deps.checkQuota(accountId)
-  if (!quota.success) {
-    return {
-      ok: false,
-      httpStatus: 429,
-      code: "monthly_quota_exceeded",
-      error: "Monthly free skill submission quota exceeded",
-      reset: quota.reset,
-    }
-  }
-
   const reserved = await deps.reserveDomain(domain)
   if (!reserved) {
     return {
@@ -269,6 +258,18 @@ export async function submitSkillSubmission(
   }
 
   try {
+    const quota = await deps.checkQuota(accountId)
+    if (!quota.success) {
+      await deps.releaseDomainReservation(domain)
+      return {
+        ok: false,
+        httpStatus: 429,
+        code: "monthly_quota_exceeded",
+        error: "Monthly free skill submission quota exceeded",
+        reset: quota.reset,
+      }
+    }
+
     const review = await deps.review({ domain, websiteUrl, variants: orderedVariants })
     const status: SkillSubmissionStatus = isSkillReviewRejected(review) ? "rejected" : "publishing"
     const saved = await deps.persist({
@@ -291,6 +292,15 @@ export async function submitSkillSubmission(
       reviewReasons: review.reasons,
     }
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return {
+        ok: false,
+        httpStatus: 409,
+        code: "domain_already_submitted",
+        error: "This domain has already used the free skill submission channel",
+      }
+    }
+
     await deps.releaseDomainReservation(domain)
     console.error("[skill-submit] automated review or persistence failed:", error)
     return {
@@ -300,6 +310,16 @@ export async function submitSkillSubmission(
       error: "Automated review is temporarily unavailable. Please try again later.",
     }
   }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error === "object" && error !== null) {
+    const code =
+      (error as { code?: unknown }).code ?? (error as { cause?: { code?: unknown } }).cause?.code
+    if (code === "23505") return true
+  }
+
+  return error instanceof Error && /duplicate key value|unique constraint/i.test(error.message)
 }
 
 export function buildSkillStatusUrl(
@@ -413,11 +433,11 @@ function checkMonthlyQuota(accountId: string): Promise<RateLimitResult> {
 }
 
 function reserveSkillDomain(domain: string): Promise<boolean> {
-  return dedupeOnce(`skill-domain:${domain}`, SKILL_DOMAIN_DEDUPE_TTL_SECONDS)
+  return dedupeOnce(`skill-domain-pending:${domain}`, SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS)
 }
 
 function releaseSkillDomainReservation(domain: string): Promise<void> {
-  return clearDedupe(`skill-domain:${domain}`)
+  return clearDedupe(`skill-domain-pending:${domain}`)
 }
 
 async function persistSkillSubmission(

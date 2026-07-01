@@ -22,10 +22,11 @@ import {
 import {
   buildSkillLaunchPayload,
   postSkillLaunchToSite,
+  skillSiteLaunchConfigError,
   type SkillPostResult,
 } from "@/lib/skill-publishing"
 import {
-  isSkillReviewRejected,
+  isSkillCanaryReviewRejected,
   reviewSkillCanaryPages,
   type SkillCanaryReviewPage,
 } from "@/lib/skill-review"
@@ -56,6 +57,24 @@ export async function GET(request: NextRequest) {
   let takenDown = 0
 
   for (const row of due) {
+    const configError = skillSiteLaunchConfigError(row.site)
+    if (configError) {
+      await recordPublishResult(row, { ok: false, configError: true, error: configError }, now)
+      deferred++
+      continue
+    }
+
+    const budgetAvailable = await checkRateLimit(
+      "skill-global",
+      SKILL_GLOBAL_DAILY_LIMIT,
+      SKILL_GLOBAL_DAILY_WINDOW_MS,
+      { onRedisError: "fail-closed", consume: false },
+    )
+    if (!budgetAvailable.success) {
+      throttled++
+      break
+    }
+
     if (row.batchDay > 1) {
       const gate = await ensureCanaryGate(row, canaryPassedThisRun)
       if (gate === "wait") {
@@ -219,7 +238,7 @@ async function ensureCanaryGate(
       websiteUrl: row.websiteUrl,
       pages,
     })
-    if (isSkillReviewRejected(verdict)) {
+    if (isSkillCanaryReviewRejected(verdict)) {
       await takedownSkillSubmission(row.submissionId, {
         reason: `Canary AI re-check failed: ${verdict.reasons.join("; ")}`,
         alertAdmin: true,

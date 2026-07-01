@@ -80,6 +80,14 @@ export function skillSiteApiKey(site: string): string | null {
   )
 }
 
+export function skillSiteLaunchConfigError(site: string): string | null {
+  if (!skillSiteEndpoint(site)) return `SKILL_PUBLISH_${envSite(site)}_URL not configured`
+  if (!skillSiteApiKey(site)) {
+    return `No API key for ${site} (set SKILL_PUBLISH_${envSite(site)}_API_KEY, SKILL_PUBLISH_API_KEY, or EXTERNAL_LAUNCH_API_KEY)`
+  }
+  return null
+}
+
 export function buildSkillLaunchRequestBody(
   site: string,
   idempotencyKey: string,
@@ -123,12 +131,14 @@ export function extractSkillPostExternalFields(json: SkillPostJson): {
 export function isSuccessfulSkillPostResponse(
   statusCode: number,
   json: SkillPostJson & { ok?: boolean },
+  options: { requireExternalUrl?: boolean } = {},
 ): boolean {
   if (statusCode < 200 || statusCode >= 300) return false
   if (json.ok === false) return false
-  if (json.ok === true) return true
 
   const external = extractSkillPostExternalFields(json)
+  if (options.requireExternalUrl) return Boolean(external.externalUrl)
+  if (json.ok === true) return true
   return Boolean(external.externalUrl)
 }
 
@@ -137,16 +147,13 @@ export async function postSkillLaunchToSite(
   idempotencyKey: string,
   payload: SkillLaunchPayload,
 ): Promise<SkillPostResult> {
-  const url = skillSiteEndpoint(site)
-  if (!url) {
-    return {
-      ok: false,
-      configError: true,
-      error: `SKILL_PUBLISH_${envSite(site)}_URL not configured`,
-    }
-  }
+  const configError = skillSiteLaunchConfigError(site)
+  if (configError) return { ok: false, configError: true, error: configError }
 
-  return postSkillJson(site, url, buildSkillLaunchRequestBody(site, idempotencyKey, payload))
+  const url = skillSiteEndpoint(site)!
+  return postSkillJson(site, url, buildSkillLaunchRequestBody(site, idempotencyKey, payload), {
+    requireExternalUrl: true,
+  })
 }
 
 export async function postSkillUnpublishToSite(
@@ -170,13 +177,18 @@ export async function postSkillUnpublishToSite(
   )
 }
 
-async function postSkillJson(site: string, url: string, body: object): Promise<SkillPostResult> {
+async function postSkillJson(
+  site: string,
+  url: string,
+  body: object,
+  options: { requireExternalUrl?: boolean } = {},
+): Promise<SkillPostResult> {
   const key = skillSiteApiKey(site)
   if (!key) {
     return {
       ok: false,
       configError: true,
-      error: `No API key for ${site} (set SKILL_PUBLISH_${envSite(site)}_API_KEY or SKILL_PUBLISH_API_KEY)`,
+      error: `No API key for ${site} (set SKILL_PUBLISH_${envSite(site)}_API_KEY, SKILL_PUBLISH_API_KEY, or EXTERNAL_LAUNCH_API_KEY)`,
     }
   }
 
@@ -216,7 +228,7 @@ async function postSkillJson(site: string, url: string, body: object): Promise<S
       if (error instanceof FetchTimeoutError) return { ok: false, error: error.message }
     }
 
-    if (!isSuccessfulSkillPostResponse(statusCode, json)) {
+    if (!isSuccessfulSkillPostResponse(statusCode, json, options)) {
       return {
         ok: false,
         statusCode,
