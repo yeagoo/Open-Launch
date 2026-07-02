@@ -96,7 +96,8 @@ curl -sS -X POST "https://aat.ee/api/skill/submit" \
 curl -sS "https://aat.ee/api/skill/status/<uuid>"
 ```
 
-The response includes `statusUrl`, or the public noindex status page is:
+The submit response includes `statusUrl`; the equivalent public noindex status
+page is:
 
 ```text
 https://aat.ee/s/<uuid>

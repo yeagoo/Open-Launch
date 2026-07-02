@@ -81,6 +81,26 @@ describe("skill publishing configuration", () => {
     })
   })
 
+  it("drops non-http external URLs from receiver responses", () => {
+    expect(
+      extractSkillPostExternalFields({
+        id: 123,
+        url: "javascript:alert(1)",
+      }),
+    ).toEqual({
+      externalId: "123",
+      externalUrl: undefined,
+    })
+
+    expect(
+      isSuccessfulSkillPostResponse(
+        200,
+        { ok: true, url: "javascript:alert(1)" },
+        { requireExternalUrl: true },
+      ),
+    ).toBe(false)
+  })
+
   it("accepts direct and gateway receiver success responses without requiring ok:true", () => {
     expect(
       isSuccessfulSkillPostResponse(200, {

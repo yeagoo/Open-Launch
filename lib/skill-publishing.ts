@@ -124,7 +124,7 @@ export function extractSkillPostExternalFields(json: SkillPostJson): {
   return {
     externalId:
       json.id != null ? String(json.id) : firstSite?.id != null ? String(firstSite.id) : undefined,
-    externalUrl: json.url ?? firstSite?.url ?? undefined,
+    externalUrl: normalizeSkillExternalUrl(json.url ?? firstSite?.url ?? undefined),
   }
 }
 
@@ -249,4 +249,16 @@ async function postSkillJson(
 
 function envSite(site: string): string {
   return site.toUpperCase().replace(/[^A-Z0-9]+/g, "_")
+}
+
+function normalizeSkillExternalUrl(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
+
+  try {
+    const url = new URL(value)
+    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
+    return url.toString()
+  } catch {
+    return undefined
+  }
 }
