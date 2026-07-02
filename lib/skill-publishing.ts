@@ -68,6 +68,7 @@ export function skillSiteUnpublishEndpoint(site: string): string | null {
 
   const launch = skillSiteEndpoint(site)
   if (!launch) return null
+  if (!/\/launch\/?$/i.test(launch)) return null
   return launch.replace(/\/launch\/?$/i, "/unpublish")
 }
 
@@ -81,7 +82,10 @@ export function skillSiteApiKey(site: string): string | null {
 }
 
 export function skillSiteLaunchConfigError(site: string): string | null {
-  if (!skillSiteEndpoint(site)) return `SKILL_PUBLISH_${envSite(site)}_URL not configured`
+  const endpoint = skillSiteEndpoint(site)
+  if (!endpoint) return `SKILL_PUBLISH_${envSite(site)}_URL not configured`
+  const endpointError = validateSkillEndpointUrl(endpoint)
+  if (endpointError) return `SKILL_PUBLISH_${envSite(site)}_URL ${endpointError}`
   if (!skillSiteApiKey(site)) {
     return `No API key for ${site} (set SKILL_PUBLISH_${envSite(site)}_API_KEY, SKILL_PUBLISH_API_KEY, or EXTERNAL_LAUNCH_API_KEY)`
   }
@@ -166,7 +170,15 @@ export async function postSkillUnpublishToSite(
     return {
       ok: false,
       configError: true,
-      error: `SKILL_PUBLISH_${envSite(site)}_UNPUBLISH_URL not configured`,
+      error: `SKILL_PUBLISH_${envSite(site)}_UNPUBLISH_URL not configured and launch URL does not end with /launch`,
+    }
+  }
+  const endpointError = validateSkillEndpointUrl(url)
+  if (endpointError) {
+    return {
+      ok: false,
+      configError: true,
+      error: `SKILL_PUBLISH_${envSite(site)}_UNPUBLISH_URL ${endpointError}`,
     }
   }
 
@@ -249,6 +261,39 @@ async function postSkillJson(
 
 function envSite(site: string): string {
   return site.toUpperCase().replace(/[^A-Z0-9]+/g, "_")
+}
+
+export function skillSiteEnvName(site: string): string {
+  return envSite(site)
+}
+
+export function validateSkillEndpointUrl(value: string): string | null {
+  try {
+    const url = new URL(value)
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return "must be an http(s) URL"
+    }
+    if (url.username || url.password) {
+      return "must not include embedded credentials"
+    }
+    return null
+  } catch {
+    return "is not a valid URL"
+  }
+}
+
+export function redactSkillEndpointUrl(value: string): string {
+  try {
+    const url = new URL(value)
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "[invalid URL]"
+    url.username = ""
+    url.password = ""
+    url.search = ""
+    url.hash = ""
+    return url.toString()
+  } catch {
+    return "[invalid URL]"
+  }
 }
 
 function normalizeSkillExternalUrl(value: string | null | undefined): string | undefined {

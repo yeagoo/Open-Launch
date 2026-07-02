@@ -13,6 +13,7 @@
     "dev": "next dev",
     "lint": "eslint .",
     "prepare": "npx simple-git-hooks",
+    "skill:receivers:check": "bun scripts/check-skill-receivers.ts",
     "start": "next start",
     "test": "node ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node ./node_modules/vitest/vitest.mjs",

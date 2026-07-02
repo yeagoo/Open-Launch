@@ -6,10 +6,13 @@ import {
   buildSkillUnpublishRequestBody,
   extractSkillPostExternalFields,
   isSuccessfulSkillPostResponse,
+  redactSkillEndpointUrl,
   skillSiteApiKey,
   skillSiteEndpoint,
+  skillSiteEnvName,
   skillSiteLaunchConfigError,
   skillSiteUnpublishEndpoint,
+  validateSkillEndpointUrl,
 } from "./skill-publishing"
 
 describe("skill publishing configuration", () => {
@@ -142,6 +145,15 @@ describe("skill publishing configuration", () => {
     expect(skillSiteUnpublishEndpoint("bigkr")).toBe("https://bigkr.com/api/external/unpublish")
   })
 
+  it("requires explicit unpublish endpoints when launch URLs do not end with /launch", () => {
+    vi.stubEnv("SKILL_PUBLISH_GATEWAY_URL", "https://gateway.example/api/external")
+
+    expect(skillSiteUnpublishEndpoint("gateway")).toBeNull()
+
+    vi.stubEnv("SKILL_PUBLISH_GATEWAY_UNPUBLISH_URL", "https://gateway.example/api/unpublish")
+    expect(skillSiteUnpublishEndpoint("gateway")).toBe("https://gateway.example/api/unpublish")
+  })
+
   it("detects local publish misconfiguration before spending global budget", () => {
     vi.stubEnv("EXTERNAL_LAUNCH_API_KEY", "")
 
@@ -154,6 +166,29 @@ describe("skill publishing configuration", () => {
 
     vi.stubEnv("SKILL_PUBLISH_API_KEY", "shared")
     expect(skillSiteLaunchConfigError("bigkr")).toBeNull()
+  })
+
+  it("validates configured receiver endpoint URLs", () => {
+    expect(skillSiteEnvName("qoo-im")).toBe("QOO_IM")
+    expect(validateSkillEndpointUrl("https://qoo.im/api/external/launch")).toBeNull()
+    expect(validateSkillEndpointUrl("javascript:alert(1)")).toBe("must be an http(s) URL")
+    expect(validateSkillEndpointUrl("https://user:pass@example.com/launch")).toBe(
+      "must not include embedded credentials",
+    )
+
+    vi.stubEnv("SKILL_PUBLISH_QOO_IM_URL", "javascript:alert(1)")
+    vi.stubEnv("SKILL_PUBLISH_API_KEY", "shared")
+    expect(skillSiteLaunchConfigError("qoo-im")).toBe(
+      "SKILL_PUBLISH_QOO_IM_URL must be an http(s) URL",
+    )
+  })
+
+  it("redacts endpoint credentials before logging", () => {
+    expect(
+      redactSkillEndpointUrl("https://user:pass@example.com/api/external/launch?token=secret#frag"),
+    ).toBe("https://example.com/api/external/launch")
+    expect(redactSkillEndpointUrl("javascript:secret-token")).toBe("[invalid URL]")
+    expect(redactSkillEndpointUrl("not a url with secret")).toBe("[invalid URL]")
   })
 
   it("prefers per-site API keys and falls back to the shared skill key", () => {

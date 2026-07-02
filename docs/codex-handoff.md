@@ -71,6 +71,17 @@ bun run lint
 bun run test
 ```
 
+Receiver rollout/config readiness:
+
+```bash
+bun run skill:receivers:check
+```
+
+This command intentionally exits non-zero until all 14
+`SKILL_PUBLISH_<SITE>_URL` values resolve to valid http(s) launch endpoints,
+each has either an explicit unpublish URL or a launch URL ending in `/launch`,
+and an API key source is present. It does not print secret values.
+
 Then run `codex review --uncommitted` with the local `code-review` skill moved
 aside and a timeout so it cannot hang indefinitely.
 
