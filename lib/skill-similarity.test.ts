@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { checkSkillVariantSimilarity, SKILL_SIMILARITY_THRESHOLD } from "./skill-similarity"
+import { SKILL_PUBLICATION_SITE_COUNT } from "./skill-sites"
 
 describe("checkSkillVariantSimilarity", () => {
   it("rejects near-identical variant bodies", () => {
-    const variants = Array.from({ length: 14 }, (_, index) => ({
+    const variants = Array.from({ length: SKILL_PUBLICATION_SITE_COUNT }, (_, index) => ({
       site: `site-${index + 1}`,
       bodyMd:
         "Acme Metrics is an analytics workspace for SaaS founders. It unifies funnels, cohorts, alerts, and investor-ready reporting in one dashboard.",
@@ -36,7 +37,9 @@ describe("checkSkillVariantSimilarity", () => {
       "A metrics assistant that summarizes funnel health, cohort anomalies, and growth opportunities from connected product data.",
       "A data room companion that keeps acquisition, retention, and revenue charts ready for investor conversations.",
       "A product analytics product that emphasizes clean weekly decisions for small teams rather than heavyweight enterprise BI.",
-    ].map((bodyMd, index) => ({ site: `site-${index + 1}`, bodyMd }))
+    ]
+      .slice(0, SKILL_PUBLICATION_SITE_COUNT)
+      .map((bodyMd, index) => ({ site: `site-${index + 1}`, bodyMd }))
 
     const result = checkSkillVariantSimilarity(variants)
 

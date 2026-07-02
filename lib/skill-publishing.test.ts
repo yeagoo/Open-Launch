@@ -38,10 +38,10 @@ describe("skill publishing configuration", () => {
       tier: "free-skill",
     })
 
-    expect(buildSkillLaunchRequestBody("qoo-im", "skill:sub-1:qoo-im", payload)).toEqual({
+    expect(buildSkillLaunchRequestBody("demo-site", "skill:sub-1:demo-site", payload)).toEqual({
       source: "aat.ee",
-      idempotencyKey: "skill:sub-1:qoo-im",
-      targetSiteId: "qoo-im",
+      idempotencyKey: "skill:sub-1:demo-site",
+      targetSiteId: "demo-site",
       name: "Acme Metrics",
       tagline: "Analytics for founders",
       description: "A useful analytics product.",
@@ -54,14 +54,14 @@ describe("skill publishing configuration", () => {
   it("builds unpublish payloads with the idempotency key and website URL fallback", () => {
     expect(
       buildSkillUnpublishRequestBody({
-        site: "qoo-im",
-        idempotencyKey: "skill:sub-1:qoo-im",
+        site: "demo-site",
+        idempotencyKey: "skill:sub-1:demo-site",
         websiteUrl: "https://example.com",
       }),
     ).toEqual({
       source: "aat.ee",
-      idempotencyKey: "skill:sub-1:qoo-im",
-      targetSiteId: "qoo-im",
+      idempotencyKey: "skill:sub-1:demo-site",
+      targetSiteId: "demo-site",
       websiteUrl: "https://example.com",
     })
   })
@@ -220,17 +220,17 @@ describe("skill publishing configuration", () => {
   })
 
   it("validates configured receiver endpoint URLs", () => {
-    expect(skillSiteEnvName("qoo-im")).toBe("QOO_IM")
+    expect(skillSiteEnvName("demo-site")).toBe("DEMO_SITE")
     expect(validateSkillEndpointUrl("https://qoo.im/api/external/launch")).toBeNull()
     expect(validateSkillEndpointUrl("javascript:alert(1)")).toBe("must be an http(s) URL")
     expect(validateSkillEndpointUrl("https://user:pass@example.com/launch")).toBe(
       "must not include embedded credentials",
     )
 
-    vi.stubEnv("SKILL_PUBLISH_QOO_IM_URL", "javascript:alert(1)")
+    vi.stubEnv("SKILL_PUBLISH_DEMO_SITE_URL", "javascript:alert(1)")
     vi.stubEnv("SKILL_PUBLISH_API_KEY", "shared")
-    expect(skillSiteLaunchConfigError("qoo-im")).toBe(
-      "SKILL_PUBLISH_QOO_IM_URL must be an http(s) URL",
+    expect(skillSiteLaunchConfigError("demo-site")).toBe(
+      "SKILL_PUBLISH_DEMO_SITE_URL must be an http(s) URL",
     )
   })
 

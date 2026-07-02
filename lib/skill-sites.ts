@@ -1,6 +1,24 @@
-import { allFriendLinks, type FriendSite } from "@/lib/directories-links"
+export const SKILL_PUBLICATION_SITES = [
+  { site: "mf8", name: "MiFanBa", domain: "mf8.biz", dr: null },
+  { site: "bigkr", name: "BigKr", domain: "bigkr.com", dr: null },
+  { site: "hicyou", name: "HiCyou", domain: "hicyou.com", dr: null },
+  { site: "mifar", name: "MiFar", domain: "mifar.net", dr: null },
+  { site: "qoo", name: "Qoo.IM", domain: "qoo.im", dr: null },
+  { site: "fastd", name: "FastD", domain: "fastd.top", dr: null },
+  { site: "xlayers", name: "Xlayers", domain: "xlayers.dev", dr: null },
+  { site: "upperstory", name: "Upperstory", domain: "upperstory.io", dr: null },
+  { site: "xemvip", name: "XemVIP", domain: "xemvip.com", dr: null },
+  { site: "skachat", name: "SkaChat", domain: "skachat.xyz", dr: null },
+  { site: "nexablocks", name: "NexaBlocks", domain: "nexablocks.com", dr: null },
+  {
+    site: "blackhawkegames",
+    name: "BlackHawkGame",
+    domain: "blackhawkegames.com",
+    dr: null,
+  },
+] as const satisfies readonly SkillPublicationSite[]
 
-export const SKILL_PUBLICATION_SITE_COUNT = 14
+export const SKILL_PUBLICATION_SITE_COUNT = SKILL_PUBLICATION_SITES.length
 export const SKILL_CANARY_SITE_COUNT = 2
 export const SKILL_ROLLOUT_SITES_PER_DAY = 3
 
@@ -16,30 +34,8 @@ export interface SkillPublicationScheduleRow extends SkillPublicationSite {
   scheduledFor: string
 }
 
-export function skillPublicationSites(
-  sites: readonly FriendSite[] = allFriendLinks,
-): SkillPublicationSite[] {
-  const seenDomains = new Set<string>()
-  const active = sites
-    .filter((site) => site.status === "active")
-    .filter((site) => {
-      const domain = site.domain.toLowerCase()
-      if (seenDomains.has(domain)) return false
-      seenDomains.add(domain)
-      return true
-    })
-    .sort((a, b) => {
-      const drDelta = (a.dr ?? Number.POSITIVE_INFINITY) - (b.dr ?? Number.POSITIVE_INFINITY)
-      if (drDelta !== 0) return drDelta
-      return a.id.localeCompare(b.id)
-    })
-
-  return active.slice(0, SKILL_PUBLICATION_SITE_COUNT).map((site) => ({
-    site: site.id,
-    name: site.name,
-    domain: site.domain,
-    dr: site.dr,
-  }))
+export function skillPublicationSites(): SkillPublicationSite[] {
+  return SKILL_PUBLICATION_SITES.map((site) => ({ ...site }))
 }
 
 export function buildSkillPublicationSchedule(

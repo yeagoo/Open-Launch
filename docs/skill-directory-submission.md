@@ -11,37 +11,58 @@ generating listing content with DeepSeek (cost) and manually placing it, the
 user runs a **Claude Code / Codex / opencode / …** Skill that:
 
 1. verifies they own the domain,
-2. crawls their own site and generates the listing copy **+ 14 SEO-differentiated
+2. crawls their own site and generates the listing copy **+ 12 SEO-differentiated
    variants + translations** using _their own_ AI tool,
 3. submits everything to aat.ee via an API-key'd endpoint,
 
-and aat.ee then **slowly** publishes those variants across our 14 directory
-sites (nofollow), gated by automated abuse/quality checks. The maker tracks
-progress on a per-submission `uuid` status page.
+and aat.ee then **slowly** publishes those variants across our 12 navigation
+receiver sites (nofollow), gated by automated abuse/quality checks. The maker
+tracks progress on a per-submission `uuid` status page.
 
 The whole point: **aat.ee spends ~zero AI compute** — the user's coding agent
 does the writing and translating. It also helps the "nobody can find my launched
-project" problem by seeding 14 real backlinks over ~5+ days.
+project" problem by seeding 12 real backlinks over ~5 days.
 
 This is a **separate product line** from the paid syndication
 (`docs/launch-syndication.md`): that one is dofollow, we generate content, 1–3
 day rollout, $6.99+. This one is free, nofollow, user-generated, slow. See
 [Positioning & paid separation](#positioning--paid-separation).
 
+## Receiver target set
+
+The receiver list is an explicit allowlist of our navigation sites. It is **not**
+derived from `lib/directories-links.json`, because that file also includes
+authority/documentation sites that are not publication receivers.
+
+| Site id           | Domain                | Repo/source                |
+| ----------------- | --------------------- | -------------------------- |
+| `mf8`             | `mf8.biz`             | `~/mf8`                    |
+| `bigkr`           | `bigkr.com`           | `~/bigkr`                  |
+| `hicyou`          | `hicyou.com`          | `~/hicyou-pravite`         |
+| `mifar`           | `mifar.net`           | `~/daohang/toolso-ai-open` |
+| `qoo`             | `qoo.im`              | `~/daohang/toolso-ai-open` |
+| `fastd`           | `fastd.top`           | `~/daohang/toolso-ai-open` |
+| `xlayers`         | `xlayers.dev`         | `~/daohang/toolso-ai-open` |
+| `upperstory`      | `upperstory.io`       | `~/daohang/toolso-ai-open` |
+| `xemvip`          | `xemvip.com`          | `~/daohang/toolso-ai-open` |
+| `skachat`         | `skachat.xyz`         | `~/daohang/toolso-ai-open` |
+| `nexablocks`      | `nexablocks.com`      | `~/daohang/toolso-ai-open` |
+| `blackhawkegames` | `blackhawkegames.com` | `~/daohang/toolso-ai-open` |
+
 ## Locked decisions
 
 | #   | Dimension              | Decision                                                                                                                                                     |
 | --- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Review gate            | **Fully automated** (AI scoring + rules). No human in the loop.                                                                                              |
-| 2   | Differentiated content | **User's AI generates all 14 variants** + translations.                                                                                                      |
-| 3   | Canary quality signal  | Publish to the 2 lowest-DR sites first, then **AI re-check** the live pages before continuing.                                                               |
-| 4   | Similarity guard       | **Local similarity check** across the 14 variants — _lenient_: only reject if variants are near-identical ("enough that a search engine sees a difference"). |
+| 2   | Differentiated content | **User's AI generates all 12 variants** + translations.                                                                                                      |
+| 3   | Canary quality signal  | Publish to the first 2 configured receiver sites first, then **AI re-check** the live pages before continuing.                                               |
+| 4   | Similarity guard       | **Local similarity check** across the 12 variants — _lenient_: only reject if variants are near-identical ("enough that a search engine sees a difference"). |
 | 5   | Paid separation        | Free = nofollow + slow + queued; paid = dofollow + fast + priority.                                                                                          |
-| 6   | Cooperating sites      | All 14 are **our own** sites → no partner-acceptance blocker.                                                                                                |
+| 6   | Cooperating sites      | All 12 are **our own** navigation receiver sites → no partner-acceptance blocker.                                                                            |
 | 7   | Receiver contract      | Submission payload carries a `rel` field (`nofollow` for this channel).                                                                                      |
 | 8   | Identity               | **Must be logged in + per-user API key** (generated in dashboard).                                                                                           |
 | 9   | Quota                  | **3 projects/account/month** + per-domain permanent dedupe + global ≤10 site-publishes/day (rest queue). No free top-up; more/faster → pay on the site.      |
-| 10  | Takedown               | Every receiver site implements an **unpublish/delete API**; aat.ee can pull a listing from all 14.                                                           |
+| 10  | Takedown               | Every receiver site implements an **unpublish/delete API**; aat.ee can pull a listing from all 12.                                                           |
 | 11  | uuid status page       | **noindex** (don't dilute aat.ee authority; don't expose pre-review content).                                                                                |
 | 12  | Domain verification    | **One-time, domain-level** (HTML file / DNS TXT / meta tag). First step of the Skill, runs in parallel with content gen, hard-gated at submit.               |
 | 13  | Queue fairness         | **Global cap,口径 A**: in-flight submissions drain before new ones start (see [Queue](#publish-queue--global-throttle-口径-a)).                              |
@@ -71,7 +92,7 @@ Because放行 is fully automatic (decision #1), the safety net is layered:
    (spam / adult / scam / illegal). High-risk → rejected immediately, recorded
    on the submission. This is the _only_ AI cost we take, and it's tiny vs
    generating content.
-3. **Similarity guard (local, decision #4).** Reject if the 14 variants are
+3. **Similarity guard (local, decision #4).** Reject if the 12 variants are
    near-duplicates — lenient threshold. No AI; a local shingle/Jaccard or
    trigram-cosine over the variant bodies. **Starting default: reject only when
    pairwise similarity > 0.9** (i.e. near-identical); tune down from real data.
@@ -86,7 +107,7 @@ Because放行 is fully automatic (decision #1), the safety net is layered:
    dedupe, global daily throttle. Reuses `lib/rate-limit.ts` (`dedupeOnce`,
    `checkRateLimit`).
 6. **Takedown safety net (decision #10).** If something slips through, one call
-   unpublishes from all 14 sites.
+   unpublishes from all 12 sites.
 
 ## Domain verification (decision #12)
 
@@ -119,9 +140,9 @@ Three methods (user picks one; all reuse existing fetch/DNS infra):
 
 Two stacked rate limiters:
 
-1. **Per-submission canary schedule.** Day 1 = 2 lowest-DR sites; after the
-   canary passes, +3 sites/day until all 14 are done. Each site becomes _due_
-   on its scheduled day.
+1. **Per-submission canary schedule.** Day 1 = the first 2 configured receiver
+   sites; after the canary passes, +3 sites/day until all 12 are done. Each
+   site becomes _due_ on its scheduled day.
 2. **Global daily cap = 10 site-publishes/day** across _all_ free submissions.
    A worker tick publishes due rows oldest-first until the daily budget is
    spent; the rest carry to the next day.
@@ -161,7 +182,7 @@ skill_submission
   locale        text
   created_at / updated_at
 
-skill_submission_variant                   -- the 14 user-generated variants
+skill_submission_variant                   -- the 12 user-generated variants
   id            uuid pk
   submission_id uuid  → skill_submission.id (cascade)
   site          text                        -- target directory site key
@@ -199,7 +220,7 @@ All endpoints are API-key authenticated (decision #8): `Authorization: Bearer
 POST /api/skill/domains                 → register a domain, get {token, methods}
 POST /api/skill/domains/:id/verify      → aat.ee fetches/looks up, marks verified
 GET  /api/skill/domains                 → list caller's verified domains
-POST /api/skill/submit                  → {domain, website_url, variants[14], tosAccepted:true}
+POST /api/skill/submit                  → {domain, website_url, variants[12], tosAccepted:true}
                                           server re-checks domain verification,
                                           rejects if tosAccepted!=true,
                                           runs AI score + similarity guard,
@@ -214,10 +235,10 @@ Internal (cron / admin):
 GET  /api/cron/skill-publish            → drains due skill_publication rows under
                                           the global 10/day cap, canary gating,
                                           AI re-check; registered in cron_schedule
-POST /api/admin/skill/:uuid/takedown    → unpublish from all 14 sites
+POST /api/admin/skill/:uuid/takedown    → unpublish from all 12 sites
 ```
 
-Receiver side (each of the 14 sites, **cross-repo**):
+Receiver side (each of the 12 sites, **cross-repo**):
 
 - extend `POST /api/external/launch` to honor `rel` (render `nofollow`),
 - add `POST /api/external/unpublish` (idempotent delete by our idempotency key).
@@ -231,7 +252,7 @@ Receiver side (each of the 14 sites, **cross-repo**):
                             instructs user for DNS TXT / meta tag
 4. Confirm                → POST /api/skill/domains/:id/verify
    ── in parallel with 3–4 ──
-   Crawl own site, generate 14 SEO-differentiated variants + translations
+   Crawl own site, generate 12 SEO-differentiated variants + translations
 5. Submit                 → POST /api/skill/submit  {domain, variants[]}
                             → returns uuid + status URL
 6. Poll / show status     → GET /api/skill/status/:uuid
@@ -261,7 +282,7 @@ find-replace clones — the server's similarity guard enforces a lenient floor.
 - AI content-score + local similarity modules.
 - noindex uuid status page + dashboard "API keys" UI.
 - SKILL.md (the distributable Skill).
-- **cross-repo:** `rel` support + unpublish API on all 14 receivers.
+- **cross-repo:** `rel` support + unpublish API on all 12 receivers.
 
 ## Open items to finalize before build
 
@@ -314,9 +335,9 @@ not optional:
 - Re-submitting the same submission creates no duplicate `skill_publication`
   rows (`UNIQUE(submission_id, site)` + `onConflictDoNothing`, same proven
   pattern as `launch_syndication`).
-- All 14 site payloads are structurally identical except the intended
+- All 12 site payloads are structurally identical except the intended
   per-site differentiation (`title`/`tagline`/`body_md`) and `rel`.
-- Partial failure (e.g. 3/14 sent) → retry re-publishes only the remaining 11,
+- Partial failure (e.g. 3/12 sent) → retry re-publishes only the remaining 9,
   never the already-`sent` rows.
 
 **2. SSRF security suite** (`*.ssrf.test.ts`)
@@ -352,9 +373,9 @@ not optional:
   the primary defense_ (more precise than generic rules); semgrep is the
   secondary net. Run `--config auto` in CI, triage noise before making it a
   hard gate.
-- **playwright multi-domain matrix** — the 14 sites are **our own** and
+- **playwright multi-domain matrix** — the 12 sites are **our own** and
   published to via **server-side API**, not browser interaction, so E2E across
-  them is low-value; fan-out is better asserted with vitest mocking the 14
+  them is low-value; fan-out is better asserted with vitest mocking the 12
   receiver HTTP endpoints. Reserve playwright for the uuid status page's real
   render only.
 - **bun audit** — available (bun 1.3.14). Include as "better than nothing", not
@@ -375,7 +396,7 @@ not optional:
 
 1. **SSRF + undici chain safety** — largest attack surface. DNS/IP block +
    per-hop redirect control + connect-time pinned lookup.
-2. **14-site fan-out consistency** — the commercial asset. Idempotent,
+2. **12-site fan-out consistency** — the commercial asset. Idempotent,
    retry-safe, partial-failure recovery.
 3. **cron + Redis race conditions** — the "silently wrong, nobody notices"
    class. Locks + the `cron-health` monitor already in the repo.

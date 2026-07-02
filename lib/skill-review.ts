@@ -47,7 +47,7 @@ const MAX_VARIANT_REVIEW_CHARS = 900
 
 const SYSTEM_PROMPT = `You are a strict automated safety reviewer for a free nofollow product-directory submission channel.
 
-Review the submitted website and 14 user-generated directory variants. Decide whether this looks like a legitimate tech/SaaS/AI/developer/creator product or high-risk content that should not be automatically distributed.
+Review the submitted website and 12 user-generated directory variants. Decide whether this looks like a legitimate tech/SaaS/AI/developer/creator product or high-risk content that should not be automatically distributed.
 
 Output a JSON object exactly:
 {

@@ -1,6 +1,6 @@
 # Codex Handoff — Skill-driven free directory submission
 
-**Updated:** 2026-07-02
+**Updated:** 2026-07-03
 **Branch:** `main`
 **Workflow:** no PRs; commit and push directly to `main`.
 
@@ -82,7 +82,7 @@ Receiver rollout/config readiness:
 bun run skill:receivers:check
 ```
 
-This command intentionally exits non-zero until all 14
+This command intentionally exits non-zero until all 12
 `SKILL_PUBLISH_<SITE>_URL` values resolve to valid http(s) launch endpoints,
 each has either an explicit unpublish URL or a launch URL ending in `/launch`,
 and an API key source is present. It does not print secret values.
@@ -107,15 +107,21 @@ submit, worker tick, status-page check, and takedown cleanup.
 In this repo, the planned feature phases are complete and pushed.
 
 Production smoke testing is documented but not yet executed in this environment:
-`bun run skill:receivers:check` still fails until all 14 receiver URLs and API
+`bun run skill:receivers:check` still fails until all 12 receiver URLs and API
 keys are configured.
 
-Cross-repo receiver work completed for the three currently wired partner repos:
+The receiver target set is the explicit navigation-site allowlist in
+`lib/skill-sites.ts`, not the authority/documentation sites from
+`lib/directories-links.json`. Configure these 12 site ids:
 
-- `~/bigkr` — `b3b94ee fix(external): harden receiver idempotency`
-- `~/mf8` — `50c7018 fix(external): harden receiver idempotency`
-- `~/hicyou-receiver-work` — `05926b0 feat: add external launch receiver`
-  (clean clone; original `~/hicyou` was not touched)
+- `~/mf8` — `mf8` / `mf8.biz`
+- `~/bigkr` — `bigkr` / `bigkr.com`
+- `~/hicyou-pravite` — `hicyou` / `hicyou.com`
+- `~/daohang/toolso-ai-open` — `mifar` / `mifar.net`, `qoo` / `qoo.im`,
+  `fastd` / `fastd.top`, `xlayers` / `xlayers.dev`, `upperstory` /
+  `upperstory.io`, `xemvip` / `xemvip.com`, `skachat` / `skachat.xyz`,
+  `nexablocks` / `nexablocks.com`, `blackhawkegames` /
+  `blackhawkegames.com`
 
 If more receiver repos are added later, repeat the same receiver contract:
 `POST /api/external/launch` must honor `rel: "nofollow"` and persist the

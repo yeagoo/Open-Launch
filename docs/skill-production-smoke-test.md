@@ -10,12 +10,12 @@ touches live receiver APIs, so stop at the first failed preflight.
   applied.
 - `CRON_API_KEY`, Redis, database, DeepSeek/Tinyfish, email, and app URL env
   vars are configured in production.
-- All 14 receiver sites have deployed:
+- All 12 navigation receiver sites have deployed:
   - `POST /api/external/launch`
   - `POST /api/external/unpublish`
   - `rel: "nofollow"` support
   - idempotency-key persistence
-- aat.ee has receiver env vars for all 14 sites:
+- aat.ee has receiver env vars for all 12 sites:
   - `SKILL_PUBLISH_<SITE>_URL`
   - `SKILL_PUBLISH_<SITE>_UNPUBLISH_URL` unless launch URL ends in `/launch`
   - `SKILL_PUBLISH_<SITE>_API_KEY`, or shared `SKILL_PUBLISH_API_KEY`, or
@@ -31,8 +31,31 @@ From the aat.ee production shell:
 bun run skill:receivers:check
 ```
 
-Expected: all 14 receiver configurations are ready. If any endpoint or key is
+Expected: all 12 receiver configurations are ready. If any endpoint or key is
 missing, stop.
+
+The receiver envs must target the navigation sites, not the authority/document
+sites from `directories-links`:
+
+```bash
+SKILL_PUBLISH_MF8_URL=https://mf8.biz/api/external/launch
+SKILL_PUBLISH_BIGKR_URL=https://bigkr.com/api/external/launch
+SKILL_PUBLISH_HICYOU_URL=https://hicyou.com/api/external/launch
+SKILL_PUBLISH_MIFAR_URL=https://mifar.net/api/external/launch
+SKILL_PUBLISH_QOO_URL=https://qoo.im/api/external/launch
+SKILL_PUBLISH_FASTD_URL=https://fastd.top/api/external/launch
+SKILL_PUBLISH_XLAYERS_URL=https://xlayers.dev/api/external/launch
+SKILL_PUBLISH_UPPERSTORY_URL=https://upperstory.io/api/external/launch
+SKILL_PUBLISH_XEMVIP_URL=https://xemvip.com/api/external/launch
+SKILL_PUBLISH_SKACHAT_URL=https://skachat.xyz/api/external/launch
+SKILL_PUBLISH_NEXABLOCKS_URL=https://nexablocks.com/api/external/launch
+SKILL_PUBLISH_BLACKHAWKEGAMES_URL=https://blackhawkegames.com/api/external/launch
+```
+
+If the launch URL ends in `/launch`, the unpublish URL is derived as the same
+path with `/unpublish`; explicit `SKILL_PUBLISH_<SITE>_UNPUBLISH_URL` values
+are optional. Use `SKILL_PUBLISH_API_KEY` for a shared receiver secret or
+`SKILL_PUBLISH_<SITE>_API_KEY` for per-site secrets.
 
 Preview the live receiver smoke:
 
@@ -98,7 +121,7 @@ curl -sS -X POST "$BASE_URL/api/skill/domains/$DOMAIN_ID/verify" \
 
 Expected: `verified: true`.
 
-Generate the real 14-variant payload with
+Generate the real 12-variant payload with
 `skills/free-directory-submission/SKILL.md` against the smoke domain. The
 payload must be realistic enough for the review classifier and similarity guard;
 do not submit placeholder repeated text.

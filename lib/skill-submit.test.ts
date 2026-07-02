@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import type { SkillPublicationScheduleRow } from "./skill-sites"
+import { SKILL_PUBLICATION_SITE_COUNT, type SkillPublicationScheduleRow } from "./skill-sites"
 import {
   SKILL_DOMAIN_PENDING_LOCK_TTL_SECONDS,
   SkillMonthlyQuotaExceededError,
@@ -12,14 +12,17 @@ import {
 const ACCOUNT_ID = "user-1"
 const NOW = new Date("2026-07-01T12:00:00Z")
 
-const schedule: SkillPublicationScheduleRow[] = Array.from({ length: 14 }, (_, index) => ({
-  site: `site-${index + 1}`,
-  name: `Site ${index + 1}`,
-  domain: `site-${index + 1}.example.com`,
-  dr: index,
-  batchDay: index < 2 ? 1 : 2 + Math.floor((index - 2) / 3),
-  scheduledFor: "2026-07-01",
-}))
+const schedule: SkillPublicationScheduleRow[] = Array.from(
+  { length: SKILL_PUBLICATION_SITE_COUNT },
+  (_, index) => ({
+    site: `site-${index + 1}`,
+    name: `Site ${index + 1}`,
+    domain: `site-${index + 1}.example.com`,
+    dr: index,
+    batchDay: index < 2 ? 1 : 2 + Math.floor((index - 2) / 3),
+    scheduledFor: "2026-07-01",
+  }),
+)
 
 const VALID_BODIES = [
   "A workflow analytics command center for SaaS teams that need funnel visibility and weekly investor metrics.",

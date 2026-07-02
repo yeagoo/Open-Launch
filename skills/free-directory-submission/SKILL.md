@@ -15,22 +15,20 @@ Default API base: `https://aat.ee`.
 
 ## Target Sites
 
-Generate exactly one differentiated variant for each site id:
+Generate exactly one differentiated variant for each navigation receiver site id:
 
-1. `mariadb-edu-rich`
-2. `onarm-net`
-3. `valkey-edu-rich`
+1. `mf8`
+2. `bigkr`
+3. `hicyou`
 4. `mifar`
-5. `runentlinux-com`
-6. `ubuntu-fan`
-7. `eol-wiki`
-8. `litehttpd-com`
-9. `qoo-im`
-10. `almalinux-com-cn`
-11. `geo-fan`
-12. `rank-fan`
-13. `debian-club`
-14. `portcyou-com`
+5. `qoo`
+6. `fastd`
+7. `xlayers`
+8. `upperstory`
+9. `xemvip`
+10. `skachat`
+11. `nexablocks`
+12. `blackhawkegames`
 
 Each variant must have a distinct title, tagline, opening angle, and body. Do
 not produce find/replace clones; the server rejects near-identical bodies.
@@ -60,7 +58,7 @@ curl -sS -X POST "https://aat.ee/api/skill/domains/<domain-id>/verify" \
   -H "Authorization: Bearer $AAT_SKILL_API_KEY"
 ```
 
-4. Crawl the user's own site, then write 14 variants. Keep claims factual and
+4. Crawl the user's own site, then write 12 variants. Keep claims factual and
    avoid prohibited content: spam, scams, adult, gambling, illegal content,
    malware, impersonation, and link farms.
 
@@ -73,7 +71,7 @@ curl -sS -X POST "https://aat.ee/api/skill/domains/<domain-id>/verify" \
   "tosAccepted": true,
   "variants": [
     {
-      "site": "mariadb-edu-rich",
+      "site": "mf8",
       "title": "Distinct title",
       "tagline": "Distinct one-line summary",
       "bodyMd": "Markdown body written for this site.",
@@ -107,7 +105,7 @@ https://aat.ee/s/<uuid>
 
 - Submit only domains the user controls.
 - `tosAccepted` must be `true`.
-- Exactly 14 variants are required.
+- Exactly 12 variants are required.
 - The website host must match the verified domain.
 - Free submissions are nofollow, slow, and globally queued. Users who need
   faster dofollow publication should use the paid directory option on aat.ee.
