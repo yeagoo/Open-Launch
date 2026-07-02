@@ -46,7 +46,10 @@ function parseIpv4Octets(host: string): [number, number, number, number] | null 
  */
 export function isPrivateHostname(hostname: string): boolean {
   // Strip IPv6 brackets and lowercase for consistent matching
-  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase()
+  const host = hostname
+    .replace(/\.+$/g, "")
+    .replace(/^\[|\]$/g, "")
+    .toLowerCase()
 
   // Localhost names
   if (host === "localhost" || host.endsWith(".localhost") || host === "0") return true

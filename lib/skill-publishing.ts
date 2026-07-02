@@ -1,6 +1,7 @@
 import { request } from "undici"
 
 import { FetchTimeoutError, withTimeout } from "@/lib/fetch-timeout"
+import { isPrivateHostname } from "@/lib/utils"
 
 export interface SkillLaunchPayload {
   source: "aat.ee"
@@ -36,6 +37,7 @@ export interface SkillUnpublishRequestBody {
 type SkillPostJson = {
   id?: string | number
   url?: string | null
+  error?: string
   sites?: Array<{ id?: string | number | null; url?: string | null }>
 }
 
@@ -135,13 +137,14 @@ export function extractSkillPostExternalFields(json: SkillPostJson): {
 export function isSuccessfulSkillPostResponse(
   statusCode: number,
   json: SkillPostJson & { ok?: boolean },
-  options: { requireExternalUrl?: boolean } = {},
+  options: { requireExternalUrl?: boolean; allowEmpty2xx?: boolean; emptyBody?: boolean } = {},
 ): boolean {
   if (statusCode < 200 || statusCode >= 300) return false
   if (json.ok === false) return false
 
   const external = extractSkillPostExternalFields(json)
   if (options.requireExternalUrl) return Boolean(external.externalUrl)
+  if (options.allowEmpty2xx && options.emptyBody) return true
   if (json.ok === true) return true
   return Boolean(external.externalUrl)
 }
@@ -186,6 +189,7 @@ export async function postSkillUnpublishToSite(
     site,
     url,
     buildSkillUnpublishRequestBody({ site, idempotencyKey, websiteUrl }),
+    { allowEmpty2xx: true },
   )
 }
 
@@ -193,7 +197,7 @@ async function postSkillJson(
   site: string,
   url: string,
   body: object,
-  options: { requireExternalUrl?: boolean } = {},
+  options: { requireExternalUrl?: boolean; allowEmpty2xx?: boolean } = {},
 ): Promise<SkillPostResult> {
   const key = skillSiteApiKey(site)
   if (!key) {
@@ -229,22 +233,40 @@ async function postSkillJson(
     }
 
     let json: SkillPostJson & { ok?: boolean; error?: string } = {}
+    let emptyBody = false
     try {
-      json = (await withTimeout(
-        res.body.json(),
+      const rawText = await withTimeout(
+        res.body.text(),
         Math.max(1, deadline - Date.now()),
         `skill publish ${site}`,
-      )) as typeof json
+      )
+      const trimmed = rawText.trim()
+      emptyBody = trimmed.length === 0
+      if (!emptyBody) {
+        try {
+          json = JSON.parse(trimmed) as typeof json
+        } catch {
+          return {
+            ok: false,
+            statusCode,
+            error:
+              statusCode >= 200 && statusCode < 300
+                ? "Invalid JSON response"
+                : `HTTP ${statusCode}: ${trimmed.slice(0, 200)}`,
+          }
+        }
+      }
     } catch (error) {
       res.body.destroy()
       if (error instanceof FetchTimeoutError) return { ok: false, error: error.message }
     }
 
-    if (!isSuccessfulSkillPostResponse(statusCode, json, options)) {
+    if (!isSuccessfulSkillPostResponse(statusCode, json, { ...options, emptyBody })) {
       return {
         ok: false,
         statusCode,
-        error: json?.error || `HTTP ${statusCode}`,
+        error:
+          json?.error || (emptyBody ? `HTTP ${statusCode} empty response` : `HTTP ${statusCode}`),
       }
     }
 
@@ -302,6 +324,7 @@ function normalizeSkillExternalUrl(value: string | null | undefined): string | u
   try {
     const url = new URL(value)
     if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
+    if (isPrivateHostname(url.hostname)) return undefined
     return url.toString()
   } catch {
     return undefined

@@ -104,6 +104,45 @@ describe("skill publishing configuration", () => {
     ).toBe(false)
   })
 
+  it("drops private external URLs from receiver responses before status/canary use", () => {
+    expect(
+      extractSkillPostExternalFields({
+        id: 123,
+        url: "http://127.0.0.1/admin",
+      }),
+    ).toEqual({
+      externalId: "123",
+      externalUrl: undefined,
+    })
+
+    expect(
+      extractSkillPostExternalFields({
+        sites: [{ id: "tool_1", url: "http://localhost:3000/internal" }],
+      }),
+    ).toEqual({
+      externalId: "tool_1",
+      externalUrl: undefined,
+    })
+
+    expect(
+      extractSkillPostExternalFields({
+        id: 456,
+        url: "http://localhost./internal",
+      }),
+    ).toEqual({
+      externalId: "456",
+      externalUrl: undefined,
+    })
+
+    expect(
+      isSuccessfulSkillPostResponse(
+        200,
+        { ok: true, url: "http://169.254.169.254/latest/meta-data" },
+        { requireExternalUrl: true },
+      ),
+    ).toBe(false)
+  })
+
   it("accepts direct and gateway receiver success responses without requiring ok:true", () => {
     expect(
       isSuccessfulSkillPostResponse(200, {
@@ -130,6 +169,18 @@ describe("skill publishing configuration", () => {
     expect(isSuccessfulSkillPostResponse(200, { ok: false })).toBe(false)
     expect(isSuccessfulSkillPostResponse(200, { id: 123 })).toBe(false)
     expect(isSuccessfulSkillPostResponse(200, {})).toBe(false)
+    expect(isSuccessfulSkillPostResponse(204, {}, { allowEmpty2xx: true })).toBe(false)
+    expect(isSuccessfulSkillPostResponse(204, {}, { allowEmpty2xx: true, emptyBody: true })).toBe(
+      true,
+    )
+    expect(
+      isSuccessfulSkillPostResponse(
+        200,
+        { error: "missing idempotencyKey" },
+        { allowEmpty2xx: true },
+      ),
+    ).toBe(false)
+    expect(isSuccessfulSkillPostResponse(204, {}, { requireExternalUrl: true })).toBe(false)
     expect(
       isSuccessfulSkillPostResponse(500, {
         id: 123,
