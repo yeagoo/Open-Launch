@@ -1,7 +1,7 @@
 import dns from "node:dns/promises"
 
 import { withTimeout } from "@/lib/fetch-timeout"
-import { safeFetch, SafeFetchError } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, safeFetch, SafeFetchError } from "@/lib/safe-fetch"
 import { buildSkillDomainMethods, type SkillDomainMethod } from "@/lib/skill-domains"
 
 interface SkillDomainProof {
@@ -113,24 +113,28 @@ async function fetchFirstText(
         timeoutMs: VERIFY_TIMEOUT_MS,
       })
 
-      if (!responseHostMatches(response, options.expectedHostname)) {
-        return {
-          ok: false,
-          reason: "Verification URL redirected to a different host",
-          terminal: true,
+      try {
+        if (!responseHostMatches(response, options.expectedHostname)) {
+          return {
+            ok: false,
+            reason: "Verification URL redirected to a different host",
+            terminal: true,
+          }
         }
-      }
 
-      if (!response.ok) {
-        lastReason = `Verification URL returned HTTP ${response.status}`
-        continue
-      }
+        if (!response.ok) {
+          lastReason = `Verification URL returned HTTP ${response.status}`
+          continue
+        }
 
-      return {
-        ok: true,
-        text: await readBoundedResponseText(response, deadline, options.maxBytes, {
-          stopAfterHead: options.stopAfterHead ?? false,
-        }),
+        return {
+          ok: true,
+          text: await readBoundedResponseText(response, deadline, options.maxBytes, {
+            stopAfterHead: options.stopAfterHead ?? false,
+          }),
+        }
+      } finally {
+        closeSafeFetchResponse(response)
       }
     } catch (error) {
       if (error instanceof SafeFetchError) {

@@ -316,10 +316,9 @@ not optional:
   `localhost`, decimal/hex IPv4, IPv4-mapped IPv6, non-http(s) schemes.
 - Every redirect hop is re-validated (a public host 302→internal IP is
   blocked). Locks in the manual per-hop check already in `lib/safe-fetch.ts`.
-- **Known limitation (documented, not faked):** DNS rebinding (TOCTOU between
-  resolve-time check and connect-time) is _not_ fully closed at the app layer.
-  `safeFetch` validates at resolve time; true rebinding defense needs
-  connect-time IP pinning. Tracked as a follow-up, not claimed as covered.
+- `safeFetch` pins undici's connect-time lookup to the already-validated DNS
+  records, closing the resolve-time → connect-time DNS rebinding window at the
+  application layer.
 
 **3. Concurrency / quota correctness** (`*.cron.test.ts`)
 
@@ -366,7 +365,7 @@ not optional:
 ### Top 3 risks to optimize (if only three)
 
 1. **SSRF + undici chain safety** — largest attack surface. DNS/IP block +
-   per-hop redirect control; connect-time pinning as follow-up.
+   per-hop redirect control + connect-time pinned lookup.
 2. **14-site fan-out consistency** — the commercial asset. Idempotent,
    retry-safe, partial-failure recovery.
 3. **cron + Redis race conditions** — the "silently wrong, nobody notices"

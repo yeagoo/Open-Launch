@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { safeFetch } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, safeFetch } from "@/lib/safe-fetch"
 import { isPrivateHostname } from "@/lib/utils"
 import { getAllCategories } from "@/app/actions/projects"
 
@@ -174,54 +174,58 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
       return null
     }
 
-    if (!response.ok) return null
+    try {
+      if (!response.ok) return null
 
-    const contentType = response.headers.get("content-type") || ""
-    if (!contentType.startsWith("image/")) return null
+      const contentType = response.headers.get("content-type") || ""
+      if (!contentType.startsWith("image/")) return null
 
-    const contentLength = parseInt(response.headers.get("content-length") || "0", 10)
-    if (contentLength > 5 * 1024 * 1024) return null // 5MB limit
+      const contentLength = parseInt(response.headers.get("content-length") || "0", 10)
+      if (contentLength > 5 * 1024 * 1024) return null // 5MB limit
 
-    const arrayBuffer = await response.arrayBuffer()
-    const inputBuffer = Buffer.from(arrayBuffer)
+      const arrayBuffer = await response.arrayBuffer()
+      const inputBuffer = Buffer.from(arrayBuffer)
 
-    if (inputBuffer.length === 0 || inputBuffer.length > 5 * 1024 * 1024) return null
+      if (inputBuffer.length === 0 || inputBuffer.length > 5 * 1024 * 1024) return null
 
-    // Convert to AVIF via sharp (same pattern as app/api/upload/route.ts)
-    let finalBuffer: Buffer
-    let finalContentType: string
+      // Convert to AVIF via sharp (same pattern as app/api/upload/route.ts)
+      let finalBuffer: Buffer
+      let finalContentType: string
 
-    if (contentType.includes("svg")) {
-      // SVG: convert to PNG first, then AVIF
-      finalBuffer = await sharp(inputBuffer)
-        .resize(256, 256, { fit: "contain" })
-        .avif({ quality: 90 })
-        .toBuffer()
-      finalContentType = "image/avif"
-    } else if (contentType.includes("ico")) {
-      // ICO: try to process, may fail on multi-frame
-      try {
+      if (contentType.includes("svg")) {
+        // SVG: convert to PNG first, then AVIF
         finalBuffer = await sharp(inputBuffer)
           .resize(256, 256, { fit: "contain" })
           .avif({ quality: 90 })
           .toBuffer()
         finalContentType = "image/avif"
-      } catch {
-        return null
+      } else if (contentType.includes("ico")) {
+        // ICO: try to process, may fail on multi-frame
+        try {
+          finalBuffer = await sharp(inputBuffer)
+            .resize(256, 256, { fit: "contain" })
+            .avif({ quality: 90 })
+            .toBuffer()
+          finalContentType = "image/avif"
+        } catch {
+          return null
+        }
+      } else if (contentType.includes("gif")) {
+        finalBuffer = inputBuffer
+        finalContentType = contentType
+      } else {
+        finalBuffer = await sharp(inputBuffer).avif({ quality: 90, effort: 6 }).toBuffer()
+        finalContentType = "image/avif"
       }
-    } else if (contentType.includes("gif")) {
-      finalBuffer = inputBuffer
-      finalContentType = contentType
-    } else {
-      finalBuffer = await sharp(inputBuffer).avif({ quality: 90, effort: 6 }).toBuffer()
-      finalContentType = "image/avif"
+
+      const ext = finalContentType.includes("gif") ? "gif" : "avif"
+      const fileName = `autofill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const fileUrl = await uploadFileToR2(finalBuffer, fileName, finalContentType, "logos")
+
+      return fileUrl
+    } finally {
+      closeSafeFetchResponse(response)
     }
-
-    const ext = finalContentType.includes("gif") ? "gif" : "avif"
-    const fileName = `autofill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-    const fileUrl = await uploadFileToR2(finalBuffer, fileName, finalContentType, "logos")
-
-    return fileUrl
   } catch {
     return null
   }

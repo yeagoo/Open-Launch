@@ -29,6 +29,8 @@ The latest review hardening adds:
 - receiver publish success requiring a concrete external URL
 - public status error sanitization so UUID pages do not expose env/config
   internals
+- `safeFetch` moved to undici with connect-time DNS lookup pinned to
+  prevalidated public records, closing the DNS rebinding follow-up.
 
 ## Required Context
 

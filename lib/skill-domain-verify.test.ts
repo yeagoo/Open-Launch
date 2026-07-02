@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { extractAatVerifyMetaContent, verifySkillDomainProof } from "./skill-domain-verify"
 
 const safeFetchMock = vi.hoisted(() => vi.fn())
+const closeSafeFetchResponseMock = vi.hoisted(() => vi.fn())
 const resolveTxtMock = vi.hoisted(() => vi.fn())
 
 vi.mock("node:dns/promises", () => ({
@@ -24,6 +25,7 @@ vi.mock("@/lib/safe-fetch", () => {
 
   return {
     safeFetch: safeFetchMock,
+    closeSafeFetchResponse: closeSafeFetchResponseMock,
     SafeFetchError: MockSafeFetchError,
   }
 })
@@ -36,6 +38,7 @@ function responseWithUrl(url: string, body: string, init?: ResponseInit): Respon
 
 beforeEach(() => {
   safeFetchMock.mockReset()
+  closeSafeFetchResponseMock.mockReset()
   resolveTxtMock.mockReset()
 })
 

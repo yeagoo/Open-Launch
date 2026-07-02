@@ -1,4 +1,4 @@
-import { safeFetch, SafeFetchError } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, safeFetch, SafeFetchError } from "@/lib/safe-fetch"
 import { tinyfishCrawl } from "@/lib/tinyfish"
 import { isPrivateHostname } from "@/lib/utils"
 
@@ -88,9 +88,19 @@ async function tryRawFetch(url: URL): Promise<RawFetchOutcome> {
 
   // 403 / 429 / 503 are the classic CF managed-challenge / rate-limit /
   // edge-block signatures. Any of those → defer to Tinyfish.
-  if ([403, 429, 503].includes(response.status)) return { kind: "challenge" }
-  if (!response.ok) return { kind: "deny" }
+  if ([403, 429, 503].includes(response.status)) {
+    closeSafeFetchResponse(response)
+    return { kind: "challenge" }
+  }
+  if (!response.ok) {
+    closeSafeFetchResponse(response)
+    return { kind: "deny" }
+  }
 
-  const html = await response.text()
-  return { kind: "ok", html }
+  try {
+    const html = await response.text()
+    return { kind: "ok", html }
+  } finally {
+    closeSafeFetchResponse(response)
+  }
 }

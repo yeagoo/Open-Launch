@@ -5,7 +5,7 @@
 
 import sharp from "sharp"
 
-import { safeFetch } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, safeFetch } from "@/lib/safe-fetch"
 
 import { uploadFileToR2 } from "./r2-client"
 
@@ -49,60 +49,64 @@ export async function downloadAndUploadImage(
       timeoutMs: 10000,
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    // 检查内容类型
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.startsWith("image/")) {
-      throw new Error(`Invalid content type: ${contentType}`)
-    }
-
-    // 检查文件大小（限制 5MB）
-    const contentLength = response.headers.get("content-length")
-    if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
-      throw new Error(`Image too large: ${contentLength} bytes`)
-    }
-
-    // 转换为 Buffer
-    const arrayBuffer = await response.arrayBuffer()
-    let buffer: Buffer = Buffer.from(arrayBuffer)
-
-    console.log(`✅ Downloaded ${buffer.length} bytes, type: ${contentType}`)
-
-    // 如果不是 SVG，则转换为 AVIF
-    let finalContentType = contentType
-    let extension = getExtensionFromContentType(contentType) || getExtensionFromUrl(imageUrl)
-
-    if (contentType !== "image/svg+xml") {
-      try {
-        console.log(`🔄 Converting to AVIF...`)
-        // 使用 sharp 转换为 avif
-        // quality: 80 是一个比较好的平衡点
-        // effort: 4 平衡压缩速度和文件大小 (0-9)
-        buffer = await sharp(buffer).avif({ quality: 80, effort: 4 }).toBuffer()
-        finalContentType = "image/avif"
-        extension = "avif"
-        console.log(`✅ Converted to AVIF, new size: ${buffer.length} bytes`)
-      } catch (sharpError) {
-        console.error("⚠️ Failed to convert to AVIF, using original format:", sharpError)
-        // 转换失败则保持原格式
+    try {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
-    }
 
-    // 生成文件名
-    const fileName = `image.${extension}`
+      // 检查内容类型
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.startsWith("image/")) {
+        throw new Error(`Invalid content type: ${contentType}`)
+      }
 
-    // 上传到 R2
-    console.log(`📤 Uploading to R2...`)
-    const r2Url = await uploadFileToR2(buffer, fileName, finalContentType, folder)
+      // 检查文件大小（限制 5MB）
+      const contentLength = response.headers.get("content-length")
+      if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+        throw new Error(`Image too large: ${contentLength} bytes`)
+      }
 
-    console.log(`✅ Uploaded to R2: ${r2Url}`)
+      // 转换为 Buffer
+      const arrayBuffer = await response.arrayBuffer()
+      let buffer: Buffer = Buffer.from(arrayBuffer)
 
-    return {
-      success: true,
-      url: r2Url,
+      console.log(`✅ Downloaded ${buffer.length} bytes, type: ${contentType}`)
+
+      // 如果不是 SVG，则转换为 AVIF
+      let finalContentType = contentType
+      let extension = getExtensionFromContentType(contentType) || getExtensionFromUrl(imageUrl)
+
+      if (contentType !== "image/svg+xml") {
+        try {
+          console.log(`🔄 Converting to AVIF...`)
+          // 使用 sharp 转换为 avif
+          // quality: 80 是一个比较好的平衡点
+          // effort: 4 平衡压缩速度和文件大小 (0-9)
+          buffer = await sharp(buffer).avif({ quality: 80, effort: 4 }).toBuffer()
+          finalContentType = "image/avif"
+          extension = "avif"
+          console.log(`✅ Converted to AVIF, new size: ${buffer.length} bytes`)
+        } catch (sharpError) {
+          console.error("⚠️ Failed to convert to AVIF, using original format:", sharpError)
+          // 转换失败则保持原格式
+        }
+      }
+
+      // 生成文件名
+      const fileName = `image.${extension}`
+
+      // 上传到 R2
+      console.log(`📤 Uploading to R2...`)
+      const r2Url = await uploadFileToR2(buffer, fileName, finalContentType, folder)
+
+      console.log(`✅ Uploaded to R2: ${r2Url}`)
+
+      return {
+        success: true,
+        url: r2Url,
+      }
+    } finally {
+      closeSafeFetchResponse(response)
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"

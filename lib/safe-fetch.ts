@@ -1,6 +1,9 @@
 import dns from "node:dns/promises"
+import type { LookupFunction } from "node:net"
+import { Readable } from "node:stream"
 
-import { FetchTimeoutError, fetchWithTimeout } from "@/lib/fetch-timeout"
+import { Client, interceptors, request, type Dispatcher } from "undici"
+
 import { isPrivateHostname } from "@/lib/utils"
 
 /**
@@ -14,6 +17,9 @@ import { isPrivateHostname } from "@/lib/utils"
  *     resolved IP falls into a private range — covers cases where the
  *     hostname looks public but resolves to internal infra, AWS metadata,
  *     decimal/hex IPv4, IPv4-mapped IPv6, etc.
+ *   - Pins the actual connect-time lookup to those already-validated records,
+ *     closing the resolve→connect DNS rebinding window at the application
+ *     layer.
  *   - Walks redirects manually (`redirect: "manual"`) and re-applies all
  *     of the above to every hop, so a public host can't 302 us into the
  *     internal network.
@@ -28,6 +34,18 @@ export type SafeFetchOptions = Omit<RequestInit, "redirect"> & {
 
 const DEFAULT_MAX_REDIRECTS = 5
 const DEFAULT_TIMEOUT_MS = 10_000
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
+const SAFE_FETCH_CLEANUP = Symbol("safeFetchCleanup")
+
+type SafeDnsRecord = { address: string; family: number }
+type UndiciResponse = Awaited<ReturnType<typeof request>>
+type UndiciBody = UndiciResponse["body"]
+
+interface SafeFetchCleanup {
+  body: UndiciBody
+  client: Client
+  done: boolean
+}
 
 export class SafeFetchError extends Error {
   constructor(
@@ -52,20 +70,10 @@ export async function safeFetch(
 ): Promise<Response> {
   const maxRedirects = init.maxRedirects ?? DEFAULT_MAX_REDIRECTS
   const timeoutMs = init.timeoutMs ?? DEFAULT_TIMEOUT_MS
-  // Deadline for the whole redirect chain. We enforce it WITHOUT aborting the
-  // fetch — an AbortSignal firing mid-stream corrupts undici's web-streams pool
-  // (see lib/fetch-timeout.ts). The caller's signal can still abort explicitly.
+  // Deadline for the whole redirect chain. This uses undici.request with native
+  // phase timeouts; do not move this back to global fetch + AbortSignal.
   const deadline = Date.now() + timeoutMs
-
-  const controller = new AbortController()
   const callerSignal = init.signal as AbortSignal | undefined
-  if (callerSignal) {
-    if (callerSignal.aborted) controller.abort(callerSignal.reason)
-    else
-      callerSignal.addEventListener("abort", () => controller.abort(callerSignal.reason), {
-        once: true,
-      })
-  }
 
   let currentUrl: URL
   try {
@@ -75,39 +83,40 @@ export async function safeFetch(
   }
 
   for (let hop = 0; hop <= maxRedirects; hop++) {
-    await assertSafeUrl(currentUrl)
+    const records = await resolveSafeUrl(currentUrl)
     const remaining = deadline - Date.now()
     if (remaining <= 0) throw new SafeFetchError("safeFetch: timed out", "timeout")
-    let response: Response
+    if (callerSignal?.aborted) throw callerSignal.reason
+
+    const client = createPinnedClient(currentUrl, records, remaining)
+    const dispatcher = createSafeFetchDispatcher(client)
+    let response: UndiciResponse
     try {
-      response = await fetchWithTimeout(
-        currentUrl.toString(),
-        { ...init, signal: controller.signal, redirect: "manual" },
-        remaining,
-        "safeFetch",
-      )
+      response = await request(currentUrl, {
+        dispatcher,
+        method: init.method ?? "GET",
+        headers: normalizeHeaders(init.headers, currentUrl.protocol),
+        body: normalizeRequestBody(init.body),
+        signal: callerSignal,
+        headersTimeout: remaining,
+        bodyTimeout: remaining,
+      })
     } catch (err) {
-      if (err instanceof FetchTimeoutError) {
+      void closeClient(client)
+      if (isUndiciTimeout(err)) {
         throw new SafeFetchError("safeFetch: timed out", "timeout")
       }
       throw err
     }
 
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location")
-      if (!location) return response
+    if (response.statusCode >= 300 && response.statusCode < 400) {
+      const location = headerValue(response.headers.location)
+      if (!location || !REDIRECT_STATUSES.has(response.statusCode)) {
+        return toWebResponse(response, currentUrl, client)
+      }
 
-      // Intentionally NOT calling `response.body.cancel()` on the
-      // intermediate redirect responses. Under undici (seen on the
-      // deployed Node 22.23.0), cancelling a fetch-returned
-      // ReadableStream while undici is still wiring up its internal
-      // Transform corrupts a process-wide stream pool, after which
-      // unrelated SSR streams crash with
-      // `controller[kState].transformAlgorithm is not a function`
-      // (digest repeats forever). The intermediate body is small and
-      // gets GC'd on its own once we abandon the reference — the few
-      // extra bytes per hop are cheaper than losing the worker.
-
+      discardUndiciBody(response.body)
+      void closeClient(client)
       let nextUrl: URL
       try {
         nextUrl = new URL(location, currentUrl.toString())
@@ -121,12 +130,23 @@ export async function safeFetch(
       continue
     }
 
-    return response
+    return toWebResponse(response, currentUrl, client)
   }
   throw new SafeFetchError("safeFetch: too many redirects", "too_many_redirects")
 }
 
-async function assertSafeUrl(url: URL): Promise<void> {
+export function closeSafeFetchResponse(response: Response): void {
+  const cleanup = (response as Response & { [SAFE_FETCH_CLEANUP]?: SafeFetchCleanup })[
+    SAFE_FETCH_CLEANUP
+  ]
+  if (!cleanup || cleanup.done) return
+
+  cleanup.done = true
+  discardUndiciBody(cleanup.body)
+  void closeClient(cleanup.client)
+}
+
+async function resolveSafeUrl(url: URL): Promise<SafeDnsRecord[]> {
   if (!["http:", "https:"].includes(url.protocol)) {
     throw new SafeFetchError(`safeFetch: protocol ${url.protocol} not allowed`, "protocol")
   }
@@ -134,12 +154,18 @@ async function assertSafeUrl(url: URL): Promise<void> {
     throw new SafeFetchError(`safeFetch: hostname ${url.hostname} is private`, "private_host")
   }
 
-  let records: { address: string; family: number }[]
+  let records: SafeDnsRecord[]
   try {
     records = await dns.lookup(url.hostname, { all: true, verbatim: true })
   } catch (err) {
     throw new SafeFetchError(
       `safeFetch: DNS lookup for ${url.hostname} failed: ${(err as Error).message}`,
+      "dns_failure",
+    )
+  }
+  if (records.length === 0) {
+    throw new SafeFetchError(
+      `safeFetch: DNS lookup for ${url.hostname} returned no addresses`,
       "dns_failure",
     )
   }
@@ -157,4 +183,172 @@ async function assertSafeUrl(url: URL): Promise<void> {
       )
     }
   }
+
+  return records
+}
+
+function createPinnedClient(
+  url: URL,
+  records: readonly SafeDnsRecord[],
+  timeoutMs: number,
+): Client {
+  return new Client(url.origin, {
+    connectTimeout: timeoutMs,
+    bodyTimeout: timeoutMs,
+    headersTimeout: timeoutMs,
+    autoSelectFamily: true,
+    autoSelectFamilyAttemptTimeout: Math.max(1, Math.min(250, timeoutMs)),
+    connect: {
+      lookup: createPinnedLookup(records),
+    },
+  })
+}
+
+function createSafeFetchDispatcher(client: Client): Dispatcher {
+  return client.compose(
+    interceptors.decompress({
+      skipErrorResponses: false,
+    }),
+  )
+}
+
+function createPinnedLookup(records: readonly SafeDnsRecord[]): LookupFunction {
+  return (_hostname, options, callback) => {
+    if (options.all) {
+      callback(
+        null,
+        records.map((record) => ({
+          address: record.address,
+          family: record.family,
+        })),
+      )
+      return
+    }
+
+    const family = typeof options.family === "number" ? options.family : 0
+    const record =
+      family === 4 || family === 6
+        ? (records.find((candidate) => candidate.family === family) ?? records[0])
+        : records[0]
+    callback(null, record.address, record.family)
+  }
+}
+
+function normalizeHeaders(
+  headers: HeadersInit | undefined,
+  protocol: string,
+): Record<string, string> {
+  const normalized: Record<string, string> = {}
+
+  if (headers) {
+    new Headers(headers).forEach((value, key) => {
+      normalized[key] = value
+    })
+  }
+  if (!normalized["accept-encoding"]) {
+    normalized["accept-encoding"] = protocol === "https:" ? "br, gzip, deflate" : "gzip, deflate"
+  }
+  return normalized
+}
+
+function normalizeRequestBody(
+  body: BodyInit | null | undefined,
+): Dispatcher.DispatchOptions["body"] {
+  if (body == null) return null
+  return body as Dispatcher.DispatchOptions["body"]
+}
+
+function toWebResponse(response: UndiciResponse, url: URL, client: Client): Response {
+  const headers = undiciHeadersToHeaders(response.headers)
+  const hasNullBody = response.statusCode === 204 || response.statusCode === 304
+
+  if (hasNullBody) {
+    discardUndiciBody(response.body)
+    void closeClient(client)
+    const webResponse = new Response(null, {
+      status: response.statusCode,
+      statusText: response.statusText,
+      headers,
+    })
+    Object.defineProperty(webResponse, "url", { value: url.toString() })
+    return webResponse
+  }
+
+  const cleanup: SafeFetchCleanup = {
+    body: response.body,
+    client,
+    done: false,
+  }
+  const body = Readable.toWeb(response.body) as ReadableStream
+  closeClientWhenBodyFinishes(cleanup)
+
+  const webResponse = new Response(body, {
+    status: response.statusCode,
+    statusText: response.statusText,
+    headers,
+  })
+  Object.defineProperty(webResponse, SAFE_FETCH_CLEANUP, { value: cleanup })
+  Object.defineProperty(webResponse, "url", { value: url.toString() })
+  return webResponse
+}
+
+function discardUndiciBody(body: UndiciBody): void {
+  body.on("error", () => {
+    // destroy() can asynchronously emit RequestAbortedError; that is expected
+    // when intentionally abandoning redirect/null/early-return bodies.
+  })
+  body.destroy()
+}
+
+function undiciHeadersToHeaders(headers: UndiciResponse["headers"]): Headers {
+  const out = new Headers()
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined) continue
+    if (Array.isArray(value)) {
+      for (const item of value) out.append(key, item)
+    } else {
+      out.set(key, String(value))
+    }
+  }
+  return out
+}
+
+function headerValue(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
+}
+
+function closeClientWhenBodyFinishes(cleanup: SafeFetchCleanup): void {
+  const close = () => {
+    if (cleanup.done) return
+    cleanup.done = true
+    void closeClient(cleanup.client)
+  }
+  const destroy = () => {
+    if (cleanup.done) return
+    cleanup.done = true
+    cleanup.client.destroy()
+  }
+
+  cleanup.body.once("end", close)
+  cleanup.body.once("close", close)
+  cleanup.body.once("error", destroy)
+}
+
+async function closeClient(client: Client): Promise<void> {
+  try {
+    await client.close()
+  } catch {
+    client.destroy()
+  }
+}
+
+function isUndiciTimeout(error: unknown): boolean {
+  const code =
+    typeof error === "object" && error !== null ? (error as { code?: unknown }).code : undefined
+  return (
+    code === "UND_ERR_CONNECT_TIMEOUT" ||
+    code === "UND_ERR_HEADERS_TIMEOUT" ||
+    code === "UND_ERR_BODY_TIMEOUT"
+  )
 }
