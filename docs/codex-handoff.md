@@ -37,6 +37,7 @@ The latest review hardening adds:
 Primary spec:
 
 - `docs/skill-directory-submission.md`
+- `docs/skill-production-smoke-test.md`
 
 Approved plan:
 
@@ -67,7 +68,9 @@ Project memories:
 Use:
 
 ```bash
-export PATH="$HOME/.nvm/versions/node/v24.11.1/bin:$HOME/.bun/bin:$PATH"
+export NODE22_BIN="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name 'v22.*' | sort -V | tail -1)/bin"
+export PATH="$NODE22_BIN:$HOME/.bun/bin:$PATH"
+node --version # must be Node 22.x; production target is 22.23.0
 bunx tsc --noEmit
 bun run lint
 bun run test
@@ -87,9 +90,25 @@ and an API key source is present. It does not print secret values.
 Then run `codex review --uncommitted` with the local `code-review` skill moved
 aside and a timeout so it cannot hang indefinitely.
 
+Production smoke test:
+
+```bash
+bun run skill:receivers:smoke
+# After receiver config is ready and live posts are intentional:
+SKILL_SMOKE_WEBSITE_URL="https://smoke.example.com" \
+  bun run skill:receivers:smoke -- --confirm-live-posts
+```
+
+Then follow `docs/skill-production-smoke-test.md` for domain verification,
+submit, worker tick, status-page check, and takedown cleanup.
+
 ## Remaining Work
 
 In this repo, the planned feature phases are complete and pushed.
+
+Production smoke testing is documented but not yet executed in this environment:
+`bun run skill:receivers:check` still fails until all 14 receiver URLs and API
+keys are configured.
 
 Cross-repo receiver work completed for the three currently wired partner repos:
 

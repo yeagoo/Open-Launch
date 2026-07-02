@@ -1,7 +1,8 @@
 # Skill-driven free directory submission
 
-> **Status:** design (not yet implemented). This doc is the decision record and
-> build spec. Nothing here ships until the plan is approved. Written 2026-07.
+> **Status:** implemented in the aat.ee main repo; receiver rollout and
+> production smoke testing remain release gates. This doc is the decision record
+> and build spec. Written 2026-07.
 
 ## What this is
 
@@ -254,7 +255,7 @@ find-replace clones — the server's similarity guard enforces a lenient floor.
 
 **New:**
 
-- 4 tables + migration.
+- 5 tables + migrations.
 - `/api/skill/*` endpoints + API-key auth middleware.
 - `/api/cron/skill-publish` worker (canary + global-cap + AI re-check).
 - AI content-score + local similarity modules.
@@ -278,8 +279,8 @@ _All resolved (2026-07) — recorded below and folded into the sections above._
 
 This system's risk is **not UI/code quality** — it's _distribution correctness,
 security correctness, and idempotency/concurrency correctness_. The guardrails
-are scoped accordingly. Package manager is **bun** (`bun.lockb`); there is no
-`.github/workflows` yet — **building CI is step 0** before this ships.
+are scoped accordingly. Package manager is **bun** (`bun.lockb`); push-based CI
+lives in `.github/workflows/ci.yml`.
 
 ### CI (GitHub Actions, triggered on push to main)
 
@@ -288,12 +289,20 @@ workflow — [[no-pr-just-push]]). It is **non-blocking to the push** (the push
 already landed) but surfaces status and alerts on failure. Five stages:
 
 ```
-1. Type safety     bun run tsc --noEmit         (tsc + Drizzle types)
+1. Type safety     bunx tsc --noEmit            (tsc + Drizzle types)
 2. Lint            bun run lint                  (eslint . — NOT `next lint`, removed in Next 16)
 3. Schema/unit     bun run test                  (vitest: all *.test.ts)
 4. Security        bun audit  +  semgrep --config auto   (see caveats)
 5. System suites   vitest fanout / ssrf / cron / ai-policy (tagged subsets)
 ```
+
+### Production smoke test
+
+Use `docs/skill-production-smoke-test.md` after deployment and receiver env
+changes. It starts with `bun run skill:receivers:check`, then an explicit
+`bun run skill:receivers:smoke -- --confirm-live-posts` receiver contract smoke,
+then a real domain-register → verify → submit → worker → status → takedown
+flow. Stop before submit if receiver config is not fully ready.
 
 ### The four must-have test suites (system correctness)
 
