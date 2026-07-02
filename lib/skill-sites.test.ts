@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+
 import { describe, expect, it } from "vitest"
 
 import {
@@ -39,6 +42,21 @@ describe("skillPublicationSites", () => {
       "nexablocks.com",
       "blackhawkegames.com",
     ])
+  })
+
+  it("keeps the distributable Skill target list in sync", () => {
+    const skillMarkdown = readFileSync(
+      join(process.cwd(), "skills/free-directory-submission/SKILL.md"),
+      "utf8",
+    )
+    const targetSection = skillMarkdown.match(/## Target Sites\n\n([\s\S]+?)\n\nEach variant/)
+
+    expect(targetSection?.[1].match(/^\d+\. `([^`]+)`/gm)).not.toBeNull()
+    const skillSites = Array.from(targetSection?.[1].matchAll(/^\d+\. `([^`]+)`/gm) ?? []).map(
+      (match) => match[1],
+    )
+
+    expect(skillSites).toEqual(skillPublicationSites().map((site) => site.site))
   })
 })
 

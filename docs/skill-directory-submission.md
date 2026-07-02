@@ -97,12 +97,13 @@ Because放行 is fully automatic (decision #1), the safety net is layered:
    trigram-cosine over the variant bodies. **Starting default: reject only when
    pairwise similarity > 0.9** (i.e. near-identical); tune down from real data.
    The goal is merely "a search engine sees a difference", not originality.
-4. **Canary + AI re-check (decision #3).** Day 1 publishes only the 2
-   lowest-DR sites. Before advancing, an AI re-check reads the **live** pages
-   (via `lib/tinyfish.ts`) and confirms they rendered the intended, clean
-   content. Failure → **auto-takedown**: unpublish everything already sent for
-   that submission (the 2 canary sites), mark it `taken_down`, alert admin, and
-   never advance to day 2. Fully automatic, no human gate (decision #1).
+4. **Canary + AI re-check (decision #3).** Day 1 publishes only the first 2
+   configured receiver sites. Before advancing, an AI re-check reads the
+   **live** pages (via `lib/tinyfish.ts`) and confirms they rendered the
+   intended, clean content. Failure → **auto-takedown**: unpublish everything
+   already sent for that submission (the 2 canary sites), mark it `taken_down`,
+   alert admin, and never advance to day 2. Fully automatic, no human gate
+   (decision #1).
 5. **Rate/dedupe limits.** Per-account monthly quota, per-domain permanent
    dedupe, global daily throttle. Reuses `lib/rate-limit.ts` (`dedupeOnce`,
    `checkRateLimit`).
