@@ -19,6 +19,7 @@ const discoverLinks = [
 
 const resourcesLinks = [
   { key: "pricing", href: "/pricing" },
+  { key: "freeDirectorySubmission", href: "/skill/free-directory-submission" },
   { key: "sponsors", href: "/sponsors" },
   { key: "blog", href: "/blog" },
   { key: "friendsPage", href: "/friends" },
