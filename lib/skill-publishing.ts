@@ -298,6 +298,9 @@ export function validateSkillEndpointUrl(value: string): string | null {
     if (url.username || url.password) {
       return "must not include embedded credentials"
     }
+    if (isPrivateHostname(url.hostname)) {
+      return "must not use a private or localhost hostname"
+    }
     return null
   } catch {
     return "is not a valid URL"

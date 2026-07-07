@@ -226,6 +226,12 @@ describe("skill publishing configuration", () => {
     expect(validateSkillEndpointUrl("https://user:pass@example.com/launch")).toBe(
       "must not include embedded credentials",
     )
+    expect(validateSkillEndpointUrl("http://127.0.0.1:3000/api/external/launch")).toBe(
+      "must not use a private or localhost hostname",
+    )
+    expect(validateSkillEndpointUrl("https://localhost/api/external/launch")).toBe(
+      "must not use a private or localhost hostname",
+    )
 
     vi.stubEnv("SKILL_PUBLISH_DEMO_SITE_URL", "javascript:alert(1)")
     vi.stubEnv("SKILL_PUBLISH_API_KEY", "shared")
