@@ -67,6 +67,9 @@ type FetchWithTimeoutInit = Omit<RequestInit, "body" | "signal"> & {
   body?: RequestInit["body"] | Dispatcher.DispatchOptions["body"] | null
 }
 
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
+const MAX_REDIRECTS = 5
+
 export function fetchWithTimeout(
   input: string | URL,
   init: FetchWithTimeoutInit,
@@ -74,16 +77,75 @@ export function fetchWithTimeout(
   label = "request",
 ): Promise<FetchWithTimeoutResponse> {
   return withTimeout(
-    request(input, {
-      method: init.method ?? "GET",
-      headers: normalizeHeaders(init.headers),
-      body: normalizeRequestBody(init.body),
-      headersTimeout: timeoutMs,
-      bodyTimeout: timeoutMs,
-    }).then(toFetchWithTimeoutResponse),
+    requestWithRedirects(input, init, timeoutMs, label).then(toFetchWithTimeoutResponse),
     timeoutMs,
     label,
   )
+}
+
+async function requestWithRedirects(
+  input: string | URL,
+  init: FetchWithTimeoutInit,
+  timeoutMs: number,
+  label: string,
+): Promise<Awaited<ReturnType<typeof request>>> {
+  const deadline = Date.now() + timeoutMs
+  let currentUrl = new URL(input.toString())
+  let method = init.method ?? "GET"
+  let body = normalizeRequestBody(init.body)
+  let headers = normalizeHeaders(init.headers)
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const remaining = Math.max(1, deadline - Date.now())
+    const response = await request(currentUrl, {
+      method,
+      headers,
+      body,
+      headersTimeout: remaining,
+      bodyTimeout: remaining,
+    })
+
+    const location = headerValue(response.headers.location)
+    if (!REDIRECT_STATUSES.has(response.statusCode) || !location || init.redirect === "manual") {
+      return response
+    }
+
+    if (init.redirect === "error") {
+      await drainResponseBody(response, remaining, label)
+      throw new Error(`${label} redirected with HTTP ${response.statusCode}`)
+    }
+
+    if (hop === MAX_REDIRECTS) {
+      await drainResponseBody(response, remaining, label)
+      throw new Error(`${label} redirected too many times`)
+    }
+
+    await drainResponseBody(response, remaining, label)
+    const previousOrigin = currentUrl.origin
+    currentUrl = new URL(location, currentUrl)
+    if (currentUrl.origin !== previousOrigin) {
+      headers = stripSensitiveRedirectHeaders(headers)
+    }
+    if (
+      response.statusCode === 303 ||
+      ((response.statusCode === 301 || response.statusCode === 302) &&
+        method.toUpperCase() === "POST")
+    ) {
+      method = "GET"
+      body = null
+      headers = stripBodyHeaders(headers)
+    }
+  }
+
+  throw new Error(`${label} redirected too many times`)
+}
+
+async function drainResponseBody(
+  response: Awaited<ReturnType<typeof request>>,
+  timeoutMs: number,
+  label: string,
+): Promise<void> {
+  await withTimeout(response.body.text(), timeoutMs, `${label} redirect body`).catch(() => {})
 }
 
 function normalizeHeaders(headers: HeadersInit | undefined): Record<string, string> {
@@ -101,6 +163,21 @@ function normalizeRequestBody(
 ): Dispatcher.DispatchOptions["body"] | null {
   if (body == null) return null
   return body as Dispatcher.DispatchOptions["body"]
+}
+
+function stripSensitiveRedirectHeaders(headers: Record<string, string>): Record<string, string> {
+  const next = { ...headers }
+  delete next.authorization
+  delete next.cookie
+  delete next["proxy-authorization"]
+  return next
+}
+
+function stripBodyHeaders(headers: Record<string, string>): Record<string, string> {
+  const next = { ...headers }
+  delete next["content-length"]
+  delete next["content-type"]
+  return next
 }
 
 function toFetchWithTimeoutResponse(
@@ -139,4 +216,9 @@ function undiciHeadersToHeaders(headers: Awaited<ReturnType<typeof request>>["he
     }
   }
   return out
+}
+
+function headerValue(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
 }
