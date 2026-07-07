@@ -1,5 +1,6 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
+import { fetchWithTimeout } from "@/lib/fetch-timeout"
 
 // Translate blog articles via DeepSeek. Title/description are short text;
 // content is Markdown/MDX whose structure, links, and code must survive intact.
@@ -40,18 +41,23 @@ async function callDeepSeek(systemPrompt: string, userPrompt: string, fn: string
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
   assertAiAvailable()
-  const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.2,
-    }),
-  })
+  const res = await fetchWithTimeout(
+    "https://api.deepseek.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.2,
+      }),
+    },
+    60_000,
+    "DeepSeek blog translation",
+  )
   if (!res.ok) {
     const text = await res.text()
     noteAiResponse(res.status, text)

@@ -1,4 +1,6 @@
-// Timeout for `fetch` that does NOT abort the request.
+import { request, type Dispatcher } from "undici"
+
+// Timeout for server-side HTTP that does NOT use global fetch streams.
 //
 // Aborting/cancelling a fetch-returned ReadableStream while undici is still
 // wiring up its internal Transform corrupts a process-wide web-streams pool,
@@ -7,11 +9,10 @@
 // Reproduced in prod on Node 22.23.0 during crawl-heavy crons, where
 // `AbortSignal.timeout` firing mid-wiring was the trigger.
 //
-// Instead of aborting on timeout, we race the fetch against a timer and, on
-// timeout, ABANDON the fetch promise. The in-flight request finishes in the
-// background and its (unread) body is GC'd on its own. Abandoning — unlike
-// cancelling — does not hit the wiring race, so the stream pool stays intact.
-// The cost is a few lingering sockets, far cheaper than losing the worker.
+// Server call sites use `undici.request` through `fetchWithTimeout` below.
+// Instead of aborting on timeout, we race the request/body read against a timer
+// and, on timeout, abandon that promise. Abandoning — unlike cancelling a
+// global-fetch ReadableStream — does not hit the wiring race.
 
 export class FetchTimeoutError extends Error {
   constructor(message: string) {
@@ -51,11 +52,91 @@ export function withTimeout<T>(
   })
 }
 
+export interface FetchWithTimeoutResponse {
+  ok: boolean
+  status: number
+  statusText: string
+  headers: Headers
+  text(): Promise<string>
+  // Mirrors lib.dom's Response.json() shape so existing callers keep inference.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json<T = any>(): Promise<T>
+}
+
+type FetchWithTimeoutInit = Omit<RequestInit, "body" | "signal"> & {
+  body?: RequestInit["body"] | Dispatcher.DispatchOptions["body"] | null
+}
+
 export function fetchWithTimeout(
   input: string | URL,
-  init: RequestInit,
+  init: FetchWithTimeoutInit,
   timeoutMs: number,
   label = "request",
-): Promise<Response> {
-  return withTimeout(fetch(input, init), timeoutMs, label)
+): Promise<FetchWithTimeoutResponse> {
+  return withTimeout(
+    request(input, {
+      method: init.method ?? "GET",
+      headers: normalizeHeaders(init.headers),
+      body: normalizeRequestBody(init.body),
+      headersTimeout: timeoutMs,
+      bodyTimeout: timeoutMs,
+    }).then(toFetchWithTimeoutResponse),
+    timeoutMs,
+    label,
+  )
+}
+
+function normalizeHeaders(headers: HeadersInit | undefined): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (!headers) return out
+
+  new Headers(headers).forEach((value, key) => {
+    out[key] = value
+  })
+  return out
+}
+
+function normalizeRequestBody(
+  body: FetchWithTimeoutInit["body"],
+): Dispatcher.DispatchOptions["body"] | null {
+  if (body == null) return null
+  return body as Dispatcher.DispatchOptions["body"]
+}
+
+function toFetchWithTimeoutResponse(
+  response: Awaited<ReturnType<typeof request>>,
+): FetchWithTimeoutResponse {
+  let consumed = false
+  async function readText(): Promise<string> {
+    if (consumed) throw new Error("Response body already consumed")
+    consumed = true
+    return response.body.text()
+  }
+
+  return {
+    ok: response.statusCode >= 200 && response.statusCode < 300,
+    status: response.statusCode,
+    statusText: response.statusText,
+    headers: undiciHeadersToHeaders(response.headers),
+    text: readText,
+    // Mirrors lib.dom's Response.json() shape so existing callers keep inference.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    json: async <T = any>() => {
+      const text = await readText()
+      return (text ? JSON.parse(text) : null) as T
+    },
+  }
+}
+
+function undiciHeadersToHeaders(headers: Awaited<ReturnType<typeof request>>["headers"]): Headers {
+  const out = new Headers()
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined) continue
+    if (Array.isArray(value)) {
+      for (const item of value) out.append(key, item)
+    } else {
+      out.set(key, String(value))
+    }
+  }
+  return out
 }

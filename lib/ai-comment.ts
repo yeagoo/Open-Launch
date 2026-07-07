@@ -10,6 +10,7 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
+import { fetchWithTimeout } from "@/lib/fetch-timeout"
 
 const PERSONAS = [
   {
@@ -253,24 +254,29 @@ async function callDeepSeek(
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY environment variable is not set")
 
   assertAiAvailable()
-  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+  const response = await fetchWithTimeout(
+    "https://api.deepseek.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 1.0,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.4,
+        max_tokens: 120,
+      }),
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 1.0,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.4,
-      max_tokens: 120,
-    }),
-  })
+    60_000,
+    "DeepSeek comment generation",
+  )
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))

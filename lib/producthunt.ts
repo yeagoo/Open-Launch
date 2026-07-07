@@ -3,6 +3,7 @@
  * 用于获取每日 Top 5 产品
  */
 
+import { fetchWithTimeout } from "./fetch-timeout"
 import { tinyfishCrawl } from "./tinyfish"
 
 /**
@@ -163,15 +164,20 @@ export async function getTop5Posts(): Promise<ProductHuntPost[]> {
   `
 
   try {
-    const response = await fetch("https://api.producthunt.com/v2/api/graphql", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const response = await fetchWithTimeout(
+      "https://api.producthunt.com/v2/api/graphql",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ query }),
       },
-      body: JSON.stringify({ query }),
-    })
+      30_000,
+      "ProductHunt API",
+    )
 
     if (!response.ok) {
       const errorText = await response.text()

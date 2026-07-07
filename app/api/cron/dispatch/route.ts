@@ -164,7 +164,13 @@ export async function GET(request: NextRequest) {
     const heartbeatUrl = process.env.CRON_HEARTBEAT_URL
     if (heartbeatUrl && status < 500) {
       try {
-        await fetchWithTimeout(heartbeatUrl, { method: "GET" }, 5_000, "cron heartbeat")
+        const heartbeat = await fetchWithTimeout(
+          heartbeatUrl,
+          { method: "GET" },
+          5_000,
+          "cron heartbeat",
+        )
+        await withTimeout(heartbeat.text(), 5_000, "cron heartbeat body").catch(() => {})
       } catch (err) {
         console.error("cron heartbeat ping failed:", err)
       }

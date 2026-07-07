@@ -7,6 +7,7 @@
 
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
+import { fetchWithTimeout } from "@/lib/fetch-timeout"
 import { sanitizeMarkdown } from "@/lib/sanitize-markdown"
 import { type ProjectLocale } from "@/lib/translate-project"
 
@@ -48,19 +49,24 @@ async function callDeepSeek(
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
   assertAiAvailable()
 
-  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: options.temperature ?? 0.3,
-      max_tokens: options.maxTokens ?? 1500,
-    }),
-  })
+  const response = await fetchWithTimeout(
+    "https://api.deepseek.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: options.temperature ?? 0.3,
+        max_tokens: options.maxTokens ?? 1500,
+      }),
+    },
+    60_000,
+    "DeepSeek enrich project",
+  )
 
   if (!response.ok) {
     const text = await response.text().catch(() => "")

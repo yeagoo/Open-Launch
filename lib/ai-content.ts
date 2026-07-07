@@ -7,6 +7,7 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml as stripHtmlShared, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
+import { fetchWithTimeout } from "@/lib/fetch-timeout"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -62,22 +63,27 @@ async function callDeepSeek(
   }
 
   assertAiAvailable()
-  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+  const response = await fetchWithTimeout(
+    "https://api.deepseek.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: options?.temperature ?? 0.3,
+        max_tokens: options?.maxTokens ?? 2000,
+      }),
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: options?.temperature ?? 0.3,
-      max_tokens: options?.maxTokens ?? 2000,
-    }),
-  })
+    60_000,
+    "DeepSeek content generation",
+  )
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))

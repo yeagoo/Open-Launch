@@ -6,6 +6,8 @@ import { db } from "@/drizzle/db"
 import { launchType as LaunchTypeEnum, project, user } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
+import { fetchWithTimeout } from "@/lib/fetch-timeout"
+
 interface DiscordEmbed {
   title: string
   color: number
@@ -113,13 +115,18 @@ export async function sendDiscordCommentNotification(
     }
 
     // Send request to Discord webhook
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithTimeout(
+      webhookUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
       },
-      body: JSON.stringify(message),
-    })
+      10_000,
+      "discord comment webhook",
+    )
 
     if (!response.ok) {
       console.error(`Error sending to Discord: ${response.status} ${response.statusText}`)
@@ -242,13 +249,18 @@ export async function notifyDiscordLaunch(
     }
 
     // Send request to Discord webhook
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithTimeout(
+      webhookUrl,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
       },
-      body: JSON.stringify(message),
-    })
+      10_000,
+      "discord launch webhook",
+    )
 
     if (!response.ok) {
       console.error(`Error sending to Discord: ${response.status} ${response.statusText}`)
