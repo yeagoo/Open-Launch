@@ -1,13 +1,12 @@
 import dns from "node:dns/promises"
 import type { LookupFunction } from "node:net"
-import { Readable } from "node:stream"
 
 import { Client, interceptors, request, type Dispatcher } from "undici"
 
 import { isPrivateHostname } from "@/lib/utils"
 
 /**
- * SSRF-hardened wrapper around `fetch`.
+ * SSRF-hardened fetch-like wrapper backed by `undici.request`.
  *
  * What it does vs plain fetch:
  *   - Rejects non-http(s) protocols.
@@ -23,13 +22,35 @@ import { isPrivateHostname } from "@/lib/utils"
  *   - Walks redirects manually (`redirect: "manual"`) and re-applies all
  *     of the above to every hop, so a public host can't 302 us into the
  *     internal network.
- *   - Enforces a default 10s timeout chained with the caller's signal.
+ *   - Enforces a default 10s timeout through undici's phase timeouts.
+ *   - Never wraps the undici body in WebStreams/Response; that path is the
+ *     Node 22 production crash trigger this helper exists to avoid.
  *
  * Use anywhere a user-supplied URL is fetched from server-side code.
  */
-export type SafeFetchOptions = Omit<RequestInit, "redirect"> & {
+export type SafeFetchOptions = Omit<RequestInit, "redirect" | "signal"> & {
   maxRedirects?: number
   timeoutMs?: number
+}
+
+export interface SafeFetchResponse {
+  ok: boolean
+  status: number
+  statusText: string
+  headers: Headers
+  url: string
+  text(): Promise<string>
+  arrayBuffer(): Promise<ArrayBuffer>
+  // Mirrors lib.dom's Response.json() shape so existing callers keep inference.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  json<T = any>(): Promise<T>
+}
+
+export interface ReadSafeFetchTextOptions {
+  deadline?: number
+  maxBytes?: number
+  stopAfterHead?: boolean
+  label?: string
 }
 
 const DEFAULT_MAX_REDIRECTS = 5
@@ -67,13 +88,12 @@ export class SafeFetchError extends Error {
 export async function safeFetch(
   input: string | URL,
   init: SafeFetchOptions = {},
-): Promise<Response> {
+): Promise<SafeFetchResponse> {
   const maxRedirects = init.maxRedirects ?? DEFAULT_MAX_REDIRECTS
   const timeoutMs = init.timeoutMs ?? DEFAULT_TIMEOUT_MS
   // Deadline for the whole redirect chain. This uses undici.request with native
   // phase timeouts; do not move this back to global fetch + AbortSignal.
   const deadline = Date.now() + timeoutMs
-  const callerSignal = init.signal as AbortSignal | undefined
 
   let currentUrl: URL
   try {
@@ -86,7 +106,6 @@ export async function safeFetch(
     const records = await resolveSafeUrl(currentUrl)
     const remaining = deadline - Date.now()
     if (remaining <= 0) throw new SafeFetchError("safeFetch: timed out", "timeout")
-    if (callerSignal?.aborted) throw callerSignal.reason
 
     const client = createPinnedClient(currentUrl, records, remaining)
     const dispatcher = createSafeFetchDispatcher(client)
@@ -97,7 +116,6 @@ export async function safeFetch(
         method: init.method ?? "GET",
         headers: normalizeHeaders(init.headers, currentUrl.protocol),
         body: normalizeRequestBody(init.body),
-        signal: callerSignal,
         headersTimeout: remaining,
         bodyTimeout: remaining,
       })
@@ -112,7 +130,7 @@ export async function safeFetch(
     if (response.statusCode >= 300 && response.statusCode < 400) {
       const location = headerValue(response.headers.location)
       if (!location || !REDIRECT_STATUSES.has(response.statusCode)) {
-        return toWebResponse(response, currentUrl, client)
+        return toSafeFetchResponse(response, currentUrl, client)
       }
 
       discardUndiciBody(response.body)
@@ -130,20 +148,37 @@ export async function safeFetch(
       continue
     }
 
-    return toWebResponse(response, currentUrl, client)
+    return toSafeFetchResponse(response, currentUrl, client)
   }
   throw new SafeFetchError("safeFetch: too many redirects", "too_many_redirects")
 }
 
-export function closeSafeFetchResponse(response: Response): void {
-  const cleanup = (response as Response & { [SAFE_FETCH_CLEANUP]?: SafeFetchCleanup })[
-    SAFE_FETCH_CLEANUP
-  ]
+export function closeSafeFetchResponse(response: SafeFetchResponse): void {
+  const cleanup = getSafeFetchCleanup(response)
   if (!cleanup || cleanup.done) return
 
   cleanup.done = true
   discardUndiciBody(cleanup.body)
   void closeClient(cleanup.client)
+}
+
+export async function readSafeFetchText(
+  response: SafeFetchResponse,
+  options: ReadSafeFetchTextOptions = {},
+): Promise<string> {
+  const cleanup = getSafeFetchCleanup(response)
+  if (!cleanup) {
+    const text = await response.text()
+    return boundFallbackText(text, options)
+  }
+
+  return consumeSafeFetchBody(cleanup, async (body) => {
+    const result = await readUndiciBodyText(body, options)
+    return {
+      value: result.text,
+      stoppedEarly: result.stoppedEarly,
+    }
+  })
 }
 
 async function resolveSafeUrl(url: URL): Promise<SafeDnsRecord[]> {
@@ -258,20 +293,18 @@ function normalizeRequestBody(
   return body as Dispatcher.DispatchOptions["body"]
 }
 
-function toWebResponse(response: UndiciResponse, url: URL, client: Client): Response {
+function toSafeFetchResponse(
+  response: UndiciResponse,
+  url: URL,
+  client: Client,
+): SafeFetchResponse {
   const headers = undiciHeadersToHeaders(response.headers)
   const hasNullBody = response.statusCode === 204 || response.statusCode === 304
 
   if (hasNullBody) {
     discardUndiciBody(response.body)
     void closeClient(client)
-    const webResponse = new Response(null, {
-      status: response.statusCode,
-      statusText: response.statusText,
-      headers,
-    })
-    Object.defineProperty(webResponse, "url", { value: url.toString() })
-    return webResponse
+    return createNullBodyResponse(response, url, headers)
   }
 
   const cleanup: SafeFetchCleanup = {
@@ -279,17 +312,165 @@ function toWebResponse(response: UndiciResponse, url: URL, client: Client): Resp
     client,
     done: false,
   }
-  const body = Readable.toWeb(response.body) as ReadableStream
-  closeClientWhenBodyFinishes(cleanup)
 
-  const webResponse = new Response(body, {
+  const safeResponse: SafeFetchResponse = {
+    ok: response.statusCode >= 200 && response.statusCode < 300,
     status: response.statusCode,
     statusText: response.statusText,
     headers,
-  })
-  Object.defineProperty(webResponse, SAFE_FETCH_CLEANUP, { value: cleanup })
-  Object.defineProperty(webResponse, "url", { value: url.toString() })
-  return webResponse
+    url: url.toString(),
+    text: () =>
+      consumeSafeFetchBody(cleanup, async (body) => ({
+        value: (await readUndiciBodyText(body)).text,
+        stoppedEarly: false,
+      })),
+    arrayBuffer: () =>
+      consumeSafeFetchBody(cleanup, async (body) => {
+        const buffer = await readUndiciBodyBuffer(body)
+        return {
+          value: bufferToArrayBuffer(buffer),
+          stoppedEarly: false,
+        }
+      }),
+    json: async <T = unknown>() => {
+      const text = await safeResponse.text()
+      return (text ? JSON.parse(text) : null) as T
+    },
+  }
+  Object.defineProperty(safeResponse, SAFE_FETCH_CLEANUP, { value: cleanup })
+  return safeResponse
+}
+
+function createNullBodyResponse(
+  response: UndiciResponse,
+  url: URL,
+  headers: Headers,
+): SafeFetchResponse {
+  return {
+    ok: response.statusCode >= 200 && response.statusCode < 300,
+    status: response.statusCode,
+    statusText: response.statusText,
+    headers,
+    url: url.toString(),
+    text: async () => "",
+    arrayBuffer: async () => new ArrayBuffer(0),
+    json: async <T = unknown>() => null as T,
+  }
+}
+
+async function consumeSafeFetchBody<T>(
+  cleanup: SafeFetchCleanup,
+  read: (body: UndiciBody) => Promise<{ value: T; stoppedEarly: boolean }>,
+): Promise<T> {
+  if (cleanup.done) throw new Error("Response body already consumed")
+  cleanup.done = true
+
+  try {
+    const result = await read(cleanup.body)
+    if (result.stoppedEarly) {
+      discardUndiciBody(cleanup.body)
+      cleanup.client.destroy()
+    } else {
+      await closeClient(cleanup.client)
+    }
+    return result.value
+  } catch (error) {
+    discardUndiciBody(cleanup.body)
+    cleanup.client.destroy()
+    throw error
+  }
+}
+
+async function readUndiciBodyBuffer(body: UndiciBody): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  for await (const chunk of body) {
+    chunks.push(chunkToBuffer(chunk))
+  }
+  return Buffer.concat(chunks)
+}
+
+async function readUndiciBodyText(
+  body: UndiciBody,
+  options: ReadSafeFetchTextOptions = {},
+): Promise<{ text: string; stoppedEarly: boolean }> {
+  const decoder = new TextDecoder()
+  const maxBytes = options.maxBytes
+  let bytes = 0
+  let text = ""
+
+  for await (const chunk of body) {
+    checkReadDeadline(options)
+
+    const buffer = chunkToBuffer(chunk)
+    bytes += buffer.byteLength
+    text += decoder.decode(buffer, { stream: true })
+
+    const headClose = options.stopAfterHead ? text.match(/<\/head\s*>/i) : null
+    if (headClose?.index !== undefined) {
+      const headEnd = headClose.index + headClose[0].length
+      const headText = text.slice(0, headEnd) + decoder.decode()
+      enforceTextByteLimit(headText, maxBytes, options)
+      return { text: headText, stoppedEarly: true }
+    }
+
+    if (maxBytes && bytes > maxBytes) {
+      throw new Error(byteLimitMessage(options, maxBytes))
+    }
+  }
+
+  checkReadDeadline(options)
+  text += decoder.decode()
+  enforceTextByteLimit(text, maxBytes, options)
+  return { text, stoppedEarly: false }
+}
+
+function checkReadDeadline(options: ReadSafeFetchTextOptions): void {
+  if (options.deadline && Date.now() > options.deadline) {
+    throw new Error(`${options.label ?? "response body"} timed out`)
+  }
+}
+
+function enforceTextByteLimit(
+  text: string,
+  maxBytes: number | undefined,
+  options: ReadSafeFetchTextOptions = {},
+): void {
+  if (!maxBytes) return
+  if (new TextEncoder().encode(text).byteLength > maxBytes) {
+    throw new Error(byteLimitMessage(options, maxBytes))
+  }
+}
+
+function byteLimitMessage(options: ReadSafeFetchTextOptions, maxBytes: number): string {
+  const label = options.label ? options.label.replace(/\s+body$/i, "") : "Response"
+  return `${label} exceeded ${maxBytes} bytes`
+}
+
+function boundFallbackText(text: string, options: ReadSafeFetchTextOptions): string {
+  const headClose = options.stopAfterHead ? text.match(/<\/head\s*>/i) : null
+  const bounded =
+    headClose?.index !== undefined ? text.slice(0, headClose.index + headClose[0].length) : text
+  enforceTextByteLimit(bounded, options.maxBytes, options)
+  return bounded
+}
+
+function chunkToBuffer(chunk: unknown): Buffer {
+  if (Buffer.isBuffer(chunk)) return chunk
+  if (typeof chunk === "string") return Buffer.from(chunk)
+  if (chunk instanceof Uint8Array) return Buffer.from(chunk)
+  return Buffer.from(String(chunk))
+}
+
+function bufferToArrayBuffer(buffer: Buffer): ArrayBuffer {
+  const start = buffer.byteOffset
+  const end = start + buffer.byteLength
+  return buffer.buffer.slice(start, end) as ArrayBuffer
+}
+
+function getSafeFetchCleanup(response: SafeFetchResponse): SafeFetchCleanup | undefined {
+  return (response as SafeFetchResponse & { [SAFE_FETCH_CLEANUP]?: SafeFetchCleanup })[
+    SAFE_FETCH_CLEANUP
+  ]
 }
 
 function discardUndiciBody(body: UndiciBody): void {
@@ -316,23 +497,6 @@ function undiciHeadersToHeaders(headers: UndiciResponse["headers"]): Headers {
 function headerValue(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null
   return value ?? null
-}
-
-function closeClientWhenBodyFinishes(cleanup: SafeFetchCleanup): void {
-  const close = () => {
-    if (cleanup.done) return
-    cleanup.done = true
-    void closeClient(cleanup.client)
-  }
-  const destroy = () => {
-    if (cleanup.done) return
-    cleanup.done = true
-    cleanup.client.destroy()
-  }
-
-  cleanup.body.once("end", close)
-  cleanup.body.once("close", close)
-  cleanup.body.once("error", destroy)
 }
 
 async function closeClient(client: Client): Promise<void> {

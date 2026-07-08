@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { closeSafeFetchResponse, safeFetch } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, safeFetch, type SafeFetchResponse } from "@/lib/safe-fetch"
 import { isPrivateHostname } from "@/lib/utils"
 import { getAllCategories } from "@/app/actions/projects"
 
@@ -164,7 +164,7 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
     if (!["http:", "https:"].includes(resolvedUrl.protocol)) return null
     if (isPrivateHostname(resolvedUrl.hostname)) return null
 
-    let response: Response
+    let response: SafeFetchResponse
     try {
       response = await safeFetch(resolvedUrl.toString(), {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; OpenLaunch/1.0)" },

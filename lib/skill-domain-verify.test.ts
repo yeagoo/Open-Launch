@@ -26,6 +26,20 @@ vi.mock("@/lib/safe-fetch", () => {
   return {
     safeFetch: safeFetchMock,
     closeSafeFetchResponse: closeSafeFetchResponseMock,
+    readSafeFetchText: async (
+      response: Response,
+      options: { maxBytes?: number; stopAfterHead?: boolean; label?: string } = {},
+    ) => {
+      const text = await response.text()
+      const headClose = options.stopAfterHead ? text.match(/<\/head\s*>/i) : null
+      const bounded =
+        headClose?.index !== undefined ? text.slice(0, headClose.index + headClose[0].length) : text
+      if (options.maxBytes && new TextEncoder().encode(bounded).byteLength > options.maxBytes) {
+        const label = options.label ? options.label.replace(/\s+body$/i, "") : "Response"
+        throw new Error(`${label} exceeded ${options.maxBytes} bytes`)
+      }
+      return bounded
+    },
     SafeFetchError: MockSafeFetchError,
   }
 })

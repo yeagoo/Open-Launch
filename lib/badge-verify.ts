@@ -1,4 +1,9 @@
-import { closeSafeFetchResponse, safeFetch, SafeFetchError } from "@/lib/safe-fetch"
+import {
+  closeSafeFetchResponse,
+  safeFetch,
+  SafeFetchError,
+  type SafeFetchResponse,
+} from "@/lib/safe-fetch"
 import { tinyfishCrawl } from "@/lib/tinyfish"
 import { isPrivateHostname } from "@/lib/utils"
 
@@ -61,7 +66,7 @@ type RawFetchOutcome =
   | { kind: "challenge" }
 
 async function tryRawFetch(url: URL): Promise<RawFetchOutcome> {
-  let response: Response
+  let response: SafeFetchResponse
   try {
     response = await safeFetch(url, {
       headers: { "User-Agent": "aat.ee Badge Verifier/1.0" },

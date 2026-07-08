@@ -1,7 +1,13 @@
 import dns from "node:dns/promises"
 
 import { withTimeout } from "@/lib/fetch-timeout"
-import { closeSafeFetchResponse, safeFetch, SafeFetchError } from "@/lib/safe-fetch"
+import {
+  closeSafeFetchResponse,
+  readSafeFetchText,
+  safeFetch,
+  SafeFetchError,
+  type SafeFetchResponse,
+} from "@/lib/safe-fetch"
 import { buildSkillDomainMethods, type SkillDomainMethod } from "@/lib/skill-domains"
 
 interface SkillDomainProof {
@@ -156,7 +162,7 @@ async function fetchFirstText(
   return { ok: false, reason: lastReason }
 }
 
-function responseHostMatches(response: Response, expectedHostname: string): boolean {
+function responseHostMatches(response: SafeFetchResponse, expectedHostname: string): boolean {
   try {
     const finalUrl = new URL(response.url)
     return normalizeHostname(finalUrl.hostname) === normalizeHostname(expectedHostname)
@@ -170,7 +176,7 @@ function normalizeHostname(hostname: string): string {
 }
 
 async function readBoundedResponseText(
-  response: Response,
+  response: SafeFetchResponse,
   deadline: number,
   maxBytes: number,
   options: { stopAfterHead: boolean },
@@ -183,53 +189,12 @@ async function readBoundedResponseText(
     }
   }
 
-  if (!response.body) return ""
-
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let bytes = 0
-  let text = ""
-
-  try {
-    while (true) {
-      const remaining = deadline - Date.now()
-      if (remaining <= 0) {
-        throw new Error("Verification response body timed out")
-      }
-
-      const chunk = await withTimeout(reader.read(), remaining, "verification response body")
-      if (chunk.done) break
-
-      bytes += chunk.value.byteLength
-      text += decoder.decode(chunk.value, { stream: true })
-
-      const headClose = options.stopAfterHead ? text.match(/<\/head\s*>/i) : null
-      if (headClose?.index !== undefined) {
-        const headEnd = headClose.index + headClose[0].length
-        const headText = text.slice(0, headEnd)
-        if (new TextEncoder().encode(headText).byteLength > maxBytes) {
-          throw new Error(`Verification response exceeded ${maxBytes} bytes`)
-        }
-        text = headText
-        text += decoder.decode()
-        return text
-      }
-
-      if (bytes > maxBytes) {
-        throw new Error(`Verification response exceeded ${maxBytes} bytes`)
-      }
-    }
-
-    text += decoder.decode()
-    return text
-  } finally {
-    try {
-      reader.releaseLock()
-    } catch {
-      // A timed-out read may still be pending. Do not cancel it: cancelling
-      // fetch-backed web streams is the production SSR crash trigger.
-    }
-  }
+  return readSafeFetchText(response, {
+    deadline,
+    maxBytes,
+    stopAfterHead: options.stopAfterHead,
+    label: "Verification response body",
+  })
 }
 
 export function extractAatVerifyMetaContent(html: string): string | null {
