@@ -5,7 +5,7 @@
 
 import sharp from "sharp"
 
-import { closeSafeFetchResponse, safeFetch } from "@/lib/safe-fetch"
+import { closeSafeFetchResponse, readSafeFetchBuffer, safeFetch } from "@/lib/safe-fetch"
 
 import { uploadFileToR2 } from "./r2-client"
 
@@ -61,14 +61,17 @@ export async function downloadAndUploadImage(
       }
 
       // 检查文件大小（限制 5MB）
+      const maxImageBytes = 5 * 1024 * 1024
       const contentLength = response.headers.get("content-length")
-      if (contentLength && parseInt(contentLength) > 5 * 1024 * 1024) {
+      if (contentLength && parseInt(contentLength) > maxImageBytes) {
         throw new Error(`Image too large: ${contentLength} bytes`)
       }
 
       // 转换为 Buffer
-      const arrayBuffer = await response.arrayBuffer()
-      let buffer: Buffer = Buffer.from(arrayBuffer)
+      let buffer = await readSafeFetchBuffer(response, {
+        maxBytes: maxImageBytes,
+        label: "Image download",
+      })
 
       console.log(`✅ Downloaded ${buffer.length} bytes, type: ${contentType}`)
 

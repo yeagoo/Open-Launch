@@ -2,7 +2,7 @@ import { Readable } from "node:stream"
 
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { closeSafeFetchResponse, safeFetch } from "./safe-fetch"
+import { closeSafeFetchResponse, readSafeFetchBuffer, safeFetch } from "./safe-fetch"
 
 const lookupMock = vi.hoisted(() => vi.fn())
 const requestMock = vi.hoisted(() => vi.fn())
@@ -168,6 +168,24 @@ describe("safeFetch SSRF guard", () => {
     expect(response.url).toBe("https://public.example/page")
     expect(response.headers.get("content-type")).toBe("text/plain")
     expect(await response.text()).toBe("ok")
+  })
+
+  it("bounds buffered body reads and closes oversized responses", async () => {
+    lookupMock.mockResolvedValueOnce([{ address: "93.184.216.34", family: 4 }])
+    requestMock.mockResolvedValueOnce({
+      ...undiciResponse(""),
+      body: Readable.from([Buffer.alloc(4), Buffer.alloc(4)]),
+    })
+
+    const response = await safeFetch("https://public.example/image.png")
+
+    await expect(
+      readSafeFetchBuffer(response, {
+        maxBytes: 5,
+        label: "Image download",
+      }),
+    ).rejects.toThrow("Image download exceeded 5 bytes")
+    expect(clientInstances[0].destroy).toHaveBeenCalledTimes(1)
   })
 
   it("lets callers explicitly close unconsumed responses", async () => {

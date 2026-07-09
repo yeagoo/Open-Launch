@@ -40,6 +40,9 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: Build
+        run: bunx next build
+
       - name: Audit dependencies
         run: bun audit
         continue-on-error: true

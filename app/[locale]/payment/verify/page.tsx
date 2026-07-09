@@ -7,7 +7,7 @@ import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
 // Pinned to match `app/api/auth/stripe/webhook/route.ts` — see
 // that file for the version-pinning rationale.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2026-06-24.dahlia",
 })
 
 export const dynamic = "force-dynamic"

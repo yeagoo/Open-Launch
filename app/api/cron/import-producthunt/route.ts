@@ -24,6 +24,7 @@ import {
   getTop5Posts,
   type ProductHuntPost,
 } from "@/lib/producthunt"
+import { sanitizeRichText } from "@/lib/sanitize"
 
 /**
  * ProductHunt 自动导入 Cron Job
@@ -115,7 +116,7 @@ export async function GET(request: Request) {
 
         const tags = extractTags(post.topics)
         const categoryIds = extractCategoryIds(post.topics)
-        const description = cleanDescription(post.description)
+        const description = sanitizeRichText(cleanDescription(post.description))
 
         // 获取真实网站地址（跟随 ProductHunt 重定向）
         console.log(`🌐 Getting real website URL for "${post.name}"...`)

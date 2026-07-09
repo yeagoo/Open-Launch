@@ -32,7 +32,7 @@ import {
 // `stripe` npm SDK; the SDK's `LatestApiVersion` type tracks what
 // it knows about.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2026-06-24.dahlia",
 })
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 

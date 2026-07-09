@@ -14,7 +14,7 @@ import { checkRateLimit } from "@/lib/rate-limit"
 // Pinned to the SDK's latest known API version — see
 // `app/api/auth/stripe/webhook/route.ts` for the rationale.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2026-06-24.dahlia",
 })
 
 const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)

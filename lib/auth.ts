@@ -12,7 +12,7 @@ import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/em
 // the `stripe` npm package — the SDK's `LatestApiVersion` type
 // tracks what it knows about.
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2026-06-24.dahlia",
 })
 
 export const auth = betterAuth({

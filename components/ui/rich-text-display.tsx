@@ -1,3 +1,4 @@
+import { sanitizeRichText } from "@/lib/sanitize"
 import { cn } from "@/lib/utils"
 
 /**
@@ -22,10 +23,12 @@ interface RichTextDisplayProps {
 }
 
 export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
+  const safeContent = sanitizeRichText(content)
+
   return (
     <div
       className={cn(RICH_TEXT_DISPLAY_STYLES, className)}
-      dangerouslySetInnerHTML={{ __html: content }}
+      dangerouslySetInnerHTML={{ __html: safeContent }}
     />
   )
 }

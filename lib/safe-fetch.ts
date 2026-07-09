@@ -53,6 +53,12 @@ export interface ReadSafeFetchTextOptions {
   label?: string
 }
 
+export interface ReadSafeFetchBufferOptions {
+  deadline?: number
+  maxBytes?: number
+  label?: string
+}
+
 const DEFAULT_MAX_REDIRECTS = 5
 const DEFAULT_TIMEOUT_MS = 10_000
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308])
@@ -177,6 +183,26 @@ export async function readSafeFetchText(
     return {
       value: result.text,
       stoppedEarly: result.stoppedEarly,
+    }
+  })
+}
+
+export async function readSafeFetchBuffer(
+  response: SafeFetchResponse,
+  options: ReadSafeFetchBufferOptions = {},
+): Promise<Buffer> {
+  const cleanup = getSafeFetchCleanup(response)
+  if (!cleanup) {
+    const buffer = Buffer.from(await response.arrayBuffer())
+    enforceBufferByteLimit(buffer.byteLength, options.maxBytes, options)
+    return buffer
+  }
+
+  return consumeSafeFetchBody(cleanup, async (body) => {
+    const buffer = await readUndiciBodyBuffer(body, options)
+    return {
+      value: buffer,
+      stoppedEarly: false,
     }
   })
 }
@@ -381,10 +407,19 @@ async function consumeSafeFetchBody<T>(
   }
 }
 
-async function readUndiciBodyBuffer(body: UndiciBody): Promise<Buffer> {
+async function readUndiciBodyBuffer(
+  body: UndiciBody,
+  options: ReadSafeFetchBufferOptions = {},
+): Promise<Buffer> {
   const chunks: Buffer[] = []
+  let bytes = 0
+
   for await (const chunk of body) {
-    chunks.push(chunkToBuffer(chunk))
+    checkReadDeadline(options)
+    const buffer = chunkToBuffer(chunk)
+    bytes += buffer.byteLength
+    enforceBufferByteLimit(bytes, options.maxBytes, options)
+    chunks.push(buffer)
   }
   return Buffer.concat(chunks)
 }
@@ -444,6 +479,18 @@ function enforceTextByteLimit(
 function byteLimitMessage(options: ReadSafeFetchTextOptions, maxBytes: number): string {
   const label = options.label ? options.label.replace(/\s+body$/i, "") : "Response"
   return `${label} exceeded ${maxBytes} bytes`
+}
+
+function enforceBufferByteLimit(
+  bytes: number,
+  maxBytes: number | undefined,
+  options: ReadSafeFetchBufferOptions = {},
+): void {
+  if (!maxBytes) return
+  if (bytes > maxBytes) {
+    const label = options.label ? options.label.replace(/\s+body$/i, "") : "Response"
+    throw new Error(`${label} exceeded ${maxBytes} bytes`)
+  }
 }
 
 function boundFallbackText(text: string, options: ReadSafeFetchTextOptions): string {

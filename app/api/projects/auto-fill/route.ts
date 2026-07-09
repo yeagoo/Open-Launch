@@ -9,7 +9,12 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { closeSafeFetchResponse, safeFetch, type SafeFetchResponse } from "@/lib/safe-fetch"
+import {
+  closeSafeFetchResponse,
+  readSafeFetchBuffer,
+  safeFetch,
+  type SafeFetchResponse,
+} from "@/lib/safe-fetch"
 import { isPrivateHostname } from "@/lib/utils"
 import { getAllCategories } from "@/app/actions/projects"
 
@@ -180,13 +185,16 @@ async function tryDownloadAndUploadLogo(imageUrl: string, baseUrl: URL): Promise
       const contentType = response.headers.get("content-type") || ""
       if (!contentType.startsWith("image/")) return null
 
+      const maxImageBytes = 5 * 1024 * 1024
       const contentLength = parseInt(response.headers.get("content-length") || "0", 10)
-      if (contentLength > 5 * 1024 * 1024) return null // 5MB limit
+      if (contentLength > maxImageBytes) return null // 5MB limit
 
-      const arrayBuffer = await response.arrayBuffer()
-      const inputBuffer = Buffer.from(arrayBuffer)
+      const inputBuffer = await readSafeFetchBuffer(response, {
+        maxBytes: maxImageBytes,
+        label: "Logo download",
+      })
 
-      if (inputBuffer.length === 0 || inputBuffer.length > 5 * 1024 * 1024) return null
+      if (inputBuffer.length === 0 || inputBuffer.length > maxImageBytes) return null
 
       // Convert to AVIF via sharp (same pattern as app/api/upload/route.ts)
       let finalBuffer: Buffer

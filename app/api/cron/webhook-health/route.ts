@@ -10,7 +10,7 @@ import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
 import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2026-06-24.dahlia",
 })
 
 /**
