@@ -8,6 +8,8 @@ const intlMiddleware = createMiddleware(routing)
 
 const BOT_UA_REGEX = /bot|crawler|spider|crawling|slurp|facebookexternalhit/i
 
+const REQUEST_ID_HEADER = "x-aat-request-id"
+
 const SESSION_GUARDED_PATHS = ["/dashboard", "/settings", "/admin"]
 
 // Routes that intentionally live outside the [locale] segment (English-only or admin)
@@ -29,20 +31,35 @@ function isNonLocalized(pathname: string): boolean {
   return NON_LOCALIZED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"))
 }
 
+function requestIdFor(request: NextRequest): string {
+  return (
+    request.headers.get(REQUEST_ID_HEADER) ||
+    request.headers.get("x-zeabur-request-id") ||
+    request.headers.get("cf-ray") ||
+    crypto.randomUUID()
+  )
+}
+
+function withRequestId<T extends Response>(response: T, requestId: string): T {
+  response.headers.set(REQUEST_ID_HEADER, requestId)
+  return response
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const requestId = requestIdFor(request)
 
   // Session guards run first (cookie-only check; role/ban verified in layouts)
   if (isSessionGuarded(pathname)) {
     const sessionCookie = getSessionCookie(request)
     if (!sessionCookie) {
-      return NextResponse.redirect(new URL("/", request.url))
+      return withRequestId(NextResponse.redirect(new URL("/", request.url)), requestId)
     }
   }
 
   // Non-localized routes (admin / compare / alternatives) skip intl rewriting entirely
   if (isNonLocalized(pathname)) {
-    return NextResponse.next()
+    return withRequestId(NextResponse.next(), requestId)
   }
 
   // Bots: strip Accept-Language so next-intl uses the default locale (no surprise redirects)
@@ -51,14 +68,15 @@ export async function proxy(request: NextRequest) {
     const headers = new Headers(request.headers)
     headers.delete("accept-language")
     headers.delete("cookie")
+    headers.set(REQUEST_ID_HEADER, requestId)
     const sanitized = new NextRequest(request.url, {
       headers,
       method: request.method,
     })
-    return intlMiddleware(sanitized)
+    return withRequestId(intlMiddleware(sanitized), requestId)
   }
 
-  return intlMiddleware(request)
+  return withRequestId(intlMiddleware(request), requestId)
 }
 
 export const config = {
