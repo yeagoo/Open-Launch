@@ -81,6 +81,7 @@ async function sendResendEmail(payload: {
   html: string
   replyTo: string | null
 }): Promise<ResendSendSuccess> {
+  const deadline = Date.now() + RESEND_TIMEOUT_MS
   const response = await fetchWithTimeout(
     RESEND_API_URL,
     {
@@ -103,7 +104,8 @@ async function sendResendEmail(payload: {
     "Resend email API",
   )
 
-  const rawText = await withTimeout(response.text(), RESEND_TIMEOUT_MS, "Resend email API body")
+  const remaining = Math.max(1, deadline - Date.now())
+  const rawText = await withTimeout(response.text(), remaining, "Resend email API body")
   const parsed = parseResendJson(rawText)
 
   if (!response.ok) {

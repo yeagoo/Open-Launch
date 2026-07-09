@@ -24,6 +24,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   process.env = { ...originalEnv }
 })
 
@@ -101,6 +102,23 @@ describe("sendEmail", () => {
         html: "<p>Hello</p>",
       }),
     ).rejects.toThrow("Resend API error: invalid success response")
+  })
+
+  it("uses the remaining request deadline for the response body", async () => {
+    vi.spyOn(Date, "now").mockReturnValueOnce(1_000).mockReturnValueOnce(3_500)
+    fetchWithTimeoutMock.mockResolvedValueOnce(resendResponse(200, { id: "email_123" }))
+
+    await sendEmail({
+      to: "user@example.com",
+      subject: "Subject",
+      html: "<p>Hello</p>",
+    })
+
+    expect(withTimeoutMock).toHaveBeenCalledWith(
+      expect.any(Promise),
+      7_500,
+      "Resend email API body",
+    )
   })
 
   it("throws when RESEND_API_KEY is not configured", async () => {
