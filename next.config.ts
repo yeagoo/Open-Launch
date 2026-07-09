@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
     return [{ source: "/:path*", headers: securityHeaders }]
   },
   images: {
+    // Remote product/logo assets are already uploaded to R2 as optimized AVIFs.
+    // Keep them as direct CDN URLs instead of routing through Next's image
+    // optimizer: the optimizer fetches remote images server-side with
+    // AbortSignal, which triggers Node 22 WebStreams corruption in production.
+    unoptimized: true,
     // 设置高质量图片压缩（默认是 75）
     formats: ["image/webp", "image/avif"],
     // Default 75 covers most usage; 95 is what the project's premium
