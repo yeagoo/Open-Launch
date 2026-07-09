@@ -3,15 +3,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { directoryOrder, project, webhookHealthCheck } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
-import Stripe from "stripe"
+import type Stripe from "stripe"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
+import { createStripeClient } from "@/lib/stripe"
 import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-})
 
 /**
  * Stripe webhook health monitor.
@@ -54,6 +51,12 @@ const MAX_EVENTS_TO_CHECK = 100 // Stripe events.list max per page
 export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request)
   if (authError) return authError
+
+  const stripe = createStripeClient()
+  if (!stripe) {
+    console.error("❌ STRIPE_SECRET_KEY is not configured")
+    return NextResponse.json({ error: "Stripe configuration error" }, { status: 500 })
+  }
 
   try {
     const nowSec = Math.floor(Date.now() / 1000)

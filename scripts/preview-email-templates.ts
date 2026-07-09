@@ -50,7 +50,7 @@ try {
   if (!fs.existsSync(previewDir)) {
     fs.mkdirSync(previewDir, { recursive: true })
   }
-} catch (error) {
+} catch {
   // Directory might already exist, ignore error
 }
 

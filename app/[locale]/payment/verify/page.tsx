@@ -1,14 +1,7 @@
 import { redirect } from "next/navigation"
 
-import Stripe from "stripe"
-
 import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
-
-// Pinned to match `app/api/auth/stripe/webhook/route.ts` — see
-// that file for the version-pinning rationale.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-})
+import { createStripeClient } from "@/lib/stripe"
 
 export const dynamic = "force-dynamic"
 
@@ -46,6 +39,12 @@ export default async function PaymentVerifyPage({
   // No session id: the user typed the URL or came from a stale tab.
   // Send them somewhere useful instead of a "missing param" error.
   if (!sessionId) {
+    redirect(`/${locale}/dashboard`)
+  }
+
+  const stripe = createStripeClient()
+  if (!stripe) {
+    console.error("[payment-verify] STRIPE_SECRET_KEY is not configured")
     redirect(`/${locale}/dashboard`)
   }
 

@@ -3,17 +3,14 @@ import { stripe } from "@better-auth/stripe"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, captcha, oneTap } from "better-auth/plugins"
-import Stripe from "stripe"
 
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
+import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
 
-// Pinned to the SDK's latest known API version. Bump together with
-// the `stripe` npm package — the SDK's `LatestApiVersion` type
-// tracks what it knows about.
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-})
+const stripeClient = createStripeClient()
+const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+const stripeConfigured = Boolean(stripeClient && stripeWebhookSecret)
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
@@ -75,7 +72,7 @@ export const auth = betterAuth({
       : ["https://www.aat.ee"],
   plugins: [
     stripe({
-      stripeClient,
+      stripeClient: stripeClient ?? createBuildSafeStripeClient(),
       // ⚠️ The webhook this plugin mounts at /api/auth/stripe/webhook is
       // INTENTIONALLY DEAD. Our explicit static route
       // (app/api/auth/stripe/webhook/route.ts) sits at the same path and
@@ -86,8 +83,8 @@ export const auth = betterAuth({
       // route: if it's removed, this no-op handler silently takes over and
       // every payment becomes an orphan. The secret stays only because the
       // plugin's type requires it (used for customer creation, not events).
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-      createCustomerOnSignUp: true,
+      stripeWebhookSecret: stripeWebhookSecret ?? "whsec_build_safe_placeholder",
+      createCustomerOnSignUp: stripeConfigured,
     }),
     captcha({
       provider: "cloudflare-turnstile", // or "google-recaptcha"

@@ -10,7 +10,7 @@
 
 import { db } from "@/drizzle/db"
 import { project, user } from "@/drizzle/db/schema"
-import { eq, notInArray, sql } from "drizzle-orm"
+import { eq, notInArray } from "drizzle-orm"
 
 async function fixProjectCreators() {
   console.log("🔧 Starting project creators fix...")

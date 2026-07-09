@@ -10,7 +10,7 @@ import {
   project,
 } from "@/drizzle/db/schema"
 import { and, eq, inArray, sql } from "drizzle-orm"
-import Stripe from "stripe"
+import type Stripe from "stripe"
 
 import { LAUNCH_SETTINGS } from "@/lib/constants"
 import {
@@ -21,20 +21,11 @@ import {
 } from "@/lib/directory-tiers"
 import { enqueueLaunchSyndication } from "@/lib/launch-syndication"
 import { dedupeOnce } from "@/lib/rate-limit"
+import { createStripeClient } from "@/lib/stripe"
 import {
   sendAdminPaymentNotification,
   sendBuyerDirectoryOrderConfirmation,
 } from "@/lib/transactional-emails"
-
-// Initialiser le client Stripe.
-// Pin the API version explicitly so behaviour stays stable across
-// Stripe-side default-version updates. Bump together with the
-// `stripe` npm SDK; the SDK's `LatestApiVersion` type tracks what
-// it knows about.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-})
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 // Expected charge for a legacy Premium Launch, in cents.
 const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
@@ -161,6 +152,7 @@ function shouldEmailOrphan(sessionId: string): Promise<boolean> {
  * webhook still returns 200 so Stripe doesn't retry forever.
  */
 async function handleOrphanPayment(
+  stripe: Stripe,
   session: Stripe.Checkout.Session,
   reason: string,
   ref: string | null,
@@ -267,10 +259,13 @@ async function handleOrphanPayment(
 export async function POST(request: Request) {
   try {
     // 检查环境变量是否配置
-    if (!process.env.STRIPE_SECRET_KEY) {
+    const stripe = createStripeClient()
+    if (!stripe) {
       console.error("❌ STRIPE_SECRET_KEY is not configured")
       return NextResponse.json({ error: "Stripe configuration error" }, { status: 500 })
     }
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
     if (!webhookSecret) {
       console.error("❌ STRIPE_WEBHOOK_SECRET is not configured")
       return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 })
@@ -304,7 +299,7 @@ export async function POST(request: Request) {
       // ids that the premium-launch flow uses.
       const ref = session.client_reference_id
       if (ref?.startsWith(DIRECTORY_ORDER_REF_PREFIX)) {
-        return await handleDirectoryOrderCompleted(session, ref)
+        return await handleDirectoryOrderCompleted(stripe, session, ref)
       }
 
       // Find the project using client_reference_id (which we set as projectId)
@@ -312,7 +307,7 @@ export async function POST(request: Request) {
       if (!projectId) {
         console.error("⚠️ No project ID found in session metadata, session_id:", session.id)
         // 返回 200 避免 Stripe 重试，但发管理员告警
-        await handleOrphanPayment(session, "no client_reference_id", null)
+        await handleOrphanPayment(stripe, session, "no client_reference_id", null)
         return NextResponse.json({ received: true, warning: "No project ID" }, { status: 200 })
       }
 
@@ -337,7 +332,7 @@ export async function POST(request: Request) {
         if (!projectData) {
           console.error("⚠️ Project not found:", projectId)
           // 返回 200 避免 Stripe 无限重试,同时发管理员告警
-          await handleOrphanPayment(session, `project ${projectId} not found`, projectId)
+          await handleOrphanPayment(stripe, session, `project ${projectId} not found`, projectId)
           return NextResponse.json(
             { received: true, warning: "Project not found" },
             { status: 200 },
@@ -378,6 +373,7 @@ export async function POST(request: Request) {
             `⚠️ Premium amount mismatch — scheduling HELD. expected=${expectedPremiumCents}¢, stripe=${session.amount_total}, discount=${session.total_details?.amount_discount ?? 0}, project=${projectId}`,
           )
           await handleOrphanPayment(
+            stripe,
             session,
             `premium amount mismatch (expected ${expectedPremiumCents}¢) for project ${projectId}`,
             projectId,
@@ -486,7 +482,7 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session
       const ref = session.client_reference_id
       if (ref?.startsWith(DIRECTORY_ORDER_REF_PREFIX)) {
-        return await handleDirectoryOrderCompleted(session, ref)
+        return await handleDirectoryOrderCompleted(stripe, session, ref)
       }
       // Premium-launch flow uses card-only checkout, so async_payment
       // events shouldn't hit this branch; log and acknowledge.
@@ -599,6 +595,7 @@ export async function POST(request: Request) {
  *   pending → paid → fulfilled       (Basic: same row, both flags set)
  */
 async function handleDirectoryOrderCompleted(
+  stripe: Stripe,
   session: Stripe.Checkout.Session,
   ref: string,
 ): Promise<NextResponse> {
@@ -630,7 +627,12 @@ async function handleDirectoryOrderCompleted(
     // Orphan — most likely the project (and its directory_order via
     // CASCADE) was deleted between createDirectoryOrder + the buyer
     // paying. Send admin alert so this $ doesn't fall into a hole.
-    await handleOrphanPayment(session, `directory_order ${orderId} not found (deleted?)`, ref)
+    await handleOrphanPayment(
+      stripe,
+      session,
+      `directory_order ${orderId} not found (deleted?)`,
+      ref,
+    )
     return NextResponse.json(
       { received: true, warning: "Directory order not found" },
       { status: 200 },
@@ -694,6 +696,7 @@ async function handleDirectoryOrderCompleted(
       `⚠️ Directory order REFUNDED — subscription-mode session for one-time tier=${tier}, order=${orderId}. Cancelling subscription + refunding first charge.`,
     )
     await handleOrphanPayment(
+      stripe,
       session,
       `subscription-mode checkout for one-time directory tier ${tier} (Payment Link still recurring?) — order ${orderId}`,
       ref,
@@ -746,6 +749,7 @@ async function handleDirectoryOrderCompleted(
     if (STALE_STATUSES.includes(order.status)) {
       console.error("⚠️ Paid webhook hit non-pending order:", orderId, "status was:", order.status)
       await handleOrphanPayment(
+        stripe,
         session,
         `directory_order ${orderId} was '${order.status}' when paid webhook arrived`,
         ref,
@@ -765,6 +769,7 @@ async function handleDirectoryOrderCompleted(
         session.id,
       )
       await handleOrphanPayment(
+        stripe,
         session,
         `directory_order ${orderId} paid twice — duplicate session ${session.id} (first ${order.stripeSessionId})`,
         ref,

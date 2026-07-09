@@ -5,17 +5,12 @@ import { NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
 import { and, eq, sql } from "drizzle-orm"
-import Stripe from "stripe"
+import type Stripe from "stripe"
 
 import { auth } from "@/lib/auth"
 import { LAUNCH_SETTINGS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
-
-// Pinned to the SDK's latest known API version — see
-// `app/api/auth/stripe/webhook/route.ts` for the rationale.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-06-24.dahlia",
-})
+import { createStripeClient } from "@/lib/stripe"
 
 const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
 const EXPECTED_CURRENCY = "usd"
@@ -55,6 +50,12 @@ export async function GET(request: Request) {
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing session ID" }, { status: 400 })
+    }
+
+    const stripe = createStripeClient()
+    if (!stripe) {
+      console.error("❌ STRIPE_SECRET_KEY is not configured")
+      return NextResponse.json({ error: "Stripe configuration error" }, { status: 500 })
     }
 
     // Verify with Stripe that this session is real and paid
