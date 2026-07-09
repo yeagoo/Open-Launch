@@ -57,6 +57,7 @@ export interface FetchWithTimeoutResponse {
   status: number
   statusText: string
   headers: Headers
+  arrayBuffer(): Promise<ArrayBuffer>
   text(): Promise<string>
   // Mirrors lib.dom's Response.json() shape so existing callers keep inference.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,10 +185,15 @@ function toFetchWithTimeoutResponse(
   response: Awaited<ReturnType<typeof request>>,
 ): FetchWithTimeoutResponse {
   let consumed = false
-  async function readText(): Promise<string> {
+  async function readArrayBuffer(): Promise<ArrayBuffer> {
     if (consumed) throw new Error("Response body already consumed")
     consumed = true
-    return response.body.text()
+    return response.body.arrayBuffer()
+  }
+
+  async function readText(): Promise<string> {
+    const buffer = await readArrayBuffer()
+    return new TextDecoder().decode(buffer)
   }
 
   return {
@@ -195,6 +201,7 @@ function toFetchWithTimeoutResponse(
     status: response.statusCode,
     statusText: response.statusText,
     headers: undiciHeadersToHeaders(response.headers),
+    arrayBuffer: readArrayBuffer,
     text: readText,
     // Mirrors lib.dom's Response.json() shape so existing callers keep inference.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
