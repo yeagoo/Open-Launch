@@ -72,7 +72,7 @@ export function SkillApiKeysCard({ initialKeys }: { initialKeys: SkillApiKeyList
   const isCreating = isPending && revokingId === null
 
   return (
-    <Card className="border dark:border-zinc-800">
+    <Card id="skill-api-keys" className="scroll-mt-24 border dark:border-zinc-800">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <RiKey2Line className="text-muted-foreground h-5 w-5" />
