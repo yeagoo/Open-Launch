@@ -11,9 +11,13 @@ import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
 const stripeClient = createStripeClient()
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 const stripeConfigured = Boolean(stripeClient && stripeWebhookSecret)
+const authSecret =
+  process.env.BETTER_AUTH_SECRET ||
+  (process.env.CI ? "open-launch-ci-build-secret-do-not-use-in-production" : undefined)
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+  secret: authSecret,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),

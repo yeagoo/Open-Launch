@@ -37,8 +37,10 @@ const fontEditorial = FontEditorial({
   variable: "--font-editorial",
 })
 
+const publicBaseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL!),
+  metadataBase: new URL(publicBaseUrl),
   title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
   description:
     "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
@@ -64,7 +66,7 @@ export const metadata: Metadata = {
     title: "aat.ee – Discover New Startups, AI Tools & Product Launches | Product Hunt Alternative",
     description:
       "Explore the latest startups, AI tools, and SaaS launches on aat.ee — the modern Product Hunt alternative for makers and early adopters. Submit your own product, get discovered by a global tech audience, and grow your launch visibility.",
-    url: process.env.NEXT_PUBLIC_URL,
+    url: publicBaseUrl,
     siteName: "aat.ee",
     images: [
       {
@@ -123,7 +125,7 @@ export default async function RootLayout({
           rel="alternate"
           type="application/rss+xml"
           title="aat.ee RSS Feed"
-          href={`${process.env.NEXT_PUBLIC_URL}/feed.xml`}
+          href={`${publicBaseUrl}/feed.xml`}
         />
 
         {/* Structured Data - Organization Schema */}
