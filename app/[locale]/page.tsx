@@ -155,11 +155,11 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             <div className="bg-secondary/70 hover:bg-secondary border-border/40 relative z-10 overflow-hidden rounded-lg border">
               <Link href="/pricing" className="block">
                 <div className="container mx-auto max-w-6xl px-4 py-4 md:py-5">
-                  <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-6">
-                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                  <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-5">
+                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:flex-nowrap md:gap-2.5 lg:gap-3">
                       {promoSites.map((d) => (
-                        <div key={d.domain} className="relative">
-                          <div className="bg-background border-border/60 flex h-12 w-12 items-center justify-center rounded-md border p-2 md:h-14 md:w-14">
+                        <div key={d.domain} className="relative shrink-0">
+                          <div className="bg-background border-border/60 flex h-12 w-12 items-center justify-center rounded-md border p-2 md:h-12 md:w-12 xl:h-14 xl:w-14">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={d.logo ?? "/logo.svg"}
