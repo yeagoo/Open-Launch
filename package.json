@@ -17,6 +17,7 @@
     "prepare": "npx simple-git-hooks",
     "skill:receivers:check": "bun scripts/check-skill-receivers.ts",
     "skill:receivers:smoke": "bun scripts/smoke-skill-receivers.ts",
+    "prestart": "node scripts/check-node-runtime.mjs",
     "start": "next start",
     "test": "node ./node_modules/vitest/vitest.mjs run",
     "test:watch": "node ./node_modules/vitest/vitest.mjs",
@@ -208,6 +209,6 @@
     "vitest": "^4.1.10"
   },
   "engines": {
-    "node": "22.22.2"
+    "node": "24.15.0"
   }
 }

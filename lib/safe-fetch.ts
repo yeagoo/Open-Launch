@@ -23,8 +23,8 @@ import { isPrivateHostname } from "@/lib/utils"
  *     of the above to every hop, so a public host can't 302 us into the
  *     internal network.
  *   - Enforces a default 10s timeout through undici's phase timeouts.
- *   - Never wraps the undici body in WebStreams/Response; that path is the
- *     Node 22 production crash trigger this helper exists to avoid.
+ *   - Never wraps the undici body in WebStreams/Response, keeping untrusted
+ *     outbound URL handling independent from the framework's render streams.
  *
  * Use anywhere a user-supplied URL is fetched from server-side code.
  */

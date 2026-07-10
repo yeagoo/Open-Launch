@@ -68,9 +68,9 @@ Project memories:
 Use:
 
 ```bash
-export NODE22_BIN="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name 'v22.*' | sort -V | tail -1)/bin"
-export PATH="$NODE22_BIN:$HOME/.bun/bin:$PATH"
-node --version # must be Node 22.x; production target is 22.23.0
+export NODE24_BIN="$(find "$HOME/.nvm/versions/node" -maxdepth 1 -type d -name 'v24.*' | sort -V | tail -1)/bin"
+export PATH="$NODE24_BIN:$HOME/.bun/bin:$PATH"
+node --version # must be Node 24.15.0; includes the TransformStream race fix
 bunx tsc --noEmit
 bun run lint
 bun run test

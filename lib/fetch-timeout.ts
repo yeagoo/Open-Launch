@@ -2,12 +2,10 @@ import { request, type Dispatcher } from "undici"
 
 // Timeout for server-side HTTP that does NOT use global fetch streams.
 //
-// Aborting/cancelling a fetch-returned ReadableStream while undici is still
-// wiring up its internal Transform corrupts a process-wide web-streams pool,
-// after which unrelated SSR renders crash with
-// `controller[kState].transformAlgorithm is not a function` (see safe-fetch.ts).
-// Reproduced in prod on Node 22.23.0 during crawl-heavy crons, where
-// `AbortSignal.timeout` firing mid-wiring was the trigger.
+// Node versions before 24.15.0 had a TransformStream cancel/write race that
+// could crash unrelated SSR renders. Production is now pinned past that fix,
+// but server jobs still use Node-readable undici.request bodies so timeout
+// handling stays independent from the framework's web-stream rendering path.
 //
 // Server call sites use `undici.request` through `fetchWithTimeout` below.
 // Instead of aborting on timeout, we race the request/body read against a timer

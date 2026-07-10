@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, captcha, oneTap } from "better-auth/plugins"
 
+import { buildBetterAuthApiErrorLog } from "@/lib/auth-error-log"
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
 import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
@@ -59,6 +60,24 @@ export const auth = betterAuth({
     // token stays usable.
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
+  },
+  advanced: {
+    ipAddress: {
+      // Production traffic reaches Zeabur through Cloudflare. Better Auth must
+      // use the single-value header overwritten by that trusted edge instead
+      // of collapsing all users into one shared path bucket when it rejects a
+      // comma-separated X-Forwarded-For chain.
+      ipAddressHeaders: ["cf-connecting-ip"],
+    },
+  },
+  onAPIError: {
+    // Better Auth's default structured logger can collapse Node errors to the
+    // message only. Preserve the stack so any provider-specific OAuth failure
+    // that remains after removing the global fetch monkey-patch is actionable,
+    // while redacting OAuth codes/tokens before they reach production logs.
+    onError(error) {
+      console.error("[better-auth-api-error]", JSON.stringify(buildBetterAuthApiErrorLog(error)))
+    },
   },
   socialProviders: {
     google: {

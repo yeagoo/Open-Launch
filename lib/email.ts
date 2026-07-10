@@ -26,9 +26,9 @@ const RESEND_TIMEOUT_MS = 10_000
 /**
  * Sends an email using Resend's REST API.
  *
- * Do not use the `resend` SDK here: it currently calls global `fetch`, and
- * aborting/cancelling fetch-backed WebStreams is the production Node 22 SSR
- * crash trigger (`controller[kState].transformAlgorithm is not a function`).
+ * Keep this on the shared timeout-aware HTTP helper rather than introducing a
+ * second SDK-specific transport. Production is pinned to Node 24.15.0, which
+ * contains the upstream TransformStream cancel/write race fix.
  * @param payload - Email configuration object
  * @returns Promise that resolves when email is sent
  */
