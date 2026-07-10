@@ -41,58 +41,72 @@ export interface LaunchAvailability {
   scheduledCount: number
 }
 
-// Fonction pour obtenir la disponibilité des lancements pour une date spécifique
-export async function getLaunchAvailability(date: string): Promise<LaunchAvailability> {
-  // Vérifier si la date est au format correct
-  const parsedDate = parse(date, DATE_FORMAT.API, new Date())
-  const formattedDate = format(parsedDate, DATE_FORMAT.API)
+interface LaunchCounts {
+  freeCount: number
+  badgeCount: number
+  premiumCount: number
+  totalCount: number
+}
 
-  // Obtenir le nombre de lancements déjà programmés pour cette date
-  const scheduledLaunches = await db
+function parseApiDate(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error(`Invalid date format: ${value}`)
+  const parsed = parse(value, DATE_FORMAT.API, new Date())
+  if (Number.isNaN(parsed.getTime()) || format(parsed, DATE_FORMAT.API) !== value) {
+    throw new Error(`Invalid date: ${value}`)
+  }
+  return parsed
+}
+
+function availabilityFor(date: string, counts?: LaunchCounts): LaunchAvailability {
+  const freeCount = counts?.freeCount ?? 0
+  const badgeCount = counts?.badgeCount ?? 0
+  const premiumCount = counts?.premiumCount ?? 0
+  const totalCount = counts?.totalCount ?? 0
+
+  return {
+    date,
+    freeSlots: Math.max(0, LAUNCH_LIMITS.FREE_DAILY_LIMIT - freeCount),
+    badgeSlots: Math.max(0, LAUNCH_LIMITS.BADGE_DAILY_LIMIT - badgeCount),
+    premiumSlots: Math.max(
+      0,
+      LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT - (premiumCount + freeCount + badgeCount),
+    ),
+    totalSlots: Math.max(0, LAUNCH_LIMITS.TOTAL_DAILY_LIMIT - totalCount),
+    scheduledCount: totalCount,
+  }
+}
+
+async function getLaunchCountsByDate(
+  start: Date,
+  endInclusive: Date,
+): Promise<Map<string, LaunchCounts>> {
+  const day = sql<string>`to_char(${projectTable.scheduledLaunchDate}, 'YYYY-MM-DD')`
+  const rows = await db
     .select({
-      // `countInt` casts BIGINT → int4 so pg returns a JS number,
-      // not a string. See `lib/db-utils.ts` for the rationale —
-      // without the cast, `premiumSlots` math below would silently
-      // turn into string concatenation and every date would render
-      // as "0 slots available".
+      day,
       freeCount: countInt(sql`${projectTable.launchType} = ${launchType.FREE}`),
-      badgeCount: countInt(sql`${projectTable.launchType} = 'free_with_badge'`),
+      badgeCount: countInt(sql`${projectTable.launchType} = ${launchType.FREE_WITH_BADGE}`),
       premiumCount: countInt(sql`${projectTable.launchType} = ${launchType.PREMIUM}`),
       totalCount: countInt(),
     })
     .from(projectTable)
     .where(
       and(
-        gte(projectTable.scheduledLaunchDate, parsedDate),
-        lt(projectTable.scheduledLaunchDate, addDays(parsedDate, 1)),
-        // Ne compter que les chaînes programmées (pas celles en attente de paiement)
+        gte(projectTable.scheduledLaunchDate, start),
+        lt(projectTable.scheduledLaunchDate, addDays(endInclusive, 1)),
         eq(projectTable.launchStatus, launchStatus.SCHEDULED),
       ),
     )
+    .groupBy(day)
 
-  // Calculer les places disponibles
-  const freeCount = scheduledLaunches[0]?.freeCount || 0
-  const badgeCount = scheduledLaunches[0]?.badgeCount || 0
-  const premiumCount = scheduledLaunches[0]?.premiumCount || 0
-  const totalCount = scheduledLaunches[0]?.totalCount || 0
+  return new Map(rows.map((row) => [row.day, row]))
+}
 
-  const freeSlots = Math.max(0, LAUNCH_LIMITS.FREE_DAILY_LIMIT - freeCount)
-  const badgeSlots = Math.max(0, LAUNCH_LIMITS.BADGE_DAILY_LIMIT - badgeCount)
-  const premiumSlots = Math.max(
-    0,
-    LAUNCH_LIMITS.PREMIUM_DAILY_LIMIT - (premiumCount + freeCount + badgeCount),
-  )
-  const totalSlots = Math.max(0, LAUNCH_LIMITS.TOTAL_DAILY_LIMIT - totalCount)
-
-  // Retourner la disponibilité
-  return {
-    date: formattedDate,
-    freeSlots,
-    badgeSlots,
-    premiumSlots,
-    totalSlots,
-    scheduledCount: totalCount,
-  }
+// Fonction pour obtenir la disponibilité des lancements pour une date spécifique
+export async function getLaunchAvailability(date: string): Promise<LaunchAvailability> {
+  const parsedDate = parseApiDate(date)
+  const counts = await getLaunchCountsByDate(parsedDate, parsedDate)
+  return availabilityFor(date, counts.get(date))
 }
 
 // Fonction pour obtenir la disponibilité des lancements pour une plage de dates
@@ -119,8 +133,8 @@ export async function getLaunchAvailabilityRange(
   const maxDate = addDays(today, maxDaysAhead)
 
   // Vérifier si les dates sont au format correct
-  const parsedStartDate = parse(startDate, DATE_FORMAT.API, new Date())
-  const parsedEndDate = parse(endDate, DATE_FORMAT.API, new Date())
+  const parsedStartDate = parseApiDate(startDate)
+  const parsedEndDate = parseApiDate(endDate)
 
   // Ajuster la date de début si elle est avant la date minimale
   const adjustedStartDate = isBefore(parsedStartDate, minDate) ? minDate : parsedStartDate
@@ -136,13 +150,19 @@ export async function getLaunchAvailabilityRange(
     currentDate = addDays(currentDate, 1)
   }
 
-  // Obtenir la disponibilité pour chaque date
-  const availabilityPromises = dates.map((date) =>
-    getLaunchAvailability(format(date, DATE_FORMAT.API)),
+  if (dates.length === 0) return []
+  const dateKeys = dates.map((date) => format(date, DATE_FORMAT.API))
+  // `adjustedStartDate` can retain the current time-of-day when the caller's
+  // start is before the minimum. Re-parse the formatted keys so the batched
+  // query still covers the whole first/last day, matching the old per-day
+  // query behavior.
+  const counts = await getLaunchCountsByDate(
+    parseApiDate(dateKeys[0]),
+    parseApiDate(dateKeys[dateKeys.length - 1]),
   )
-  const availabilityResults = await Promise.all(availabilityPromises)
-
-  return availabilityResults
+  return dateKeys.map((key) => {
+    return availabilityFor(key, counts.get(key))
+  })
 }
 
 // vérifier la limite de lancement de l'utilisateur
@@ -309,9 +329,11 @@ export async function scheduleLaunch(
 
       // 3. Re-count actual scheduled projects on this date INSIDE the lock.
       // The quota counter is denormalized; the project table is canonical.
-      const dayStart = new Date(parsedDate)
-      dayStart.setHours(0, 0, 0, 0)
-      const dayEnd = addDays(dayStart, 1)
+      const dayStart = new Date(
+        Date.UTC(launchDate.getUTCFullYear(), launchDate.getUTCMonth(), launchDate.getUTCDate()),
+      )
+      const dayEnd = new Date(dayStart)
+      dayEnd.setUTCDate(dayEnd.getUTCDate() + 1)
       const [counts] = await tx
         .select({
           freeCount: countInt(sql`${projectTable.launchType} = ${launchType.FREE}`),

@@ -70,33 +70,36 @@ export function EditButton({ projectId, isOwner, canEdit, sourceLocale }: EditBu
   useEffect(() => {
     if (!isDialogOpen) return
     let cancelled = false
-    setLoading(true)
-    getProjectForEdit(projectId)
-      .then((data) => {
-        if (cancelled) return
-        if (!data) {
-          toast.error("Could not load project")
-          setIsDialogOpen(false)
-          return
-        }
-        setInitial({
-          name: data.name,
-          tagline: data.tagline,
-          description: data.description,
-          websiteUrl: data.websiteUrl,
-          logoUrl: data.logoUrl,
-          productImage: data.productImage ?? null,
-          techStack: data.techStack ?? [],
-          platforms: data.platforms ?? [],
-          pricing: data.pricing,
-          githubUrl: data.githubUrl ?? null,
-          twitterUrl: data.twitterUrl ?? null,
-          categories: data.categories,
+    queueMicrotask(() => {
+      if (cancelled) return
+      setLoading(true)
+      void getProjectForEdit(projectId)
+        .then((data) => {
+          if (cancelled) return
+          if (!data) {
+            toast.error("Could not load project")
+            setIsDialogOpen(false)
+            return
+          }
+          setInitial({
+            name: data.name,
+            tagline: data.tagline,
+            description: data.description,
+            websiteUrl: data.websiteUrl,
+            logoUrl: data.logoUrl,
+            productImage: data.productImage ?? null,
+            techStack: data.techStack ?? [],
+            platforms: data.platforms ?? [],
+            pricing: data.pricing,
+            githubUrl: data.githubUrl ?? null,
+            twitterUrl: data.twitterUrl ?? null,
+            categories: data.categories,
+          })
         })
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    })
     return () => {
       cancelled = true
     }

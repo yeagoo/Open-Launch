@@ -99,7 +99,7 @@ export function SearchCommand() {
 
   // Réinitialiser l'index actif quand les résultats changent
   useEffect(() => {
-    setActiveIndex(-1)
+    queueMicrotask(() => setActiveIndex(-1))
   }, [results, query])
 
   // Fonction pour naviguer vers un résultat

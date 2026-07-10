@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -51,7 +51,6 @@ type Stats = {
 
 export default function PaidProjectsPage() {
   const [projects, setProjects] = useState<PaidProject[]>([])
-  const [filteredProjects, setFilteredProjects] = useState<PaidProject[]>([])
   const [stats, setStats] = useState<Stats>({
     total: 0,
     premium: 0,
@@ -72,7 +71,6 @@ export default function PaidProjectsPage() {
     try {
       const data = await getPaidProjects()
       setProjects(data.projects)
-      setFilteredProjects(data.projects)
       setStats(data.stats)
     } catch (error) {
       console.error("Error fetching paid projects:", error)
@@ -88,7 +86,6 @@ export default function PaidProjectsPage() {
 
     const previousProjects = [...projects]
     setProjects((prev) => prev.filter((p) => p.id !== projectId))
-    setFilteredProjects((prev) => prev.filter((p) => p.id !== projectId))
 
     try {
       const result = await deleteProject(projectId)
@@ -97,21 +94,19 @@ export default function PaidProjectsPage() {
         fetchPaidProjects()
       } else {
         setProjects(previousProjects)
-        setFilteredProjects(previousProjects)
         toast.error(result.error || "Failed to delete project")
       }
     } catch {
       setProjects(previousProjects)
-      setFilteredProjects(previousProjects)
       toast.error("An error occurred while deleting the project")
     }
   }
 
   useEffect(() => {
-    fetchPaidProjects()
+    queueMicrotask(() => void fetchPaidProjects())
   }, [])
 
-  useEffect(() => {
+  const filteredProjects = useMemo(() => {
     let result = [...projects]
 
     if (searchQuery) {
@@ -132,9 +127,12 @@ export default function PaidProjectsPage() {
       result = result.filter((project) => project.launchStatus === statusFilter)
     }
 
-    setFilteredProjects(result)
-    setCurrentPage(1)
+    return result
   }, [searchQuery, typeFilter, statusFilter, projects])
+
+  useEffect(() => {
+    queueMicrotask(() => setCurrentPage(1))
+  }, [searchQuery, typeFilter, statusFilter])
 
   const indexOfLastProject = currentPage * itemsPerPage
   const indexOfFirstProject = indexOfLastProject - itemsPerPage

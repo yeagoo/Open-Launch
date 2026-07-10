@@ -35,7 +35,7 @@ export default function FlaggedTagsPage() {
   }
 
   useEffect(() => {
-    fetchTags()
+    queueMicrotask(() => void fetchTags())
   }, [])
 
   const handleApprove = async (tagId: string) => {

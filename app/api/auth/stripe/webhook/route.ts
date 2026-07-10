@@ -2,14 +2,8 @@ import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import {
-  directoryOrder,
-  launchQuota,
-  launchStatus,
-  launchSyndication,
-  project,
-} from "@/drizzle/db/schema"
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { directoryOrder, launchStatus, launchSyndication, project } from "@/drizzle/db/schema"
+import { and, eq, inArray } from "drizzle-orm"
 import type Stripe from "stripe"
 
 import { LAUNCH_SETTINGS } from "@/lib/constants"
@@ -20,7 +14,13 @@ import {
   type DirectoryTier,
 } from "@/lib/directory-tiers"
 import { enqueueLaunchSyndication } from "@/lib/launch-syndication"
+import {
+  confirmPaidPremiumLaunch,
+  type PremiumLaunchConfirmationResult,
+} from "@/lib/premium-launch-confirmation"
+import { notifyDiscordForScheduledProject } from "@/lib/project-launch-notification"
 import { dedupeOnce } from "@/lib/rate-limit"
+import { readRequestTextBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 import { createStripeClient } from "@/lib/stripe"
 import {
   sendAdminPaymentNotification,
@@ -34,6 +34,7 @@ const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
 // price check when the session is actually in USD (399 JPY would otherwise
 // satisfy a 399-USD-cent comparison).
 const EXPECTED_CURRENCY = "usd"
+const MAX_STRIPE_WEBHOOK_BYTES = 1024 * 1024
 
 /**
  * True when the amount actually charged matches the expected price AND the
@@ -271,7 +272,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 })
     }
 
-    const body = await request.text()
+    let body: string
+    try {
+      body = await readRequestTextBounded(request, MAX_STRIPE_WEBHOOK_BYTES)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof RequestBodyTooLargeError ? "Payload too large" : "Invalid body" },
+        { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+      )
+    }
     const signature = request.headers.get("stripe-signature") as string
 
     if (!signature) {
@@ -341,8 +350,14 @@ export async function POST(request: Request) {
 
         if (!projectData.scheduledLaunchDate) {
           console.error("⚠️ Project data incomplete:", projectId)
+          await handleOrphanPayment(
+            stripe,
+            session,
+            `project ${projectId} has no scheduled launch date`,
+            projectId,
+          )
           return NextResponse.json(
-            { received: true, warning: "Project data incomplete" },
+            { received: true, warning: "Project data incomplete — payment refunded" },
             { status: 200 },
           )
         }
@@ -384,53 +399,32 @@ export async function POST(request: Request) {
           )
         }
 
-        // Atomic conditional update: only transition PAYMENT_PENDING → SCHEDULED
-        // The WHERE clause ensures only the first writer (verify or webhook) succeeds
-        const updateResult = await db
-          .update(project)
-          .set({
-            launchStatus: launchStatus.SCHEDULED,
-            featuredOnHomepage: false,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(project.id, projectId), eq(project.launchStatus, launchStatus.PAYMENT_PENDING)),
+        const confirmation = await confirmPaidPremiumLaunch(projectId)
+        if (confirmation.status === "rejected") {
+          await handleOrphanPayment(
+            stripe,
+            session,
+            `premium launch confirmation rejected (${confirmation.reason}) for project ${projectId}`,
+            projectId,
           )
+          return NextResponse.json(
+            { received: true, warning: `${confirmation.reason} — payment refunded` },
+            { status: 200 },
+          )
+        }
 
-        // Only update quota if THIS request actually performed the transition
-        if (!updateResult.rowCount || updateResult.rowCount === 0) {
-          console.log("ℹ️ Project already processed by verify endpoint, skipping quota update")
+        if (confirmation.status === "already_processed") {
+          console.log("ℹ️ Project already processed, skipping quota update")
         } else {
           console.log("✅ Webhook: Payment confirmed for project:", projectId)
 
-          revalidatePath("/sitemap.xml")
-
-          const launchDate = projectData.scheduledLaunchDate
-          const quotaResult = await db
-            .select()
-            .from(launchQuota)
-            .where(eq(launchQuota.date, launchDate))
-            .limit(1)
-
-          if (quotaResult.length === 0) {
-            await db.insert(launchQuota).values({
-              id: crypto.randomUUID(),
-              date: launchDate,
-              freeCount: 0,
-              badgeCount: 0,
-              premiumCount: 1,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-          } else {
-            await db
-              .update(launchQuota)
-              .set({
-                premiumCount: sql`${launchQuota.premiumCount} + 1`,
-                updatedAt: new Date(),
-              })
-              .where(eq(launchQuota.id, quotaResult[0].id))
+          try {
+            await notifyDiscordForScheduledProject(projectId)
+          } catch (notificationError) {
+            console.error("⚠️ Failed to send paid-launch Discord notification:", notificationError)
           }
+
+          revalidatePath("/sitemap.xml")
 
           try {
             revalidatePath(`/projects`)
@@ -461,17 +455,12 @@ export async function POST(request: Request) {
         console.log("✅ Webhook processed successfully for project:", projectId)
         return NextResponse.json({ success: true }, { status: 200 })
       } else {
-        // Si le paiement n'a pas réussi, mettre à jour le statut à PAYMENT_FAILED
-        console.log("⚠️ Payment not completed, status:", session.payment_status)
-        await db
-          .update(project)
-          .set({
-            launchStatus: launchStatus.PAYMENT_FAILED,
-            updatedAt: new Date(),
-          })
-          .where(eq(project.id, projectId))
-
-        return NextResponse.json({ success: true }, { status: 200 })
+        // Payment Links expose client_reference_id to the browser. An unpaid
+        // or no-payment-required session therefore has no authority to mutate
+        // a project. Leave it pending; the normal stale-payment cleanup owns
+        // expiry and a later async_payment_succeeded event owns confirmation.
+        console.log("ℹ️ Payment not completed; project left unchanged:", session.payment_status)
+        return NextResponse.json({ success: true, pending: true }, { status: 200 })
       }
     } else if (event.type === "checkout.session.async_payment_succeeded") {
       // Delayed-payment methods (SEPA, ACH, bank transfer) fire
@@ -484,10 +473,39 @@ export async function POST(request: Request) {
       if (ref?.startsWith(DIRECTORY_ORDER_REF_PREFIX)) {
         return await handleDirectoryOrderCompleted(stripe, session, ref)
       }
-      // Premium-launch flow uses card-only checkout, so async_payment
-      // events shouldn't hit this branch; log and acknowledge.
-      console.log("ℹ️ async_payment_succeeded for non-directory order:", ref)
-      return NextResponse.json({ received: true }, { status: 200 })
+      if (!ref) return NextResponse.json({ received: true }, { status: 200 })
+      const [premiumProject] = await db
+        .select({ premiumPriceCents: project.premiumPriceCents })
+        .from(project)
+        .where(eq(project.id, ref))
+        .limit(1)
+      if (!premiumProject) {
+        await handleOrphanPayment(stripe, session, `project ${ref} not found`, ref)
+        return NextResponse.json({ received: true, warning: "Project not found" })
+      }
+      const expected = premiumProject.premiumPriceCents ?? PREMIUM_PRICE_CENTS
+      if (!chargedAmountMatches(session, expected)) {
+        await handleOrphanPayment(
+          stripe,
+          session,
+          `premium amount mismatch for project ${ref}`,
+          ref,
+        )
+        return NextResponse.json({ received: true, warning: "Amount mismatch" })
+      }
+      const confirmation = await confirmPaidPremiumLaunch(ref)
+      if (confirmation.status === "rejected") {
+        await handleOrphanPayment(
+          stripe,
+          session,
+          `premium async confirmation rejected (${confirmation.reason}) for project ${ref}`,
+          ref,
+        )
+      }
+      return NextResponse.json(
+        { success: true, confirmation: confirmation.status },
+        { status: 200 },
+      )
     } else if (event.type === "checkout.session.async_payment_failed") {
       const session = event.data.object as Stripe.Checkout.Session
       const ref = session.client_reference_id
@@ -542,30 +560,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true }, { status: 200 })
       }
 
-      const projectId = ref
-
-      if (projectId) {
-        // Only a project genuinely awaiting payment may be failed. Stripe
-        // Payment Links accept an attacker-supplied `?client_reference_id=`,
-        // so without this PAYMENT_PENDING guard anyone could expire a session
-        // carrying a victim's projectId and flip a SCHEDULED/LAUNCHED project
-        // to PAYMENT_FAILED. Mirrors the atomic guard on the paid path and the
-        // directory branch above (which already guards status="pending").
-        const failResult = await db
-          .update(project)
-          .set({
-            launchStatus: launchStatus.PAYMENT_FAILED,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(eq(project.id, projectId), eq(project.launchStatus, launchStatus.PAYMENT_PENDING)),
-          )
-        if (failResult.rowCount && failResult.rowCount > 0) {
-          console.log("✅ Updated project status to PAYMENT_FAILED:", projectId)
-        } else {
-          console.log("ℹ️ Expired session for non-pending project, ignored:", projectId)
-        }
-      }
+      // A bare project reference came from a browser-visible Payment Link and
+      // is not an authorization capability. Do not mutate the project from an
+      // expiry event; the authenticated stale-payment cleanup owns expiry.
+      if (ref) console.log("ℹ️ Expired premium session left project unchanged:", ref)
 
       return NextResponse.json({ success: true }, { status: 200 })
     }
@@ -741,20 +739,47 @@ async function handleDirectoryOrderCompleted(
   const updateRowCount = updateResult.rowCount ?? 0
 
   if (updateRowCount === 0) {
+    // Re-read after the failed conditional update. The snapshot loaded above
+    // may still say `pending` when two different Checkout Sessions complete
+    // concurrently; decisions must use the row written by the winner.
+    const [currentOrder] = await db
+      .select({
+        status: directoryOrder.status,
+        stripeSessionId: directoryOrder.stripeSessionId,
+        amountVerified: directoryOrder.amountVerified,
+      })
+      .from(directoryOrder)
+      .where(eq(directoryOrder.id, orderId))
+      .limit(1)
+    if (!currentOrder) {
+      await handleOrphanPayment(
+        stripe,
+        session,
+        `directory_order ${orderId} disappeared while processing payment`,
+        ref,
+      )
+      return NextResponse.json({ received: true, warning: "Directory order disappeared" })
+    }
+
     // Disambiguate idempotent (Stripe retry on already-paid order) vs
     // stale (someone canceled/refunded the order between createCheckout
     // and pay). The former is normal; the latter means money came in
     // for an order the user explicitly killed — admin needs to refund.
     const STALE_STATUSES: ReadonlyArray<string> = ["canceled", "refunded", "failed"]
-    if (STALE_STATUSES.includes(order.status)) {
-      console.error("⚠️ Paid webhook hit non-pending order:", orderId, "status was:", order.status)
+    if (STALE_STATUSES.includes(currentOrder.status)) {
+      console.error(
+        "⚠️ Paid webhook hit non-pending order:",
+        orderId,
+        "status was:",
+        currentOrder.status,
+      )
       await handleOrphanPayment(
         stripe,
         session,
-        `directory_order ${orderId} was '${order.status}' when paid webhook arrived`,
+        `directory_order ${orderId} was '${currentOrder.status}' when paid webhook arrived`,
         ref,
       )
-    } else if (order.stripeSessionId && order.stripeSessionId !== session.id) {
+    } else if (currentOrder.stripeSessionId && currentOrder.stripeSessionId !== session.id) {
       // Already paid/fulfilled, but by a DIFFERENT checkout session — the buyer
       // paid the same order twice (two sessions off one reusable Payment Link).
       // Refund the duplicate + alert; never silently keep a second charge. (A
@@ -764,16 +789,20 @@ async function handleDirectoryOrderCompleted(
         "⚠️ Duplicate payment for already-paid directory order:",
         orderId,
         "first session:",
-        order.stripeSessionId,
+        currentOrder.stripeSessionId,
         "duplicate:",
         session.id,
       )
       await handleOrphanPayment(
         stripe,
         session,
-        `directory_order ${orderId} paid twice — duplicate session ${session.id} (first ${order.stripeSessionId})`,
+        `directory_order ${orderId} paid twice — duplicate session ${session.id} (first ${currentOrder.stripeSessionId})`,
         ref,
       )
+    } else if (!currentOrder.amountVerified) {
+      // Amount-mismatch orders are deliberately held for admin review. A
+      // webhook retry must not bypass that hold and schedule the project.
+      console.log("ℹ️ Directory order remains held; scheduling skipped:", orderId)
     } else {
       // Genuine Stripe retry (same session id). Re-run the idempotent project
       // promotion: if the FIRST delivery flipped the order to paid but then
@@ -781,7 +810,17 @@ async function handleDirectoryOrderCompleted(
       // would otherwise hit this skip branch and leave the project stranded in
       // payment_pending forever. scheduleProjectIfPendingPayment is a no-op
       // once the project is past payment_pending, so this is safe to repeat.
-      await scheduleProjectIfPendingPayment(order.projectId)
+      const confirmation = await scheduleProjectIfPendingPayment(order.projectId)
+      if (confirmation.status === "rejected") {
+        return refundDirectoryOrderAfterLaunchRejection(
+          stripe,
+          session,
+          orderId,
+          ref,
+          order.projectId,
+          confirmation.reason,
+        )
+      }
       console.log("ℹ️ Directory order already processed, ensured scheduling:", orderId)
     }
     return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
@@ -802,7 +841,17 @@ async function handleDirectoryOrderCompleted(
       `⚠️ Directory order HELD for admin review — amount mismatch: config=${cfg.amountCents}, stripe=${session.amount_total}, discount=${discountCents}. tier=${tier}, order=${orderId}`,
     )
   } else {
-    await scheduleProjectIfPendingPayment(order.projectId)
+    const confirmation = await scheduleProjectIfPendingPayment(order.projectId)
+    if (confirmation.status === "rejected") {
+      return refundDirectoryOrderAfterLaunchRejection(
+        stripe,
+        session,
+        orderId,
+        ref,
+        order.projectId,
+        confirmation.reason,
+      )
+    }
 
     // Cross-post Plus/Pro/Ultra listings to partner sites. This only
     // ENQUEUES rows (idempotent on (order, site)); the actual HTTP push is
@@ -890,79 +939,65 @@ async function handleDirectoryOrderCompleted(
  * purchases against already-scheduled / launched projects — those
  * paths shouldn't touch the project's launch state.
  */
-async function scheduleProjectIfPendingPayment(projectId: string): Promise<void> {
-  const [proj] = await db
-    .select({
-      id: project.id,
-      slug: project.slug,
-      launchStatus: project.launchStatus,
-      scheduledLaunchDate: project.scheduledLaunchDate,
-    })
-    .from(project)
-    .where(eq(project.id, projectId))
-    .limit(1)
-
-  if (!proj || proj.launchStatus !== launchStatus.PAYMENT_PENDING) return
-
-  if (!proj.scheduledLaunchDate) {
-    console.warn(
-      "⚠️ Project in payment_pending has no scheduledLaunchDate; cannot promote to SCHEDULED:",
+async function scheduleProjectIfPendingPayment(
+  projectId: string,
+): Promise<PremiumLaunchConfirmationResult> {
+  const confirmation = await confirmPaidPremiumLaunch(projectId, {
+    allowNonPremiumProcessed: true,
+  })
+  if (confirmation.status === "rejected") {
+    console.error(
+      "⚠️ Directory payment could not schedule project:",
       projectId,
+      confirmation.reason,
     )
-    return
+    return confirmation
   }
-
-  // Atomic transition — only the first writer wins, mirroring the
-  // existing Premium-Launch idempotency guard.
-  const updateResult = await db
-    .update(project)
-    .set({
-      launchStatus: launchStatus.SCHEDULED,
-      featuredOnHomepage: false,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(project.id, projectId), eq(project.launchStatus, launchStatus.PAYMENT_PENDING)))
-
-  if (!updateResult.rowCount || updateResult.rowCount === 0) {
-    console.log("ℹ️ Project already promoted by another writer:", projectId)
-    return
-  }
-
-  // Bump the day's premium quota counter so the per-day cap stays
-  // accurate. Same pattern as the existing Premium-Launch path.
-  const launchDate = proj.scheduledLaunchDate
-  const [existingQuota] = await db
-    .select()
-    .from(launchQuota)
-    .where(eq(launchQuota.date, launchDate))
-    .limit(1)
-
-  if (!existingQuota) {
-    await db.insert(launchQuota).values({
-      id: crypto.randomUUID(),
-      date: launchDate,
-      freeCount: 0,
-      badgeCount: 0,
-      premiumCount: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-  } else {
-    await db
-      .update(launchQuota)
-      .set({
-        premiumCount: sql`${launchQuota.premiumCount} + 1`,
-        updatedAt: new Date(),
-      })
-      .where(eq(launchQuota.id, existingQuota.id))
-  }
+  if (confirmation.status === "already_processed") return confirmation
 
   revalidatePath("/projects")
   revalidatePath("/sitemap.xml")
   try {
-    revalidatePath(`/projects/${proj.slug}`)
+    revalidatePath(`/projects/${confirmation.slug}`)
   } catch (err) {
     console.error("⚠️ Error revalidating slug path:", err)
   }
   console.log("✅ Project scheduled via directory_order at-submit path:", projectId)
+  try {
+    await notifyDiscordForScheduledProject(projectId)
+  } catch (notificationError) {
+    console.error("⚠️ Failed to send directory-launch Discord notification:", notificationError)
+  }
+  return confirmation
+}
+
+async function refundDirectoryOrderAfterLaunchRejection(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+  orderId: string,
+  ref: string,
+  projectId: string,
+  reason: string,
+): Promise<NextResponse> {
+  await db
+    .update(directoryOrder)
+    .set({ status: "refunded", amountVerified: false, updatedAt: new Date() })
+    .where(
+      and(
+        eq(directoryOrder.id, orderId),
+        eq(directoryOrder.stripeSessionId, session.id),
+        inArray(directoryOrder.status, ["paid", "fulfilled"]),
+      ),
+    )
+
+  await handleOrphanPayment(
+    stripe,
+    session,
+    `directory payment could not schedule project ${projectId} (${reason})`,
+    ref,
+  )
+  return NextResponse.json(
+    { received: true, refunded: true, warning: `Launch confirmation rejected: ${reason}` },
+    { status: 200 },
+  )
 }

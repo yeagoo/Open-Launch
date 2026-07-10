@@ -84,7 +84,9 @@ export function TranslatedComments({
   // Load comments + auth
   useEffect(() => {
     let cancelled = false
-    setError(null)
+    queueMicrotask(() => {
+      if (!cancelled) setError(null)
+    })
     Promise.all([
       fetchJson<CommentRow[]>(`${API_BASE}/${projectId}?sort=newest`),
       fetchJson<AuthInfo | null>(`${API_BASE}/${projectId}/auth`).catch(() => null),

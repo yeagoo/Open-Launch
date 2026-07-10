@@ -2,97 +2,30 @@
 
 import { headers } from "next/headers"
 
-import { launchType as LaunchTypeEnum } from "@/drizzle/db/schema"
 import { z } from "zod"
 
 import { auth } from "@/lib/auth"
-import { notifyDiscordLaunch as sendRealDiscordLaunchNotification } from "@/lib/discord-notification"
+import { notifyDiscordForScheduledProject } from "@/lib/project-launch-notification"
+import { checkRateLimit } from "@/lib/rate-limit"
 
-const LaunchTypeZodEnum = z.enum(Object.values(LaunchTypeEnum) as [string, ...string[]], {
-  errorMap: () => ({ message: "Invalid launch type specified." }),
-})
+const projectIdSchema = z.string().uuid()
 
-const DiscordNotificationSchema = z.object({
-  projectName: z
-    .string()
-    .min(1, "Project name cannot be empty.")
-    .max(100, "Project name cannot exceed 100 characters."),
-  launchDate: z.string().min(1, "Launch date cannot be empty."),
-  launchType: LaunchTypeZodEnum,
-  websiteUrl: z.string().url("Invalid website URL format.").min(1, "Website URL cannot be empty."),
-  projectUrl: z.string().url("Invalid project URL format.").min(1, "Project URL cannot be empty."),
-})
+/**
+ * Notify Discord for a project that the authenticated caller owns and that is
+ * already scheduled. All message fields come from the database; the browser
+ * cannot forge names, URLs, dates, or launch types.
+ */
+export async function notifyDiscordLaunch(projectId: string) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user?.id) return { success: false, error: "Unauthorized" }
 
-export async function notifyDiscordLaunch(
-  projectName: string,
-  launchDate: string,
-  launchType: string,
-  websiteUrl: string,
-  projectUrl: string,
-) {
-  const requestHeaders = await headers()
-  const session = await auth.api.getSession({ headers: requestHeaders })
+  const parsedId = projectIdSchema.safeParse(projectId)
+  if (!parsedId.success) return { success: false, error: "Invalid project id" }
 
-  if (!session?.user?.id) {
-    console.error("[DiscordNotify] Unauthorized attempt: No active session.")
-    return { success: false, error: "Unauthorized: User not authenticated." }
-  }
-
-  const authenticatedUserId = session.user.id
-
-  const validation = DiscordNotificationSchema.safeParse({
-    projectName,
-    launchDate,
-    launchType,
-    websiteUrl,
-    projectUrl,
+  const rate = await checkRateLimit(`discord-launch:${session.user.id}`, 5, 60 * 60 * 1000, {
+    onRedisError: "fail-closed",
   })
+  if (!rate.success) return { success: false, error: "Notification rate limit exceeded" }
 
-  if (!validation.success) {
-    console.error(
-      "[DiscordNotify] Invalid data for notification:",
-      JSON.stringify(validation.error.flatten()),
-    )
-    return {
-      success: false,
-      error: "Invalid data provided for Discord notification.",
-      details: validation.error.flatten().fieldErrors,
-    }
-  }
-
-  const validatedData = validation.data
-
-  try {
-    console.log(
-      `[DiscordNotify] Sending notification for project: ${validatedData.projectName}, Type: ${validatedData.launchType}, Initiated by User ID: ${authenticatedUserId}`,
-    )
-    const result = await sendRealDiscordLaunchNotification(
-      validatedData.projectName,
-      validatedData.launchDate,
-      validatedData.launchType,
-      validatedData.websiteUrl,
-      validatedData.projectUrl,
-      authenticatedUserId,
-    )
-    if (result) {
-      console.log(
-        `[DiscordNotify] Successfully sent notification for project: ${validatedData.projectName}`,
-      )
-      return { success: true }
-    } else {
-      console.warn(
-        `[DiscordNotify] sendRealDiscordLaunchNotification returned false for project: ${validatedData.projectName}`,
-      )
-      return { success: false, error: "Notification sending function indicated failure." }
-    }
-  } catch (error) {
-    console.error(
-      `[DiscordNotify] Error sending Discord launch notification for project: ${validatedData.projectName}, User ID: ${authenticatedUserId}:`,
-      error,
-    )
-    return {
-      success: false,
-      error: "Internal server error during Discord notification.",
-    }
-  }
+  return notifyDiscordForScheduledProject(parsedId.data, session.user.id)
 }

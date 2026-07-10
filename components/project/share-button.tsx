@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
 
 import {
   RiCodeFill,
@@ -27,13 +27,10 @@ interface ShareButtonProps {
 export function ShareButton({ name, slug, variant = "default", className }: ShareButtonProps) {
   const id = useId()
   const [copied, setCopied] = useState<boolean>(false)
-  const [shareUrl, setShareUrl] = useState<string>("")
+  const shareUrl = `${process.env.NEXT_PUBLIC_URL?.replace(/\/$/, "") ?? ""}/projects/${slug}`
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const baseUrl = window.location.origin
-    setShareUrl(`${baseUrl}/projects/${slug}`)
-  }, [slug])
+  const absoluteShareUrl = () => new URL(shareUrl, window.location.origin).toString()
 
   const handleCopy = () => {
     if (inputRef.current) {
@@ -44,7 +41,7 @@ export function ShareButton({ name, slug, variant = "default", className }: Shar
   }
 
   const shareOnSocial = (platform: string) => {
-    const url = shareUrl
+    const url = absoluteShareUrl()
     const title = `Check out ${name} on aat.ee`
 
     let socialShareUrl = ""

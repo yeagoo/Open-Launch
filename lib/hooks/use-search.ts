@@ -52,14 +52,17 @@ export function useSearch({
 
     // Réinitialiser les résultats si la requête est trop courte
     if (!query || query.length < minLength) {
-      setResults([])
-      setIsLoading(false)
-      return
+      const resetTimer = setTimeout(() => {
+        setResults([])
+        setIsLoading(false)
+        setError(null)
+      }, 0)
+      return () => clearTimeout(resetTimer)
     }
 
     // Définir un nouveau timeout pour le debounce
-    setIsLoading(true)
     timeoutRef.current = setTimeout(async () => {
+      setIsLoading(true)
       try {
         console.log(`[useSearch] Searching for: "${query}"`)
 

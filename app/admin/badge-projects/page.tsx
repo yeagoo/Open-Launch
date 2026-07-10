@@ -43,7 +43,7 @@ export default function BadgeProjectsPage() {
   }, [])
 
   useEffect(() => {
-    fetchData()
+    queueMicrotask(() => void fetchData())
   }, [fetchData])
 
   const q = query.trim().toLowerCase()

@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth"
 import { crawlUrl } from "@/lib/crawl4ai"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { readRequestJsonBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 import {
   closeSafeFetchResponse,
   readSafeFetchBuffer,
@@ -44,8 +45,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { websiteUrl, sourceLocale } = body as { websiteUrl?: string; sourceLocale?: string }
+    let body: unknown
+    try {
+      body = await readRequestJsonBounded(request, 16 * 1024)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof RequestBodyTooLargeError ? "Payload too large" : "Invalid body" },
+        { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+      )
+    }
+    const { websiteUrl, sourceLocale } =
+      body && typeof body === "object"
+        ? (body as { websiteUrl?: string; sourceLocale?: string })
+        : {}
 
     if (!websiteUrl) {
       return NextResponse.json({ error: "websiteUrl is required" }, { status: 400 })

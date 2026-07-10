@@ -179,11 +179,30 @@ export async function upsertTagsForProject(projectId: string, tagNames: string[]
   const tagsToProcess = tagNames.slice(0, 10)
 
   // Normalize and filter
-  const normalizedTags = tagsToProcess
-    .map(normalizeTag)
-    .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
+  const normalizedTags = [
+    ...new Map(
+      tagsToProcess
+        .map(normalizeTag)
+        .filter((tag) => tag.slug.length >= 2 && tag.slug.length <= 30)
+        .map((tag) => [tag.id, tag]),
+    ).values(),
+  ]
 
   if (normalizedTags.length === 0) {
+    const oldAssociations = await db
+      .select({ tagId: projectToTag.tagId })
+      .from(projectToTag)
+      .where(eq(projectToTag.projectId, projectId))
+    await db.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
+    for (const { tagId } of oldAssociations) {
+      await db
+        .update(tagTable)
+        .set({
+          projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
+          updatedAt: new Date(),
+        })
+        .where(eq(tagTable.id, tagId))
+    }
     return { success: true, tagIds: [] }
   }
 

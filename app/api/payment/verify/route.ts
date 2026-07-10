@@ -3,12 +3,14 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { launchQuota, launchStatus, launchType, project } from "@/drizzle/db/schema"
-import { and, eq, sql } from "drizzle-orm"
+import { launchStatus, project } from "@/drizzle/db/schema"
+import { eq } from "drizzle-orm"
 import type Stripe from "stripe"
 
 import { auth } from "@/lib/auth"
 import { LAUNCH_SETTINGS } from "@/lib/constants"
+import { confirmPaidPremiumLaunch } from "@/lib/premium-launch-confirmation"
+import { notifyDiscordForScheduledProject } from "@/lib/project-launch-notification"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { createStripeClient } from "@/lib/stripe"
 
@@ -114,55 +116,26 @@ export async function GET(request: Request) {
         }
       }
 
-      // Atomic conditional update: only transition PAYMENT_PENDING → SCHEDULED
-      // The WHERE clause ensures only the first writer (verify OR webhook) succeeds.
+      let confirmedLaunchStatus = projectData.launchStatus
+      if (
+        projectData.launchStatus === launchStatus.PAYMENT_PENDING &&
+        !projectData.scheduledLaunchDate
+      ) {
+        return NextResponse.json({ status: "failed", reason: "invalid_project" })
+      }
       if (projectData.scheduledLaunchDate) {
-        const updateResult = await db
-          .update(project)
-          .set({
-            launchStatus: launchStatus.SCHEDULED,
-            featuredOnHomepage: false,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(project.id, projectId),
-              eq(project.launchType, launchType.PREMIUM),
-              eq(project.launchStatus, launchStatus.PAYMENT_PENDING),
-            ),
-          )
-
-        // Only update quota if THIS request actually performed the transition
-        if (updateResult.rowCount && updateResult.rowCount > 0) {
+        const confirmation = await confirmPaidPremiumLaunch(projectId)
+        if (confirmation.status === "rejected") {
+          return NextResponse.json({ status: "failed", reason: confirmation.reason })
+        }
+        if (confirmation.status === "scheduled") {
+          confirmedLaunchStatus = launchStatus.SCHEDULED
           console.log("⚡ Fast Path: Payment verified for", projectId)
-
-          const launchDate = projectData.scheduledLaunchDate
-          const quotaResult = await db
-            .select()
-            .from(launchQuota)
-            .where(eq(launchQuota.date, launchDate))
-            .limit(1)
-
-          if (quotaResult.length === 0) {
-            await db.insert(launchQuota).values({
-              id: crypto.randomUUID(),
-              date: launchDate,
-              freeCount: 0,
-              badgeCount: 0,
-              premiumCount: 1,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
-          } else {
-            await db
-              .update(launchQuota)
-              .set({
-                premiumCount: sql`${launchQuota.premiumCount} + 1`,
-                updatedAt: new Date(),
-              })
-              .where(eq(launchQuota.id, quotaResult[0].id))
+          try {
+            await notifyDiscordForScheduledProject(projectId, session_.user.id)
+          } catch (notificationError) {
+            console.error("Failed to send paid-launch Discord notification", notificationError)
           }
-
           revalidatePath("/projects")
           revalidatePath("/sitemap.xml")
           try {
@@ -170,6 +143,8 @@ export async function GET(request: Request) {
           } catch (e) {
             console.error("Error revalidating slug path", e)
           }
+        } else {
+          confirmedLaunchStatus = confirmation.launchStatus
         }
       }
 
@@ -177,10 +152,7 @@ export async function GET(request: Request) {
         status: "complete",
         projectId: projectData.id,
         projectSlug: projectData.slug,
-        launchStatus:
-          projectData.launchStatus === launchStatus.PAYMENT_PENDING
-            ? launchStatus.SCHEDULED
-            : projectData.launchStatus,
+        launchStatus: confirmedLaunchStatus,
       })
     } else if (session.payment_status === "unpaid") {
       return NextResponse.json({ status: "pending" })

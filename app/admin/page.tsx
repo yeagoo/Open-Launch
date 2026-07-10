@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { format, parseISO } from "date-fns"
@@ -61,7 +61,6 @@ type User = {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -166,14 +165,12 @@ export default function AdminDashboard() {
         createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
       }))
       setUsers(mappedUsers)
-      setFilteredUsers(mappedUsers)
       setStats(stats)
       setFreeLaunchAvailability(freeLaunchData.firstAvailableDate)
       setScheduledProjects(scheduledData.groupedByDate)
       setTotalScheduled(scheduledData.total)
     } catch {
       setUsers([])
-      setFilteredUsers([])
       setStats({
         totalLaunches: 0,
         premiumLaunches: 0,
@@ -222,12 +219,13 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    fetchData()
-    fetchCategories()
+    queueMicrotask(() => {
+      void fetchData()
+      void fetchCategories()
+    })
   }, [])
 
-  // Filtres
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     let result = [...users]
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
@@ -246,9 +244,12 @@ export default function AdminDashboard() {
         result = result.filter((user) => user.banned !== true)
       }
     }
-    setFilteredUsers(result)
-    setCurrentPage(1)
+    return result
   }, [searchQuery, roleFilter, statusFilter, users])
+
+  useEffect(() => {
+    queueMicrotask(() => setCurrentPage(1))
+  }, [searchQuery, roleFilter, statusFilter])
 
   const indexOfLastUser = currentPage * itemsPerPage
   const indexOfFirstUser = indexOfLastUser - itemsPerPage

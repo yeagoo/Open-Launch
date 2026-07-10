@@ -34,6 +34,25 @@ interface ProjectSectionProps {
   isAuthenticated: boolean
 }
 
+function ViewAllButton({ href, mobile = false }: { href: string; mobile?: boolean }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className={
+        mobile
+          ? "bg-secondary w-full justify-center text-sm sm:w-auto"
+          : "w-full justify-center text-sm sm:w-auto"
+      }
+      asChild
+    >
+      <Link href={href} className="flex items-center gap-1">
+        View all <RiArrowRightLine className="h-4 w-4" />
+      </Link>
+    </Button>
+  )
+}
+
 export function ProjectSection({
   title,
   projects,
@@ -45,34 +64,13 @@ export function ProjectSection({
     ? [...projects].sort((a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0))
     : projects
 
-  const ViewAllButton = () => (
-    <Button variant="ghost" size="sm" className={"w-full justify-center text-sm sm:w-auto"} asChild>
-      <Link href={moreHref!} className="flex items-center gap-1">
-        View all <RiArrowRightLine className="h-4 w-4" />
-      </Link>
-    </Button>
-  )
-
-  const ViewAllButtonMobile = () => (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={"bg-secondary w-full justify-center text-sm sm:w-auto"}
-      asChild
-    >
-      <Link href={moreHref!} className="flex items-center gap-1">
-        View all <RiArrowRightLine className="h-4 w-4" />
-      </Link>
-    </Button>
-  )
-
   return (
     <section className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold sm:text-2xl">{title}</h2>
         {moreHref && (
           <div className="hidden sm:block">
-            <ViewAllButton />
+            <ViewAllButton href={moreHref} />
           </div>
         )}
       </div>
@@ -109,7 +107,7 @@ export function ProjectSection({
 
         {moreHref && (
           <div className="mt-4 sm:hidden">
-            <ViewAllButtonMobile />
+            <ViewAllButton href={moreHref} mobile />
           </div>
         )}
       </div>

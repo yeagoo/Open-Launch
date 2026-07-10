@@ -1,5 +1,7 @@
 import Script from "next/script"
 
+import { serializeJsonLd } from "@/lib/safe-json-ld"
+
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
 
 // Organization Schema - 网站整体
@@ -38,7 +40,7 @@ export function OrganizationSchema() {
     <Script
       id="schema-organization"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }
@@ -115,7 +117,7 @@ export function ProductSchema({
     <Script
       id="schema-product"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }
@@ -171,7 +173,7 @@ export function ArticleSchema({
     <Script
       id="schema-article"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }
@@ -202,7 +204,7 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
     <Script
       id="schema-breadcrumb"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }
@@ -257,7 +259,7 @@ export function ComparisonSchema({
     <Script
       id="schema-comparison"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }
@@ -304,7 +306,7 @@ export function ItemListSchema({
     <Script
       id="schema-itemlist"
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
 }

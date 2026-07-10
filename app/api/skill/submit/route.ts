@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { readRequestJsonBounded } from "@/lib/read-request-body"
 import { verifySkillApiKey } from "@/lib/skill-auth"
 import {
   buildSkillStatusUrl,
@@ -15,7 +16,7 @@ function unauthorized() {
 
 async function readJson(request: Request): Promise<unknown> {
   try {
-    return await request.json()
+    return await readRequestJsonBounded(request, 512 * 1024)
   } catch {
     return null
   }

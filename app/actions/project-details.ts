@@ -11,7 +11,10 @@ import {
   launchStatus,
   project,
   projectToCategory,
+  projectToTag,
   projectTranslation,
+  tagModerationStatus,
+  tag as tagTable,
   upvote,
   user,
 } from "@/drizzle/db/schema"
@@ -20,6 +23,7 @@ import { and, eq, ne, sql } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { sanitizeRichText } from "@/lib/sanitize"
 import { getCurrentUserId } from "@/lib/server-auth"
+import { projectUpdateSchema, type ProjectUpdateInput } from "@/lib/validations/project"
 
 // Get session helper
 async function getSession() {
@@ -163,20 +167,16 @@ const EDITABLE_STATUSES = new Set([
   launchStatus.SCHEDULED,
 ])
 
-export interface UpdateProjectData {
-  name?: string
-  tagline?: string | null
-  description?: string
-  categories?: string[]
-  websiteUrl?: string
-  logoUrl?: string
-  productImage?: string | null
-  techStack?: string[]
-  platforms?: string[]
-  pricing?: string
-  githubUrl?: string | null
-  twitterUrl?: string | null
+function normalizeProjectTag(raw: string) {
+  const name = raw.trim()
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  return { id: slug, name, slug }
 }
+
+export type UpdateProjectData = ProjectUpdateInput
 
 /**
  * Update an editable project. Allowed for the creator while the
@@ -201,6 +201,16 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
   }
 
   try {
+    const parsedUpdate = projectUpdateSchema.safeParse(data)
+    if (!parsedUpdate.success) {
+      return {
+        success: false,
+        error: "Invalid project data",
+        issues: parsedUpdate.error.flatten().fieldErrors,
+      }
+    }
+    data = parsedUpdate.data
+
     const [projectData] = await db.select().from(project).where(eq(project.id, projectId)).limit(1)
 
     if (!projectData) {
@@ -306,6 +316,56 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
               categoryId,
             })),
           )
+        }
+      }
+
+      if (Array.isArray(data.techStack)) {
+        const normalizedTags = [
+          ...new Map(
+            data.techStack
+              .map(normalizeProjectTag)
+              .filter((tag) => tag.slug.length >= 2 && tag.slug.length <= 30)
+              .map((tag) => [tag.id, tag]),
+          ).values(),
+        ]
+        const oldRows = await tx
+          .select({ tagId: projectToTag.tagId })
+          .from(projectToTag)
+          .where(eq(projectToTag.projectId, projectId))
+
+        for (const tag of normalizedTags) {
+          await tx
+            .insert(tagTable)
+            .values({
+              id: tag.id,
+              name: tag.name,
+              slug: tag.slug,
+              moderationStatus: tagModerationStatus.PENDING,
+              projectCount: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onConflictDoNothing({ target: tagTable.id })
+        }
+
+        await tx.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
+        if (normalizedTags.length > 0) {
+          await tx
+            .insert(projectToTag)
+            .values(normalizedTags.map((tag) => ({ projectId, tagId: tag.id })))
+        }
+
+        const affectedTagIds = [
+          ...new Set([...oldRows.map((row) => row.tagId), ...normalizedTags.map((tag) => tag.id)]),
+        ]
+        for (const tagId of affectedTagIds) {
+          await tx
+            .update(tagTable)
+            .set({
+              projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
+              updatedAt: new Date(),
+            })
+            .where(eq(tagTable.id, tagId))
         }
       }
 

@@ -6,6 +6,7 @@ import { and, desc, eq, isNull } from "drizzle-orm"
 
 import { countInt } from "@/lib/db-utils"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { readRequestJsonBounded } from "@/lib/read-request-body"
 import { verifySkillApiKey } from "@/lib/skill-auth"
 import {
   buildSkillDomainMethods,
@@ -41,7 +42,7 @@ function serializeDomain(row: VerifiedDomainRow) {
 
 async function readJson(request: Request): Promise<unknown> {
   try {
-    return await request.json()
+    return await readRequestJsonBounded(request, 16 * 1024)
   } catch {
     return null
   }

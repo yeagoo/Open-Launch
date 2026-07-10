@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -35,8 +35,9 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 export function ResetPasswordForm() {
   const [loading, setLoading] = useState(false)
   const [generalError, setGeneralError] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const router = useRouter()
+  const token = useSearchParams().get("token")
+  const displayedError = generalError ?? (!token ? "Invalid or missing reset token" : null)
 
   const {
     register,
@@ -45,17 +46,6 @@ export function ResetPasswordForm() {
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   })
-
-  useEffect(() => {
-    // Récupérer le token depuis l'URL
-    const searchParams = new URLSearchParams(window.location.search)
-    const tokenFromUrl = searchParams.get("token")
-    if (!tokenFromUrl) {
-      setGeneralError("Invalid or missing reset token")
-      return
-    }
-    setToken(tokenFromUrl)
-  }, [])
 
   const handleResetPassword = async (data: ResetPasswordFormData) => {
     if (!token) {
@@ -112,7 +102,7 @@ export function ResetPasswordForm() {
                 <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
               )}
             </div>
-            {generalError && <p className="text-center text-sm text-red-500">{generalError}</p>}
+            {displayedError && <p className="text-center text-sm text-red-500">{displayedError}</p>}
             <Button type="submit" className="w-full" disabled={loading || !token}>
               {loading ? "Resetting password..." : "Reset password"}
             </Button>

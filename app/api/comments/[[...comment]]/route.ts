@@ -7,6 +7,7 @@ import { checkCommentRateLimit } from "@/lib/comment-rate-limit"
 import { commentAuth, commentStorage } from "@/lib/comment.config"
 import { extractTextFromContent } from "@/lib/content-utils"
 import { sendDiscordCommentNotification } from "@/lib/discord-notification"
+import { readRequestTextBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 
 // Max comment request body. Comment payloads (Tiptap JSON) are small; this
 // caps the read an UNAUTHENTICATED client can force — the rate limit is
@@ -65,14 +66,7 @@ function removeLinksFromContent(content: any): any {
 async function processRequestWithLinkRemoval(
   req: NextRequest,
 ): Promise<{ req: NextRequest; body: Record<string, any> | null }> {
-  // Reject oversized bodies before buffering (callers turn this throw into a
-  // 400). A missing/non-numeric Content-Length falls through to the platform
-  // body limit; the common abuse case (a declared huge body) is cut here.
-  const declaredLen = Number(req.headers.get("content-length"))
-  if (Number.isFinite(declaredLen) && declaredLen > MAX_COMMENT_BODY_BYTES) {
-    throw new Error("BODY_TOO_LARGE")
-  }
-  const raw = await req.text()
+  const raw = await readRequestTextBounded(req, MAX_COMMENT_BODY_BYTES)
   if (!raw) {
     return {
       req: new NextRequest(req.url, { method: req.method, headers: req.headers }),
@@ -142,8 +136,16 @@ export async function POST(req: NextRequest, context: any) {
     let processed: { req: NextRequest; body: Record<string, any> | null }
     try {
       processed = await processRequestWithLinkRemoval(req)
-    } catch {
-      return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message:
+            error instanceof RequestBodyTooLargeError
+              ? "Request body too large"
+              : "Invalid request body",
+        },
+        { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+      )
     }
 
     // Fire the Discord notification for new comments with the stripped content.
@@ -183,8 +185,16 @@ export async function PATCH(req: NextRequest, context: any) {
     let processed: { req: NextRequest; body: Record<string, any> | null }
     try {
       processed = await processRequestWithLinkRemoval(req)
-    } catch {
-      return NextResponse.json({ message: "Invalid request body" }, { status: 400 })
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message:
+            error instanceof RequestBodyTooLargeError
+              ? "Request body too large"
+              : "Invalid request body",
+        },
+        { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+      )
     }
     return commentHandler.PATCH(processed.req, context)
   } catch (error) {

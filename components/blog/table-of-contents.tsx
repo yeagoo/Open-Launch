@@ -40,7 +40,7 @@ export function TableOfContents() {
       }
     })
 
-    setToc(tocItems)
+    queueMicrotask(() => setToc(tocItems))
   }, [])
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {

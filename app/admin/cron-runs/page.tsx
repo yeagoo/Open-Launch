@@ -3,7 +3,7 @@ import Link from "next/link"
 import { db } from "@/drizzle/db"
 import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 import { formatDistanceToNow } from "date-fns"
-import { asc, gte, sql } from "drizzle-orm"
+import { asc, sql } from "drizzle-orm"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,8 +13,6 @@ import { toggleCronEnabled, updateCronExpression } from "./actions"
 export const dynamic = "force-dynamic"
 
 export default async function AdminCronRunsPage() {
-  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-
   // Pull schedules + last 24h aggregate stats per task in one round trip.
   const [schedules, statsRows] = await Promise.all([
     db.select().from(cronSchedule).orderBy(asc(cronSchedule.path)),
@@ -28,7 +26,7 @@ export default async function AdminCronRunsPage() {
         lastFailure: sql<Date | null>`MAX(${cronRunLog.dispatchedAt}) FILTER (WHERE ${cronRunLog.statusCode} >= 400 OR ${cronRunLog.statusCode} = 0)`,
       })
       .from(cronRunLog)
-      .where(gte(cronRunLog.dispatchedAt, dayAgo))
+      .where(sql`${cronRunLog.dispatchedAt} >= now() - interval '24 hours'`)
       .groupBy(cronRunLog.taskPath),
   ])
 

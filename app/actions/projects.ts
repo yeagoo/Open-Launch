@@ -23,6 +23,7 @@ import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { sanitizeRichText } from "@/lib/sanitize"
 import { getCurrentUserId } from "@/lib/server-auth"
+import { projectSubmissionSchema, type ProjectSubmissionInput } from "@/lib/validations/project"
 
 // Fonction pour générer un slug unique
 async function generateUniqueSlug(name: string): Promise<string> {
@@ -138,7 +139,6 @@ export async function getUserCreatedProjects() {
     .from(projectTable)
     .where(eq(projectTable.createdBy, session.user.id))
     .orderBy(desc(projectTable.createdAt))
-    .limit(10)
 
   return userProjects
 }
@@ -259,26 +259,8 @@ export async function toggleUpvote(projectId: string) {
 type ProjectLocale = "en" | "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
 const SUPPORTED_LOCALES: readonly ProjectLocale[] = ["en", "zh", "es", "pt", "fr", "ja", "ko", "et"]
 
-interface ProjectSubmissionData {
-  name: string
-  tagline?: string | null
-  description: string
-  sourceLocale?: string
-  websiteUrl: string
-  logoUrl: string
-  productImage: string | null
-  categories: string[]
-  techStack: string[]
-  platforms: string[]
-  pricing: string
-  githubUrl?: string | null
-  twitterUrl?: string | null
-  hasBadgeVerified?: boolean
-  tags?: string[]
-}
-
 // Version correcte de submitProject
-export async function submitProject(projectData: ProjectSubmissionData) {
+export async function submitProject(projectData: ProjectSubmissionInput) {
   const session = await getSession()
 
   if (!session?.user) {
@@ -286,6 +268,15 @@ export async function submitProject(projectData: ProjectSubmissionData) {
   }
 
   try {
+    const parsedProject = projectSubmissionSchema.safeParse(projectData)
+    if (!parsedProject.success) {
+      return {
+        success: false,
+        error: "Invalid project data",
+        issues: parsedProject.error.flatten().fieldErrors,
+      }
+    }
+
     // Utiliser les données de projectData
     const {
       name,
@@ -303,7 +294,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       twitterUrl,
       hasBadgeVerified,
       tags,
-    } = projectData
+    } = parsedProject.data
 
     // Validate sourceLocale (default to "en" for clients that don't supply it)
     const sourceLocale: ProjectLocale = SUPPORTED_LOCALES.includes(rawSourceLocale as ProjectLocale)
@@ -311,7 +302,7 @@ export async function submitProject(projectData: ProjectSubmissionData) {
       : "en"
 
     // Normalize URL: lowercase + strip trailing slash (consistent with check-url endpoint)
-    const websiteUrl = rawWebsiteUrl.toLowerCase().replace(/\/$/, "")
+    const websiteUrl = rawWebsiteUrl.trim().toLowerCase().replace(/\/$/, "")
 
     // Sanitize untrusted HTML before persistence (XSS prevention)
     const sanitizedDescription = sanitizeRichText(description)
@@ -321,20 +312,6 @@ export async function submitProject(projectData: ProjectSubmissionData) {
     let serverVerifiedBadge = false
     if (hasBadgeVerified) {
       serverVerifiedBadge = await verifyAatBadgeServerSide(websiteUrl)
-    }
-
-    // Validation
-    if (
-      !name ||
-      !description ||
-      !websiteUrl ||
-      !logoUrl ||
-      categories.length === 0 ||
-      techStack.length === 0 ||
-      platforms.length === 0 ||
-      !pricing
-    ) {
-      return { success: false, error: "Missing required fields" }
     }
 
     // Resubmit guard for the same URL:
@@ -386,10 +363,15 @@ export async function submitProject(projectData: ProjectSubmissionData) {
 
     const normalizedTags =
       tags && tags.length > 0
-        ? tags
-            .slice(0, 10)
-            .map(normalizeTag)
-            .filter((t) => t.slug.length >= 2 && t.slug.length <= 30)
+        ? [
+            ...new Map(
+              tags
+                .slice(0, 10)
+                .map(normalizeTag)
+                .filter((tag) => tag.slug.length >= 2 && tag.slug.length <= 30)
+                .map((tag) => [tag.id, tag]),
+            ).values(),
+          ]
         : []
 
     const newProject = await db.transaction(async (tx) => {

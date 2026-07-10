@@ -75,18 +75,21 @@ export function EditProjectForm({ projectId, initial, onUpdate, onCancel }: Edit
 
   useEffect(() => {
     let cancelled = false
-    setIsLoadingCategories(true)
-    getAllCategories()
-      .then((cats) => {
-        if (!cancelled) setAllCategories(cats)
-      })
-      .catch((err) => {
-        console.error("Failed to load categories:", err)
-        if (!cancelled) toast.error("Failed to load categories")
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingCategories(false)
-      })
+    queueMicrotask(() => {
+      if (cancelled) return
+      setIsLoadingCategories(true)
+      void getAllCategories()
+        .then((cats) => {
+          if (!cancelled) setAllCategories(cats)
+        })
+        .catch((err) => {
+          console.error("Failed to load categories:", err)
+          if (!cancelled) toast.error("Failed to load categories")
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingCategories(false)
+        })
+    })
     return () => {
       cancelled = true
     }

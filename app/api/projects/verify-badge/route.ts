@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { readRequestJsonBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 
 /**
  * Verify if a website contains the aat.ee badge link.
@@ -30,8 +31,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { websiteUrl } = body
+    let body: unknown
+    try {
+      body = await readRequestJsonBounded(request, 16 * 1024)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof RequestBodyTooLargeError ? "Payload too large" : "Invalid body" },
+        { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
+      )
+    }
+    const websiteUrl =
+      body && typeof body === "object" && "websiteUrl" in body
+        ? (body as { websiteUrl?: unknown }).websiteUrl
+        : undefined
 
     if (!websiteUrl || typeof websiteUrl !== "string") {
       return NextResponse.json({ error: "Website URL is required" }, { status: 400 })

@@ -343,6 +343,12 @@ export function SubmitProjectForm({
         sourceLocale: restoredLocale,
         hasBadgeVerified: false,
       })
+      setTechStackTags(
+        (saved.formData.techStack ?? []).map((tech, index) => ({
+          id: `draft-${index}-${tech}`,
+          text: tech,
+        })),
+      )
       setUploadedLogoUrl(saved.uploadedLogoUrl)
       toast.info(t("toast.draftRestored"))
     },
@@ -440,34 +446,7 @@ export function SubmitProjectForm({
     }
   }, [formData.launchType, formData.hasBadgeVerified])
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  useEffect(() => {
-    if (currentStep === 3) {
-      loadAvailableDates()
-    }
-  }, [currentStep, loadAvailableDates])
-
-  useEffect(() => {
-    const tagsFromFormData = formData.techStack.map((tech, index) => ({
-      id: `${index}-${tech}`,
-      text: tech,
-    }))
-    if (JSON.stringify(tagsFromFormData) !== JSON.stringify(techStackTags)) {
-      setTechStackTags(tagsFromFormData)
-    }
-  }, [formData.techStack])
-
-  useEffect(() => {
-    const techStringArray = techStackTags.map((tag) => tag.text)
-    if (JSON.stringify(techStringArray) !== JSON.stringify(formData.techStack)) {
-      setFormData((prev) => ({ ...prev, techStack: techStringArray }))
-    }
-  }, [techStackTags])
-
-  async function fetchCategories() {
+  const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true)
     try {
       const data = await getAllCategories()
@@ -478,7 +457,17 @@ export function SubmitProjectForm({
     } finally {
       setIsLoadingCategories(false)
     }
-  }
+  }, [t])
+
+  useEffect(() => {
+    queueMicrotask(() => void fetchCategories())
+  }, [fetchCategories])
+
+  useEffect(() => {
+    if (currentStep === 3) {
+      queueMicrotask(() => void loadAvailableDates())
+    }
+  }, [currentStep, loadAvailableDates])
 
   const handleAutoFill = async () => {
     if (!formData.websiteUrl || isAutoFilling) return
@@ -530,11 +519,17 @@ export function SubmitProjectForm({
 
       // Tags: only set if user hasn't added any
       if (techStackTags.length === 0 && data.tags?.length > 0) {
-        const newTags = data.tags.map((t: string, i: number) => ({
-          id: `autofill-${i}-${t}`,
-          text: t,
+        const tagNames = data.tags
+          .filter((tag: unknown): tag is string => typeof tag === "string")
+          .map((tag: string) => tag.trim())
+          .filter(Boolean)
+          .slice(0, 10)
+        const newTags = tagNames.map((tag: string, index: number) => ({
+          id: `autofill-${index}-${tag}`,
+          text: tag,
         }))
         setTechStackTags(newTags)
+        setFormData((prev) => ({ ...prev, techStack: tagNames }))
       }
 
       // Logo: only set if user hasn't uploaded one
@@ -629,7 +624,7 @@ export function SubmitProjectForm({
 
   useEffect(() => {
     if (formData.scheduledDate && currentStep === 3) {
-      validateLaunchDateLimit(formData.scheduledDate)
+      queueMicrotask(() => void validateLaunchDateLimit(formData.scheduledDate))
     }
   }, [formData.scheduledDate, currentStep, validateLaunchDateLimit])
 
@@ -637,23 +632,27 @@ export function SubmitProjectForm({
   // get the heads-up at Step 1 instead of after filling out the entire
   // 4-step form. Cleared on each keystroke + when URL becomes invalid.
   useEffect(() => {
-    setUrlDuplicateWarning(false)
-    const url = formData.websiteUrl.trim()
-    if (!url) {
+    let aborted = false
+    const resetCheckState = () => {
+      if (aborted) return
+      setUrlDuplicateWarning(false)
       setIsCheckingUrl(false)
-      return
     }
+    queueMicrotask(resetCheckState)
+
+    const url = formData.websiteUrl.trim()
+    if (!url) return () => void (aborted = true)
     try {
       new URL(url)
     } catch {
-      setIsCheckingUrl(false)
-      return
+      return () => void (aborted = true)
     }
     // `aborted` guards against in-flight fetches resolving after the user
     // has already typed something else. Without it, slow networks would
     // briefly flash stale warnings on the new URL.
-    let aborted = false
-    setIsCheckingUrl(true)
+    queueMicrotask(() => {
+      if (!aborted) setIsCheckingUrl(true)
+    })
     const handle = setTimeout(async () => {
       const exists = await checkWebsiteUrl(url)
       if (aborted) return
@@ -821,13 +820,7 @@ export function SubmitProjectForm({
           }
 
           try {
-            await notifyDiscordLaunch(
-              formData.name,
-              format(parseISO(formData.scheduledDate), DATE_FORMAT.DISPLAY),
-              formData.launchType,
-              formData.websiteUrl,
-              `${process.env.NEXT_PUBLIC_URL || ""}/projects/${projectSlug}`,
-            )
+            await notifyDiscordLaunch(projectId)
           } catch (discordError) {
             console.error("Failed to send Discord notification:", discordError)
           }
@@ -1355,7 +1348,9 @@ export function SubmitProjectForm({
                 id={tagInputId}
                 tags={techStackTags}
                 setTags={(newTags) => {
-                  if (newTags.length > 10) {
+                  const resolvedTags =
+                    typeof newTags === "function" ? newTags(techStackTags) : newTags
+                  if (resolvedTags.length > 10) {
                     setFieldErrors((prev) => ({
                       ...prev,
                       techStack: t("errors.fields.techStackMax"),
@@ -1363,7 +1358,11 @@ export function SubmitProjectForm({
                     return
                   }
                   setFieldErrors((prev) => ({ ...prev, techStack: "" }))
-                  setTechStackTags(newTags)
+                  setTechStackTags(resolvedTags)
+                  setFormData((prev) => ({
+                    ...prev,
+                    techStack: resolvedTags.map((tag) => tag.text),
+                  }))
                 }}
                 placeholder={t("step2.tags.placeholder")}
                 enableAutocomplete={autocompleteTags.length > 0}
