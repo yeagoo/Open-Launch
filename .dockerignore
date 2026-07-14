@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+coverage
+email-previews
+logs
+*.log
+*.db
+*.sqlite
+.env
+.env.*
+!.env.example
+jietu
+docs

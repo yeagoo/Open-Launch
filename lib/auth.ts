@@ -7,6 +7,7 @@ import { admin, captcha, oneTap } from "better-auth/plugins"
 import { buildBetterAuthApiErrorLog } from "@/lib/auth-error-log"
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
+import { redactEmail } from "@/lib/log-redaction"
 import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
 
 const stripeClient = createStripeClient()
@@ -45,9 +46,9 @@ export const auth = betterAuth({
           subject: "Verify Your Email - aat.ee",
           html,
         })
-        console.log(`✅ Verification email sent to ${user.email}`)
+        console.log(`✅ Verification email sent to ${redactEmail(user.email)}`)
       } catch (error) {
-        console.error(`❌ Failed to send verification email to ${user.email}:`, error)
+        console.error(`❌ Failed to send verification email to ${redactEmail(user.email)}:`, error)
         throw error
       }
     },

@@ -1,4 +1,5 @@
 import { fetchWithTimeout, withTimeout } from "@/lib/fetch-timeout"
+import { redactEmail } from "@/lib/log-redaction"
 
 interface EmailPayload {
   to: string
@@ -56,11 +57,15 @@ export async function sendEmail(payload: EmailPayload) {
       replyTo: effectiveReplyTo,
     })
 
-    console.log("Email sent successfully:", { to, subject, id: data?.id })
+    console.log("Email sent successfully:", { to: redactEmail(to), subject, id: data?.id })
     return { success: true, data }
   } catch (error) {
     console.error("Failed to send email:", error)
-    console.error("Email details:", { from: fromEmail, to, subject })
+    console.error("Email details:", {
+      from: redactEmail(fromEmail),
+      to: redactEmail(to),
+      subject,
+    })
     throw error
   }
 }

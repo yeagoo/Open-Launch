@@ -22,11 +22,17 @@
  */
 
 import { db } from "@/drizzle/db"
-import { crawledData } from "@/drizzle/db/schema"
+import { crawledData, project as projectTable } from "@/drizzle/db/schema"
 import { addDays } from "date-fns"
-import { and, eq, gt } from "drizzle-orm"
+import { and, eq, gt, sql } from "drizzle-orm"
 
-import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
+import { crawlFailurePolicy } from "./crawl-health"
+import {
+  CrawlError,
+  CrawlSuspendedError,
+  type CrawlOptions,
+  type CrawlResult,
+} from "./crawler-types"
 import { fetchWithTimeout, withTimeout } from "./fetch-timeout"
 import { tinyfishCrawl } from "./tinyfish"
 
@@ -71,7 +77,44 @@ export async function getCachedOrCrawl(
     }
   }
 
-  const result = await crawlUrl(url, options)
+  const health = projectId
+    ? await db
+        .select({
+          failureCount: projectTable.crawlFailureCount,
+          suspendedUntil: projectTable.crawlSuspendedUntil,
+        })
+        .from(projectTable)
+        .where(eq(projectTable.id, projectId))
+        .limit(1)
+        .then((rows) => rows[0])
+    : undefined
+
+  if (health?.suspendedUntil && health.suspendedUntil > now) {
+    throw new CrawlSuspendedError(url, health.suspendedUntil)
+  }
+
+  let result: CrawlResult
+  try {
+    result = await crawlUrl(url, options)
+  } catch (error) {
+    if (projectId && !(error instanceof CrawlSuspendedError)) {
+      await recordProjectCrawlFailure(projectId, error, now)
+    }
+    throw error
+  }
+
+  if (projectId && health && (health.failureCount > 0 || health.suspendedUntil)) {
+    await db
+      .update(projectTable)
+      .set({
+        crawlFailureCount: 0,
+        crawlLastFailedAt: null,
+        crawlSuspendedUntil: null,
+        crawlLastError: null,
+      })
+      .where(eq(projectTable.id, projectId))
+  }
+
   const id = crypto.randomUUID()
   const expiresAt = addDays(now, ttlDays)
   const contentHash = await hashContent(result.markdown)
@@ -102,6 +145,34 @@ export async function getCachedOrCrawl(
     })
 
   return result
+}
+
+async function recordProjectCrawlFailure(
+  projectId: string,
+  error: unknown,
+  now: Date,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : String(error)
+  const policy = crawlFailurePolicy(message, now)
+
+  try {
+    await db
+      .update(projectTable)
+      .set({
+        crawlFailureCount: sql`${projectTable.crawlFailureCount} + 1`,
+        crawlLastFailedAt: now,
+        crawlSuspendedUntil: policy.suspendedUntil,
+        crawlLastError: message.slice(0, 500),
+      })
+      .where(eq(projectTable.id, projectId))
+    console.warn(
+      `[crawl-circuit] project=${projectId} kind=${policy.kind} suspendedUntil=${policy.suspendedUntil.toISOString()}`,
+    )
+  } catch (recordError) {
+    // Crawl failure remains authoritative. Observability writes must never
+    // replace it with a secondary database error.
+    console.error("[crawl-circuit] failed to persist project crawl failure:", recordError)
+  }
 }
 
 async function hashContent(content: string): Promise<string> {

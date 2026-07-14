@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { project, projectTranslation } from "@/drizzle/db/schema"
-import { and, asc, eq, isNull, or, sql } from "drizzle-orm"
+import { and, asc, eq, isNull, lte, or, sql } from "drizzle-orm"
 
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { CrawlError } from "@/lib/crawler-types"
@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
       and(
         sql`${project.websiteUrl} IS NOT NULL AND length(${project.websiteUrl}) > 0`,
         eq(project.isLowQuality, false),
+        or(isNull(project.crawlSuspendedUntil), lte(project.crawlSuspendedUntil, new Date())),
         // Skip projects we've attempted in the last 24h. Brand new
         // candidates (attempted_at IS NULL) are always eligible.
         or(

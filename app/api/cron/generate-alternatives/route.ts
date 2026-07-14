@@ -9,7 +9,7 @@ import {
   project as projectTable,
   projectToCategory,
 } from "@/drizzle/db/schema"
-import { and, eq, or, sql } from "drizzle-orm"
+import { and, eq, isNull, lte, or, sql } from "drizzle-orm"
 
 import {
   analyzeAlternative,
@@ -72,6 +72,10 @@ export async function GET(request: NextRequest) {
             eq(projectTable.launchStatus, launchStatus.LAUNCHED),
           ),
           eq(projectTable.isLowQuality, false),
+          or(
+            isNull(projectTable.crawlSuspendedUntil),
+            lte(projectTable.crawlSuspendedUntil, new Date()),
+          ),
           sql`${projectTable.id} NOT IN (SELECT subject_project_id FROM alternative_page)`,
           sql`${sameCategoryCountSql} >= ${MIN_ALTERNATIVES}`,
           sql`(${projectTable.alternativesAttemptedAt} IS NULL OR ${projectTable.alternativesAttemptedAt} < ${reattemptCutoff})`,
@@ -132,6 +136,10 @@ export async function GET(request: NextRequest) {
                 eq(projectTable.launchStatus, launchStatus.LAUNCHED),
               ),
               eq(projectTable.isLowQuality, false),
+              or(
+                isNull(projectTable.crawlSuspendedUntil),
+                lte(projectTable.crawlSuspendedUntil, new Date()),
+              ),
             ),
           )
           .groupBy(

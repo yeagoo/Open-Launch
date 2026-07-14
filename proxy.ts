@@ -7,6 +7,10 @@ import createMiddleware from "next-intl/middleware"
 const intlMiddleware = createMiddleware(routing)
 
 const BOT_UA_REGEX = /bot|crawler|spider|crawling|slurp|facebookexternalhit/i
+// Next.js 16.2 action identifiers in this build are 40-character hex hashes.
+// Reject obvious probes such as `Next-Action: x` before they reach the action
+// resolver and generate noisy "Failed to find Server Action" exceptions.
+const SERVER_ACTION_ID_REGEX = /^[a-f0-9]{40}$/i
 
 const REQUEST_ID_HEADER = "x-aat-request-id"
 
@@ -48,6 +52,11 @@ function withRequestId<T extends Response>(response: T, requestId: string): T {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const requestId = requestIdFor(request)
+
+  const serverActionId = request.headers.get("next-action")
+  if (serverActionId && !SERVER_ACTION_ID_REGEX.test(serverActionId)) {
+    return withRequestId(new NextResponse(null, { status: 404 }), requestId)
+  }
 
   // Session guards run first (cookie-only check; role/ban verified in layouts)
   if (isSessionGuarded(pathname)) {

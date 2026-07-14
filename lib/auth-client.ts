@@ -3,12 +3,9 @@ import { adminClient, oneTapClient } from "better-auth/client/plugins"
 import { createAuthClient } from "better-auth/react"
 
 const authClient = createAuthClient({
-  baseURL: process.env.BETTER_AUTH_URL!,
-  trustedOrigins: [
-    process.env.NODE_ENV !== "development"
-      ? "https://www.open-launch.com"
-      : "http://localhost:3000",
-  ],
+  // No baseURL is intentional: in the browser Better Auth uses the current
+  // origin. This keeps localized/custom-domain visits same-origin and avoids
+  // bundling a server-only BETTER_AUTH_URL or the retired open-launch.com host.
   plugins: [
     stripeClient({
       subscription: true, //if you want to enable subscription management

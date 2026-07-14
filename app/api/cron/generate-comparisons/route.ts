@@ -11,7 +11,7 @@ import {
   projectToCategory,
   upvote,
 } from "@/drizzle/db/schema"
-import { and, count, desc, eq, gte, or, sql } from "drizzle-orm"
+import { and, count, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm"
 
 import { aiCircuitOpen, AiUnavailableError, assertAiAvailable } from "@/lib/ai-circuit"
 import { generateComparisonContent } from "@/lib/ai-content"
@@ -77,6 +77,10 @@ export async function GET(request: NextRequest) {
               eq(projectTable.launchStatus, launchStatus.LAUNCHED),
             ),
             eq(projectTable.isLowQuality, false),
+            or(
+              isNull(projectTable.crawlSuspendedUntil),
+              lte(projectTable.crawlSuspendedUntil, new Date()),
+            ),
           ),
         )
         .groupBy(

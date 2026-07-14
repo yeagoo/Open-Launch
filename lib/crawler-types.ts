@@ -15,6 +15,13 @@ export class CrawlError extends Error {
   }
 }
 
+export class CrawlSuspendedError extends CrawlError {
+  constructor(url: string, suspendedUntil: Date) {
+    super(url, `Project crawl suspended until ${suspendedUntil.toISOString()}`)
+    this.name = "CrawlSuspendedError"
+  }
+}
+
 export interface CrawlOptions {
   timeout?: number
 }

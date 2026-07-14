@@ -19,7 +19,13 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Zeabur exposes the commit SHA while building Git deployments. Next.js
+  // attaches this value to client navigations and performs a hard refresh when
+  // an old tab talks to a newer deployment, avoiding stale Server Action IDs.
+  deploymentId: process.env.ZEABUR_GIT_COMMIT_SHA || process.env.DEPLOYMENT_VERSION,
+  // Emit the traced production server instead of shipping the complete
+  // dependency tree. The multi-stage Dockerfile copies this directory only.
+  output: "standalone",
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
   },

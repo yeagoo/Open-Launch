@@ -46,6 +46,7 @@ export function SignUpForm() {
       await signIn.social({
         provider: provider as "google" | "github",
         callbackURL: "/dashboard",
+        errorCallbackURL: "/sign-in",
       })
     } catch (error) {
       setGeneralError(error instanceof Error ? error.message : t("genericError"))
@@ -89,7 +90,12 @@ export function SignUpForm() {
     oneTap({
       fetchOptions: {
         onError: ({ error }) => {
-          toast.error(error.message || t("genericError"))
+          const message = error.message
+          toast.error(
+            message?.includes("account_not_linked")
+              ? tSignIn("accountNotLinkedError")
+              : message || t("genericError"),
+          )
         },
         onSuccess: () => {
           toast.success(tSignIn("successToast"))

@@ -11,8 +11,12 @@ export async function register() {
   if (globalForInstrumentation.__aatRequestErrorMonitorRegistered) return
 
   globalForInstrumentation.__aatRequestErrorMonitorRegistered = true
-  const { registerNodeRuntimeErrorMonitor } = await import("./lib/node-runtime-error-monitor")
+  const [{ registerNodeRuntimeErrorMonitor }, { startEmbeddedCron }] = await Promise.all([
+    import("./lib/node-runtime-error-monitor"),
+    import("./lib/embedded-cron"),
+  ])
   registerNodeRuntimeErrorMonitor()
+  startEmbeddedCron()
 }
 
 export const onRequestError: Instrumentation.onRequestError = (error, request, context) => {

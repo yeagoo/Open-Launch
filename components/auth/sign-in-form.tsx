@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { Link } from "@/i18n/navigation"
@@ -19,7 +19,7 @@ import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { TurnstileCaptcha } from "./turnstile-captcha"
 
-export function SignInForm() {
+export function SignInForm({ initialError }: { initialError?: string }) {
   const router = useRouter()
   const t = useTranslations("auth.signIn")
   const [loadingButtons, setLoadingButtons] = useState({
@@ -37,7 +37,19 @@ export function SignInForm() {
     resolver: zodResolver(signInSchema),
   })
 
-  const [generalError, setGeneralError] = useState<string | null>(null)
+  const [generalError, setGeneralError] = useState<string | null>(initialError ?? null)
+
+  const friendlyAuthError = useCallback(
+    (message?: string) => {
+      if (!message) return t("genericError")
+      if (message.includes("account_not_linked")) return t("accountNotLinkedError")
+      if (message.includes("state_") || message.toLowerCase().includes("state mismatch")) {
+        return t("oauthStateError")
+      }
+      return message
+    },
+    [t],
+  )
 
   const handleLogin = async (provider: string) => {
     setLoadingButtons((prevState) => ({ ...prevState, [provider]: true }))
@@ -45,9 +57,10 @@ export function SignInForm() {
       await signIn.social({
         provider: provider as "google" | "github",
         callbackURL: "/dashboard",
+        errorCallbackURL: "/sign-in",
       })
     } catch (error) {
-      setGeneralError(error instanceof Error ? error.message : t("genericError"))
+      setGeneralError(friendlyAuthError(error instanceof Error ? error.message : undefined))
     } finally {
       setLoadingButtons((prevState) => ({ ...prevState, [provider]: false }))
     }
@@ -91,7 +104,7 @@ export function SignInForm() {
     oneTap({
       fetchOptions: {
         onError: ({ error }) => {
-          toast.error(error.message || t("genericError"))
+          toast.error(friendlyAuthError(error.message))
         },
         onSuccess: () => {
           toast.success(t("successToast"))
@@ -99,7 +112,7 @@ export function SignInForm() {
         },
       },
     })
-  }, [t])
+  }, [friendlyAuthError, t])
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 sm:px-0">

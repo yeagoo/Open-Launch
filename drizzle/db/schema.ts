@@ -146,6 +146,13 @@ export const project = pgTable(
     relatedAttemptedAt: timestamp("related_attempted_at"),
     alternativesAttemptedAt: timestamp("alternatives_attempted_at"),
     isLowQuality: boolean("is_low_quality").notNull().default(false),
+    // Shared crawler circuit state. A dead website is quarantined once at the
+    // project level so comparison/alternatives/enrichment jobs do not each
+    // spend Tinyfish quota rediscovering the same failure.
+    crawlFailureCount: integer("crawl_failure_count").notNull().default(0),
+    crawlLastFailedAt: timestamp("crawl_last_failed_at"),
+    crawlSuspendedUntil: timestamp("crawl_suspended_until"),
+    crawlLastError: text("crawl_last_error"),
     qualityCheckedAt: timestamp("quality_checked_at"),
     qualityScore: integer("quality_score"),
     qualityReason: text("quality_reason"),
@@ -168,6 +175,7 @@ export const project = pgTable(
       ),
       // Dashboard / quota recount / admin queries filter by owner.
       createdByIdx: index("project_created_by_idx").on(table.createdBy),
+      crawlSuspendedIdx: index("project_crawl_suspended_until_idx").on(table.crawlSuspendedUntil),
     }
   },
 )
