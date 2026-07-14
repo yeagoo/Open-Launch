@@ -5,6 +5,9 @@ import path from "node:path"
 
 import * as dotenv from "dotenv"
 
+const CONTROLLED_PG_DUMP_ATTEMPTS = 2
+const CONTROLLED_PG_DUMP_RETRY_DELAY_MS = 5_000
+
 type Args = {
   envFile: string
   dryRun: boolean
@@ -45,9 +48,19 @@ function pgEnv(databaseUrl: string): NodeJS.ProcessEnv {
   }
 }
 
+function localToolEnv(): NodeJS.ProcessEnv {
+  return {
+    PATH: process.env.PATH,
+    HOME: process.env.HOME,
+    NODE_ENV: process.env.NODE_ENV,
+    LANG: process.env.LANG,
+    LC_ALL: process.env.LC_ALL,
+  }
+}
+
 async function run(program: string, args: string[], env?: NodeJS.ProcessEnv): Promise<void> {
   const child = spawn(program, args, {
-    env: env ? { ...process.env, ...env } : process.env,
+    env: env ?? process.env,
     stdio: ["ignore", "ignore", "pipe"],
   })
   let stderr = ""
@@ -66,6 +79,37 @@ async function run(program: string, args: string[], env?: NodeJS.ProcessEnv): Pr
   }
 }
 
+async function runControlledPgDump(outputPath: string, databaseUrl: string): Promise<void> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= CONTROLLED_PG_DUMP_ATTEMPTS; attempt += 1) {
+    await fs.rm(outputPath, { force: true })
+    try {
+      await run(
+        "pg_dump",
+        [
+          "--format=plain",
+          "--no-owner",
+          "--no-privileges",
+          "--encoding=UTF8",
+          "--file",
+          outputPath,
+        ],
+        pgEnv(databaseUrl),
+      )
+      return
+    } catch (error) {
+      lastError = error
+      if (attempt < CONTROLLED_PG_DUMP_ATTEMPTS) {
+        console.error(
+          `[opsctl-backup] pg_dump attempt ${attempt}/${CONTROLLED_PG_DUMP_ATTEMPTS} failed; retrying`,
+        )
+        await new Promise((resolve) => setTimeout(resolve, CONTROLLED_PG_DUMP_RETRY_DELAY_MS))
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("pg_dump failed")
+}
+
 function isZstdPath(outputPath: string): boolean {
   return outputPath.endsWith(".zst")
 }
@@ -73,42 +117,52 @@ function isZstdPath(outputPath: string): boolean {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const controlledOutputPath = process.env.OPSCTL_BACKUP_DUMP_OUTPUT
+  const controlledFinalOutputPath = process.env.OPSCTL_BACKUP_DUMP_FINAL_OUTPUT
+  const controlledDatabaseUrl = controlledOutputPath ? process.env.DATABASE_URL : undefined
   dotenv.config({ path: args.envFile, override: true })
   if (controlledOutputPath) {
     process.env.OPSCTL_BACKUP_DUMP_OUTPUT = controlledOutputPath
   }
+  if (controlledFinalOutputPath) {
+    process.env.OPSCTL_BACKUP_DUMP_FINAL_OUTPUT = controlledFinalOutputPath
+  }
+  if (controlledDatabaseUrl) {
+    process.env.DATABASE_URL = controlledDatabaseUrl
+  }
 
   const outputPath = requireEnv("OPSCTL_BACKUP_DUMP_OUTPUT")
+  if (!path.isAbsolute(outputPath)) {
+    throw new Error("OPSCTL_BACKUP_DUMP_OUTPUT must be an absolute path")
+  }
+  const finalOutputPath = process.env.OPSCTL_BACKUP_DUMP_FINAL_OUTPUT ?? outputPath
+  if (!path.isAbsolute(finalOutputPath)) {
+    throw new Error("OPSCTL_BACKUP_DUMP_FINAL_OUTPUT must be an absolute path")
+  }
   const databaseUrl = requireEnv("DATABASE_URL")
   const outputDir = path.dirname(outputPath)
   const tempBase = path.join(outputDir, `.opsctl-${process.pid}-${Date.now()}`)
-  const plainSqlPath = isZstdPath(outputPath) ? `${tempBase}.sql` : tempBase
-  const compressedPath = isZstdPath(outputPath) ? `${tempBase}.sql.zst` : plainSqlPath
+  const compress = isZstdPath(finalOutputPath)
+  const plainSqlPath = compress ? `${tempBase}.sql` : tempBase
+  const compressedPath = compress ? `${tempBase}.sql.zst` : plainSqlPath
 
   if (args.dryRun) {
     console.log(JSON.stringify({ ok: true, dryRun: true, outputPath }))
     return
   }
 
+  process.umask(0o077)
   await fs.mkdir(outputDir, { recursive: true })
+  const outputDirectoryStat = await fs.stat(outputDir)
   try {
-    await run(
-      "pg_dump",
-      [
-        "--format=plain",
-        "--no-owner",
-        "--no-privileges",
-        "--encoding=UTF8",
-        "--file",
-        plainSqlPath,
-      ],
-      pgEnv(databaseUrl),
-    )
-    if (isZstdPath(outputPath)) {
-      await run("zstd", ["-T0", "-q", "-f", "-o", compressedPath, plainSqlPath])
+    await runControlledPgDump(plainSqlPath, databaseUrl)
+    if (compress) {
+      await run("zstd", ["-T0", "-q", "-f", "-o", compressedPath, plainSqlPath], localToolEnv())
       await fs.rm(plainSqlPath, { force: true })
     }
     await fs.chmod(compressedPath, 0o600)
+    if (typeof process.getuid === "function" && process.getuid() === 0) {
+      await fs.chown(compressedPath, outputDirectoryStat.uid, outputDirectoryStat.gid)
+    }
     await fs.rename(compressedPath, outputPath)
     const stat = await fs.stat(outputPath)
     if (!stat.isFile() || stat.size === 0) {
