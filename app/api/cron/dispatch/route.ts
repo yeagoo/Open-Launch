@@ -4,6 +4,11 @@ import { db } from "@/drizzle/db"
 import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import {
+  pingCronHeartbeat,
+  type CronHeartbeatResult,
+  type CronHeartbeatState,
+} from "@/lib/cron-heartbeat"
 import { cronMatches } from "@/lib/cron-match"
 import { cronStatusFromResult } from "@/lib/cron-status"
 import { fetchWithTimeout, withTimeout } from "@/lib/fetch-timeout"
@@ -16,6 +21,14 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 300
 
 const SUBTASK_TIMEOUT_MS = 240_000 // 4 min per fan-out
+
+const globalForHeartbeat = globalThis as typeof globalThis & {
+  __aatCronHeartbeatState?: CronHeartbeatState
+}
+const heartbeatState = (globalForHeartbeat.__aatCronHeartbeatState ??= {
+  consecutiveFailures: 0,
+  nextAttemptAt: 0,
+})
 
 interface TaskResult {
   path: string
@@ -162,18 +175,9 @@ export async function GET(request: NextRequest) {
     // optional: a missing/broken URL never affects dispatch. Skipped on a 500
     // dispatch so we don't signal "healthy" when nothing succeeded.
     const heartbeatUrl = process.env.CRON_HEARTBEAT_URL
+    let heartbeat: CronHeartbeatResult | { status: "disabled" } = { status: "disabled" }
     if (heartbeatUrl && status < 500) {
-      try {
-        const heartbeat = await fetchWithTimeout(
-          heartbeatUrl,
-          { method: "GET" },
-          5_000,
-          "cron heartbeat",
-        )
-        await withTimeout(heartbeat.text(), 5_000, "cron heartbeat body").catch(() => {})
-      } catch (err) {
-        console.error("cron heartbeat ping failed:", err)
-      }
+      heartbeat = await pingCronHeartbeat(heartbeatUrl, heartbeatState)
     }
 
     return NextResponse.json(
@@ -183,6 +187,7 @@ export async function GET(request: NextRequest) {
         successCount,
         failedCount,
         skippedDisabled,
+        heartbeat,
         results,
       },
       { status },

@@ -7,7 +7,10 @@
   Generate it once with `openssl rand -base64 32`; do not rotate it on every
   deployment.
 - `CRON_HEARTBEAT_URL`: an external dead-man check URL from healthchecks.io,
-  Better Stack, or an equivalent service.
+  Better Stack, or an equivalent service. It must be a publicly reachable
+  third-party URL, not an `aat.ee` route or a private/internal address. Failed
+  pings retry with exponential backoff up to 30 minutes and never fail cron
+  dispatch itself.
 - `BETTER_AUTH_URL` and `NEXT_PUBLIC_URL`: both `https://www.aat.ee` in
   production.
 
