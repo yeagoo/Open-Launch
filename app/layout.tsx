@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import {
   IBM_Plex_Serif as FontEditorial,
@@ -10,7 +11,13 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { Toaster } from "sonner"
 
+import {
+  MATOMO_BASE_URL,
+  MATOMO_SENSITIVE_QUERY_PARAMETERS,
+  MATOMO_SITE_ID,
+} from "@/lib/analytics/matomo"
 import { footerNavSites } from "@/lib/directories-links"
+import { MatomoRouteTracker } from "@/components/analytics/matomo-route-tracker"
 import Footer from "@/components/layout/footer"
 import Nav from "@/components/layout/nav"
 import { OrganizationSchema } from "@/components/seo/structured-data"
@@ -117,6 +124,30 @@ export default async function RootLayout({
                 gtag('config', '${GA_MEASUREMENT_ID}');
               `}
             </Script>
+
+            {/* Matomo Analytics: the bootstrap tracks the initial page load. */}
+            <Script id="matomo-analytics" strategy="afterInteractive">
+              {`
+                var _paq = window._paq = window._paq || [];
+                var matomoUrl = new URL(window.location.href);
+                var sensitiveParameters = new Set(${JSON.stringify(MATOMO_SENSITIVE_QUERY_PARAMETERS)});
+                Array.from(matomoUrl.searchParams.keys()).forEach(function(parameter) {
+                  if (sensitiveParameters.has(parameter.toLowerCase())) {
+                    matomoUrl.searchParams.delete(parameter);
+                  }
+                });
+                _paq.push(['setCustomUrl', matomoUrl.toString()]);
+                _paq.push(['trackPageView']);
+                _paq.push(['enableLinkTracking']);
+                (function() {
+                  var u=${JSON.stringify(MATOMO_BASE_URL)};
+                  _paq.push(['setTrackerUrl', u+'matomo.php']);
+                  _paq.push(['setSiteId', ${JSON.stringify(MATOMO_SITE_ID)}]);
+                  var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                  g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+                })();
+              `}
+            </Script>
           </>
         )}
 
@@ -149,6 +180,11 @@ export default async function RootLayout({
             </div>
           </ThemeProvider>
           <Toaster />
+          {process.env.NODE_ENV === "production" && (
+            <Suspense fallback={null}>
+              <MatomoRouteTracker />
+            </Suspense>
+          )}
         </NextIntlClientProvider>
       </body>
     </html>
