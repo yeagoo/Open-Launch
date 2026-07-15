@@ -7,6 +7,7 @@ import { and, eq, gte, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { redactEmail } from "@/lib/log-redaction"
 import { sendLaunchReminderEmail } from "@/lib/transactional-emails"
 
 export async function GET(request: NextRequest) {
@@ -76,13 +77,15 @@ export async function GET(request: NextRequest) {
 
       // Skip bot users - they don't need email notifications
       if (projectCreator.isBot) {
-        console.log(`Skipping bot user ${projectCreator.email} for project ${proj.projectName}.`)
+        console.log(
+          `Skipping bot user ${redactEmail(projectCreator.email)} for project ${proj.projectName}.`,
+        )
         continue
       }
 
       try {
         console.log(
-          `Sending launch reminder email to ${projectCreator.email} for project ${proj.projectName}`,
+          `Sending launch reminder email to ${redactEmail(projectCreator.email)} for project ${proj.projectName}`,
         )
 
         await sendLaunchReminderEmail({
@@ -94,7 +97,7 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         emailsFailedCount++
         console.error(
-          `Failed to send launch reminder email for project ${proj.projectName} to ${projectCreator.email}:`,
+          `Failed to send launch reminder email for project ${proj.projectName} to ${redactEmail(projectCreator.email)}:`,
           error,
         )
       }

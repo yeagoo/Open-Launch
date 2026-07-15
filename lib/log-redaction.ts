@@ -12,3 +12,9 @@ export function redactEmail(email: string): string {
   const visible = local.slice(0, Math.min(2, local.length))
   return `${visible}***@${domain}`
 }
+
+const EMAIL_IN_TEXT_REGEX = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi
+
+export function redactEmailsInText(value: string): string {
+  return value.replace(EMAIL_IN_TEXT_REGEX, (email) => redactEmail(email))
+}

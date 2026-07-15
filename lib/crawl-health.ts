@@ -1,11 +1,14 @@
 import { addDays, addHours } from "date-fns"
 
-export type CrawlFailureKind = "permanent" | "degraded" | "transient" | "unknown"
+export type CrawlFailureKind = "provider" | "permanent" | "degraded" | "transient" | "unknown"
 
-export interface CrawlFailurePolicy {
-  kind: CrawlFailureKind
-  suspendedUntil: Date
-}
+export type CrawlFailurePolicy =
+  | { kind: "provider"; shouldSuspendProject: false }
+  | {
+      kind: Exclude<CrawlFailureKind, "provider">
+      shouldSuspendProject: true
+      suspendedUntil: Date
+    }
 
 /**
  * Convert provider/network wording into a bounded retry policy.
@@ -17,13 +20,30 @@ export interface CrawlFailurePolicy {
 export function crawlFailurePolicy(message: string, now = new Date()): CrawlFailurePolicy {
   const normalized = message.toLowerCase()
 
+  // Credentials, provider quotas and missing crawler configuration affect all
+  // URLs. Persisting them against individual projects would quarantine the
+  // whole catalogue even after the operational issue has been fixed.
+  if (
+    normalized.includes("api key") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("environment variable is not set") ||
+    normalized.includes("http 401") ||
+    normalized.includes("http 429")
+  ) {
+    return { kind: "provider", shouldSuspendProject: false }
+  }
+
   if (
     normalized.includes("page_not_found") ||
     normalized.includes("invalid_url") ||
     normalized.includes("enotfound") ||
     normalized.includes("domain_not_found")
   ) {
-    return { kind: "permanent", suspendedUntil: addDays(now, 30) }
+    return {
+      kind: "permanent",
+      shouldSuspendProject: true,
+      suspendedUntil: addDays(now, 30),
+    }
   }
 
   if (
@@ -31,18 +51,31 @@ export function crawlFailurePolicy(message: string, now = new Date()): CrawlFail
     normalized.includes("empty_content") ||
     normalized.includes("no text content")
   ) {
-    return { kind: "degraded", suspendedUntil: addDays(now, 7) }
+    return {
+      kind: "degraded",
+      shouldSuspendProject: true,
+      suspendedUntil: addDays(now, 7),
+    }
   }
 
   if (
     normalized.includes("proxy_error") ||
+    normalized.includes("target_unreachable") ||
     normalized.includes("timeout") ||
     normalized.includes("timed out") ||
     normalized.includes("econnreset") ||
     normalized.includes("econnrefused")
   ) {
-    return { kind: "transient", suspendedUntil: addHours(now, 1) }
+    return {
+      kind: "transient",
+      shouldSuspendProject: true,
+      suspendedUntil: addHours(now, 1),
+    }
   }
 
-  return { kind: "unknown", suspendedUntil: addHours(now, 6) }
+  return {
+    kind: "unknown",
+    shouldSuspendProject: true,
+    suspendedUntil: addHours(now, 6),
+  }
 }

@@ -24,7 +24,7 @@
 import { db } from "@/drizzle/db"
 import { crawledData, project as projectTable } from "@/drizzle/db/schema"
 import { addDays } from "date-fns"
-import { and, eq, gt, sql } from "drizzle-orm"
+import { and, eq, gt, isNull, lte, or, sql } from "drizzle-orm"
 
 import { crawlFailurePolicy } from "./crawl-health"
 import {
@@ -112,7 +112,14 @@ export async function getCachedOrCrawl(
         crawlSuspendedUntil: null,
         crawlLastError: null,
       })
-      .where(eq(projectTable.id, projectId))
+      // Do not erase a failure written by another crawl that started after
+      // this successful crawl. Only state that existed at our start is stale.
+      .where(
+        and(
+          eq(projectTable.id, projectId),
+          or(isNull(projectTable.crawlLastFailedAt), lte(projectTable.crawlLastFailedAt, now)),
+        ),
+      )
   }
 
   const id = crypto.randomUUID()
@@ -155,13 +162,20 @@ async function recordProjectCrawlFailure(
   const message = error instanceof Error ? error.message : String(error)
   const policy = crawlFailurePolicy(message, now)
 
+  if (!policy.shouldSuspendProject) {
+    console.warn(`[crawl-circuit] provider-wide failure; project=${projectId} not suspended`)
+    return
+  }
+
   try {
     await db
       .update(projectTable)
       .set({
         crawlFailureCount: sql`${projectTable.crawlFailureCount} + 1`,
         crawlLastFailedAt: now,
-        crawlSuspendedUntil: policy.suspendedUntil,
+        // Concurrent crawls can fail differently. Never let a short transient
+        // policy overwrite a longer quarantine already written for this URL.
+        crawlSuspendedUntil: sql`GREATEST(COALESCE(${projectTable.crawlSuspendedUntil}, ${policy.suspendedUntil}), ${policy.suspendedUntil})`,
         crawlLastError: message.slice(0, 500),
       })
       .where(eq(projectTable.id, projectId))

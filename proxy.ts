@@ -4,13 +4,11 @@ import { routing } from "@/i18n/routing"
 import { getSessionCookie } from "better-auth/cookies"
 import createMiddleware from "next-intl/middleware"
 
+import { isPlausibleServerActionId } from "@/lib/server-action-id"
+
 const intlMiddleware = createMiddleware(routing)
 
 const BOT_UA_REGEX = /bot|crawler|spider|crawling|slurp|facebookexternalhit/i
-// Next.js 16.2 action identifiers in this build are 40-character hex hashes.
-// Reject obvious probes such as `Next-Action: x` before they reach the action
-// resolver and generate noisy "Failed to find Server Action" exceptions.
-const SERVER_ACTION_ID_REGEX = /^[a-f0-9]{40}$/i
 
 const REQUEST_ID_HEADER = "x-aat-request-id"
 
@@ -54,7 +52,7 @@ export async function proxy(request: NextRequest) {
   const requestId = requestIdFor(request)
 
   const serverActionId = request.headers.get("next-action")
-  if (serverActionId && !SERVER_ACTION_ID_REGEX.test(serverActionId)) {
+  if (serverActionId && !isPlausibleServerActionId(serverActionId)) {
     return withRequestId(new NextResponse(null, { status: 404 }), requestId)
   }
 

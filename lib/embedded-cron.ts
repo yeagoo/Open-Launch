@@ -10,6 +10,21 @@ interface EmbeddedCronState {
   timeout?: NodeTimer
   interval?: ReturnType<typeof setInterval>
   consecutiveFailures: number
+  inFlight: boolean
+}
+
+export async function runSingleFlight(
+  state: Pick<EmbeddedCronState, "inFlight">,
+  operation: () => Promise<void>,
+): Promise<boolean> {
+  if (state.inFlight) return false
+  state.inFlight = true
+  try {
+    await operation()
+    return true
+  } finally {
+    state.inFlight = false
+  }
 }
 
 const globalForCron = globalThis as typeof globalThis & {
@@ -41,40 +56,44 @@ export function startEmbeddedCron(): void {
     )
   }
 
-  const state: EmbeddedCronState = { consecutiveFailures: 0 }
+  const state: EmbeddedCronState = { consecutiveFailures: 0, inFlight: false }
   globalForCron.__aatEmbeddedCronState = state
 
-  const tick = async () => {
-    try {
-      const baseUrl = `http://127.0.0.1:${process.env.PORT ?? "3000"}`
-      const response = await fetchWithTimeout(
-        `${baseUrl}/api/cron/dispatch`,
-        { headers: { Authorization: `Bearer ${apiKey}` } },
-        REQUEST_TIMEOUT_MS,
-        "embedded cron dispatch",
-      )
-      const body = await withTimeout(
-        response.text(),
-        REQUEST_TIMEOUT_MS,
-        "embedded cron response",
-      ).catch(() => "")
-
-      if (!response.ok) {
-        throw new Error(`dispatcher returned ${response.status}: ${body.slice(0, 300)}`)
-      }
-      state.consecutiveFailures = 0
-    } catch (error) {
-      state.consecutiveFailures++
-      // Log the first failure immediately, then every tenth failure. A pod can
-      // take a few seconds to accept loopback traffic during startup.
-      if (state.consecutiveFailures === 1 || state.consecutiveFailures % 10 === 0) {
-        console.error(
-          `[embedded-cron] dispatch failed (${state.consecutiveFailures} consecutive):`,
-          error,
+  const tick = () =>
+    // The dispatcher can legitimately take several minutes when a long cron
+    // task is due. Never stack loopback requests while the previous one is
+    // still active; the next interval will retry after it settles.
+    runSingleFlight(state, async () => {
+      try {
+        const baseUrl = `http://127.0.0.1:${process.env.PORT ?? "3000"}`
+        const response = await fetchWithTimeout(
+          `${baseUrl}/api/cron/dispatch`,
+          { headers: { Authorization: `Bearer ${apiKey}` } },
+          REQUEST_TIMEOUT_MS,
+          "embedded cron dispatch",
         )
+        const body = await withTimeout(
+          response.text(),
+          REQUEST_TIMEOUT_MS,
+          "embedded cron response",
+        ).catch(() => "")
+
+        if (!response.ok) {
+          throw new Error(`dispatcher returned ${response.status}: ${body.slice(0, 300)}`)
+        }
+        state.consecutiveFailures = 0
+      } catch (error) {
+        state.consecutiveFailures++
+        // Log the first failure immediately, then every tenth failure. A pod can
+        // take a few seconds to accept loopback traffic during startup.
+        if (state.consecutiveFailures === 1 || state.consecutiveFailures % 10 === 0) {
+          console.error(
+            `[embedded-cron] dispatch failed (${state.consecutiveFailures} consecutive):`,
+            error,
+          )
+        }
       }
-    }
-  }
+    })
 
   state.timeout = setTimeout(() => {
     void tick()

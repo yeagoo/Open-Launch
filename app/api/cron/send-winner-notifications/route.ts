@@ -7,6 +7,7 @@ import { and, eq, gte, inArray, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { redactEmail } from "@/lib/log-redaction"
 import { sendWinnerBadgeEmail } from "@/lib/transactional-emails"
 
 export async function GET(request: NextRequest) {
@@ -79,13 +80,15 @@ export async function GET(request: NextRequest) {
 
       // Skip bot users - they don't need email notifications
       if (projectCreator.isBot) {
-        console.log(`Skipping bot user ${projectCreator.email} for project ${winner.projectName}.`)
+        console.log(
+          `Skipping bot user ${redactEmail(projectCreator.email)} for project ${winner.projectName}.`,
+        )
         continue
       }
 
       try {
         console.log(
-          `Sending winner email to ${projectCreator.email} for project ${winner.projectName}`,
+          `Sending winner email to ${redactEmail(projectCreator.email)} for project ${winner.projectName}`,
         )
 
         await sendWinnerBadgeEmail({
@@ -99,7 +102,7 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         emailsFailedCount++
         console.error(
-          `Failed to send winner email for project ${winner.projectName} to ${projectCreator.email}:`,
+          `Failed to send winner email for project ${winner.projectName} to ${redactEmail(projectCreator.email)}:`,
           error,
         )
       }

@@ -5,7 +5,7 @@ import { buildBetterAuthApiErrorLog } from "@/lib/auth-error-log"
 describe("buildBetterAuthApiErrorLog", () => {
   it("keeps actionable stack frames while redacting OAuth secrets", () => {
     const error = new TypeError(
-      "exchange failed code=abc123 access_token=token-value Bearer bearer-value",
+      "exchange failed for alice@example.com code=abc123 access_token=token-value Bearer bearer-value",
     )
     error.stack = `${error.name}: ${error.message}\n    at callback (https://aat.ee/api/auth/callback?state=secret-state)`
 
@@ -19,5 +19,7 @@ describe("buildBetterAuthApiErrorLog", () => {
     expect(serialized).not.toContain("token-value")
     expect(serialized).not.toContain("bearer-value")
     expect(serialized).not.toContain("secret-state")
+    expect(serialized).not.toContain("alice@example.com")
+    expect(serialized).toContain("al***@example.com")
   })
 })
