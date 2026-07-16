@@ -12,7 +12,10 @@ assets remain separate, so only the database uses this backup destination.
   at `/admin/cron-runs`.
 - **Dump** — `lib/db-backup.ts` opens one `REPEATABLE READ` snapshot and
   `COPY … TO STDOUT`s every `public` base table (PostgreSQL native COPY format)
-  plus sequence values and a manifest. No `pg_dump` binary needed. The
+  plus sequence values and a manifest. Format v2 records and uses an explicit
+  ordered column list for every table, so a freshly migrated database restores
+  correctly even when its physical column order differs from production. No
+  `pg_dump` binary needed. The
   `drizzle.__drizzle_migrations` table is intentionally excluded — `db:migrate`
   re-establishes the schema on restore.
 - **Switch** — runs only when `BACKUP_ENABLED` is `true`. Off/unset is a clean

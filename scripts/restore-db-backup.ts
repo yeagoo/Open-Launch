@@ -34,6 +34,7 @@ import { from as copyFrom } from "pg-copy-streams"
 import {
   BACKUP_PREFIX,
   backupBucket,
+  copyTableExpression,
   getBackupR2Client,
   parseContainer,
   passphraseDecrypt,
@@ -148,14 +149,41 @@ async function main() {
     // Provision the schema (bun run db:migrate at the manifest's migration)
     // before restoring.
     const missing: string[] = []
+    const missingColumns: string[] = []
     for (const t of manifest.tables) {
       const exists = await client.query(`SELECT to_regclass($1) AS oid`, [`public.${t.name}`])
-      if (!exists.rows[0].oid) missing.push(t.name)
+      if (!exists.rows[0].oid) {
+        missing.push(t.name)
+        continue
+      }
+      if (manifest.version >= 2) {
+        if (!t.columns?.length) {
+          throw new Error(`Backup v2 manifest has no columns for table ${t.name}`)
+        }
+        const targetColumns = await client.query<{ name: string }>(
+          `SELECT a.attname AS name
+             FROM pg_attribute a
+            WHERE a.attrelid = $1::regclass
+              AND a.attnum > 0
+              AND NOT a.attisdropped`,
+          [`public.${quoteIdent(t.name)}`],
+        )
+        const available = new Set(targetColumns.rows.map((column) => column.name))
+        for (const column of t.columns) {
+          if (!available.has(column)) missingColumns.push(`${t.name}.${column}`)
+        }
+      }
     }
     if (missing.length > 0) {
       throw new Error(
         `Target is missing ${missing.length} table(s) from the backup: ${missing.join(", ")}. ` +
           "Run `bun run db:migrate` (matching the manifest's migration) first.",
+      )
+    }
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `Target is missing ${missingColumns.length} column(s) from the backup: ${missingColumns.join(", ")}. ` +
+          "Run `bun run db:migrate` at the backup manifest's migration first.",
       )
     }
 
@@ -175,7 +203,9 @@ async function main() {
         const data = tableData.get(t.name)
         if (!data) throw new Error(`backup has no data section for table ${t.name}`)
         await new Promise<void>((resolve, reject) => {
-          const stream = client.query(copyFrom(`COPY public.${quoteIdent(t.name)} FROM STDIN`))
+          const stream = client.query(
+            copyFrom(`COPY ${copyTableExpression(t.name, t.columns)} FROM STDIN`),
+          )
           stream.on("finish", resolve)
           stream.on("error", reject)
           stream.end(data)

@@ -43,11 +43,11 @@ export const BACKUP_PREFIX = "db/openlaunch/"
 export const DEFAULT_RETENTION_DAYS = 30
 
 export interface BackupManifest {
-  version: 1
+  version: 1 | 2
   createdAt: string
   pgVersion: string
   migrationTag: string | null
-  tables: { name: string; rows: number }[]
+  tables: { name: string; rows: number; columns?: string[] }[]
   sequences: { name: string; value: string }[]
 }
 
@@ -250,6 +250,13 @@ function quoteIdent(name: string): string {
   return `"${name.replace(/"/g, '""')}"`
 }
 
+export function copyTableExpression(name: string, columns?: string[]): string {
+  const table = `public.${quoteIdent(name)}`
+  if (!columns) return table
+  if (columns.length === 0) throw new Error(`table ${name} has no backup columns`)
+  return `${table} (${columns.map(quoteIdent).join(", ")})`
+}
+
 // ─── Build the encrypted backup blob from a live snapshot ──
 export async function createDatabaseBackup(passphrase: string): Promise<{
   body: Buffer
@@ -269,12 +276,23 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     )
     const tableNames = tableRows.map((r) => r.name)
 
-    const tables: { name: string; rows: number }[] = []
+    const tables: { name: string; rows: number; columns: string[] }[] = []
     for (const name of tableNames) {
       const { rows } = await client.query<{ n: string }>(
         `SELECT count(*)::text AS n FROM public.${quoteIdent(name)}`,
       )
-      tables.push({ name, rows: Number(rows[0].n) })
+      const columnResult = await client.query<{ name: string }>(
+        `SELECT a.attname AS name
+           FROM pg_attribute a
+          WHERE a.attrelid = $1::regclass
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+          ORDER BY a.attnum`,
+        [`public.${quoteIdent(name)}`],
+      )
+      const columns = columnResult.rows.map((column) => column.name)
+      if (columns.length === 0) throw new Error(`table ${name} has no visible columns`)
+      tables.push({ name, rows: Number(rows[0].n), columns })
     }
 
     const { rows: seqRows } = await client.query<{ name: string; value: string }>(
@@ -315,7 +333,7 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     const { rows: verRows } = await client.query<{ v: string }>(`SELECT version() AS v`)
 
     const manifest: BackupManifest = {
-      version: 1,
+      version: 2,
       createdAt: new Date().toISOString(),
       pgVersion: verRows[0].v,
       migrationTag,
@@ -338,8 +356,10 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     metaLen.writeUInt32BE(metaJson.length, 0)
     await writeChunk(gzip, Buffer.concat([CONTAINER_MAGIC, metaLen, metaJson]))
 
-    for (const { name } of tables) {
-      const copyStream = client.query(copyTo(`COPY public.${quoteIdent(name)} TO STDOUT`))
+    for (const { name, columns } of tables) {
+      const copyStream = client.query(
+        copyTo(`COPY ${copyTableExpression(name, columns)} TO STDOUT`),
+      )
       const data = await streamToBuffer(copyStream as unknown as NodeJS.ReadableStream)
       const nameBuf = Buffer.from(name, "utf8")
       const header = Buffer.alloc(2 + nameBuf.length + 8)

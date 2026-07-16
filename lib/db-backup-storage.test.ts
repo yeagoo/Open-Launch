@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { backupBucket, getBackupStorageClient } from "./db-backup"
+import { backupBucket, copyTableExpression, getBackupStorageClient } from "./db-backup"
 
 const ENV_NAMES = [
   "BACKUP_S3_ACCESS_KEY_ID",
@@ -94,5 +94,21 @@ describe("backup S3 storage configuration", () => {
     expect(await client.config.region()).toBe("auto")
     expect(endpoint.hostname).toBe("synthetic-account.r2.cloudflarestorage.com")
     expect(backupBucket()).toBe("synthetic-r2-bucket")
+  })
+})
+
+describe("copyTableExpression", () => {
+  it("keeps the legacy relation-only form for v1 backups", () => {
+    expect(copyTableExpression("projects")).toBe('public."projects"')
+  })
+
+  it("binds v2 COPY data to explicit escaped columns", () => {
+    expect(copyTableExpression('odd"table', ["created_at", 'odd"column'])).toBe(
+      'public."odd""table" ("created_at", "odd""column")',
+    )
+  })
+
+  it("rejects an empty v2 column list", () => {
+    expect(() => copyTableExpression("projects", [])).toThrow(/no backup columns/)
   })
 })
