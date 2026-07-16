@@ -36,6 +36,7 @@ import {
   backupBucket,
   copyTableExpression,
   getBackupR2Client,
+  manualMigrationCoverage,
   parseContainer,
   passphraseDecrypt,
 } from "../lib/db-backup"
@@ -144,6 +145,29 @@ async function main() {
   const client = new Client({ connectionString: target })
   await client.connect()
   try {
+    if (manifest.version >= 3) {
+      if (!manifest.manualMigrations) {
+        throw new Error("Backup v3 manifest has no manual migration evidence")
+      }
+      const targetMigrations = await client.query<{
+        filename: string
+        content_hash: string
+      }>("SELECT filename, content_hash FROM public.manual_migrations_applied")
+      const coverage = manualMigrationCoverage(
+        manifest.manualMigrations,
+        targetMigrations.rows.map((row) => ({
+          filename: row.filename,
+          contentHash: row.content_hash,
+        })),
+      )
+      if (coverage.missing.length > 0 || coverage.mismatched.length > 0) {
+        throw new Error(
+          "Target migration ledger does not cover the backup schema: " +
+            `${coverage.missing.length} missing, ${coverage.mismatched.length} hash-mismatched`,
+        )
+      }
+    }
+
     // Fail fast if the target is missing any backed-up table — restoring a
     // subset and reporting success would silently drop a whole table's data.
     // Provision the schema (bun run db:migrate at the manifest's migration)

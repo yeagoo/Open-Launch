@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { backupBucket, copyTableExpression, getBackupStorageClient } from "./db-backup"
+import {
+  backupBucket,
+  copyTableExpression,
+  getBackupStorageClient,
+  manualMigrationCoverage,
+} from "./db-backup"
 
 const ENV_NAMES = [
   "BACKUP_S3_ACCESS_KEY_ID",
@@ -110,5 +115,31 @@ describe("copyTableExpression", () => {
 
   it("rejects an empty v2 column list", () => {
     expect(() => copyTableExpression("projects", [])).toThrow(/no backup columns/)
+  })
+})
+
+describe("manualMigrationCoverage", () => {
+  it("allows reviewed forward migrations on the target", () => {
+    expect(
+      manualMigrationCoverage(
+        [{ filename: "001.sql", contentHash: "hash-1" }],
+        [
+          { filename: "001.sql", contentHash: "hash-1" },
+          { filename: "002.sql", contentHash: "hash-2" },
+        ],
+      ),
+    ).toEqual({ missing: [], mismatched: [] })
+  })
+
+  it("reports missing and content-drifted source migrations", () => {
+    expect(
+      manualMigrationCoverage(
+        [
+          { filename: "001.sql", contentHash: "source-1" },
+          { filename: "002.sql", contentHash: "source-2" },
+        ],
+        [{ filename: "001.sql", contentHash: "target-drift" }],
+      ),
+    ).toEqual({ missing: ["002.sql"], mismatched: ["001.sql"] })
   })
 })

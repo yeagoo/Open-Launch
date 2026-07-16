@@ -43,12 +43,30 @@ export const BACKUP_PREFIX = "db/openlaunch/"
 export const DEFAULT_RETENTION_DAYS = 30
 
 export interface BackupManifest {
-  version: 1 | 2
+  version: 1 | 2 | 3
   createdAt: string
   pgVersion: string
   migrationTag: string | null
   tables: { name: string; rows: number; columns?: string[] }[]
   sequences: { name: string; value: string }[]
+  manualMigrations?: { filename: string; contentHash: string }[]
+}
+
+export function manualMigrationCoverage(
+  source: { filename: string; contentHash: string }[],
+  target: { filename: string; contentHash: string }[],
+): { missing: string[]; mismatched: string[] } {
+  const targetByName = new Map(
+    target.map((migration) => [migration.filename, migration.contentHash]),
+  )
+  const missing: string[] = []
+  const mismatched: string[] = []
+  for (const migration of source) {
+    const targetHash = targetByName.get(migration.filename)
+    if (targetHash === undefined) missing.push(migration.filename)
+    else if (targetHash !== migration.contentHash) mismatched.push(migration.filename)
+  }
+  return { missing, mismatched }
 }
 
 // ─── Private S3-compatible backup storage ───
@@ -272,6 +290,7 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
       `SELECT c.relname AS name
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE n.nspname = 'public' AND c.relkind = 'r'
+          AND c.relname <> 'manual_migrations_applied'
         ORDER BY c.relname`,
     )
     const tableNames = tableRows.map((r) => r.name)
@@ -308,15 +327,30 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     // to_regclass first: catching an undefined-table error inside PostgreSQL
     // would still abort this transaction and poison every later query.
     let migrationTag: string | null = null
+    let manualMigrations: { filename: string; contentHash: string }[] = []
     const manualTracker = await client.query<{ relation: string | null }>(
       "SELECT to_regclass('public.manual_migrations_applied')::text AS relation",
     )
     if (manualTracker.rows[0]?.relation) {
-      const { rows } = await client.query<{ filename: string }>(
-        `SELECT filename FROM public.manual_migrations_applied
-          ORDER BY applied_at DESC, filename DESC LIMIT 1`,
+      const { rows } = await client.query<{
+        filename: string
+        content_hash: string
+        applied_at: Date
+      }>(
+        `SELECT filename, content_hash, applied_at
+           FROM public.manual_migrations_applied
+          ORDER BY filename`,
       )
-      migrationTag = rows[0]?.filename ?? null
+      manualMigrations = rows.map((row) => ({
+        filename: row.filename,
+        contentHash: row.content_hash,
+      }))
+      migrationTag =
+        rows.toSorted(
+          (left, right) =>
+            right.applied_at.getTime() - left.applied_at.getTime() ||
+            right.filename.localeCompare(left.filename),
+        )[0]?.filename ?? null
     }
     if (!migrationTag) {
       const drizzleTracker = await client.query<{ relation: string | null }>(
@@ -333,12 +367,13 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     const { rows: verRows } = await client.query<{ v: string }>(`SELECT version() AS v`)
 
     const manifest: BackupManifest = {
-      version: 2,
+      version: 3,
       createdAt: new Date().toISOString(),
       pgVersion: verRows[0].v,
       migrationTag,
       tables,
       sequences: seqRows,
+      manualMigrations,
     }
 
     // Stream container → gzip, buffering ONE table at a time (peak memory =
