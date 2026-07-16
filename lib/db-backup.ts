@@ -19,7 +19,7 @@ import { to as copyTo } from "pg-copy-streams"
  * STDOUT` every public table (PostgreSQL's native COPY text format — the same
  * bytes pg_dump's data sections use) and record each sequence's value. The
  * result is gzipped, envelope-encrypted, and stored as ONE object in a private
- * R2 bucket.
+ * S3-compatible bucket.
  *
  * Restore model (see scripts/restore-db-backup.ts): provision a DB → run
  * `bun run db:migrate` (schema lives in git) → load this dump's data with
@@ -51,27 +51,94 @@ export interface BackupManifest {
   sequences: { name: string; value: string }[]
 }
 
-// ─── R2 (separate PRIVATE bucket + scoped creds; endpoint reuses the account) ──
-export function getBackupR2Client(): S3Client {
+// ─── Private S3-compatible backup storage ───
+// BACKUP_S3_* is the provider-neutral contract used by IDrive E2 and similar
+// services. The old BACKUP_R2_* variables remain a fallback so an existing R2
+// deployment does not break during a rolling configuration migration.
+const BACKUP_S3_REQUIRED = [
+  "BACKUP_S3_ACCESS_KEY_ID",
+  "BACKUP_S3_SECRET_ACCESS_KEY",
+  "BACKUP_S3_BUCKET",
+  "BACKUP_S3_ENDPOINT",
+  "BACKUP_S3_REGION",
+] as const
+
+function configured(value: string | undefined): value is string {
+  return Boolean(value?.trim())
+}
+
+function normalizedHttpsEndpoint(raw: string): string {
+  const candidate = raw.includes("://") ? raw : `https://${raw}`
+  let endpoint: URL
+  try {
+    endpoint = new URL(candidate)
+  } catch {
+    throw new Error("BACKUP_S3_ENDPOINT must be a valid HTTPS endpoint")
+  }
+  if (
+    endpoint.protocol !== "https:" ||
+    !endpoint.hostname ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash ||
+    (endpoint.pathname !== "" && endpoint.pathname !== "/")
+  ) {
+    throw new Error(
+      "BACKUP_S3_ENDPOINT must be an HTTPS origin without credentials, path, query, or fragment",
+    )
+  }
+  return endpoint.origin
+}
+
+function genericS3Configured(): boolean {
+  return BACKUP_S3_REQUIRED.some((name) => configured(process.env[name]))
+}
+
+export function getBackupStorageClient(): S3Client {
+  if (genericS3Configured()) {
+    const missing = BACKUP_S3_REQUIRED.filter((name) => !configured(process.env[name]))
+    if (missing.length > 0) {
+      throw new Error(`Backup S3 not configured: missing ${missing.join(", ")}`)
+    }
+
+    return new S3Client({
+      region: process.env.BACKUP_S3_REGION!.trim(),
+      endpoint: normalizedHttpsEndpoint(process.env.BACKUP_S3_ENDPOINT!.trim()),
+      credentials: {
+        accessKeyId: process.env.BACKUP_S3_ACCESS_KEY_ID!.trim(),
+        secretAccessKey: process.env.BACKUP_S3_SECRET_ACCESS_KEY!.trim(),
+      },
+      // IDrive E2 documents bucket requests as endpoint/bucket/key. Path style
+      // also avoids assuming wildcard DNS support from a generic S3 provider.
+      forcePathStyle: true,
+    })
+  }
+
   const accountId = process.env.R2_ACCOUNT_ID
   const accessKeyId = process.env.BACKUP_R2_ACCESS_KEY_ID
   const secretAccessKey = process.env.BACKUP_R2_SECRET_ACCESS_KEY
-  if (!accountId || !accessKeyId || !secretAccessKey) {
+  if (!configured(accountId) || !configured(accessKeyId) || !configured(secretAccessKey)) {
     throw new Error(
-      "Backup R2 not configured: need R2_ACCOUNT_ID + BACKUP_R2_ACCESS_KEY_ID + BACKUP_R2_SECRET_ACCESS_KEY",
+      "Backup storage not configured: set all BACKUP_S3_* variables or the legacy R2_ACCOUNT_ID + BACKUP_R2_ACCESS_KEY_ID + BACKUP_R2_SECRET_ACCESS_KEY variables",
     )
   }
   return new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: { accessKeyId, secretAccessKey },
+    endpoint: `https://${accountId.trim()}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId: accessKeyId.trim(), secretAccessKey: secretAccessKey.trim() },
   })
 }
 
 export function backupBucket(): string {
-  const b = process.env.BACKUP_R2_BUCKET
-  if (!b) throw new Error("BACKUP_R2_BUCKET not configured")
-  return b
+  if (genericS3Configured()) {
+    const bucket = process.env.BACKUP_S3_BUCKET
+    if (!configured(bucket)) throw new Error("BACKUP_S3_BUCKET not configured")
+    return bucket.trim()
+  }
+  const bucket = process.env.BACKUP_R2_BUCKET
+  if (!configured(bucket)) throw new Error("BACKUP_R2_BUCKET not configured")
+  return bucket.trim()
 }
 
 // ─── Password encryption: key = scrypt(passphrase, random salt) → AES-256-GCM.
@@ -217,25 +284,29 @@ export async function createDatabaseBackup(passphrase: string): Promise<{
     // scripts/apply-pending-sql.ts into public.manual_migrations_applied, so
     // that tracker is the real "latest schema" signal; drizzle.__drizzle_migrations
     // only covers the generated journal (0000–0006) and never advances past it.
-    // Prefer the manual tracker, fall back to the drizzle hash. Best-effort.
+    // Prefer the manual tracker, fall back to the drizzle hash. Probe with
+    // to_regclass first: catching an undefined-table error inside PostgreSQL
+    // would still abort this transaction and poison every later query.
     let migrationTag: string | null = null
-    try {
+    const manualTracker = await client.query<{ relation: string | null }>(
+      "SELECT to_regclass('public.manual_migrations_applied')::text AS relation",
+    )
+    if (manualTracker.rows[0]?.relation) {
       const { rows } = await client.query<{ filename: string }>(
         `SELECT filename FROM public.manual_migrations_applied
           ORDER BY applied_at DESC, filename DESC LIMIT 1`,
       )
       migrationTag = rows[0]?.filename ?? null
-    } catch {
-      // tracker table may not exist in some envs — fall through.
     }
     if (!migrationTag) {
-      try {
+      const drizzleTracker = await client.query<{ relation: string | null }>(
+        "SELECT to_regclass('drizzle.__drizzle_migrations')::text AS relation",
+      )
+      if (drizzleTracker.rows[0]?.relation) {
         const { rows } = await client.query<{ hash: string }>(
           `SELECT hash FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 1`,
         )
         migrationTag = rows[0]?.hash ?? null
-      } catch {
-        // drizzle schema may not exist either — leave null.
       }
     }
 
@@ -297,7 +368,7 @@ export function buildObjectKey(date = new Date()): string {
 }
 
 export async function uploadBackup(body: Buffer, key: string): Promise<void> {
-  await getBackupR2Client().send(
+  await getBackupStorageClient().send(
     new PutObjectCommand({
       Bucket: backupBucket(),
       Key: key,
@@ -312,7 +383,7 @@ export async function uploadBackup(body: Buffer, key: string): Promise<void> {
  * upload so a failed run never prunes the good history.
  */
 export async function pruneOldBackups(retentionDays = DEFAULT_RETENTION_DAYS): Promise<number> {
-  const client = getBackupR2Client()
+  const client = getBackupStorageClient()
   const bucket = backupBucket()
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000
   let deleted = 0

@@ -5,12 +5,14 @@ import { getSessionCookie } from "better-auth/cookies"
 import createMiddleware from "next-intl/middleware"
 
 import { isPlausibleServerActionId } from "@/lib/server-action-id"
+import { stagingReadOnlyDecision } from "@/lib/staging-read-only"
 
 const intlMiddleware = createMiddleware(routing)
 
 const BOT_UA_REGEX = /bot|crawler|spider|crawling|slurp|facebookexternalhit/i
 
 const REQUEST_ID_HEADER = "x-aat-request-id"
+const STAGING_READ_ONLY = process.env.STAGING_READ_ONLY === "true"
 
 const SESSION_GUARDED_PATHS = ["/dashboard", "/settings", "/admin"]
 
@@ -44,12 +46,27 @@ function requestIdFor(request: NextRequest): string {
 
 function withRequestId<T extends Response>(response: T, requestId: string): T {
   response.headers.set(REQUEST_ID_HEADER, requestId)
+  if (STAGING_READ_ONLY) {
+    response.headers.set("x-robots-tag", "noindex, nofollow, noarchive")
+  }
   return response
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const requestId = requestIdFor(request)
+
+  const stagingDecision = stagingReadOnlyDecision(STAGING_READ_ONLY, request.method, pathname)
+  if (stagingDecision) {
+    return withRequestId(new NextResponse(null, { status: stagingDecision.status }), requestId)
+  }
+
+  // The API matcher exists only so staging read-only mode can gate API writes.
+  // In normal operation API routes must continue directly to their handlers,
+  // without locale rewriting.
+  if (pathname === "/api" || pathname.startsWith("/api/")) {
+    return withRequestId(NextResponse.next(), requestId)
+  }
 
   const serverActionId = request.headers.get("next-action")
   if (serverActionId && !isPlausibleServerActionId(serverActionId)) {
@@ -89,5 +106,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/((?!api|_next|_vercel|.*\\..*|sitemap.xml|robots.txt|feed.xml|llms.txt|favicon.ico).*)",
+    "/api/:path*",
   ],
 }
