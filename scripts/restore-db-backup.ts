@@ -8,7 +8,7 @@
 //
 // Usage:
 //   bun scripts/restore-db-backup.ts --list
-//       List available backups in the configured backup bucket.
+//       List available backups in the R2 backup bucket.
 //
 //   bun scripts/restore-db-backup.ts \
 //       --source db/openlaunch/2026/06/openlaunch-....olbk.enc \
@@ -17,8 +17,6 @@
 //       Decrypt the backup and load it into --target. --source may also be a
 //       local file path. The passphrase comes from --passphrase or the
 //       BACKUP_PASSPHRASE env (must match the one used to create the backup).
-//       --once records the applied source in the target database. Re-running
-//       the same source becomes a no-op; a different source fails closed.
 //
 // SAFETY: this TRUNCATEs every restored table in --target. It refuses to run
 // against the same URL as DATABASE_URL (prod) unless --force-prod is given,
@@ -36,7 +34,7 @@ import { from as copyFrom } from "pg-copy-streams"
 import {
   BACKUP_PREFIX,
   backupBucket,
-  getBackupStorageClient,
+  getBackupR2Client,
   parseContainer,
   passphraseDecrypt,
 } from "../lib/db-backup"
@@ -46,7 +44,6 @@ function arg(name: string): string | undefined {
   return i >= 0 ? process.argv[i + 1] : undefined
 }
 const has = (name: string) => process.argv.includes(name)
-const RESTORE_LOCK_ID = "7120250716001"
 
 function quoteIdent(name: string): string {
   return `"${name.replace(/"/g, '""')}"`
@@ -68,7 +65,7 @@ function sameDatabase(a: string, b: string): boolean {
 }
 
 async function listBackups() {
-  const client = getBackupStorageClient()
+  const client = getBackupR2Client()
   const bucket = backupBucket()
   let token: string | undefined
   const all: { key: string; size: number; when?: Date }[] = []
@@ -89,12 +86,12 @@ async function listBackups() {
 }
 
 async function fetchSource(source: string): Promise<Buffer> {
-  // A path that exists on disk is a local file; otherwise treat it as an S3
+  // A path that exists on disk is a local file; otherwise treat it as an R2
   // object key (the listed `db/openlaunch/...` form).
   if (existsSync(source)) {
     return readFile(source)
   }
-  const res = await getBackupStorageClient().send(
+  const res = await getBackupR2Client().send(
     new GetObjectCommand({ Bucket: backupBucket(), Key: source }),
   )
   const bytes = await res.Body!.transformToByteArray()
@@ -107,13 +104,10 @@ async function main() {
     return
   }
 
-  const source = arg("--source") ?? process.env.RESTORE_BACKUP_SOURCE
+  const source = arg("--source")
   const target = arg("--target") ?? process.env.RESTORE_DATABASE_URL
   if (!source || !target) {
-    throw new Error(
-      "Required: --source <object-key|file> (or RESTORE_BACKUP_SOURCE) and " +
-        "--target <postgres-url> (or RESTORE_DATABASE_URL), or use --list",
-    )
+    throw new Error("Required: --source <r2-key|file> and --target <postgres-url> (or --list)")
   }
   if (
     process.env.DATABASE_URL &&
@@ -137,42 +131,18 @@ async function main() {
     throw new Error("This TRUNCATEs and reloads every table in --target. Re-run with --yes.")
   }
 
+  console.log("Downloading + decrypting…")
+  const blob = await fetchSource(source)
+  const gzipped = passphraseDecrypt(blob, passphrase)
+  const { manifest, tableData } = parseContainer(gzipped)
+  console.log(
+    `Backup from ${manifest.createdAt} · ${manifest.tables.length} tables · ${manifest.sequences.length} sequences`,
+  )
+  console.log(`Migration tag at dump time: ${manifest.migrationTag ?? "(unknown)"}`)
+
   const client = new Client({ connectionString: target })
   await client.connect()
-  let restoreLockHeld = false
   try {
-    if (has("--once")) {
-      await client.query("SELECT pg_advisory_lock($1::bigint)", [RESTORE_LOCK_ID])
-      restoreLockHeld = true
-      const markerTable = await client.query<{ relation: string | null }>(
-        "SELECT to_regclass('opsctl_internal.restore_marker')::text AS relation",
-      )
-      if (markerTable.rows[0]?.relation) {
-        const marker = await client.query<{ source: string }>(
-          "SELECT source FROM opsctl_internal.restore_marker WHERE singleton = 1",
-        )
-        if (marker.rows[0]?.source === source) {
-          console.log("✓ This backup source is already restored; no changes made.")
-          return
-        }
-        if (marker.rows.length > 0) {
-          throw new Error(
-            "A different backup source was already restored into this database. " +
-              "Provision a new empty target for a new full restore.",
-          )
-        }
-      }
-    }
-
-    console.log("Downloading + decrypting…")
-    const blob = await fetchSource(source)
-    const gzipped = passphraseDecrypt(blob, passphrase)
-    const { manifest, tableData } = parseContainer(gzipped)
-    console.log(
-      `Backup from ${manifest.createdAt} · ${manifest.tables.length} tables · ${manifest.sequences.length} sequences`,
-    )
-    console.log(`Migration tag at dump time: ${manifest.migrationTag ?? "(unknown)"}`)
-
     // Fail fast if the target is missing any backed-up table — restoring a
     // subset and reporting success would silently drop a whole table's data.
     // Provision the schema (bun run db:migrate at the manifest's migration)
@@ -196,17 +166,6 @@ async function main() {
     // order/triggers ignored during load; reverts on COMMIT/ROLLBACK).
     await client.query("BEGIN")
     try {
-      if (has("--once")) {
-        await client.query("CREATE SCHEMA IF NOT EXISTS opsctl_internal")
-        await client.query(`
-          CREATE TABLE IF NOT EXISTS opsctl_internal.restore_marker (
-            singleton smallint PRIMARY KEY CHECK (singleton = 1),
-            source text NOT NULL,
-            manifest_created_at timestamptz NOT NULL,
-            restored_at timestamptz NOT NULL DEFAULT now()
-          )
-        `)
-      }
       await client.query("SET LOCAL session_replication_role = replica")
 
       const list = manifest.tables.map((t) => `public.${quoteIdent(t.name)}`).join(", ")
@@ -244,15 +203,6 @@ async function main() {
         throw new Error(`Row-count mismatch — rolling back:\n  ${mismatches.join("\n  ")}`)
       }
 
-      if (has("--once")) {
-        await client.query(
-          `INSERT INTO opsctl_internal.restore_marker
-             (singleton, source, manifest_created_at)
-           VALUES (1, $1, $2)`,
-          [source, manifest.createdAt],
-        )
-      }
-
       await client.query("COMMIT")
       console.log(
         `✓ Restore complete — all ${manifest.tables.length} tables match expected row counts.`,
@@ -262,13 +212,6 @@ async function main() {
       throw err
     }
   } finally {
-    if (restoreLockHeld) {
-      // Closing the session releases advisory locks too. Do not mask a restore
-      // result if the explicit unlock races with a broken connection.
-      await client
-        .query("SELECT pg_advisory_unlock($1::bigint)", [RESTORE_LOCK_ID])
-        .catch(() => undefined)
-    }
     await client.end()
   }
 }
