@@ -5,7 +5,14 @@ import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 import { and, gte, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import {
+  CRON_HEALTH_ALERT_REMINDER_SECONDS,
+  CRON_HEALTH_ALERT_STATE_KEY,
+  cronHealthAlertFingerprint,
+  cronHealthAlertIncidentAnchor,
+} from "@/lib/cron-health-alert"
 import { previousFireTime } from "@/lib/cron-match"
+import { clearStatefulAlert, decideStatefulAlert, releaseStatefulAlert } from "@/lib/rate-limit"
 import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
 
 /**
@@ -50,6 +57,8 @@ interface StaleTask {
   displayName: string
   expression: string
   quietForMs: number
+  lastSuccessEpochSeconds: string | null
+  scheduleUpdatedEpochSeconds: string
 }
 
 export async function GET(request: NextRequest) {
@@ -68,6 +77,7 @@ export async function GET(request: NextRequest) {
         // DB-side age of the registration row, same reasoning as the run-gap
         // query below (avoid process↔DB tz skew on a no-tz timestamp).
         secondsSinceCreated: sql<number>`extract(epoch from (now() - ${cronSchedule.createdAt}))`,
+        scheduleUpdatedEpochSeconds: sql<string>`floor(extract(epoch from ${cronSchedule.updatedAt}))::text`,
       })
       .from(cronSchedule)
 
@@ -91,11 +101,15 @@ export async function GET(request: NextRequest) {
       .select({
         taskPath: cronRunLog.taskPath,
         secondsSince: sql<number>`extract(epoch from (now() - max(${cronRunLog.dispatchedAt})))`,
+        lastSuccessEpochSeconds: sql<string>`floor(extract(epoch from max(${cronRunLog.dispatchedAt})))::text`,
       })
       .from(cronRunLog)
       .where(and(gte(cronRunLog.statusCode, 200), sql`${cronRunLog.statusCode} < 300`))
       .groupBy(cronRunLog.taskPath)
     const secsSinceByPath = new Map(lastRuns.map((r) => [r.taskPath, Number(r.secondsSince)]))
+    const lastSuccessEpochByPath = new Map(
+      lastRuns.map((r) => [r.taskPath, r.lastSuccessEpochSeconds]),
+    )
 
     // Total-silence check: seconds since the newest row across the whole log,
     // again DB-side. null (empty table) ⇒ silent.
@@ -104,6 +118,9 @@ export async function GET(request: NextRequest) {
         secondsSince: sql<
           number | null
         >`extract(epoch from (now() - max(${cronRunLog.dispatchedAt})))`,
+        lastRunEpochSeconds: sql<
+          string | null
+        >`floor(extract(epoch from max(${cronRunLog.dispatchedAt})))::text`,
       })
       .from(cronRunLog)
     const dispatcherSilentSecs = newest?.secondsSince == null ? null : Number(newest.secondsSince)
@@ -148,11 +165,14 @@ export async function GET(request: NextRequest) {
         displayName: t.displayName,
         expression: t.cronExpression,
         quietForMs,
+        lastSuccessEpochSeconds: lastSuccessEpochByPath.get(t.path) ?? null,
+        scheduleUpdatedEpochSeconds: t.scheduleUpdatedEpochSeconds,
       })
     }
 
     if (!dispatcherSilent && stale.length === 0) {
-      return NextResponse.json({ status: "healthy", checked: enabled.length })
+      const alertStateCleared = await clearStatefulAlert(CRON_HEALTH_ALERT_STATE_KEY)
+      return NextResponse.json({ status: "healthy", checked: enabled.length, alertStateCleared })
     }
 
     // Build the alert. Dispatcher-down is the headline when detected; otherwise
@@ -181,21 +201,51 @@ export async function GET(request: NextRequest) {
     }
     const body = lines.join("\n")
 
-    try {
-      await sendAdminPaymentNotification({
-        userEmail: "cron-health-monitor",
-        amount: 0,
-        currency: "usd",
-        projectName: dispatcherSilent
-          ? `CRON HEALTH alert: dispatcher down (no runs in ${Math.round(
-              DISPATCHER_SILENCE_MS / 60000,
-            )} min)`
-          : `CRON HEALTH alert: ${stale.length} stale task(s)`,
-        websiteUrl: body,
-        orphan: true,
-      })
-    } catch (err) {
-      console.error("⚠️ Failed to send cron-health alert email:", err)
+    const alertFingerprint = cronHealthAlertFingerprint(
+      dispatcherSilent,
+      stale.map((task) => task.path),
+    )
+    const alertIncidentAnchor = cronHealthAlertIncidentAnchor(
+      dispatcherSilent,
+      newest?.lastRunEpochSeconds ?? null,
+      stale.map((task) => ({
+        path: task.path,
+        lastSuccessEpochSeconds: task.lastSuccessEpochSeconds,
+        scheduleUpdatedEpochSeconds: task.scheduleUpdatedEpochSeconds,
+      })),
+    )
+    const alertDecision = await decideStatefulAlert(
+      CRON_HEALTH_ALERT_STATE_KEY,
+      alertFingerprint,
+      alertIncidentAnchor,
+      CRON_HEALTH_ALERT_REMINDER_SECONDS,
+    )
+    let alertNotification: "sent" | "suppressed" | "failed" = "suppressed"
+    let alertStateReleased: boolean | null = null
+    if (alertDecision.shouldSend) {
+      try {
+        await sendAdminPaymentNotification({
+          userEmail: "cron-health-monitor",
+          amount: 0,
+          currency: "usd",
+          projectName: dispatcherSilent
+            ? `CRON HEALTH alert: dispatcher down (no runs in ${Math.round(
+                DISPATCHER_SILENCE_MS / 60000,
+              )} min)`
+            : `CRON HEALTH alert: ${stale.length} stale task(s)`,
+          websiteUrl: body,
+          orphan: true,
+        })
+        alertNotification = "sent"
+      } catch (err) {
+        alertNotification = "failed"
+        alertStateReleased = await releaseStatefulAlert(
+          CRON_HEALTH_ALERT_STATE_KEY,
+          alertFingerprint,
+          alertIncidentAnchor,
+        )
+        console.error("⚠️ Failed to send cron-health alert email:", err)
+      }
     }
 
     return NextResponse.json({
@@ -204,6 +254,9 @@ export async function GET(request: NextRequest) {
       dispatcherSilent,
       staleCount: stale.length,
       stale: stale.slice(0, 20),
+      alertNotification,
+      alertReason: alertDecision.reason,
+      alertStateReleased,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)

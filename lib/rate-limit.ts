@@ -148,6 +148,214 @@ redis.call("EXPIRE", KEYS[1], ttl_seconds)
 return {1, available - count - 1, ttl_seconds, token}
 `
 
+const STATEFUL_ALERT_LUA = `
+local fingerprint = redis.call("HGET", KEYS[1], "fingerprint")
+local incident_anchor = redis.call("HGET", KEYS[1], "incident_anchor")
+local last_sent = tonumber(redis.call("HGET", KEYS[1], "last_sent") or "0")
+local next_fingerprint = ARGV[1]
+local next_incident_anchor = ARGV[2]
+local now = tonumber(ARGV[3])
+local reminder_seconds = tonumber(ARGV[4])
+local retention_seconds = tonumber(ARGV[5])
+
+if not fingerprint then
+  redis.call("HSET", KEYS[1], "fingerprint", next_fingerprint, "incident_anchor", next_incident_anchor, "last_sent", now)
+  redis.call("EXPIRE", KEYS[1], retention_seconds)
+  return 1
+end
+
+if fingerprint ~= next_fingerprint then
+  redis.call("HSET", KEYS[1], "fingerprint", next_fingerprint, "incident_anchor", next_incident_anchor, "last_sent", now)
+  redis.call("EXPIRE", KEYS[1], retention_seconds)
+  return 2
+end
+
+-- Adopt an anchor for state written by the previous implementation without
+-- creating a rollout alert. Future occurrences can then be distinguished.
+if not incident_anchor then
+  redis.call("HSET", KEYS[1], "incident_anchor", next_incident_anchor)
+elseif incident_anchor ~= next_incident_anchor then
+  redis.call("HSET", KEYS[1], "incident_anchor", next_incident_anchor, "last_sent", now)
+  redis.call("EXPIRE", KEYS[1], retention_seconds)
+  return 2
+end
+
+if now - last_sent >= reminder_seconds then
+  redis.call("HSET", KEYS[1], "last_sent", now)
+  redis.call("EXPIRE", KEYS[1], retention_seconds)
+  return 3
+end
+
+redis.call("EXPIRE", KEYS[1], retention_seconds)
+return 0
+`
+
+const RELEASE_STATEFUL_ALERT_LUA = `
+local fingerprint = redis.call("HGET", KEYS[1], "fingerprint")
+local incident_anchor = redis.call("HGET", KEYS[1], "incident_anchor")
+
+if fingerprint == ARGV[1] and incident_anchor == ARGV[2] then
+  return redis.call("DEL", KEYS[1])
+end
+
+return 0
+`
+
+export type StatefulAlertDecision = {
+  shouldSend: boolean
+  reason: "new" | "changed" | "reminder" | "suppressed"
+}
+
+type InMemoryAlertState = {
+  fingerprint: string
+  incidentAnchor: string
+  lastSentAt: number
+}
+
+const MAX_IN_MEMORY_ALERT_STATES = 1000
+const inMemoryAlertStates = new Map<string, InMemoryAlertState>()
+
+function rememberAlertState(key: string, state: InMemoryAlertState): void {
+  inMemoryAlertStates.delete(key)
+  inMemoryAlertStates.set(key, state)
+  if (inMemoryAlertStates.size > MAX_IN_MEMORY_ALERT_STATES) {
+    const oldest = inMemoryAlertStates.keys().next().value
+    if (oldest !== undefined) inMemoryAlertStates.delete(oldest)
+  }
+}
+
+function decideInMemoryStatefulAlert(
+  key: string,
+  fingerprint: string,
+  incidentAnchor: string,
+  reminderSeconds: number,
+  now: number,
+): StatefulAlertDecision {
+  const existing = inMemoryAlertStates.get(key)
+  if (!existing) {
+    rememberAlertState(key, { fingerprint, incidentAnchor, lastSentAt: now })
+    return { shouldSend: true, reason: "new" }
+  }
+  if (existing.fingerprint !== fingerprint || existing.incidentAnchor !== incidentAnchor) {
+    rememberAlertState(key, { fingerprint, incidentAnchor, lastSentAt: now })
+    return { shouldSend: true, reason: "changed" }
+  }
+  if (now - existing.lastSentAt >= reminderSeconds * 1000) {
+    rememberAlertState(key, { fingerprint, incidentAnchor, lastSentAt: now })
+    return { shouldSend: true, reason: "reminder" }
+  }
+  rememberAlertState(key, existing)
+  return { shouldSend: false, reason: "suppressed" }
+}
+
+/**
+ * Atomically decide whether an alert should be sent for the current state.
+ * A new fingerprint or incident anchor sends immediately; an unchanged state
+ * sends only after `reminderSeconds`. Redis keeps the decision shared across
+ * app instances, with a bounded per-process fallback when Redis is unavailable.
+ */
+export async function decideStatefulAlert(
+  key: string,
+  fingerprint: string,
+  incidentAnchor: string,
+  reminderSeconds: number,
+): Promise<StatefulAlertDecision> {
+  if (!Number.isFinite(reminderSeconds) || reminderSeconds <= 0) {
+    throw new RangeError("reminderSeconds must be a finite positive number")
+  }
+  const fullKey = `alert-state:${key}`
+  const boundedReminderSeconds = Math.max(1, Math.ceil(reminderSeconds))
+  const retentionSeconds = Math.max(24 * 3600, boundedReminderSeconds * 4)
+  const now = Date.now()
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    const code = Number(
+      await client.eval(
+        STATEFUL_ALERT_LUA,
+        1,
+        fullKey,
+        fingerprint,
+        incidentAnchor,
+        String(Math.floor(now / 1000)),
+        String(boundedReminderSeconds),
+        String(retentionSeconds),
+      ),
+    )
+    if (code === 1) return { shouldSend: true, reason: "new" }
+    if (code === 2) return { shouldSend: true, reason: "changed" }
+    if (code === 3) return { shouldSend: true, reason: "reminder" }
+    if (code === 0) return { shouldSend: false, reason: "suppressed" }
+    throw new Error(`unexpected stateful alert decision code: ${code}`)
+  } catch (error) {
+    console.error("Redis error (decideStatefulAlert):", error)
+    return decideInMemoryStatefulAlert(
+      fullKey,
+      fingerprint,
+      incidentAnchor,
+      boundedReminderSeconds,
+      now,
+    )
+  }
+}
+
+/**
+ * Clear alert state after recovery. Returns false if shared Redis state could
+ * not be cleared; the incident anchor still makes a later recurrence distinct.
+ */
+export async function clearStatefulAlert(key: string): Promise<boolean> {
+  const fullKey = `alert-state:${key}`
+  inMemoryAlertStates.delete(fullKey)
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    await client.del(fullKey)
+    return true
+  } catch (error) {
+    console.error("Redis error (clearStatefulAlert):", error)
+    return false
+  }
+}
+
+/**
+ * Release a claimed alert after notification failure, but only when the state
+ * still represents that exact incident. This prevents an older request from
+ * deleting a newer concurrently-recorded incident.
+ */
+export async function releaseStatefulAlert(
+  key: string,
+  fingerprint: string,
+  incidentAnchor: string,
+): Promise<boolean> {
+  const fullKey = `alert-state:${key}`
+  const fallbackState = inMemoryAlertStates.get(fullKey)
+  if (
+    fallbackState?.fingerprint === fingerprint &&
+    fallbackState.incidentAnchor === incidentAnchor
+  ) {
+    inMemoryAlertStates.delete(fullKey)
+  }
+
+  try {
+    const client = getRedisClient()
+    if (client.status !== "ready") {
+      await client.connect()
+    }
+    return (
+      Number(
+        await client.eval(RELEASE_STATEFUL_ALERT_LUA, 1, fullKey, fingerprint, incidentAnchor),
+      ) === 1
+    )
+  } catch (error) {
+    console.error("Redis error (releaseStatefulAlert):", error)
+    return false
+  }
+}
+
 /**
  * Fixed-window byte budget (Redis INCRBY + TTL). Unlike
  * `checkRateLimit` this meters a quantity, not a count — use it to
