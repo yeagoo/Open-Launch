@@ -11,7 +11,7 @@ import {
   cronHealthAlertFingerprint,
   cronHealthAlertIncidentAnchor,
 } from "@/lib/cron-health-alert"
-import { previousFireTime } from "@/lib/cron-match"
+import { evaluateCronTaskStaleness } from "@/lib/cron-health-staleness"
 import { clearStatefulAlert, decideStatefulAlert, releaseStatefulAlert } from "@/lib/rate-limit"
 import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
 
@@ -44,10 +44,6 @@ import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
 export const dynamic = "force-dynamic"
 export const maxDuration = 30
 
-// Floor on the tolerated gap so high-frequency jobs (every 1–5 min) don't
-// alert on a single hiccup. A run is only "missed" if it's been quiet longer
-// than this AND past its second-most-recent scheduled fire (see the loop).
-const MIN_GRACE_MS = 20 * 60 * 1000 // 20 min
 // Total-silence detector: if the entire cron_run_log has no rows newer than
 // this, the dispatcher itself is almost certainly down.
 const DISPATCHER_SILENCE_MS = 30 * 60 * 1000 // 30 min
@@ -129,42 +125,20 @@ export async function GET(request: NextRequest) {
 
     const stale: StaleTask[] = []
     for (const t of enabled) {
-      // Staleness is judged against the SECOND-most-recent scheduled fire, not a
-      // synthetic uniform interval. A task is stale only if it hasn't succeeded
-      // since `prevPrev` — which means it missed its most recent fire (`prev`)
-      // by a full additional gap. Using prevPrev directly (rather than
-      // prev−prevPrev × factor) makes irregular schedules correct for free:
-      // the DeepSeek off-peak crons pause for hours (e.g. `*/5 0,4,5,10-23`
-      // skips 01:00–04:00), and moderate-tags has a 12h overnight gap. The gap
-      // back to prevPrev already encodes those planned pauses, so the monitor
-      // won't false-alert during them while still catching a genuinely stuck job
-      // one full interval after its last expected run.
-      const prev = previousFireTime(t.cronExpression, now)
-      if (!prev) continue // unparseable expression — skip, not our alarm to raise
-      const prevPrev = previousFireTime(t.cronExpression, new Date(prev.getTime() - 1))
-      const graceMs = prevPrev
-        ? Math.max(MIN_GRACE_MS, now.getTime() - prevPrev.getTime())
-        : MIN_GRACE_MS
-
-      // null ⇒ no successful run on record (within the 90d retention) ⇒
-      // effectively infinite gap.
       const secsSince = secsSinceByPath.get(t.path)
-      const quietForMs = secsSince == null ? Number.POSITIVE_INFINITY : secsSince * 1000
-      if (quietForMs <= graceMs) continue
-
-      // Suppress the false positive for a task that has simply never come due
-      // yet: a freshly registered low-frequency job (weekly roundup, monthly
-      // recap) has no run row but isn't broken. Only treat "never succeeded" as
-      // stale once the task has been registered longer than one grace window —
-      // i.e. it has actually had a chance to fire and didn't. Tasks WITH a past
-      // success always fall through to the staleness alert regardless of age.
-      if (secsSince == null && t.secondsSinceCreated * 1000 <= graceMs) continue
+      const staleness = evaluateCronTaskStaleness({
+        cronExpression: t.cronExpression,
+        now,
+        secondsSinceLastSuccess: secsSince,
+        secondsSinceCreated: Number(t.secondsSinceCreated),
+      })
+      if (!staleness?.isStale) continue
 
       stale.push({
         path: t.path,
         displayName: t.displayName,
         expression: t.cronExpression,
-        quietForMs,
+        quietForMs: staleness.quietForMs,
         lastSuccessEpochSeconds: lastSuccessEpochByPath.get(t.path) ?? null,
         scheduleUpdatedEpochSeconds: t.scheduleUpdatedEpochSeconds,
       })
