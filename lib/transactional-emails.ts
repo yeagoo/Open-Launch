@@ -3,24 +3,11 @@ import { routing } from "@/i18n/routing"
 import { resolveAppUrl } from "@/lib/app-url"
 import type { DirectoryTier } from "@/lib/directory-tiers"
 import { sendEmail } from "@/lib/email"
+import { escapeHtml } from "@/lib/html-escape"
 
 interface BasicUser {
   email: string
   name: string | null
-}
-
-// Escape user-supplied strings before interpolating into HTML email
-// bodies. Project names, customer names, and URLs all originate
-// from user input — without escaping, a name like
-// `<img onerror=alert(1)>` would execute in HTML-rendering email
-// clients (Gmail web, Outlook online, etc.).
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
 }
 
 // Returns a properly-encoded URL only if it uses an http(s) scheme

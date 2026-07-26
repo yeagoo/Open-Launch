@@ -167,12 +167,17 @@ export async function getLaunchAvailabilityRange(
 
 // vérifier la limite de lancement de l'utilisateur
 export async function checkUserLaunchLimit(
-  userId: string,
   launchDate: string,
 ): Promise<{ allowed: boolean; count: number; limit: number }> {
+  const session = await getSession()
+  if (!session?.user?.id) {
+    throw new Error("Authentication required.")
+  }
+
   // 所有用户统一限制
   const limit = USER_DAILY_LAUNCH_LIMIT
 
+  parseApiDate(launchDate)
   const [year, month, day] = launchDate.split("-").map(Number)
   const dateStart = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
   const nextDayStart = new Date(dateStart)
@@ -183,7 +188,7 @@ export async function checkUserLaunchLimit(
     .from(projectTable)
     .where(
       and(
-        eq(projectTable.createdBy, userId),
+        eq(projectTable.createdBy, session.user.id),
         gte(projectTable.scheduledLaunchDate, dateStart), // Utiliser dateStart UTC
         lt(projectTable.scheduledLaunchDate, nextDayStart), // Utiliser nextDayStart UTC
         // Exclure les projets dont le paiement est en attente ou a échoué
@@ -437,58 +442,4 @@ export async function scheduleLaunch(
     console.error("Error scheduling launch:", error)
     throw error
   }
-}
-
-// Mettre à jour le statut des chaînes dont la date de lancement est aujourd'hui
-export async function updateProjectStatusToOngoing() {
-  const todayStart = new Date()
-  // Utiliser l'heure de lancement définie dans les constantes
-  todayStart.setUTCHours(LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0)
-
-  // Trouver les chaînes programmées pour aujourd'hui
-  // Ne mettre à jour que les chaînes avec le statut SCHEDULED (pas PAYMENT_PENDING)
-  const result = await db
-    .update(projectTable)
-    .set({
-      launchStatus: launchStatus.ONGOING,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(projectTable.launchStatus, launchStatus.SCHEDULED),
-        gte(projectTable.scheduledLaunchDate, todayStart),
-        lt(projectTable.scheduledLaunchDate, addDays(todayStart, 1)),
-      ),
-    )
-
-  console.log(`Updated ${result.rowCount} projects to ONGOING`)
-  return { success: true, updatedCount: result.rowCount }
-}
-
-// Mettre à jour le statut des chaînes dont la date de lancement était hier
-export async function updateProjectStatusToLaunched() {
-  const today = new Date()
-  const yesterdayStart = new Date(today)
-  yesterdayStart.setDate(yesterdayStart.getDate() - 1)
-  // Utiliser l'heure de lancement définie dans les constantes
-  yesterdayStart.setUTCHours(LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0)
-
-  // Trouver les chaînes en cours de lancement depuis hier
-  // Ne mettre à jour que les chaînes avec le statut ONGOING
-  const result = await db
-    .update(projectTable)
-    .set({
-      launchStatus: launchStatus.LAUNCHED,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(projectTable.launchStatus, launchStatus.ONGOING),
-        gte(projectTable.scheduledLaunchDate, yesterdayStart),
-        lt(projectTable.scheduledLaunchDate, addDays(yesterdayStart, 1)),
-      ),
-    )
-
-  console.log(`Updated ${result.rowCount} projects to LAUNCHED`)
-  return { success: true, updatedCount: result.rowCount }
 }

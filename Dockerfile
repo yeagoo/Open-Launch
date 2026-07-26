@@ -11,7 +11,6 @@ RUN bun install --frozen-lockfile
 
 FROM base AS builder
 
-# Zeabur automatically supplies matching service variables to declared ARGs.
 # Only public/build identifiers and the dedicated Server Action key are needed
 # while compiling; runtime provider/database secrets are never copied here.
 ARG NEXT_PUBLIC_APP_URL
@@ -23,7 +22,7 @@ ARG NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ARG NEXT_PUBLIC_URL=https://www.aat.ee
 ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
-ARG ZEABUR_GIT_COMMIT_SHA
+ARG GIT_COMMIT_SHA
 ARG DEPLOYMENT_VERSION
 
 ENV CI=true
@@ -42,9 +41,7 @@ ENV NODE_ENV=production \
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs nextjs
 
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 8080

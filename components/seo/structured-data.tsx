@@ -12,14 +12,6 @@ export function OrganizationSchema() {
     url: baseUrl,
     description:
       "Modern Product Hunt alternative for discovering startups, AI tools, and SaaS launches",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${baseUrl}/search?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
     publisher: {
       "@type": "Organization",
       "@id": `${baseUrl}/#organization`,
@@ -44,29 +36,27 @@ export function OrganizationSchema() {
 }
 
 // Product Schema - 项目页面
-interface ProductSchemaProps {
+interface ProjectSchemaProps {
   name: string
+  slug: string
   description: string
   websiteUrl: string
   imageUrl: string
-  platforms?: string[]
-  pricing: string
   upvoteCount: number
   commentCount: number
   scheduledLaunchDate?: Date | null
 }
 
-export function ProductSchema({
+export function ProjectSchema({
   name,
+  slug,
   description,
   websiteUrl,
   imageUrl,
-  platforms,
-  pricing,
   upvoteCount,
   commentCount,
   scheduledLaunchDate,
-}: ProductSchemaProps) {
+}: ProjectSchemaProps) {
   // We track upvotes + comments, not 1–5 star reviews, so emitting an
   // AggregateRating would be fabricated data — Google flags that and
   // strips rich-result eligibility. interactionStatistic is the honest
@@ -89,17 +79,15 @@ export function ProductSchema({
 
   const schema = {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
+    "@type": "WebPage",
     name,
     description,
-    url: websiteUrl,
+    url: `${baseUrl}/projects/${slug}`,
     image: imageUrl,
-    applicationCategory: "BusinessApplication",
-    operatingSystem: platforms?.join(", ") || "Web",
-    offers: {
-      "@type": "Offer",
-      price: pricing === "FREE" ? "0" : "varies",
-      priceCurrency: "USD",
+    mainEntity: {
+      "@type": "Thing",
+      name,
+      url: websiteUrl,
     },
     ...(interactionStatistic.length > 0 && { interactionStatistic }),
     author: {
@@ -233,12 +221,12 @@ export function ComparisonSchema({
     url: `${baseUrl}/compare/${slug}`,
     about: [
       {
-        "@type": "SoftwareApplication",
+        "@type": "Thing",
         name: projectAName,
         url: projectAUrl,
       },
       {
-        "@type": "SoftwareApplication",
+        "@type": "Thing",
         name: projectBName,
         url: projectBUrl,
       },
@@ -292,7 +280,7 @@ export function ItemListSchema({
       "@type": "ListItem",
       position: index + 1,
       item: {
-        "@type": listType === "project" ? "SoftwareApplication" : "Article",
+        "@type": listType === "project" ? "Thing" : "Article",
         name: item.name,
         url: `${baseUrl}/${listType === "project" ? "projects" : "blog"}/${item.slug}`,
         image: item.logoUrl,

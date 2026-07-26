@@ -228,10 +228,10 @@ export async function GET(request: NextRequest) {
     // wouldn't surface until the next cache window expires —
     // visible to users as "the 8 AM launch didn't show up."
     if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
-      revalidatePath("/sitemap.xml")
+      revalidatePath("/sitemaps/projects.xml")
       revalidateTag(HOME_PROJECTS_TAG, "max")
       revalidateTag(TOP_CATEGORIES_TAG, "max")
-      console.log("✅ Sitemap regenerated + home/category caches busted")
+      console.log("✅ Project sitemap regenerated + home/category caches busted")
     }
 
     return NextResponse.json({

@@ -35,9 +35,9 @@ const globalForCron = globalThis as typeof globalThis & {
  * Redundant in-process trigger for self-hosted Next.js.
  *
  * The external cron-job.org trigger remains useful, but it is no longer a
- * single point of failure: every running Zeabur pod also calls the existing
+ * single point of failure: every running application process also calls the
  * authenticated dispatcher once per minute. The dispatcher's Redis lease
- * deduplicates overlapping pods and external calls.
+ * deduplicates overlapping processes and external calls.
  */
 export function startEmbeddedCron(): void {
   if (process.env.NODE_ENV !== "production") return

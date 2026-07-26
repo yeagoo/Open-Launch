@@ -10,14 +10,14 @@ import {
   type CronHeartbeatState,
 } from "@/lib/cron-heartbeat"
 import { cronMatches } from "@/lib/cron-match"
-import { cronStatusFromResult } from "@/lib/cron-status"
+import { cronDispatcherStatusFromResult } from "@/lib/cron-status"
 import { fetchWithTimeout, withTimeout } from "@/lib/fetch-timeout"
 import { clearDedupe, dedupeOnce } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
 // 5 min total cap. We give each fan-out 4 min and reserve 1 min for the
-// dispatcher's own setup + log writes. Zeabur's default function timeout
-// is 300s, so this stays inside it.
+// dispatcher's own setup + log writes. Keep the route and reverse-proxy
+// timeout at or above this value in the self-hosted deployment.
 export const maxDuration = 300
 
 const SUBTASK_TIMEOUT_MS = 240_000 // 4 min per fan-out
@@ -71,8 +71,7 @@ async function runTask(baseUrl: string, authHeader: string, path: string): Promi
  *
  * Status code:
  *   - 200 if all due tasks succeeded OR no tasks were due
- *   - 500 if at least one was due AND none succeeded (cron-job.org alerts)
- *   - 200 with a `failed` count > 0 for partial failures (no alert spam)
+ *   - 500 if any due task failed, making the minute retryable
  */
 export async function GET(request: NextRequest) {
   const authError = verifyCronAuth(request)
@@ -83,10 +82,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "CRON_API_KEY not configured" }, { status: 500 })
   }
   const authHeader = `Bearer ${apiKey}`
-  // Self-fetch over loopback. The public origin (request.url) routes back
-  // through Zeabur's ingress and times out (ETIMEDOUT) — the container
-  // can't reach its own external hostname. INTERNAL_BASE_URL lets ops
-  // override if needed; otherwise hit 127.0.0.1 on the same port.
+  // Self-fetch over loopback instead of making the host route its own public
+  // origin through Cloudflare/reverse-proxy ingress. INTERNAL_BASE_URL lets
+  // ops override if needed; otherwise hit 127.0.0.1 on the same port.
   const baseUrl = process.env.INTERNAL_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3000"}`
   const now = new Date()
 
@@ -155,13 +153,13 @@ export async function GET(request: NextRequest) {
 
     const successCount = results.filter((r) => r.statusCode >= 200 && r.statusCode < 300).length
     const failedCount = results.length - successCount
-    const status = cronStatusFromResult({
+    const status = cronDispatcherStatusFromResult({
       errorCount: failedCount,
       successCount: successCount,
     })
 
-    // Failed dispatch (some tasks were due and none succeeded → 500):
-    // release the lease so cron-job.org's retry isn't skipped.
+    // Any failed subtask makes the dispatch retryable. Release the lease so
+    // cron-job.org's same-minute retry isn't suppressed by a successful sibling.
     if (status >= 500) {
       await clearDedupe(dedupeKey)
     }

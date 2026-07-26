@@ -6,9 +6,12 @@ import { endOfMonth, startOfMonth } from "date-fns"
 import { and, count, desc, eq, or, sql } from "drizzle-orm"
 
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import { clampInteger, clampPage } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
 
 export async function getMonthProjects(page: number = 1, limit: number = 10) {
+  page = clampPage(page)
+  limit = clampInteger(limit, 10, 1, 100)
   const now = new Date()
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)

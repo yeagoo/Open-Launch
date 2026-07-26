@@ -599,7 +599,7 @@ export function SubmitProjectForm({
       setIsLoadingDateCheck(true)
       setLaunchDateLimitError(null)
       try {
-        const result = await checkUserLaunchLimit(userId, date)
+        const result = await checkUserLaunchLimit(date)
         if (!result.allowed) {
           setIsLaunchDateOverLimit(true)
           setLaunchDateLimitError(

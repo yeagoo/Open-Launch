@@ -204,12 +204,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
               )
               const heroToday = sortedToday.slice(0, 3)
               const restToday = sortedToday.slice(3)
-              // Zeabur's Node image ships with reduced ICU data, so calling
-              // toLocaleDateString with non-English locales (et / ko / etc.)
-              // throws "Incorrect locale information provided". Try the
-              // user's locale, fall back to en-US if Node rejects it; if
-              // even that fails, drop the kicker entirely rather than 500
-              // the home page.
+              // Some slim Node images ship with reduced ICU data. Try the
+              // user's locale, fall back to en-US if the runtime rejects it;
+              // if even that fails, drop the kicker rather than 500 the page.
               let todayKicker: string | undefined
               try {
                 todayKicker = new Date().toLocaleDateString(

@@ -13,3 +13,15 @@ export function cronStatusFromResult(opts: {
   if (opts.errorCount > 0 && opts.successCount === 0) return 500
   return 200
 }
+
+/**
+ * The dispatcher fans out independent scheduled routes. A failure in any one
+ * route must make the dispatch retryable; otherwise a successful sibling masks
+ * a daily/monthly task failure and the per-minute lease suppresses the retry.
+ */
+export function cronDispatcherStatusFromResult(opts: {
+  errorCount: number
+  successCount: number
+}): 200 | 500 {
+  return opts.errorCount > 0 ? 500 : 200
+}

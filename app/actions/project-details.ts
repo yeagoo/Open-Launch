@@ -1,13 +1,11 @@
 "use server"
 
-import { cache } from "react"
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
   category,
-  fumaComments,
   launchStatus,
   project,
   projectToCategory,
@@ -15,14 +13,11 @@ import {
   projectTranslation,
   tagModerationStatus,
   tag as tagTable,
-  upvote,
-  user,
 } from "@/drizzle/db/schema"
 import { and, eq, ne, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { sanitizeRichText } from "@/lib/sanitize"
-import { getCurrentUserId } from "@/lib/server-auth"
 import { projectUpdateSchema, type ProjectUpdateInput } from "@/lib/validations/project"
 
 // Get session helper
@@ -30,94 +25,6 @@ async function getSession() {
   return auth.api.getSession({
     headers: await headers(),
   })
-}
-
-/**
- * Get project by slug — wrapped in React `cache()` so that within
- * a single request, `generateMetadata` and the page body share one
- * lookup. Without this the detail page issued 8 DB queries per
- * render (4 inside this function, called twice).
- *
- * `cache()` is per-request so two different visitors still trigger
- * two real DB reads — for cross-request caching see `unstable_cache`
- * in the actions called from the home page.
- */
-export const getProjectBySlug = cache(async (slug: string) => {
-  // Get project details - Exclure les projets avec le statut payment_pending
-  const [projectData] = await db
-    .select()
-    .from(project)
-    .where(and(eq(project.slug, slug), ne(project.launchStatus, launchStatus.PAYMENT_PENDING)))
-    .limit(1)
-
-  if (!projectData) {
-    return null
-  }
-
-  // Get creator information if available
-  let creator = null
-  if (projectData.createdBy) {
-    const [creatorData] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, projectData.createdBy))
-      .limit(1)
-    creator = creatorData
-  }
-
-  // Get categories
-  const categories = await db
-    .select({
-      id: category.id,
-      name: category.name,
-    })
-    .from(category)
-    .innerJoin(projectToCategory, eq(category.id, projectToCategory.categoryId))
-    .where(eq(projectToCategory.projectId, projectData.id))
-
-  // Get upvote count
-  const [upvoteCount] = await db
-    .select({
-      count: sql`count(*)`,
-    })
-    .from(upvote)
-    .where(eq(upvote.projectId, projectData.id))
-
-  // Get comment count — fumaComments.page is the project id (see
-  // fuma-comment integration in lib/comment.config.ts). Used by the
-  // structured-data interactionStatistic on the detail page.
-  const [commentCount] = await db
-    .select({
-      count: sql`count(*)`,
-    })
-    .from(fumaComments)
-    .where(sql`${fumaComments.page}::text = ${projectData.id}`)
-
-  return {
-    ...projectData,
-    categories,
-    upvoteCount: Number(upvoteCount?.count || 0),
-    commentCount: Number(commentCount?.count || 0),
-    creator,
-  }
-})
-
-// Check if a user has upvoted a project.
-//
-// Uses `getCurrentUserId` (React-cached per request) so detail-page
-// renders that already resolved the user share the lookup instead of
-// hitting auth again.
-export async function hasUserUpvoted(projectId: string) {
-  const userId = await getCurrentUserId()
-  if (!userId) return false
-
-  const userUpvotes = await db
-    .select()
-    .from(upvote)
-    .where(and(eq(upvote.userId, userId), eq(upvote.projectId, projectId)))
-    .limit(1)
-
-  return userUpvotes.length > 0
 }
 
 /**

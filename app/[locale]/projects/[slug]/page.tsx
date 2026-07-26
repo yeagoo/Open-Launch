@@ -17,6 +17,7 @@ import {
 } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
+import { getProjectBySlug, hasUserUpvoted } from "@/lib/project-details-query"
 import { getCurrentUserId } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
@@ -32,8 +33,7 @@ import { ProjectMetaCard } from "@/components/project/sidebar/project-meta-card"
 import { RelatedPagesCard } from "@/components/project/sidebar/related-pages-card"
 import { VisitWebsiteCard } from "@/components/project/sidebar/visit-website-card"
 import { UpvoteButton } from "@/components/project/upvote-button"
-import { BreadcrumbSchema, ProductSchema } from "@/components/seo/structured-data"
-import { getProjectBySlug, hasUserUpvoted } from "@/app/actions/project-details"
+import { BreadcrumbSchema, ProjectSchema } from "@/components/seo/structured-data"
 
 // Types
 interface ProjectPageProps {
@@ -170,13 +170,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   return (
     <div className="bg-background min-h-screen">
       {/* Structured Data - Product Schema */}
-      <ProductSchema
+      <ProjectSchema
         name={projectData.name}
+        slug={projectData.slug}
         description={stripHtml(localizedDescription)}
         websiteUrl={projectData.websiteUrl}
         imageUrl={projectData.productImage || projectData.logoUrl}
-        platforms={projectData.platforms || []}
-        pricing={projectData.pricing}
         upvoteCount={projectData.upvoteCount}
         commentCount={projectData.commentCount}
         scheduledLaunchDate={projectData.scheduledLaunchDate}

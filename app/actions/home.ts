@@ -17,6 +17,7 @@ import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
+import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
 
 // Reusable project-summary projection — the 4 listings on home /
@@ -150,6 +151,7 @@ const fetchWinnersByDateBase = unstable_cache(
 // ─── Public entry points ────────────────────────────────────────────────────
 
 export async function getTodayProjects(limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, 1, 100)
   const { start, end } = getCurrentLaunchWindow()
   const [base, userId] = await Promise.all([
     fetchTodayProjectsBase(limit, start.toISOString(), end.toISOString()),
@@ -165,6 +167,7 @@ export async function getTodayProjects(limit: number = PROJECT_LIMITS_VARIABLES.
 export async function getYesterdayProjects(
   limit: number = PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT,
 ) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT, 1, 100)
   const now = new Date()
   const isBeforeLaunchTime = now.getUTCHours() < LAUNCH_SETTINGS.LAUNCH_HOUR_UTC
   const yesterdayStart = new Date(now)
@@ -193,6 +196,7 @@ export async function getYesterdayProjects(
 }
 
 export async function getMonthBestProjects(limit: number = PROJECT_LIMITS_VARIABLES.MONTH_LIMIT) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.MONTH_LIMIT, 1, 100)
   const now = new Date()
   const monthStart = startOfMonth(now)
   const monthEnd = endOfMonth(now)

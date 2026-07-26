@@ -1,6 +1,6 @@
 import { db } from "@/drizzle/db"
 import { stripe } from "@better-auth/stripe"
-import { betterAuth } from "better-auth"
+import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, captcha, oneTap } from "better-auth/plugins"
 
@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
 import { redactEmail } from "@/lib/log-redaction"
 import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
+import { isSafeProfileImageUrl } from "@/lib/user-profile-validation"
 
 const stripeClient = createStripeClient()
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -23,6 +24,24 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        async before(user) {
+          if (!isSafeProfileImageUrl(user.image)) {
+            throw new APIError("BAD_REQUEST", { message: "Profile image must be an HTTP URL" })
+          }
+        },
+      },
+      update: {
+        async before(user) {
+          if ("image" in user && !isSafeProfileImageUrl(user.image)) {
+            throw new APIError("BAD_REQUEST", { message: "Profile image must be an HTTP URL" })
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -64,10 +83,10 @@ export const auth = betterAuth({
   },
   advanced: {
     ipAddress: {
-      // Production traffic reaches Zeabur through Cloudflare. Better Auth must
-      // use the single-value header overwritten by that trusted edge instead
-      // of collapsing all users into one shared path bucket when it rejects a
-      // comma-separated X-Forwarded-For chain.
+      // Production traffic reaches the service through Cloudflare. Better Auth
+      // must use the single-value header overwritten by that trusted edge
+      // instead of collapsing all users into one shared path bucket when it
+      // rejects a comma-separated X-Forwarded-For chain.
       ipAddressHeaders: ["cf-connecting-ip"],
     },
   },

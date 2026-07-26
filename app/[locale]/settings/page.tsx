@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -158,25 +158,29 @@ function EditProfileDialog() {
   const [isLoading, setIsLoading] = useState(false)
   const [open, setOpen] = useState(false)
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setImage(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
+    if (!file) return
 
-  async function convertImageToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+    if (file.size > 1024 * 1024) {
+      toast.error("Profile image must be 1MB or smaller")
+      e.target.value = ""
+      return
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(file.type)) {
+      toast.error("Choose a JPEG, PNG, WebP, GIF, or AVIF image")
+      e.target.value = ""
+      return
+    }
+
+    setImage(file)
+    setImagePreview(URL.createObjectURL(file))
   }
 
   return (
@@ -219,7 +223,7 @@ function EditProfileDialog() {
                 <Input
                   id="image"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                   onChange={handleImageChange}
                   className="w-full cursor-pointer border dark:border-zinc-700"
                 />
@@ -242,15 +246,28 @@ function EditProfileDialog() {
             onClick={async () => {
               setIsLoading(true)
               try {
+                let imageUrl: string | undefined
+                if (image) {
+                  const formData = new FormData()
+                  formData.append("file", image)
+                  formData.append("folder", "avatars")
+                  const response = await fetch("/api/upload", { method: "POST", body: formData })
+                  const payload = (await response.json()) as { fileUrl?: string; error?: string }
+                  if (!response.ok || !payload.fileUrl) {
+                    throw new Error(payload.error || "Profile image upload failed")
+                  }
+                  imageUrl = payload.fileUrl
+                }
+
                 await updateUser({
                   name: name || undefined,
-                  image: image ? await convertImageToBase64(image) : undefined,
+                  image: imageUrl,
                 })
                 toast.success("Profile updated successfully")
                 router.refresh()
                 setOpen(false)
-              } catch {
-                toast.error("Failed to update profile")
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Failed to update profile")
               }
               setIsLoading(false)
               setName("")

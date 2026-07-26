@@ -19,13 +19,22 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  // Zeabur exposes the commit SHA while building Git deployments. Next.js
-  // attaches this value to client navigations and performs a hard refresh when
-  // an old tab talks to a newer deployment, avoiding stale Server Action IDs.
-  deploymentId: process.env.ZEABUR_GIT_COMMIT_SHA || process.env.DEPLOYMENT_VERSION,
+  // The deployment tool supplies a stable source identifier. Next.js attaches
+  // it to client navigations and hard-refreshes an old tab when Server Action
+  // IDs change across deployments.
+  deploymentId:
+    process.env.DEPLOYMENT_VERSION ||
+    process.env.GIT_COMMIT_SHA ||
+    process.env.ZEABUR_GIT_COMMIT_SHA,
   // Emit the traced production server instead of shipping the complete
   // dependency tree. The multi-stage Dockerfile copies this directory only.
   output: "standalone",
+  // Sharp loads its platform-specific libvips and native addon at runtime.
+  // Next's file tracer does not discover those optional @img packages
+  // reliably, so include them explicitly in the standalone artifact.
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
   },

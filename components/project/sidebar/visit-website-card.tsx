@@ -6,7 +6,7 @@ import type { project as projectSchema } from "@/drizzle/db/schema"
 import { RiExternalLinkLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 
-import { getProjectWebsiteRelAttribute } from "@/lib/link-utils"
+import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 
 type ProjectRow = typeof projectSchema.$inferSelect
 
@@ -44,6 +44,7 @@ export function VisitWebsiteCard({
     { launchStatus, launchType, dailyRanking, hasBadgeVerified, isLowQuality },
     { isDetailPage: true },
   )
+  const href = getProjectOutboundHref(websiteUrl, { isLowQuality })
 
   let displayHost = websiteUrl
   try {
@@ -55,7 +56,7 @@ export function VisitWebsiteCard({
 
   return (
     <a
-      href={websiteUrl}
+      href={href}
       target="_blank"
       rel={rel}
       className="group bg-primary text-primary-foreground hover:bg-primary/90 block rounded-lg p-4 transition-colors"

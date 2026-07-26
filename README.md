@@ -33,7 +33,6 @@
 - [Support](#support)
 - [Sponsoring](#sponsoring)
 
-
 ## Sponsors
 
 Huge thanks to our sponsors:
@@ -120,7 +119,7 @@ Visit `http://localhost:3000` to see your app running.
 - **📖 [配置文档总索引](./docs/cursor/CONFIGURATION_INDEX.md)** - 从这里开始
 - **🚀 [快速开始指南](./docs/cursor/README.md)** - 新手指南
 - **⚙️ [环境变量配置](./docs/cursor/ENV_SETUP_GUIDE.md)** - 详细的环境变量设置
-- **🚢 [Zeabur 部署指南](./docs/cursor/ZEABUR_DEPLOYMENT_GUIDE.md)** - 一键部署到 Zeabur
+- **🚢 [当前生产运行手册](./docs/production-runtime.md)** - standalone、systemd/Docker 与 cron
 - **🛠️ [管理员设置](./docs/cursor/ADMIN_SETUP_GUIDE.md)** - 设置管理员账号
 - **🔧 [故障排查](./docs/cursor/DEPLOYMENT_TROUBLESHOOTING.md)** - 常见问题解决
 
@@ -132,7 +131,7 @@ Visit `http://localhost:3000` to see your app running.
 
 | Technology                              | Description                            |
 | --------------------------------------- | -------------------------------------- |
-| [Next.js 15](https://nextjs.org)        | React framework for production         |
+| [Next.js 16](https://nextjs.org)        | React framework for production         |
 | [React 19](https://reactjs.org)         | UI library                             |
 | [Tailwind CSS](https://tailwindcss.com) | Utility-first CSS framework            |
 | [Shadcn/ui](https://ui.shadcn.com)      | Accessible and customizable components |
@@ -160,13 +159,15 @@ Visit `http://localhost:3000` to see your app running.
 
 ## Deployment
 
-Open Launch is optimized for deployment on Vercel but can be deployed on any platform that supports Next.js.
+Open Launch is deployed to `8.210.175.190` through
+`/home/ivmm/tools/deploy-tools` as a Next.js standalone artifact. It can run
+under systemd or Docker; see the [production runtime checklist](./docs/production-runtime.md).
 
 ```bash
 # Build the application
 bun run build
 
-# Start the production server
+# Start the prepared .next/standalone server (Node 24.15+)
 bun run start
 ```
 

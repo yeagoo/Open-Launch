@@ -1,6 +1,6 @@
 # Production runtime checklist
 
-## Required Zeabur variables
+## Required production variables
 
 - `CRON_API_KEY`: one strong bearer token shared by the dispatcher and tasks.
 - `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`: a stable base64-encoded 32-byte value.
@@ -14,9 +14,10 @@
 - `BETTER_AUTH_URL` and `NEXT_PUBLIC_URL`: both `https://www.aat.ee` in
   production.
 
-Zeabur supplies `ZEABUR_GIT_COMMIT_SHA` during the image build. Next.js uses it
-as `deploymentId` so an old browser tab hard-refreshes when it reaches a newer
-deployment instead of posting a stale Server Action ID.
+The deployment at `8.210.175.190` is managed through
+`/home/ivmm/tools/deploy-tools`. Supply `DEPLOYMENT_VERSION` (normally the Git
+commit SHA) during the build so an old browser tab hard-refreshes when it
+reaches a newer deployment instead of posting a stale Server Action ID.
 
 ## Scheduler
 
@@ -35,10 +36,13 @@ Authorization: Bearer <CRON_API_KEY>
 idempotent. Missing the 08:00 UTC boundary therefore self-heals on the next
 tick rather than hiding the daily feed until an operator intervenes.
 
-## Container image
+## Production artifact
 
-Zeabur detects the root `Dockerfile`. It builds Next.js `standalone` output in
-a Node 24 builder and copies only the traced runtime, static assets, and
-`public/` into the final non-root image. Build-time `NEXT_PUBLIC_*`, deployment
-ID, and Server Action key variables are declared as Docker `ARG`s so Zeabur can
-inject them into the multi-stage build.
+`bun run build` produces a self-contained `.next/standalone` directory, copies
+`public/` and `.next/static` into it, and removes dotenv files. `bun run start`
+starts that artifact with Node 24.15+; it must not use `next start` while
+`output: "standalone"` is enabled.
+
+The root `Dockerfile` uses the same artifact and runs it as a non-root user.
+Build-time `NEXT_PUBLIC_*`, deployment ID, and Server Action key variables are
+declared as Docker `ARG`s; runtime secrets are injected separately.

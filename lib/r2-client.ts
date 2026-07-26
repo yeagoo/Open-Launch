@@ -1,6 +1,8 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
+export type UploadFolder = "avatars" | "logos" | "products"
+
 // 初始化 R2 客户端
 export function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID
@@ -25,7 +27,7 @@ export function getR2Client() {
 export async function getUploadUrl(
   fileName: string,
   fileType: string,
-  folder: "logos" | "products",
+  folder: UploadFolder,
 ): Promise<{ uploadUrl: string; fileUrl: string }> {
   const client = getR2Client()
   const bucketName = process.env.R2_BUCKET_NAME
@@ -64,7 +66,7 @@ export async function uploadFileToR2(
   file: Buffer,
   fileName: string,
   fileType: string,
-  folder: "logos" | "products",
+  folder: UploadFolder,
 ): Promise<string> {
   const client = getR2Client()
   const bucketName = process.env.R2_BUCKET_NAME

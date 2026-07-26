@@ -3,6 +3,8 @@
  * Contains all types of email templates
  */
 
+import { escapeHtml, requireSafeHttpUrl } from "@/lib/html-escape"
+
 const PRIMARY_COLOR = "#16a34a" // Brand green color
 const LOGO_URL = "https://www.aat.ee/logo.png" // Your Logo URL
 
@@ -74,12 +76,14 @@ function getEmailLayout(content: string): string {
  * Button component
  */
 function getButton(url: string, text: string): string {
+  const safeUrl = escapeHtml(requireSafeHttpUrl(url))
+  const safeText = escapeHtml(text)
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 30px auto;">
   <tr>
     <td style="border-radius: 8px; background-color: ${PRIMARY_COLOR};">
-      <a href="${url}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; text-align: center;">
-        ${text}
+      <a href="${safeUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px; text-align: center;">
+        ${safeText}
       </a>
     </td>
   </tr>
@@ -108,6 +112,8 @@ function getInfoBox(content: string, type: "info" | "warning" = "info"): string 
  * Email verification template
  */
 export function getVerificationEmailTemplate(userName: string, verificationUrl: string): string {
+  const safeUserName = escapeHtml(userName)
+  const safeVerificationUrl = escapeHtml(requireSafeHttpUrl(verificationUrl))
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="display: inline-block; width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; line-height: 64px; font-size: 32px; margin-bottom: 20px;">
@@ -120,7 +126,7 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      Hello <strong style="color: #111827;">${userName}</strong>,
+      Hello <strong style="color: #111827;">${safeUserName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
@@ -133,8 +139,8 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
       Or copy and paste this URL into your browser:
     </p>
     <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 8px; word-break: break-all;">
-      <a href="${verificationUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
-        ${verificationUrl}
+      <a href="${safeVerificationUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
+        ${safeVerificationUrl}
       </a>
     </div>
 
@@ -154,6 +160,8 @@ export function getVerificationEmailTemplate(userName: string, verificationUrl: 
  * Password reset template
  */
 export function getPasswordResetTemplate(userName: string, resetUrl: string): string {
+  const safeUserName = escapeHtml(userName)
+  const safeResetUrl = escapeHtml(requireSafeHttpUrl(resetUrl))
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="display: inline-block; width: 64px; height: 64px; background-color: #fef3c7; border-radius: 50%; line-height: 64px; font-size: 32px; margin-bottom: 20px;">
@@ -166,7 +174,7 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      Hello <strong style="color: #111827;">${userName}</strong>,
+      Hello <strong style="color: #111827;">${safeUserName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">
@@ -179,8 +187,8 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
       Or copy and paste this URL into your browser:
     </p>
     <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 8px; word-break: break-all;">
-      <a href="${resetUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
-        ${resetUrl}
+      <a href="${safeResetUrl}" style="color: ${PRIMARY_COLOR}; text-decoration: none; font-size: 13px; font-family: monospace;">
+        ${safeResetUrl}
       </a>
     </div>
 
@@ -204,6 +212,7 @@ export function getPasswordResetTemplate(userName: string, resetUrl: string): st
  * Welcome email template (optional)
  */
 export function getWelcomeEmailTemplate(userName: string): string {
+  const safeUserName = escapeHtml(userName)
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="display: inline-block; width: 64px; height: 64px; background-color: #dcfce7; border-radius: 50%; line-height: 64px; font-size: 32px; margin-bottom: 20px;">
@@ -216,7 +225,7 @@ export function getWelcomeEmailTemplate(userName: string): string {
     </h1>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6;">
-      Hello <strong style="color: #111827;">${userName}</strong>,
+      Hello <strong style="color: #111827;">${safeUserName}</strong>,
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: #374151; text-align: center; line-height: 1.6;">

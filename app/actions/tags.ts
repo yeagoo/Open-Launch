@@ -12,10 +12,11 @@ import {
   tag as tagTable,
   upvote,
 } from "@/drizzle/db/schema"
-import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, inArray, or, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -46,6 +47,7 @@ function normalizeTag(raw: string): { id: string; name: string; slug: string } {
 // ─── Public actions ──────────────────────────────────────────────────────────
 
 export async function getAllTags(limit = 200) {
+  limit = clampInteger(limit, 200, 1, 500)
   const tags = await db
     .select()
     .from(tagTable)
@@ -156,23 +158,9 @@ export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, so
 // ─── Authenticated actions ───────────────────────────────────────────────────
 
 export async function upsertTagsForProject(projectId: string, tagNames: string[]) {
-  // Verify the caller is authenticated and owns this project
   const session = await getSession()
   if (!session?.user?.id) {
     return { success: false, tagIds: [] }
-  }
-
-  // Check project ownership (or admin role)
-  if (session.user.role !== "admin") {
-    const proj = await db
-      .select({ createdBy: projectTable.createdBy })
-      .from(projectTable)
-      .where(eq(projectTable.id, projectId))
-      .limit(1)
-
-    if (!proj[0] || proj[0].createdBy !== session.user.id) {
-      return { success: false, tagIds: [] }
-    }
   }
 
   // Limit to 10 tags per project
@@ -188,79 +176,84 @@ export async function upsertTagsForProject(projectId: string, tagNames: string[]
     ).values(),
   ]
 
-  if (normalizedTags.length === 0) {
-    const oldAssociations = await db
+  const result = await db.transaction(async (tx) => {
+    // Authorization and all association/count writes share one transaction so
+    // a failure cannot leave a project with missing tags or stale counters.
+    const [ownedProject] = await tx
+      .select({ createdBy: projectTable.createdBy })
+      .from(projectTable)
+      .where(eq(projectTable.id, projectId))
+      .limit(1)
+
+    if (
+      !ownedProject ||
+      (session.user.role !== "admin" && ownedProject.createdBy !== session.user.id)
+    ) {
+      return { success: false, tagIds: [] }
+    }
+
+    const oldAssociations = await tx
       .select({ tagId: projectToTag.tagId })
       .from(projectToTag)
       .where(eq(projectToTag.projectId, projectId))
-    await db.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
-    for (const { tagId } of oldAssociations) {
-      await db
+
+    if (normalizedTags.length === 0) {
+      await tx.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
+      const oldTagIds = oldAssociations.map(({ tagId }) => tagId)
+      if (oldTagIds.length > 0) {
+        await tx
+          .update(tagTable)
+          .set({
+            projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
+            updatedAt: new Date(),
+          })
+          .where(inArray(tagTable.id, oldTagIds))
+      }
+      return { success: true, tagIds: [] }
+    }
+
+    await tx
+      .insert(tagTable)
+      .values(
+        normalizedTags.map((tag) => ({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+          moderationStatus: tagModerationStatus.PENDING,
+          projectCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })),
+      )
+      .onConflictDoNothing({ target: tagTable.id })
+
+    await tx.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
+    await tx.insert(projectToTag).values(
+      normalizedTags.map((tag) => ({
+        projectId,
+        tagId: tag.id,
+      })),
+    )
+
+    const oldTagIds = oldAssociations.map(({ tagId }) => tagId)
+    const newTagIds = normalizedTags.map((tag) => tag.id)
+    const allAffectedTagIds = [...new Set([...oldTagIds, ...newTagIds])]
+    if (allAffectedTagIds.length > 0) {
+      await tx
         .update(tagTable)
         .set({
           projectCount: sql`(SELECT count(*) FROM ${projectToTag} WHERE ${projectToTag.tagId} = ${tagTable.id})`,
           updatedAt: new Date(),
         })
-        .where(eq(tagTable.id, tagId))
+        .where(inArray(tagTable.id, allAffectedTagIds))
     }
-    return { success: true, tagIds: [] }
+
+    return { success: true, tagIds: newTagIds }
+  })
+  if (result.success) {
+    revalidatePath("/sitemaps/tags.xml")
   }
-
-  // Upsert tags
-  for (const t of normalizedTags) {
-    await db
-      .insert(tagTable)
-      .values({
-        id: t.id,
-        name: t.name,
-        slug: t.slug,
-        moderationStatus: tagModerationStatus.PENDING,
-        projectCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .onConflictDoNothing({ target: tagTable.id })
-  }
-
-  // Get old tag IDs before deleting associations
-  const oldAssociations = await db
-    .select({ tagId: projectToTag.tagId })
-    .from(projectToTag)
-    .where(eq(projectToTag.projectId, projectId))
-  const oldTagIds = oldAssociations.map((a) => a.tagId)
-
-  // Delete old tag associations for this project
-  await db.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
-
-  // Insert new associations
-  await db.insert(projectToTag).values(
-    normalizedTags.map((t) => ({
-      projectId,
-      tagId: t.id,
-    })),
-  )
-
-  // Collect all affected tag IDs (old + new) for count update
-  const newTagIds = normalizedTags.map((t) => t.id)
-  const allAffectedTagIds = [...new Set([...oldTagIds, ...newTagIds])]
-
-  // Update project counts for all affected tags
-  for (const tagId of allAffectedTagIds) {
-    const countResult = await db
-      .select({ count: count() })
-      .from(projectToTag)
-      .where(eq(projectToTag.tagId, tagId))
-
-    await db
-      .update(tagTable)
-      .set({
-        projectCount: countResult[0]?.count || 0,
-        updatedAt: new Date(),
-      })
-      .where(eq(tagTable.id, tagId))
-  }
-
-  return { success: true, tagIds: normalizedTags.map((t) => t.id) }
+  return result
 }
 
 // ─── Admin actions ───────────────────────────────────────────────────────────
@@ -288,6 +281,7 @@ export async function approveTag(tagId: string) {
     .where(eq(tagTable.id, tagId))
 
   revalidatePath("/tags")
+  revalidatePath("/sitemaps/tags.xml")
   revalidatePath("/admin/tags")
   return { success: true }
 }
@@ -299,6 +293,7 @@ export async function deleteTag(tagId: string) {
   await db.delete(tagTable).where(eq(tagTable.id, tagId))
 
   revalidatePath("/tags")
+  revalidatePath("/sitemaps/tags.xml")
   revalidatePath("/admin/tags")
   return { success: true }
 }

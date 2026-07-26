@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-// Build-time sync of friend-link data from the directories-links repo
+// Explicit, review-time sync of friend-link data from the directories-links repo
 // (https://github.com/yeagoo/directories-links). Fetches link.json plus the
-// SVG logos it references and writes committed snapshots, so the footer, the
-// /friends page, and the DR values shown on /pricing always reflect the latest
-// upstream data at build time.
+// SVG logos it references and writes committed snapshots. This script is not
+// part of `bun run build`: upstream changes must produce a reviewable commit
+// instead of silently changing an artifact built from the same source SHA.
 //
 // Fail-soft: if the fetch fails, the existing committed snapshot is kept and
 // the build proceeds (only the very first build with no snapshot hard-fails).
@@ -11,20 +11,56 @@ import { existsSync } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { basename, join } from "node:path"
 
-const RAW_BASE = "https://raw.githubusercontent.com/yeagoo/directories-links/main"
+const UPSTREAM_COMMIT = "2d3b9f893b7650eae92699038bddf9fcb80b18b7"
+const RAW_BASE = `https://raw.githubusercontent.com/yeagoo/directories-links/${UPSTREAM_COMMIT}`
 const SNAPSHOT = "lib/directories-links.json"
 const LOGO_DIR = "public/partner-logos"
+const MAX_JSON_BYTES = 2 * 1024 * 1024
+const MAX_SVG_BYTES = 128 * 1024
+
+function validateHttpUrl(value: unknown): boolean {
+  if (typeof value !== "string" || value.length > 2048) return false
+  try {
+    const url = new URL(value)
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password
+  } catch {
+    return false
+  }
+}
+
+function validateSiteArray(value: unknown): value is { logo_svg?: string }[] {
+  if (!Array.isArray(value) || value.length > 5000) return false
+  return value.every((site) => {
+    if (!site || typeof site !== "object") return false
+    const entry = site as Record<string, unknown>
+    if (!validateHttpUrl(entry.url)) return false
+    return (
+      entry.logo_svg === undefined ||
+      (typeof entry.logo_svg === "string" &&
+        /^\/assets\/logos\/[a-zA-Z0-9._-]+\.svg$/.test(entry.logo_svg))
+    )
+  })
+}
+
+function validateSvg(svg: string): boolean {
+  if (Buffer.byteLength(svg) > MAX_SVG_BYTES || !/<svg[\s>]/i.test(svg)) return false
+  return !/<(?:script|foreignObject|iframe|object|embed)\b|on[a-z]+\s*=|javascript:|data:text\/html/i.test(
+    svg,
+  )
+}
 
 async function main() {
   let json: Record<string, unknown>
   try {
     const res = await fetch(`${RAW_BASE}/link.json`, { signal: AbortSignal.timeout(30_000) })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    json = (await res.json()) as Record<string, unknown>
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    if (bytes.byteLength > MAX_JSON_BYTES) throw new Error("link.json exceeds size limit")
+    json = JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>
     if (
-      !Array.isArray(json.footer_navigation_sites) ||
-      !Array.isArray(json.authority_documentation_sites) ||
-      !Array.isArray(json.all_friend_links)
+      !validateSiteArray(json.footer_navigation_sites) ||
+      !validateSiteArray(json.authority_documentation_sites) ||
+      !validateSiteArray(json.all_friend_links)
     ) {
       throw new Error("unexpected link.json shape (missing required arrays)")
     }
@@ -56,7 +92,9 @@ async function main() {
     try {
       const r = await fetch(`${RAW_BASE}${p}`, { signal: AbortSignal.timeout(20_000) })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
-      await writeFile(join(LOGO_DIR, name), await r.text())
+      const svg = await r.text()
+      if (!validateSvg(svg)) throw new Error("SVG failed security validation")
+      await writeFile(join(LOGO_DIR, name), svg)
       ok++
     } catch (err) {
       kept++

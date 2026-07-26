@@ -21,6 +21,7 @@ import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import { clampInteger, clampPage } from "@/lib/query-limits"
 import { sanitizeRichText } from "@/lib/sanitize"
 import { getCurrentUserId } from "@/lib/server-auth"
 import { projectSubmissionSchema, type ProjectSubmissionInput } from "@/lib/validations/project"
@@ -96,7 +97,7 @@ const fetchTopCategoriesCached = unstable_cache(
 )
 
 export async function getTopCategories(limit = 5) {
-  return fetchTopCategoriesCached(limit)
+  return fetchTopCategoriesCached(clampInteger(limit, 5, 1, 50))
 }
 
 // Get user's upvoted projects
@@ -511,6 +512,9 @@ export async function getProjectsByCategory(
   limit: number = 10,
   sort: string = "recent",
 ) {
+  page = clampPage(page)
+  limit = clampInteger(limit, 10, 1, 100)
+
   let orderByClause
   switch (sort) {
     case "upvotes":
