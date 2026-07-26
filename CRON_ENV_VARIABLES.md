@@ -116,7 +116,7 @@ PRODUCTHUNT_API_KEY=your-producthunt-api-key
 
 # DeepSeek API（用于 AI 评论生成）
 DEEPSEEK_API_KEY=sk-your-deepseek-api-key
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
 ```
 
 ## 🔧 Cron-Job.org 配置对照

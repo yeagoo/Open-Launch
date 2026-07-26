@@ -36,7 +36,7 @@ Open-Launch 提供了一个自动化系统，使用虚拟用户（Bot）在项�
 ```env
 # DeepSeek API 配置
 DEEPSEEK_API_KEY=sk-your_deepseek_api_key_here
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
 ```
 
 ### 2. 生成机器人用户

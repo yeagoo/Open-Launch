@@ -21,7 +21,7 @@ PRODUCTHUNT_API_KEY=your-producthunt-api-key
 
 # DeepSeek API 密钥（用于 AI 评论生成）
 DEEPSEEK_API_KEY=sk-your-deepseek-api-key
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
 ```
 
 ### 3. 确保机器人账号已创建
