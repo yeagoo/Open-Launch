@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -6,7 +6,7 @@ import { crawledData, launchStatus, project, upvote } from "@/drizzle/db/schema"
 import { subHours } from "date-fns"
 import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
 
-import { HOME_PROJECTS_TAG, TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
+import { HOME_PROJECTS_TAG, SITEMAP_ENTRIES_TAG, TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { getCurrentLaunchWindow, getLaunchWindowForDate } from "@/lib/launch-window"
 
@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
     // wouldn't surface until the next cache window expires —
     // visible to users as "the 8 AM launch didn't show up."
     if (scheduledToOngoing.length > 0 || ongoingToLaunched.length > 0) {
-      revalidatePath("/sitemaps/projects.xml")
+      revalidateTag(SITEMAP_ENTRIES_TAG, "max")
       revalidateTag(HOME_PROJECTS_TAG, "max")
       revalidateTag(TOP_CATEGORIES_TAG, "max")
       console.log("✅ Project sitemap regenerated + home/category caches busted")

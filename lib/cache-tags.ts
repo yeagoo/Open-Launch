@@ -36,3 +36,9 @@ export const PROJECT_RELATED_TAG = "project-related"
 // detail page. Refreshed by the `generate-comparisons` and
 // `generate-alternatives` crons when they ship new pages.
 export const PROJECT_SIDEBAR_LINKS_TAG = "project-sidebar-links"
+
+// Database-backed sitemap entry sets. The XML route is deliberately dynamic
+// so CI and production builds never require database access, while this shared
+// tag keeps the expensive project/tag/editorial queries cached for one hour
+// and lets the corresponding writers invalidate them immediately.
+export const SITEMAP_ENTRIES_TAG = "sitemap-entries"

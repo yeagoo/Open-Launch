@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
@@ -15,6 +15,7 @@ import {
 import { and, asc, count, desc, eq, inArray, or, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
@@ -251,7 +252,7 @@ export async function upsertTagsForProject(projectId: string, tagNames: string[]
     return { success: true, tagIds: newTagIds }
   })
   if (result.success) {
-    revalidatePath("/sitemaps/tags.xml")
+    revalidateTag(SITEMAP_ENTRIES_TAG, "max")
   }
   return result
 }
@@ -281,7 +282,7 @@ export async function approveTag(tagId: string) {
     .where(eq(tagTable.id, tagId))
 
   revalidatePath("/tags")
-  revalidatePath("/sitemaps/tags.xml")
+  revalidateTag(SITEMAP_ENTRIES_TAG, "max")
   revalidatePath("/admin/tags")
   return { success: true }
 }
@@ -293,7 +294,7 @@ export async function deleteTag(tagId: string) {
   await db.delete(tagTable).where(eq(tagTable.id, tagId))
 
   revalidatePath("/tags")
-  revalidatePath("/sitemaps/tags.xml")
+  revalidateTag(SITEMAP_ENTRIES_TAG, "max")
   revalidatePath("/admin/tags")
   return { success: true }
 }

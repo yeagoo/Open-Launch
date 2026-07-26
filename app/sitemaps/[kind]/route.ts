@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache"
+
 import { db } from "@/drizzle/db"
 import {
   alternativePage,
@@ -9,6 +11,7 @@ import {
 } from "@/drizzle/db/schema"
 import { eq, or } from "drizzle-orm"
 
+import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import {
   englishSitemapEntry,
   localizedSitemapEntries,
@@ -18,12 +21,10 @@ import {
   type SitemapKind,
 } from "@/lib/sitemap-xml"
 
-export const dynamic = "force-static"
-export const revalidate = 3600
-
-export function generateStaticParams() {
-  return SITEMAP_KINDS.map((kind) => ({ kind: `${kind}.xml` }))
-}
+// The database-backed variants must not execute during `next build`: CI and a
+// clean standalone build intentionally have no production database. Runtime
+// results are cached below and invalidated by the corresponding writers.
+export const dynamic = "force-dynamic"
 
 function staticEntries(): SitemapEntry[] {
   return [
@@ -108,6 +109,11 @@ async function entriesFor(kind: SitemapKind): Promise<SitemapEntry[]> {
   ]
 }
 
+const cachedEntriesFor = unstable_cache(entriesFor, ["sitemap-entries"], {
+  revalidate: 3600,
+  tags: [SITEMAP_ENTRIES_TAG],
+})
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ kind: string }> },
@@ -118,7 +124,7 @@ export async function GET(
     return new Response("Not Found", { status: 404 })
   }
 
-  const entries = await entriesFor(kind as SitemapKind)
+  const entries = await cachedEntriesFor(kind as SitemapKind)
   return new Response(serializeSitemap(entries), {
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",

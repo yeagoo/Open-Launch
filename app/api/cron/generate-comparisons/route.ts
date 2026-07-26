@@ -15,7 +15,7 @@ import { and, count, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm"
 
 import { aiCircuitOpen, AiUnavailableError, assertAiAvailable } from "@/lib/ai-circuit"
 import { generateComparisonContent } from "@/lib/ai-content"
-import { PROJECT_SIDEBAR_LINKS_TAG } from "@/lib/cache-tags"
+import { PROJECT_SIDEBAR_LINKS_TAG, SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
@@ -244,6 +244,7 @@ export async function GET(request: NextRequest) {
 
     if (generated > 0) {
       revalidatePath("/compare")
+      revalidateTag(SITEMAP_ENTRIES_TAG, "max")
       // Detail pages cache their sidebar comparison list per project;
       // bust the tag so freshly-written comparisons surface without
       // waiting for the 6h revalidate window.
