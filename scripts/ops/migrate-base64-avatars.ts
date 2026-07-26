@@ -8,7 +8,10 @@ import { uploadFileToR2 } from "@/lib/r2-client"
 
 const execute = process.argv.includes("--execute")
 const MAX_DECODED_BYTES = 20 * 1024 * 1024
-const MAX_INPUT_PIXELS = 16_000_000
+// Legacy profile photos include a small number of 24.5 MP phone images.
+// Keep the cap just above that observed maximum while remaining well within
+// the 768 MiB operations-container limit (about 100 MiB decoded RGBA).
+const MAX_INPUT_PIXELS = 25_000_000
 const BATCH_SIZE = 25
 
 function decodeImageDataUrl(value: string): Buffer {
