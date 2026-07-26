@@ -31,6 +31,8 @@ describe("breadcrumb structured data", () => {
         { name: "Serena" },
       ],
     })
+    expect(element.type).toBe("script")
+    expect(renderToStaticMarkup(element)).toContain('type="application/ld+json"')
     const serialized = element.props.dangerouslySetInnerHTML.__html
     const schema = JSON.parse(serialized)
 
