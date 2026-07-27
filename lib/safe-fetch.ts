@@ -248,6 +248,21 @@ async function resolveSafeUrl(url: URL): Promise<SafeDnsRecord[]> {
   return records
 }
 
+/**
+ * DNS-level SSRF guard for code paths that do NOT fetch through safeFetch
+ * — third-party crawl APIs (Tinyfish, crawl4ai) where the remote service,
+ * not this server, performs the HTTP request. Resolves the hostname and
+ * rejects literal-private hosts and anything resolving to a private address
+ * (e.g. a public domain pointing at 169.254.169.254 or 10.x).
+ *
+ * This cannot pin the remote crawler's own DNS resolution, so DNS rebinding
+ * remains theoretically possible; it closes the direct "public name →
+ * private IP" hole, which literal hostname checks miss.
+ */
+export async function assertPubliclyResolvable(url: URL): Promise<void> {
+  await resolveSafeUrl(url)
+}
+
 function createPinnedClient(
   url: URL,
   records: readonly SafeDnsRecord[],

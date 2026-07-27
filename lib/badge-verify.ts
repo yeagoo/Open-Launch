@@ -1,6 +1,7 @@
 import sanitizeHtml from "sanitize-html"
 
 import {
+  assertPubliclyResolvable,
   closeSafeFetchResponse,
   readSafeFetchText,
   safeFetch,
@@ -95,7 +96,15 @@ export async function verifyAatBadgeServerSide(websiteUrl: string): Promise<bool
   if (rawResult.kind === "deny") return false
 
   // Path 2: Tinyfish fallback. Only reached when rawFetch returned a
-  // challenge-shaped failure (403/429/503/network).
+  // challenge-shaped failure (403/429/503/network). The crawl runs on
+  // Tinyfish infrastructure, outside safeFetch's DNS pinning — re-check at
+  // DNS level so a public domain resolving to a private/cloud-metadata
+  // address can't be crawled through the paid API.
+  try {
+    await assertPubliclyResolvable(url)
+  } catch {
+    return false
+  }
   try {
     const result = await tinyfishCrawl(websiteUrl, { timeout: 30_000 })
     // Search rendered markdown for a real link so anchor text like

@@ -11,6 +11,7 @@ import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { readRequestJsonBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 import {
+  assertPubliclyResolvable,
   closeSafeFetchResponse,
   readSafeFetchBuffer,
   safeFetch,
@@ -83,6 +84,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (isPrivateHostname(parsedUrl.hostname)) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
+    }
+
+    // The crawl runs on remote infrastructure (outside safeFetch's DNS
+    // pinning), so a literal hostname check isn't enough: reject public
+    // domains that resolve to private/cloud-metadata addresses.
+    try {
+      await assertPubliclyResolvable(parsedUrl)
+    } catch {
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
     }
 
