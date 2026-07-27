@@ -351,7 +351,7 @@ export async function GET(request: NextRequest) {
         // forever, since the cron only processes 1 project per tick. The
         // starvation case is recurring; the false-positive case is one-shot,
         // so we stamp.
-        console.error(`Error generating alternatives for ${subjectProject.name}:`, error)
+        console.error("Error generating alternatives for project:", subjectProject.name, error)
         errors++
         await markAttempted(subjectProject.id).catch(() => {})
       }
