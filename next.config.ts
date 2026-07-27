@@ -33,7 +33,9 @@ const nextConfig: NextConfig = {
   // Next's file tracer does not discover those optional @img packages
   // reliably, so include them explicitly in the standalone artifact.
   outputFileTracingIncludes: {
-    "/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+    // OG-image fonts are read from disk at runtime (lib/og-fonts.ts);
+    // without tracing, the standalone container has no assets/fonts.
+    "/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*", "./assets/fonts/**/*"],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
