@@ -32,6 +32,7 @@ import { ThemeToggleMenu } from "../theme/theme-toggle-menu"
 import { Button, buttonVariants } from "../ui/button"
 import { LanguageSwitcher } from "./language-switcher"
 import { NavMenu } from "./nav-menu"
+import { NotificationBell } from "./notification-bell"
 import { SearchCommand } from "./search-command"
 import { UserNav } from "./user-nav"
 
@@ -62,6 +63,7 @@ export default async function Nav() {
         {/* Version Desktop - Recherche et actions */}
         <div className="hidden items-center gap-3 md:flex">
           <SearchCommand isAuthenticated={!!session} />
+          {session && <NotificationBell />}
 
           <LanguageSwitcher />
           <ThemeToggle />

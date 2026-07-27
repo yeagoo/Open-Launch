@@ -859,7 +859,13 @@
     "hero": {
       "kicker": "Listados en directorios",
       "heading": "Haz que vean tu <rotate>producto</rotate> en nuestra <accent>red de directorios</accent>",
-      "headingRotateWords": ["producto", "sitio web", "SaaS", "app", "herramienta"],
+      "headingRotateWords": [
+        "producto",
+        "sitio web",
+        "SaaS",
+        "app",
+        "herramienta"
+      ],
       "subheading": "Salta la cola. Consigue enlaces dofollow. Llega a creadores y early adopters en <num>{n}+</num> sitios seleccionados con más de <num>700k+</num> visitantes mensuales combinados.",
       "limited": "Precio de lanzamiento — los descuentos se reducen a medida que nuestro DR y tráfico crecen.",
       "outcomes": {
@@ -1128,5 +1134,18 @@
     "tab": "Marcadores",
     "emptyTitle": "Aún no hay marcadores",
     "emptyDesc": "Guarda proyectos para encontrarlos rápidamente"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "empty": "Aún no hay notificaciones",
+    "viewAll": "Ver todas",
+    "markAllRead": "Marcar todo como leído",
+    "someone": "Alguien",
+    "typeComment": "{actor} comentó en {project}",
+    "typeReply": "{actor} respondió a tu comentario en {project}",
+    "typeMention": "{actor} te mencionó en {project}",
+    "typeMilestone": "¡{project} alcanzó {count} votos! 🎉",
+    "typeLaunchStatus": "¡{project} ya está en línea!",
+    "typeLaunchEnded": "El día de lanzamiento de {project} ha terminado"
   }
 }

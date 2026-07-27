@@ -267,7 +267,11 @@
       "plus": {
         "blurb": "5 sõltumatut domeeni, mida Google loeb orgaanilisteks.",
         "cta": "Vali Plus",
-        "features": ["Kõik, mis on Basicus", "5 kataloogisaiti", "5 sõltumatut dofollow domeeni"]
+        "features": [
+          "Kõik, mis on Basicus",
+          "5 kataloogisaiti",
+          "5 sõltumatut dofollow domeeni"
+        ]
       },
       "pro": {
         "blurb": "Kogu meie kataloogivõrk — autoriteet täisvõimsusel.",
@@ -855,7 +859,13 @@
     "hero": {
       "kicker": "Kataloogikirjed",
       "heading": "Näita oma <rotate>toodet</rotate> kogu meie <accent>kataloogivõrgustikus</accent>",
-      "headingRotateWords": ["toode", "veebileht", "SaaS", "rakendus", "tööriist"],
+      "headingRotateWords": [
+        "toode",
+        "veebileht",
+        "SaaS",
+        "rakendus",
+        "tööriist"
+      ],
       "subheading": "Jäta järjekord vahele. Teenige dofollow tagasilinke. Jõudke loojate ja varajaste kasutajateni <num>{n}+</num> kureeritud saidil, millel on kokku <num>700k+</num> igakuist külastajat.",
       "limited": "Käivitushinnad — allahindlused vähenevad, kui meie DR ja liiklus kasvavad.",
       "outcomes": {
@@ -1124,5 +1134,18 @@
     "tab": "Järjehoidjad",
     "emptyTitle": "Järjehoidjaid pole",
     "emptyDesc": "Salvesta projekte, et leida need hiljem kiiresti"
+  },
+  "notifications": {
+    "title": "Teavitused",
+    "empty": "Teavitusi pole veel",
+    "viewAll": "Vaata kõiki",
+    "markAllRead": "Märgi kõik loetuks",
+    "someone": "Keegi",
+    "typeComment": "{actor} kommenteeris projekti {project}",
+    "typeReply": "{actor} vastas sinu kommentaarile projektis {project}",
+    "typeMention": "{actor} mainis sind projektis {project}",
+    "typeMilestone": "{project} jõudis {count} hääleni 🎉",
+    "typeLaunchStatus": "{project} on nüüd avaldatud!",
+    "typeLaunchEnded": "Projekti {project} väljalaskepäev on lõppenud"
   }
 }

@@ -277,7 +277,11 @@
         "blurb": "ディレクトリネットワークのすべて——オーソリティをフルパワーで。",
         "cta": "Pro を選ぶ",
         "badge": "一番人気",
-        "features": ["Plus のすべてを含む", "全13のディレクトリサイト", "多言語・多国展開のリーチ"]
+        "features": [
+          "Plus のすべてを含む",
+          "全13のディレクトリサイト",
+          "多言語・多国展開のリーチ"
+        ]
       },
       "ultra": {
         "blurb": "フルリーチに加え、AIエンジンが引用するGEO記事を。",
@@ -855,7 +859,13 @@
     "hero": {
       "kicker": "ディレクトリ掲載",
       "heading": "あなたの<rotate>プロダクト</rotate>を<accent>ディレクトリネットワーク</accent>全体で見てもらう",
-      "headingRotateWords": ["プロダクト", "ウェブサイト", "SaaS", "アプリ", "ツール"],
+      "headingRotateWords": [
+        "プロダクト",
+        "ウェブサイト",
+        "SaaS",
+        "アプリ",
+        "ツール"
+      ],
       "subheading": "列に並ばずに済みます。dofollowバックリンクを獲得し、<num>{n}+</num>の厳選サイトでメーカーやアーリーアダプターにリーチ。月間訪問者数は合計<num>70万+</num>。",
       "limited": "ローンチ価格 — DRとトラフィックが増えるにつれて割引は縮小します。",
       "outcomes": {
@@ -1124,5 +1134,18 @@
     "tab": "ブックマーク",
     "emptyTitle": "ブックマークはまだありません",
     "emptyDesc": "プロジェクトを保存するとここに表示されます"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "通知はまだありません",
+    "viewAll": "すべて見る",
+    "markAllRead": "すべて既読にする",
+    "someone": "誰か",
+    "typeComment": "{actor} が {project} にコメントしました",
+    "typeReply": "{actor} が {project} のあなたのコメントに返信しました",
+    "typeMention": "{actor} が {project} であなたに言及しました",
+    "typeMilestone": "{project} が {count} 票に達しました 🎉",
+    "typeLaunchStatus": "{project} が公開されました！",
+    "typeLaunchEnded": "{project} のローンチ日が終了しました"
   }
 }

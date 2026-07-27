@@ -267,7 +267,11 @@
       "plus": {
         "blurb": "5 domínios independentes que o Google lê como orgânicos.",
         "cta": "Obter Plus",
-        "features": ["Tudo do Basic", "5 sites de diretório", "5 domínios dofollow independentes"]
+        "features": [
+          "Tudo do Basic",
+          "5 sites de diretório",
+          "5 domínios dofollow independentes"
+        ]
       },
       "pro": {
         "blurb": "Toda a nossa rede de diretórios — autoridade em força máxima.",
@@ -855,7 +859,13 @@
     "hero": {
       "kicker": "Listagens em diretórios",
       "heading": "Faça seu <rotate>produto</rotate> ser visto em nossa <accent>rede de diretórios</accent>",
-      "headingRotateWords": ["produto", "site", "SaaS", "app", "ferramenta"],
+      "headingRotateWords": [
+        "produto",
+        "site",
+        "SaaS",
+        "app",
+        "ferramenta"
+      ],
       "subheading": "Pule a fila. Ganhe backlinks dofollow. Alcance makers e early adopters em <num>{n}+</num> sites selecionados com mais de <num>700k+</num> visitantes mensais combinados.",
       "limited": "Preço de lançamento — os descontos diminuem à medida que nosso DR e tráfego crescem.",
       "outcomes": {
@@ -1124,5 +1134,18 @@
     "tab": "Favoritos",
     "emptyTitle": "Nenhum favorito ainda",
     "emptyDesc": "Salve projetos para encontrá-los rapidamente"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "empty": "Ainda não há notificações",
+    "viewAll": "Ver todas",
+    "markAllRead": "Marcar tudo como lido",
+    "someone": "Alguém",
+    "typeComment": "{actor} comentou em {project}",
+    "typeReply": "{actor} respondeu ao seu comentário em {project}",
+    "typeMention": "{actor} mencionou você em {project}",
+    "typeMilestone": "{project} alcançou {count} votos 🎉",
+    "typeLaunchStatus": "{project} está no ar!",
+    "typeLaunchEnded": "O dia de lançamento de {project} terminou"
   }
 }

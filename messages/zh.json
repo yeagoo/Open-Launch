@@ -258,18 +258,30 @@
       "basic": {
         "blurb": "免排队——在 aat.ee 即时获得 dofollow 收录。",
         "cta": "选择 Basic",
-        "features": ["免审核，直接发布到 aat.ee", "永久 dofollow 外链", "约 1 天内自动上线"]
+        "features": [
+          "免审核，直接发布到 aat.ee",
+          "永久 dofollow 外链",
+          "约 1 天内自动上线"
+        ]
       },
       "plus": {
         "blurb": "5 个独立域名，Google 视作自然外链。",
         "cta": "选择 Plus",
-        "features": ["包含 Basic 全部", "5 个导航站", "5 个独立域名的 dofollow 外链"]
+        "features": [
+          "包含 Basic 全部",
+          "5 个导航站",
+          "5 个独立域名的 dofollow 外链"
+        ]
       },
       "pro": {
         "blurb": "整张导航网络——权重火力全开。",
         "cta": "选择 Pro",
         "badge": "最受欢迎",
-        "features": ["包含 Plus 全部", "全部 13 个导航站", "多语言、多国家覆盖"]
+        "features": [
+          "包含 Plus 全部",
+          "全部 13 个导航站",
+          "多语言、多国家覆盖"
+        ]
       },
       "ultra": {
         "blurb": "完整覆盖，加上被 AI 引擎引用的 GEO 文章。",
@@ -284,7 +296,11 @@
       "ultraPlus": {
         "blurb": "最大化大模型曝光——GEO 文章数量翻倍。",
         "cta": "选择 Ultra Plus",
-        "features": ["包含 Ultra 全部", "6 篇 GEO/AIEO 文章（覆盖翻倍）", "最大化大模型品牌曝光"]
+        "features": [
+          "包含 Ultra 全部",
+          "6 篇 GEO/AIEO 文章（覆盖翻倍）",
+          "最大化大模型品牌曝光"
+        ]
       }
     },
     "pricingSub": "所有套餐均为一次性付费。无订阅，无续费。",
@@ -843,7 +859,13 @@
     "hero": {
       "kicker": "导航站推广",
       "heading": "把您的<rotate>产品</rotate><lb></lb>推广到我们的<accent>导航网络</accent>",
-      "headingRotateWords": ["产品", "网站", "SaaS", "App", "工具"],
+      "headingRotateWords": [
+        "产品",
+        "网站",
+        "SaaS",
+        "App",
+        "工具"
+      ],
       "subheading": "免排队。获得 Dofollow 反向链接。在 <num>{n}+</num> 个精选站点中曝光您的产品，月流量合计 <num>70 万+</num>。",
       "limited": "限时折扣 — 随着我们 DR 与流量的提升，价格只升不降。",
       "outcomes": {
@@ -1112,5 +1134,18 @@
     "tab": "收藏",
     "emptyTitle": "暂无收藏",
     "emptyDesc": "收藏项目后可在此快速找到"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "暂无通知",
+    "viewAll": "查看全部",
+    "markAllRead": "全部标为已读",
+    "someone": "有人",
+    "typeComment": "{actor} 评论了 {project}",
+    "typeReply": "{actor} 回复了你在 {project} 的评论",
+    "typeMention": "{actor} 在 {project} 中提到了你",
+    "typeMilestone": "{project} 获得了 {count} 个赞 🎉",
+    "typeLaunchStatus": "{project} 已上线！",
+    "typeLaunchEnded": "{project} 的发布日已结束"
   }
 }

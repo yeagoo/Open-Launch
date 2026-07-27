@@ -859,7 +859,13 @@
     "hero": {
       "kicker": "Annuaires",
       "heading": "Faites voir votre <rotate>produit</rotate> sur notre <accent>réseau d'annuaires</accent>",
-      "headingRotateWords": ["produit", "site web", "SaaS", "app", "outil"],
+      "headingRotateWords": [
+        "produit",
+        "site web",
+        "SaaS",
+        "app",
+        "outil"
+      ],
       "subheading": "Sautez la file d'attente. Gagnez des backlinks dofollow. Touchez les créateurs et les early adopters sur <num>{n}+</num> sites sélectionnés avec <num>700k+</num> visiteurs mensuels combinés.",
       "limited": "Prix de lancement — les réductions diminuent à mesure que notre DR et notre trafic augmentent.",
       "outcomes": {
@@ -1128,5 +1134,18 @@
     "tab": "Favoris",
     "emptyTitle": "Aucun favori",
     "emptyDesc": "Enregistrez des projets pour les retrouver facilement"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification pour le moment",
+    "viewAll": "Tout voir",
+    "markAllRead": "Tout marquer comme lu",
+    "someone": "Quelqu'un",
+    "typeComment": "{actor} a commenté {project}",
+    "typeReply": "{actor} a répondu à votre commentaire sur {project}",
+    "typeMention": "{actor} vous a mentionné sur {project}",
+    "typeMilestone": "{project} a atteint {count} votes 🎉",
+    "typeLaunchStatus": "{project} est en ligne !",
+    "typeLaunchEnded": "Le jour de lancement de {project} est terminé"
   }
 }
