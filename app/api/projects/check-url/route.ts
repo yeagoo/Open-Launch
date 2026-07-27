@@ -4,15 +4,16 @@ import { db } from "@/drizzle/db"
 import { project } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
+import { getClientIp } from "@/lib/client-ip"
 import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function GET(request: Request) {
   try {
     // IP rate limit: this endpoint reveals whether a URL is already
     // submitted, so it's an enumeration surface. Cap probing per IP.
-    // x-forwarded-for is client-spoofable, but it still bounds naive
-    // scraping; the leftmost hop is the best signal available here.
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    // cf-connecting-ip is trusted (Cloudflare overwrites it); the XFF
+    // fallback uses the rightmost hop since the leftmost is client-spoofable.
+    const ip = getClientIp(request.headers)
     const rate = await checkRateLimit(`check-url:${ip}`, 30, 60 * 1000)
     if (!rate.success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })

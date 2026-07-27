@@ -6,6 +6,7 @@ import { db } from "@/drizzle/db"
 import { category, project, tag, tagModerationStatus } from "@/drizzle/db/schema"
 import { and, eq, ilike, sql } from "drizzle-orm"
 
+import { getClientIp } from "@/lib/client-ip"
 import { API_RATE_LIMITS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
 
@@ -132,10 +133,9 @@ const getSearchResults = unstable_cache(
 
 export async function GET(request: NextRequest) {
   try {
-    // Obtenir l'IP du client
+    // Obtenir l'IP du client (cf-connecting-ip d'abord — x-forwarded-for est falsifiable)
     const headersList = await headers()
-    const forwardedFor = headersList.get("x-forwarded-for")
-    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : "127.0.0.1"
+    const ip = getClientIp(headersList)
 
     // Vérifier la limite de taux avec les constantes spécifiques pour la recherche
     const rateLimitResult = await checkRateLimit(
