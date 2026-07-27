@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { Metadata, ResolvingMetadata } from "next"
+import { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -46,10 +46,7 @@ interface ProjectPageProps {
   }>
 }
 
-export async function generateMetadata(
-  { params }: ProjectPageProps,
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
+export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug, locale } = await params
   const projectData = await getProjectBySlug(slug)
 
@@ -69,7 +66,6 @@ export async function generateMetadata(
     projectData.description,
   )
 
-  const previousImages = (await parent).openGraph?.images || []
   const path = `/projects/${slug}`
 
   return {
@@ -82,10 +78,8 @@ export async function generateMetadata(
       ...buildLocaleOpenGraph(path, locale),
       siteName: "aat.ee",
       type: "website",
-      images: [
-        projectData.productImage || projectData.coverImageUrl || projectData.logoUrl,
-        ...previousImages,
-      ],
+      // No explicit images: the opengraph-image.tsx convention file in this
+      // folder generates the dynamic card (explicit images would override it).
       ...(projectData.scheduledLaunchDate && {
         publishedTime: projectData.scheduledLaunchDate.toISOString(),
       }),
@@ -99,7 +93,6 @@ export async function generateMetadata(
       creator: "@aat_ee",
       title: `${projectData.name} on aat.ee`,
       description: stripHtml(localizedDescription),
-      images: [projectData.productImage || projectData.logoUrl],
     },
   }
 }
