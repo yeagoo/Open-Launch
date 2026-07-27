@@ -445,7 +445,22 @@
   "search": {
     "placeholder": "プロジェクトを検索...",
     "noResults": "結果が見つかりませんでした",
-    "recentSearches": "最近の検索"
+    "recentSearches": "最近の検索",
+    "resultsFound": "{count} 件の結果",
+    "searching": "検索中…",
+    "suggestions": "おすすめ",
+    "navigation": "ナビゲーション",
+    "trendingProjects": "トレンドプロジェクト",
+    "categories": "カテゴリ",
+    "exploreLaunches": "ローンチを探す",
+    "dashboard": "ダッシュボード",
+    "submitProject": "プロジェクトを投稿",
+    "viewAllResults": "すべての結果を見る →",
+    "resultsFor": "「{query}」の検索結果",
+    "noResultsFor": "「{query}」に一致する結果はありません",
+    "prevPage": "前へ",
+    "nextPage": "次へ",
+    "pageOf": "{total} ページ中 {page} ページ"
   },
   "errors": {
     "generic": "問題が発生しました。もう一度お試しください。",

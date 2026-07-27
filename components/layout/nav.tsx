@@ -61,7 +61,7 @@ export default async function Nav() {
 
         {/* Version Desktop - Recherche et actions */}
         <div className="hidden items-center gap-3 md:flex">
-          {session && <SearchCommand />}
+          <SearchCommand isAuthenticated={!!session} />
 
           <LanguageSwitcher />
           <ThemeToggle />
@@ -128,14 +128,10 @@ export default async function Nav() {
                     </SheetClose>
                   </div>
 
-                  {session && (
-                    <>
-                      <div className="mt-2 mb-6 px-6">
-                        <SearchCommand />
-                      </div>
-                      <div className="bg-border my-4 h-px" />
-                    </>
-                  )}
+                  <div className="mt-2 mb-6 px-6">
+                    <SearchCommand isAuthenticated={!!session} />
+                  </div>
+                  <div className="bg-border my-4 h-px" />
                   {/* Navigation */}
                   {session && (
                     <div className="mb-4">

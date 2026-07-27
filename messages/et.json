@@ -445,7 +445,22 @@
   "search": {
     "placeholder": "Otsi projekte...",
     "noResults": "Tulemusi ei leitud",
-    "recentSearches": "Hiljutised otsingud"
+    "recentSearches": "Hiljutised otsingud",
+    "resultsFound": "{count} tulemust",
+    "searching": "Otsin…",
+    "suggestions": "Soovitused",
+    "navigation": "Navigeerimine",
+    "trendingProjects": "Populaarsed projektid",
+    "categories": "Kategooriad",
+    "exploreLaunches": "Avasta väljalaseid",
+    "dashboard": "Töölaud",
+    "submitProject": "Esita projekt",
+    "viewAllResults": "Kuva kõik tulemused →",
+    "resultsFor": "Päringu \"{query}\" tulemused",
+    "noResultsFor": "Päringule \"{query}\" ei leitud tulemusi",
+    "prevPage": "Eelmine",
+    "nextPage": "Järgmine",
+    "pageOf": "Leht {page} / {total}"
   },
   "errors": {
     "generic": "Midagi läks valesti. Palun proovi uuesti.",

@@ -15,19 +15,21 @@ import {
   RiRocketLine,
   RiSearchLine,
 } from "@remixicon/react"
+import { useTranslations } from "next-intl"
 
 import { useSearch } from "@/lib/hooks/use-search"
 import { CommandDialog, CommandInput } from "@/components/ui/command"
 import { DialogTitle } from "@/components/ui/dialog"
 
-export function SearchCommand() {
+export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const router = useRouter()
+  const t = useTranslations("search")
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const resultsRef = useRef<HTMLDivElement>(null)
 
   // Utiliser notre hook de recherche
-  const { query, setQuery, results, isLoading, error } = useSearch({
+  const { query, setQuery, results, totalCount, isLoading, error } = useSearch({
     debounceMs: 300,
     minLength: 2,
   })
@@ -56,13 +58,14 @@ export function SearchCommand() {
       // Déterminer le nombre total d'éléments sélectionnables
       let totalItems = 0
 
-      // Compter les résultats de recherche
+      // Compter les résultats de recherche (le lien "voir tout" est un
+      // élément supplémentaire navigable au clavier)
       if (results && results.length > 0) {
-        totalItems = results.length
+        totalItems = results.length + (totalCount > 0 ? 1 : 0)
       }
       // Compter les suggestions si pas de recherche
       else if (query.length === 0) {
-        totalItems = 5 // 3 suggestions + 2 navigation
+        totalItems = isAuthenticated ? 5 : 3 // trending/categories/home (+ dashboard/submit)
       }
 
       if (totalItems === 0) return
@@ -95,7 +98,7 @@ export function SearchCommand() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [open, isLoading, results, query, activeIndex])
+  }, [open, isLoading, results, totalCount, query, activeIndex, isAuthenticated])
 
   // Réinitialiser l'index actif quand les résultats changent
   useEffect(() => {
@@ -128,7 +131,7 @@ export function SearchCommand() {
     return (
       <div>
         <div className="text-muted-foreground mb-2 px-1 text-xs">
-          {results.length} results found
+          {t("resultsFound", { count: results.length })}
         </div>
         <div className="space-y-1">
           {results.map((result, index) => (
@@ -177,6 +180,22 @@ export function SearchCommand() {
             </div>
           ))}
         </div>
+        {/* Only offer the results page when there are PROJECT results —
+            the page paginates projects only, so a category/tag-only match
+            would land on a confusing "no results" page. */}
+        {totalCount > 0 && (
+          <div
+            data-index={results.length}
+            className={`mt-1 flex cursor-pointer items-center justify-center rounded-md p-2 text-sm font-medium transition-colors ${
+              activeIndex === results.length
+                ? "bg-muted text-primary"
+                : "text-primary hover:bg-muted/50"
+            }`}
+            onClick={() => runCommand(() => router.push(`/search?q=${encodeURIComponent(query)}`))}
+          >
+            {t("viewAllResults")}
+          </div>
+        )}
       </div>
     )
   }
@@ -208,15 +227,15 @@ export function SearchCommand() {
         onClick={() => setOpen(true)}
       >
         <RiSearchLine className="mr-2 h-3.5 w-3.5" />
-        <span>Search...</span>
+        <span>{t("placeholder")}</span>
         <kbd className="bg-muted pointer-events-none ml-auto hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
       <CommandDialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTitle className="sr-only">Search</DialogTitle>
+        <DialogTitle className="sr-only">{t("placeholder")}</DialogTitle>
         <CommandInput
-          placeholder="Search projects, categories..."
+          placeholder={t("placeholder")}
           value={query}
           onValueChange={setQuery}
           className="border-none focus:ring-0"
@@ -233,7 +252,7 @@ export function SearchCommand() {
           {isLoading && (
             <div className="flex items-center justify-center py-4 text-center">
               <RiLoader4Line className="text-primary mr-2 h-5 w-5 animate-spin" />
-              <span className="text-sm">Searching...</span>
+              <span className="text-sm">{t("searching")}</span>
             </div>
           )}
 
@@ -247,7 +266,7 @@ export function SearchCommand() {
 
           {/* Afficher "No results" */}
           {!isLoading && !error && query.length >= 2 && (!results || results.length === 0) && (
-            <div className="text-muted-foreground py-4 text-center text-sm">No results found.</div>
+            <div className="text-muted-foreground py-4 text-center text-sm">{t("noResults")}</div>
           )}
 
           {/* Afficher les résultats */}
@@ -257,7 +276,7 @@ export function SearchCommand() {
           {query.length === 0 && (
             <div className="space-y-4">
               <div>
-                <h4 className="mb-2 px-1 text-sm font-medium">Suggestions</h4>
+                <h4 className="mb-2 px-1 text-sm font-medium">{t("suggestions")}</h4>
                 <div className="space-y-1">
                   <div
                     data-index="0"
@@ -267,7 +286,7 @@ export function SearchCommand() {
                     onClick={() => runCommand(() => router.push("/trending"))}
                   >
                     <RiFireLine className="mr-2 h-4 w-4 text-orange-500" />
-                    <span>Trending projects</span>
+                    <span>{t("trendingProjects")}</span>
                   </div>
                   <div
                     data-index="1"
@@ -277,13 +296,13 @@ export function SearchCommand() {
                     onClick={() => runCommand(() => router.push("/categories"))}
                   >
                     <RiAppsLine className="mr-2 h-4 w-4 text-purple-500" />
-                    <span>Categories</span>
+                    <span>{t("categories")}</span>
                   </div>
                 </div>
               </div>
 
               <div className="border-border border-t pt-4">
-                <h4 className="mb-2 px-1 text-sm font-medium">Navigation</h4>
+                <h4 className="mb-2 px-1 text-sm font-medium">{t("navigation")}</h4>
 
                 <div className="space-y-1">
                   {/* pour explore launches */}
@@ -296,30 +315,35 @@ export function SearchCommand() {
                     onClick={() => runCommand(() => router.push("/"))}
                   >
                     <RiRocketLine className="text-primary mr-2 h-4 w-4" />
-                    <span>Explore launches</span>
+                    <span>{t("exploreLaunches")}</span>
                   </div>
 
-                  {/* pour dashboard */}
-                  <div
-                    data-index="3"
-                    className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                      activeIndex === 3 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => runCommand(() => router.push("/dashboard"))}
-                  >
-                    <RiDashboardLine className="mr-2 h-4 w-4 text-green-500" />
-                    <span>Dashboard</span>
-                  </div>
-                  <div
-                    data-index="4"
-                    className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                      activeIndex === 4 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => runCommand(() => router.push("/projects/submit"))}
-                  >
-                    <RiAddCircleLine className="mr-2 h-4 w-4 text-sky-500" />
-                    <span>Submit Project</span>
-                  </div>
+                  {/* Auth-only destinations are hidden for guests — a guest
+                      clicking Dashboard just bounces off the sign-in guard. */}
+                  {isAuthenticated && (
+                    <>
+                      <div
+                        data-index="3"
+                        className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                          activeIndex === 3 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => runCommand(() => router.push("/dashboard"))}
+                      >
+                        <RiDashboardLine className="mr-2 h-4 w-4 text-green-500" />
+                        <span>{t("dashboard")}</span>
+                      </div>
+                      <div
+                        data-index="4"
+                        className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                          activeIndex === 4 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => runCommand(() => router.push("/projects/submit"))}
+                      >
+                        <RiAddCircleLine className="mr-2 h-4 w-4 text-sky-500" />
+                        <span>{t("submitProject")}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

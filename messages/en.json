@@ -445,7 +445,22 @@
   "search": {
     "placeholder": "Search projects...",
     "noResults": "No results found",
-    "recentSearches": "Recent searches"
+    "recentSearches": "Recent searches",
+    "resultsFound": "{count} results found",
+    "searching": "Searching...",
+    "suggestions": "Suggestions",
+    "navigation": "Navigation",
+    "trendingProjects": "Trending projects",
+    "categories": "Categories",
+    "exploreLaunches": "Explore launches",
+    "dashboard": "Dashboard",
+    "submitProject": "Submit Project",
+    "viewAllResults": "View all results →",
+    "resultsFor": "Search results for \"{query}\"",
+    "noResultsFor": "No results found for \"{query}\"",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {page} of {total}"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

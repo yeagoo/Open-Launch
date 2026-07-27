@@ -441,7 +441,22 @@
   "search": {
     "placeholder": "프로젝트 검색...",
     "noResults": "검색 결과가 없습니다",
-    "recentSearches": "최근 검색어"
+    "recentSearches": "최근 검색어",
+    "resultsFound": "{count}개의 결과",
+    "searching": "검색 중…",
+    "suggestions": "추천",
+    "navigation": "탐색",
+    "trendingProjects": "인기 프로젝트",
+    "categories": "카테고리",
+    "exploreLaunches": "런치 둘러보기",
+    "dashboard": "대시보드",
+    "submitProject": "프로젝트 제출",
+    "viewAllResults": "모든 결과 보기 →",
+    "resultsFor": "\"{query}\" 검색 결과",
+    "noResultsFor": "\"{query}\"에 대한 결과가 없습니다",
+    "prevPage": "이전",
+    "nextPage": "다음",
+    "pageOf": "{total}페이지 중 {page}페이지"
   },
   "errors": {
     "generic": "문제가 발생했습니다. 다시 시도해 주세요.",

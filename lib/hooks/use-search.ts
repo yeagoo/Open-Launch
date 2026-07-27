@@ -13,6 +13,7 @@ interface UseSearchResult {
   query: string
   setQuery: (query: string) => void
   results: SearchResult[]
+  totalCount: number
   isLoading: boolean
   error: string | null
 }
@@ -38,62 +39,62 @@ export function useSearch({
 }: UseSearchOptions = {}): UseSearchResult {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Référence pour le timeout de debounce
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // AbortController for the in-flight request: a slow earlier response must
+  // never overwrite the results of a newer query (the previous version had
+  // no cancellation, so stale responses raced and won).
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    // Annuler le timeout précédent
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
+    // Any new query invalidates the previous in-flight request.
+    abortRef.current?.abort()
+    abortRef.current = null
 
     // Réinitialiser les résultats si la requête est trop courte
     if (!query || query.length < minLength) {
       const resetTimer = setTimeout(() => {
         setResults([])
+        setTotalCount(0)
         setIsLoading(false)
         setError(null)
       }, 0)
       return () => clearTimeout(resetTimer)
     }
 
-    // Définir un nouveau timeout pour le debounce
     timeoutRef.current = setTimeout(async () => {
+      const controller = new AbortController()
+      abortRef.current = controller
       setIsLoading(true)
       try {
-        console.log(`[useSearch] Searching for: "${query}"`)
-
-        // Appeler l'API de recherche
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        })
 
         const data = await response.json()
 
         if (!response.ok) {
-          // Gérer les erreurs API de manière structurée
           const apiError = data as ApiError
 
           if (response.status === 429) {
-            // Rate limit - ce n'est pas une erreur critique, juste une limitation
-            console.log(`[useSearch] Rate limit reached: ${apiError.message}`)
             setError(apiError.message || `Too many requests. Please wait before trying again.`)
           } else {
-            // Autres erreurs
             throw new Error(apiError.message || `Search request failed (${response.status})`)
           }
 
           setResults([])
+          setTotalCount(0)
           return
         }
 
-        console.log("[useSearch] Results received:", data)
-
         if (data && data.results && Array.isArray(data.results)) {
-          console.log(`[useSearch] ${data.results.length} results found`)
-
-          // Vérifier que chaque résultat a les propriétés requises
           const validResults = data.results.filter(
             (result: ResultValidation) =>
               result &&
@@ -102,33 +103,41 @@ export function useSearch({
               "name" in result &&
               "type" in result,
           )
-
-          console.log(`[useSearch] ${validResults.length} valid results after filtering`)
           setResults(validResults as SearchResult[])
+          setTotalCount(typeof data.totalCount === "number" ? data.totalCount : validResults.length)
           setError(null)
         } else {
-          console.warn("[useSearch] Results are not an array:", data)
           setResults([])
+          setTotalCount(0)
         }
       } catch (err) {
+        // Aborted because a newer query superseded this one — not an error.
+        if (err instanceof DOMException && err.name === "AbortError") return
         console.error("[useSearch] Search error:", err)
-        // Afficher le message d'erreur spécifique ou un message générique
         setError(
           err instanceof Error
             ? err.message
             : "An error occurred while searching. Please try again later.",
         )
         setResults([])
+        setTotalCount(0)
       } finally {
-        setIsLoading(false)
+        // Only the latest request may clear the loading flag; an aborted
+        // earlier request must not flip it while its successor is running.
+        if (abortRef.current === controller) {
+          setIsLoading(false)
+          abortRef.current = null
+        }
       }
     }, debounceMs)
 
-    // Nettoyer le timeout lors du démontage
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      // Unmount (or next effect run) aborts anything still in flight.
+      abortRef.current?.abort()
+      abortRef.current = null
     }
   }, [query, debounceMs, minLength])
 
@@ -136,6 +145,7 @@ export function useSearch({
     query,
     setQuery,
     results,
+    totalCount,
     isLoading,
     error,
   }

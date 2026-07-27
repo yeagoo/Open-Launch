@@ -449,7 +449,22 @@
   "search": {
     "placeholder": "Rechercher des projets...",
     "noResults": "Aucun résultat trouvé",
-    "recentSearches": "Recherches récentes"
+    "recentSearches": "Recherches récentes",
+    "resultsFound": "{count} résultats",
+    "searching": "Recherche…",
+    "suggestions": "Suggestions",
+    "navigation": "Navigation",
+    "trendingProjects": "Projets tendance",
+    "categories": "Catégories",
+    "exploreLaunches": "Explorer les lancements",
+    "dashboard": "Tableau de bord",
+    "submitProject": "Soumettre un projet",
+    "viewAllResults": "Voir tous les résultats →",
+    "resultsFor": "Résultats pour « {query} »",
+    "noResultsFor": "Aucun résultat pour « {query} »",
+    "prevPage": "Précédent",
+    "nextPage": "Suivant",
+    "pageOf": "Page {page} sur {total}"
   },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez réessayer.",
