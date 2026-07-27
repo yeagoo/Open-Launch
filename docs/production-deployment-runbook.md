@@ -145,7 +145,7 @@ At the last verification, `status --json` reported:
 The application artifact currently serving public traffic was built from:
 
 ```text
-805c25efb2188bb23d3b998eb29affd60f081118
+176b6d37ac32d80fca66a0ab8010a8becb03b59a
 ```
 
 Current runtime facts:
@@ -153,9 +153,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.sitemap-hotfix-r12.yml`
+  `compose.sitemap-sharding-r13.yml`
 - deployment marker:
-  `20260728-sitemap-hotfix-r12`
+  `20260728-sitemap-sharding-r13`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 
@@ -163,8 +163,11 @@ The audit-remediation release first deployed commit
 `1fc846d79882420b7b78cabfb66f378397969ee2` through the `r10` plan, including
 migrations 0048–0057. Production sitemap verification then found a cached-Date
 serialization bug; commit `805c25efb2188bb23d3b998eb29affd60f081118`
-fixed it and was deployed as the application-only `r12` hotfix. The exact
-plans, snapshots, journals, migration evidence, and backup records are in
+fixed it and was deployed as the application-only `r12` hotfix. Commit
+`176b6d37ac32d80fca66a0ab8010a8becb03b59a`, deployed as `r13`, then split
+projects/users into bounded sitemap shards and moved the expanded hreflang
+objects out of the Next Data Cache. The exact plans, snapshots, journals,
+migration evidence, and backup records are in
 `docs/deployments/2026-07-27-audit-remediation.md`.
 
 ## Required deployment sequence
@@ -228,11 +231,17 @@ https://aat.ee/
 https://www.aat.ee/
 https://www.aat.ee/sitemap.xml
 https://www.aat.ee/sitemaps/static.xml
-https://www.aat.ee/sitemaps/projects.xml
+https://www.aat.ee/sitemaps/projects-1.xml
+https://www.aat.ee/sitemaps/users-1.xml
 https://www.aat.ee/sitemaps/tags.xml
 https://www.aat.ee/sitemaps/editorial.xml
 https://www.aat.ee/et/projects/serena
 ```
+
+The legacy `/sitemaps/projects.xml` and `/sitemaps/users.xml` routes must return
+`308` to `/sitemap.xml`. Sharded routes use one-based suffixes; zero, suffixes
+above the bounded parser limit, and suffixes on unsharded kinds must return
+`404`.
 
 For the Serena page, confirm one server-rendered `BreadcrumbList` with exactly
 three ordered items (`Avaleht`, `Projektid`, `Serena`), each containing `name`

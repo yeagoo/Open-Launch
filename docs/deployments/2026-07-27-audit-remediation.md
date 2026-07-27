@@ -1,8 +1,8 @@
 # 2026-07-27 全站审计修复 + 新功能（0–9 阶段）
 
 Status: **生产部署完成**（2026-07-28，最终应用 commit
-`805c25efb2188bb23d3b998eb29affd60f081118`）；0048–0057 已应用，评论 FK
-已验证，部署后 hotfix 已发布
+`176b6d37ac32d80fca66a0ab8010a8becb03b59a`）；0048–0057 已应用，评论 FK
+已验证，部署后 sitemap hotfix 与分片已发布
 
 本次改造源于四路并行审计（安全 / 数据正确性 / 前端·SEO / 基础设施），覆盖
 0–9 十个阶段：紧急安全修复、数据并发、运维可靠性、SEO 前端、搜索升级、
@@ -118,10 +118,6 @@ tombstone 评论的作者无法编辑/删除它（403）。
 4. **fuma author 匿名化策略**：删用户时评论 author 由清理脚本改为
    `deleted-user`；admin removeUser 路径暂不含自动匿名化（better-auth 无
    delete hook），依赖定期清理。
-5. **大型 sitemap 不进入 Next Data Cache**：`users.xml` 与 `projects.xml`
-   未压缩响应分别约 3.6MB / 9.8MB，超过 Next.js 单项 2MB cache 上限。
-   当前请求均返回 200，搜索引擎 50MB 上限也未触及，但每次会重新查询并序列化；
-   后续宜按条目数继续分片，而不是依赖 `unstable_cache`。
 
 ## 四、相关文档
 
@@ -185,5 +181,38 @@ ISO 字符串，blog sitemap 序列化仍调用 `toISOString()`，导致缓存�
   `backup-aat-ee-restic-20260727173253`，状态 success。
 - restic 仓库检查：
   `check-restic-idrive-e2-20260727173405`，状态 success。
+- 最终 `opsctl status`：doctor errors/warnings 均为 0；deploy gates、backup
+  readiness/history、snapshot coverage 均为 ready。
+
+### sitemap 分片发布
+
+hotfix 验证时发现 projects/users 的展开后 hreflang 对象超过 Next.js 2MB
+单项 Data Cache 上限。`r13` 将两类 sitemap 改为每片 250 个源记录，并只缓存
+紧凑源行；locale/hreflang 在缓存读取后展开：
+
+- 最终应用 commit：
+  `176b6d37ac32d80fca66a0ab8010a8becb03b59a`
+- CI：
+  `30290783482`（TypeScript、Lint、228 tests、Build、dependency audit、
+  Semgrep 全部通过）
+- 计划：
+  `deploy_aat-ee-sitemap-sharding-r13-20260728`
+- 快照：
+  `snap_aat-ee-sitemap-sharding-r13-20260728_1785174671066687746`
+- journal：
+  `deploy-deploy_aat-ee-sitemap-sharding-r13-20260728-20260727175306`
+- 结果：仅替换 `aat-ee-app`，7/7 操作成功，0 失败；未运行迁移或写业务数据。
+
+生产 index 实际生成 8 个 projects 分片和 3 个 users 分片。两轮抓取均为 200：
+projects 共 14,704 个 locale URL，users 共 4,624 个 locale URL，合计 19,328
+个 `<loc>` 且全部唯一；每片不超过 2,000 URL，远低于 sitemap 协议的
+50,000 URL / 50MB 上限。旧的 `projects.xml`、`users.xml` 均 308 到完整
+index；非法分片号返回 404。应用日志不再出现 `items over 2MB can not be
+cached`。
+
+- 部署后备份记录：
+  `backup-aat-ee-restic-20260727175821`，状态 success。
+- restic 仓库检查：
+  `check-restic-idrive-e2-20260727175936`，状态 success。
 - 最终 `opsctl status`：doctor errors/warnings 均为 0；deploy gates、backup
   readiness/history、snapshot coverage 均为 ready。
