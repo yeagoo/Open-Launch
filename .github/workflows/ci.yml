@@ -19,9 +19,11 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Setup Node
+        # Match production: check-node-runtime.mjs requires >= 24.15
+        # (TransformStream race fix), the Dockerfile runs node:24.18.0.
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: .node-version
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -44,11 +46,12 @@ jobs:
         run: bunx next build
 
       - name: Audit dependencies
+        # Blocking: a known-vulnerable dependency must fail the build, not
+        # scroll past in logs nobody reads.
         run: bun audit
-        continue-on-error: true
 
       - name: Semgrep
+        # Blocking: static-analysis findings must gate merges.
         run: |
           python -m pip install --upgrade semgrep
-          semgrep --config auto
-        continue-on-error: true
+          semgrep --config auto --error
