@@ -3,9 +3,11 @@ import { unstable_cache } from "next/cache"
 import { db } from "@/drizzle/db"
 import {
   alternativePage,
+  blogArticle,
   comparisonPage,
   launchStatus,
   project,
+  seoArticle,
   tag,
   tagModerationStatus,
 } from "@/drizzle/db/schema"
@@ -76,6 +78,36 @@ async function entriesFor(kind: SitemapKind): Promise<SitemapEntry[]> {
       .where(eq(tag.moderationStatus, tagModerationStatus.APPROVED))
     return tags.flatMap((item) =>
       localizedSitemapEntries(`/tags/${item.slug}`, {
+        lastModified: item.updatedAt,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      }),
+    )
+  }
+
+  if (kind === "blog") {
+    // Published only — recaps land as drafts for human review and must
+    // not be submitted to search engines. Translations share the source
+    // slug, so hreflang alternates point at the same path per locale.
+    const articles = await db
+      .select({ slug: blogArticle.slug, updatedAt: blogArticle.updatedAt })
+      .from(blogArticle)
+      .where(eq(blogArticle.status, "published"))
+    return articles.flatMap((item) =>
+      localizedSitemapEntries(`/blog/${item.slug}`, {
+        lastModified: item.updatedAt,
+        changeFrequency: "weekly",
+        priority: 0.7,
+      }),
+    )
+  }
+
+  if (kind === "reviews") {
+    const reviews = await db
+      .select({ slug: seoArticle.slug, updatedAt: seoArticle.updatedAt })
+      .from(seoArticle)
+    return reviews.flatMap((item) =>
+      localizedSitemapEntries(`/reviews/${item.slug}`, {
         lastModified: item.updatedAt,
         changeFrequency: "weekly",
         priority: 0.7,

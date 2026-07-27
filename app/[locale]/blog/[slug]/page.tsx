@@ -38,8 +38,14 @@ import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/structured-dat
 // Fetch the article, merging a per-locale translation over the English source
 // when one exists. Falls back to English if the locale has no translation (or
 // the translation table isn't present yet — guarded so the blog never breaks).
+// Drafts are excluded here too (they're for human review; previously the
+// detail page rendered them to anyone with the slug).
 async function getLocalizedArticle(slug: string, locale: string) {
-  const [base] = await db.select().from(blogArticle).where(eq(blogArticle.slug, slug)).limit(1)
+  const [base] = await db
+    .select()
+    .from(blogArticle)
+    .where(and(eq(blogArticle.slug, slug), eq(blogArticle.status, "published")))
+    .limit(1)
   if (!base) return null
   if (locale === "en") return base
   try {
@@ -151,6 +157,7 @@ export default async function BlogArticlePage({
     <div className="bg-background min-h-screen">
       {/* Structured Data - Article Schema */}
       <ArticleSchema
+        basePath="/blog"
         headline={title}
         description={description}
         image={article.image}
