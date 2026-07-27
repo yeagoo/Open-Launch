@@ -642,6 +642,41 @@ async function handleDirectoryOrderCompleted(
     return NextResponse.json({ received: true, warning: "Invalid tier" }, { status: 200 })
   }
 
+  // The project was deleted after the order was created (project_id is
+  // SET NULL instead of CASCADE since 0048, so the order row survives).
+  // An already paid/fulfilled order means this is just a Stripe retry
+  // arriving after deletion — the purchase was legitimately fulfilled,
+  // so it must no-op, never refund. Every other status (pending: paid
+  // after deletion; canceled/refunded/failed: the user killed the order
+  // but the still-open Payment Link completed) is money with nowhere to
+  // go → orphan refund + alert.
+  if (!order.projectId) {
+    if (order.status === "paid" || order.status === "fulfilled") {
+      // Same-session Stripe retry after deletion → genuine no-op. A
+      // DIFFERENT session id means the buyer paid the same order twice
+      // (reusable Payment Link) — that second charge must be refunded,
+      // same as the duplicate-payment branch for live projects below.
+      if (order.stripeSessionId && order.stripeSessionId !== session.id) {
+        await handleOrphanPayment(
+          stripe,
+          session,
+          `directory_order ${orderId} paid twice (project deleted) — duplicate session ${session.id} (first ${order.stripeSessionId})`,
+          ref,
+        )
+        return NextResponse.json({ received: true, warning: "Duplicate payment" }, { status: 200 })
+      }
+      console.log("ℹ️ Directory order already processed; project since deleted:", orderId)
+      return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
+    }
+    await handleOrphanPayment(
+      stripe,
+      session,
+      `directory_order ${orderId} (status=${order.status}) paid but project was deleted`,
+      ref,
+    )
+    return NextResponse.json({ received: true, warning: "Order project deleted" }, { status: 200 })
+  }
+
   const tier: DirectoryTier = order.tier
   const cfg = DIRECTORY_TIER_CONFIG[tier]
   const now = new Date()

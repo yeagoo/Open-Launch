@@ -88,6 +88,9 @@ export async function GET(request: NextRequest) {
     )
     .limit(BATCH)
   for (const o of missing) {
+    // Project deleted after payment (project_id SET NULL since 0048) — there
+    // is nothing to syndicate; the order stays visible in the admin queue.
+    if (!o.projectId) continue
     try {
       await enqueueLaunchSyndication(o.id, o.projectId, o.tier)
       reconciled++
@@ -128,11 +131,32 @@ export async function GET(request: NextRequest) {
   let sent = 0
   let failed = 0
   let deferred = 0
+  let orphaned = 0
 
-  if (due.length > 0) {
+  // Rows whose project was deleted (project_id SET NULL since 0048) can
+  // never be delivered — flip them to the terminal 'orphaned' status so
+  // they stop retrying and the per-order completion check below can settle.
+  const orphanRows = due.filter((row) => row.projectId === null)
+  const deliverable = due.filter(
+    (row): row is (typeof due)[number] & { projectId: string } => row.projectId !== null,
+  )
+  for (const row of orphanRows) {
+    const res = await db
+      .update(launchSyndication)
+      .set({ status: "orphaned", lastError: "project deleted", updatedAt: now })
+      .where(
+        and(
+          eq(launchSyndication.id, row.id),
+          inArray(launchSyndication.status, ["pending", "failed"]),
+        ),
+      )
+    if (res.rowCount && res.rowCount > 0) orphaned++
+  }
+
+  if (deliverable.length > 0) {
     // Build each project's payload once, sequentially — no cache race.
     const payloads = new Map<string, LaunchPayload | null>()
-    for (const row of due) {
+    for (const row of deliverable) {
       // Key by (project, tier): the gateway derives reach from the payload tier
       // (+ maxSites), so a Plus and a Pro row for the same project need distinct
       // payloads.
@@ -150,8 +174,8 @@ export async function GET(request: NextRequest) {
     // under-delivered. Post once per group and apply the outcome to every row in
     // it (receivers dedupe by URL, so posting the same listing twice across
     // tiers is harmless).
-    const groups = new Map<string, typeof due>()
-    for (const row of due) {
+    const groups = new Map<string, typeof deliverable>()
+    for (const row of deliverable) {
       const key = `${row.site}::${row.projectId}::${row.tier}`
       const g = groups.get(key)
       if (g) g.push(row)
@@ -257,7 +281,27 @@ export async function GET(request: NextRequest) {
     // and an order enqueued under an older/larger list still settles correctly
     // instead of being stranded forever waiting on a site it never had a row for.
     const complete = rows.length > 0 && rows.every((r) => r.status === "sent")
-    if (!complete) continue
+    if (!complete) {
+      // Every row terminal but not all sent ⇒ some were orphaned by project
+      // deletion. The order can never be fully delivered: cancel it so the
+      // admin queue surfaces it for review/refund instead of it sitting in
+      // `paid` forever.
+      const terminal =
+        rows.length > 0 && rows.every((r) => r.status === "sent" || r.status === "orphaned")
+      const hasOrphan = rows.some((r) => r.status === "orphaned")
+      if (terminal && hasOrphan) {
+        await db
+          .update(directoryOrder)
+          .set({
+            status: "canceled",
+            adminNotes: sql`trim(coalesce(${directoryOrder.adminNotes}, '') || E'\nCanceled: project deleted mid-delivery — review for refund')`,
+            updatedAt: now,
+          })
+          .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "paid")))
+        console.log(`⚠️ Order ${order.id} canceled — project deleted mid-delivery`)
+      }
+      continue
+    }
     const res = await db
       .update(directoryOrder)
       .set({
@@ -294,10 +338,11 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ranAt: now.toISOString(),
     reconciled,
-    drained: due.length,
+    drained: deliverable.length,
     sent,
     failed,
     deferred,
+    orphaned,
     ordersFulfilled,
   })
 }

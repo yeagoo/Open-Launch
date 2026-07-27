@@ -212,7 +212,7 @@ function OrderTable({ rows, showFulfilAction }: OrderTableProps) {
                     {o.projectName ?? o.projectId}
                   </Link>
                 ) : (
-                  <span>{o.projectName ?? o.projectId}</span>
+                  <span>{o.projectName ?? o.projectId ?? "(deleted project)"}</span>
                 )}
               </Td>
               <Td>

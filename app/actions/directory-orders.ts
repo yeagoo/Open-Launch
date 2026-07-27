@@ -5,7 +5,7 @@ import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { directoryOrder, launchSyndication, project, user } from "@/drizzle/db/schema"
-import { and, desc, eq, gt } from "drizzle-orm"
+import { and, desc, eq, gt, sql } from "drizzle-orm"
 import { getLocale } from "next-intl/server"
 
 import { logAdminAction } from "@/lib/admin-audit"
@@ -272,7 +272,9 @@ async function checkAdminAccess(): Promise<{ adminId: string }> {
 
 export interface AdminDirectoryOrderRow {
   id: string
-  projectId: string
+  // Null when the project was deleted after purchase (SET NULL since 0048);
+  // the order stays in the admin queue for manual handling.
+  projectId: string | null
   projectName: string | null
   projectSlug: string | null
   buyerEmail: string | null
@@ -306,7 +308,11 @@ export async function listDirectoryOrders(): Promise<AdminDirectoryOrderRow[]> {
       projectId: directoryOrder.projectId,
       projectName: project.name,
       projectSlug: project.slug,
-      buyerEmail: user.email,
+      // The user join goes through project — which is NULL for orders whose
+      // project was deleted (SET NULL since 0048), exactly the rows an admin
+      // needs to refund/reconcile. Fall back to the buyer email the webhook
+      // captured from the Stripe session at payment time.
+      buyerEmail: sql<string | null>`coalesce(${user.email}, ${directoryOrder.buyerEmail})`,
       tier: directoryOrder.tier,
       url: directoryOrder.url,
       status: directoryOrder.status,

@@ -847,9 +847,11 @@ export const directoryOrder = pgTable(
   "directory_order",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: text("project_id")
-      .notNull()
-      .references(() => project.id, { onDelete: "cascade" }),
+    // Nullable + SET NULL: this is a financial record and must survive
+    // project deletion (refund disputes, reconciliation). A null projectId
+    // means the project was deleted after the order was created — the admin
+    // queue still shows the order (left join) for manual handling.
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
     // Allowed values are enforced via a CHECK constraint in the
     // migration (drizzle/migrations/0021_directory_order.sql). Keep
     // the comment in sync when extending the set.
@@ -902,12 +904,15 @@ export const launchSyndication = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => directoryOrder.id, { onDelete: "cascade" }),
-    projectId: text("project_id")
-      .notNull()
-      .references(() => project.id, { onDelete: "cascade" }),
+    // Nullable + SET NULL like directory_order.projectId: when the project is
+    // deleted the row becomes undeliverable and the drain worker flips it to
+    // the terminal 'orphaned' status instead of retrying forever.
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
     site: text("site").notNull(), // 'bigkr' | 'mf8' | 'hicyou'
     tier: text("tier").notNull(), // snapshot: 'plus' | 'pro' | 'ultra'
-    status: text("status").notNull().default("pending"), // 'pending' | 'sent' | 'failed'
+    // 'sending' = claimed by a worker tick (crash-recoverable via updated_at);
+    // 'orphaned' = terminal, project deleted before delivery.
+    status: text("status").notNull().default("pending"), // 'pending' | 'sending' | 'sent' | 'failed' | 'orphaned'
     attempts: integer("attempts").notNull().default(0),
     lastError: text("last_error"),
     externalId: text("external_id"), // id returned by the partner site
