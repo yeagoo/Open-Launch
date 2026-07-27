@@ -46,4 +46,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 USER nextjs
 EXPOSE 8080
 
+# Liveness probe against the app port (8080, not the Next default 3000).
+# The slim image has no curl/wget; node fetch is enough.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch(\`http://127.0.0.1:\${process.env.PORT || 8080}/api/health\`).then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 CMD ["node", "server.js"]
