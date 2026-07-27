@@ -7,6 +7,7 @@ import { checkCommentRateLimit, checkUpvoteRateLimit } from "@/lib/comment-rate-
 import { commentAuth, commentStorage } from "@/lib/comment.config"
 import { extractTextFromContent } from "@/lib/content-utils"
 import { sendDiscordCommentNotification } from "@/lib/discord-notification"
+import { notifyMentions, notifyNewComment, notifyReply } from "@/lib/notifications"
 import { readRequestTextBounded, RequestBodyTooLargeError } from "@/lib/read-request-body"
 
 // Max comment request body. Comment payloads (Tiptap JSON) are small; this
@@ -95,6 +96,24 @@ async function processRequestWithLinkRemoval(
   }
 }
 
+/**
+ * Collect user ids from fuma `mention` nodes (attrs.id = user id).
+ * Defensive: mentions are enabled in the handler config, and unknown
+ * shapes simply yield no ids.
+ */
+function extractMentionUserIds(content: any): string[] {
+  const ids: string[] = []
+  const walk = (node: any) => {
+    if (!node || typeof node !== "object") return
+    if (node.type === "mention" && typeof node.attrs?.id === "string") {
+      ids.push(node.attrs.id)
+    }
+    if (Array.isArray(node.content)) node.content.forEach(walk)
+  }
+  walk(content)
+  return [...new Set(ids)]
+}
+
 // Create standard Fuma Comment handler
 const commentHandler = NextComment({
   mention: { enabled: true },
@@ -166,14 +185,45 @@ export async function POST(req: NextRequest, context: any) {
       )
     }
 
-    // Fire the Discord notification for new comments with the stripped content.
-    if (isNewComment && session && processed.body?.content) {
+    // Persist first, notify second. The Discord alert used to fire BEFORE
+    // the comment was stored — a failed insert produced ghost "new
+    // comment" pings. Now every notification (Discord ops channel + the
+    // in-app notification center) only fires on a successful write.
+    const commentResponse = await commentHandler.POST(processed.req, context)
+
+    if (isNewComment && session && processed.body?.content && commentResponse.ok) {
       const projectId = commentParams[0]
       const commentText = extractTextFromContent(processed.body.content)
       void sendDiscordCommentNotification(projectId, session.id || "", commentText)
+
+      // The created comment id (for per-comment mention dedupe). Read from
+      // a clone — consuming the original body would break the response.
+      let createdCommentId: number | null = null
+      try {
+        const payload = (await commentResponse.clone().json()) as Record<string, any>
+        const rawId = payload?.id ?? payload?.data?.id
+        const parsed = Number(rawId)
+        createdCommentId = Number.isInteger(parsed) ? parsed : null
+      } catch {
+        createdCommentId = null
+      }
+
+      // body.thread (comment id as string) marks a reply in the fuma
+      // protocol; its absence marks a top-level comment.
+      const threadId = processed.body.thread ? Number(processed.body.thread) : null
+      if (threadId && Number.isInteger(threadId)) {
+        void notifyReply(threadId, session.id, projectId, commentText)
+      } else {
+        void notifyNewComment(projectId, session.id, commentText)
+      }
+
+      const mentionedIds = extractMentionUserIds(processed.body.content)
+      if (mentionedIds.length > 0) {
+        void notifyMentions(mentionedIds, session.id, projectId, commentText, createdCommentId)
+      }
     }
 
-    return commentHandler.POST(processed.req, context)
+    return commentResponse
   } catch (error) {
     console.error("Error intercepting request:", error)
     return NextResponse.json({ message: "Failed to process comment" }, { status: 500 })

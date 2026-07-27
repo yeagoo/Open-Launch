@@ -12,14 +12,16 @@ import {
   projectToCategory,
   projectTranslation,
   upvote,
+  user as userTable,
 } from "@/drizzle/db/schema"
-import { and, asc, count, desc, eq, or, sql } from "drizzle-orm"
+import { and, asc, count, desc, count as drizzleCount, eq, isNull, or, sql } from "drizzle-orm"
 import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
+import { notifyUpvoteMilestone } from "@/lib/notifications"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { clampInteger, clampPage } from "@/lib/query-limits"
 import { sanitizeRichText } from "@/lib/sanitize"
@@ -233,6 +235,7 @@ export async function toggleUpvote(projectId: string) {
   // transaction-scoped advisory lock so the check and the write are one
   // linearizable unit. The (user_id, project_id) unique index remains as
   // the last-resort integrity net.
+  let voteAdded = false
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id} || ':' || ${projectId}))`,
@@ -258,8 +261,34 @@ export async function toggleUpvote(projectId: string) {
           createdAt: new Date(),
         })
         .onConflictDoNothing()
+      voteAdded = true
     }
   })
+
+  // Upvote milestones (10/50/100/500) notify the project owner. Only REAL
+  // (non-bot) votes count toward a milestone: simulated engagement must
+  // never manufacture owner notifications. The count is approximate under
+  // concurrency, but the milestone dedupe key makes duplicate triggers
+  // collapse into one notification. Best-effort: never blocks the vote.
+  if (voteAdded) {
+    void (async () => {
+      const [total] = await db
+        .select({ value: drizzleCount(upvote.id) })
+        .from(upvote)
+        .innerJoin(userTable, eq(userTable.id, upvote.userId))
+        .where(
+          and(
+            eq(upvote.projectId, projectId),
+            // isBot is nullable (pre-existing users): count votes where the
+            // flag is false OR unset — only TRUE excludes.
+            or(eq(userTable.isBot, false), isNull(userTable.isBot)),
+          ),
+        )
+      if (total?.value) {
+        await notifyUpvoteMilestone(projectId, total.value)
+      }
+    })().catch((err) => console.error("[upvote] milestone notify failed:", err))
+  }
 
   revalidatePath("/dashboard")
   // Temporairement commenter la revalidation spécifique au projet

@@ -14,6 +14,7 @@ import {
 } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { getCurrentLaunchWindow, getLaunchWindowForDate } from "@/lib/launch-window"
+import { notifyLaunchStatus } from "@/lib/notifications"
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +44,14 @@ export async function GET(request: NextRequest) {
           lt(project.scheduledLaunchDate, currentWindowEnd),
         ),
       )
-      .returning({ id: project.id, name: project.name })
+      .returning({ id: project.id, name: project.name, createdBy: project.createdBy })
+
+    // Notify each owner their launch is live (dedupe-keyed per project, so
+    // a cron replay can't double-notify). Best-effort, outside the ranking
+    // transaction below.
+    for (const p of scheduledToOngoing) {
+      if (p.createdBy) void notifyLaunchStatus(p.id, p.createdBy, "ongoing")
+    }
 
     // 2+3. ONGOING -> LAUNCHED and its daily-ranking writes run in ONE
     // transaction: if ranking dies mid-way, the status flip rolls back too,
@@ -91,6 +99,7 @@ export async function GET(request: NextRequest) {
           id: project.id,
           name: project.name,
           scheduledLaunchDate: project.scheduledLaunchDate,
+          createdBy: project.createdBy,
         })
 
       // 3. Calculate top projects for each launch window we just closed.
@@ -212,6 +221,10 @@ export async function GET(request: NextRequest) {
 
       return { ongoingToLaunched, totalRanked }
     })
+
+    for (const p of ongoingToLaunched) {
+      if (p.createdBy) void notifyLaunchStatus(p.id, p.createdBy, "launched")
+    }
 
     const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
 
