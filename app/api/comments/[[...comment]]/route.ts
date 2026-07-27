@@ -251,9 +251,9 @@ export async function POST(req: NextRequest, context: any) {
       // protocol; its absence marks a top-level comment.
       const threadId = processed.body.thread ? Number(processed.body.thread) : null
       if (threadId && Number.isInteger(threadId)) {
-        void notifyReply(threadId, session.id, projectId, commentText)
+        void notifyReply(threadId, session.id, projectId, commentText, createdCommentId)
       } else {
-        void notifyNewComment(projectId, session.id, commentText)
+        void notifyNewComment(projectId, session.id, commentText, createdCommentId)
       }
 
       const mentionedIds = extractMentionUserIds(processed.body.content)

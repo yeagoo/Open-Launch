@@ -66,6 +66,7 @@ export async function notifyNewComment(
   projectId: string,
   commentAuthorId: string,
   excerpt: string,
+  commentId: number | null = null,
 ): Promise<void> {
   try {
     const [proj] = await db
@@ -84,6 +85,7 @@ export async function notifyNewComment(
       type: "comment",
       actorId: commentAuthorId,
       projectId,
+      commentId,
       metadata: { excerpt: excerpt.slice(0, 140) },
     })
   } catch (err) {
@@ -100,6 +102,7 @@ export async function notifyReply(
   replyAuthorId: string,
   projectId: string,
   excerpt: string,
+  replyCommentId: number | null = null,
 ): Promise<void> {
   try {
     // The parent must belong to the SAME project (fuma stores body.thread
@@ -121,8 +124,10 @@ export async function notifyReply(
       type: "reply",
       actorId: replyAuthorId,
       projectId,
-      commentId: parentCommentId,
-      metadata: { excerpt: excerpt.slice(0, 140) },
+      // The REPLY's own id: moderation cleanup deletes notifications by
+      // the moderated comment's id. The parent id moves to metadata.
+      commentId: replyCommentId,
+      metadata: { excerpt: excerpt.slice(0, 140), parentCommentId },
     })
   } catch (err) {
     console.error("[notifications] notifyReply failed:", err)
@@ -204,13 +209,19 @@ export async function notifyLaunchStatus(
   ownerId: string,
   newStatus: string,
 ): Promise<void> {
-  // Bot-owned (ProductHunt-imported) projects never read notifications.
-  if (await isBotUser(ownerId)) return
-  await createNotification({
-    userId: ownerId,
-    type: "launch_status",
-    projectId,
-    metadata: { newStatus },
-    dedupeKey: `status:${newStatus}:${projectId}`,
-  })
+  try {
+    // Bot-owned (ProductHunt-imported) projects never read notifications.
+    if (await isBotUser(ownerId)) return
+    await createNotification({
+      userId: ownerId,
+      type: "launch_status",
+      projectId,
+      metadata: { newStatus },
+      dedupeKey: `status:${newStatus}:${projectId}`,
+    })
+  } catch (err) {
+    // Best-effort like every other producer: callers fire-and-forget this
+    // from the launch cron, so a transient DB error must not reject there.
+    console.error("[notifications] notifyLaunchStatus failed:", err)
+  }
 }
