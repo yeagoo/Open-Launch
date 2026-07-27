@@ -369,6 +369,12 @@ export const fumaComments = pgTable(
     author: varchar("author", { length: 256 }).notNull(),
     content: json("content").notNull(),
     timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+    // Admin tombstone (0056): hidden comments keep their thread structure
+    // but their content is replaced with a placeholder. The comments write
+    // path rejects edits when hidden_at IS NOT NULL so the author can't
+    // restore hidden content.
+    hiddenAt: timestamp("hidden_at"),
+    hiddenBy: text("hidden_by"),
   },
   (table) => [
     // Plain btree on `page` so the per-project comment-count join on
@@ -400,6 +406,32 @@ export const fumaRates = pgTable(
   (table) => [
     primaryKey({ columns: [table.userId, table.commentId] }),
     index("comment_idx").on(table.commentId),
+  ],
+)
+
+// Comment reporting queue (0056). One report per (comment, reporter);
+// contentSnapshot preserves the text at report time for admin review.
+export const commentReport = pgTable(
+  "comment_report",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => fumaComments.id, { onDelete: "cascade" }),
+    reporterId: text("reporter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(), // 'spam' | 'abuse' | 'offtopic' | 'other'
+    details: text("details"),
+    contentSnapshot: json("content_snapshot"),
+    status: text("status").notNull().default("pending"), // 'pending' | 'actioned' | 'dismissed'
+    resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("comment_report_comment_reporter_uniq").on(table.commentId, table.reporterId),
+    index("comment_report_status_idx").on(table.status, table.createdAt),
   ],
 )
 

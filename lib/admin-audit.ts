@@ -13,6 +13,9 @@ export type AdminAction =
   | "tag.reject"
   | "directory_order.fulfill"
   | "skill_submission.takedown"
+  | "comment.hide"
+  | "comment.delete"
+  | "comment_report.dismiss"
 
 interface LogAdminActionParams {
   adminUserId: string
