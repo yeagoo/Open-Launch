@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ProjectCard } from "@/components/home/project-card"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
-import { BreadcrumbSchema } from "@/components/seo/structured-data"
+import { BreadcrumbSchema, ItemListSchema } from "@/components/seo/structured-data"
 import { getProjectsByTag, getTagBySlug } from "@/app/actions/tags"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
@@ -112,6 +112,18 @@ async function TagData({
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {paginatedProjects.length > 0 && (
+        <ItemListSchema
+          name={`#${tag.name}`}
+          description={`Projects tagged #${tag.name}`}
+          items={paginatedProjects.map((p) => ({
+            name: p.name,
+            slug: p.slug,
+            logoUrl: p.logoUrl ?? "",
+          }))}
+          listType="project"
+        />
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold sm:text-2xl">#{tag.name}</h2>
         <DropdownMenu>

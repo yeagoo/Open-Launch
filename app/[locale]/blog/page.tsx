@@ -9,6 +9,7 @@ import { Calendar, Clock } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { ItemListSchema } from "@/components/seo/structured-data"
 
 export async function generateMetadata({
   params,
@@ -109,6 +110,14 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="bg-background min-h-screen">
+      {articles.length > 0 && (
+        <ItemListSchema
+          name="Blog"
+          description="Insights, tutorials and resources for building and launching products"
+          items={articles.map((a) => ({ name: a.title, slug: a.slug, logoUrl: a.image ?? "" }))}
+          listType="blog"
+        />
+      )}
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 text-center">

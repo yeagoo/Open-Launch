@@ -12,6 +12,7 @@ import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata
 import { Button } from "@/components/ui/button"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
 import { ProjectCard } from "@/components/home/project-card"
+import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
@@ -119,6 +120,14 @@ async function TrendingData({
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {projects.length > 0 && (
+        <ItemListSchema
+          name={title}
+          description={`${title} on aat.ee`}
+          items={projects.map((p) => ({ name: p.name, slug: p.slug, logoUrl: p.logoUrl ?? "" }))}
+          listType="project"
+        />
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
       </div>

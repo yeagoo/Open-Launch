@@ -108,7 +108,7 @@ export function ProjectSchema({
   )
 }
 
-// Article Schema - 博客文章
+// Article Schema - 博客文章 / reviews 长文
 interface ArticleSchemaProps {
   headline: string
   description: string
@@ -117,6 +117,10 @@ interface ArticleSchemaProps {
   dateModified: Date
   author: string
   slug: string
+  // Canonical path prefix without the slug, e.g. "/blog" or "/reviews".
+  // Required since 2026-07: previously hardcoded /blog, which mislabeled
+  // reviews articles as blog URLs when the component was reused.
+  basePath: string
 }
 
 export function ArticleSchema({
@@ -127,6 +131,7 @@ export function ArticleSchema({
   dateModified,
   author,
   slug,
+  basePath,
 }: ArticleSchemaProps) {
   const schema = {
     "@context": "https://schema.org",
@@ -151,7 +156,7 @@ export function ArticleSchema({
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${baseUrl}/blog/${slug}`,
+      "@id": `${baseUrl}${basePath}/${slug}`,
     },
   }
 

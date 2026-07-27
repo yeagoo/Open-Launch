@@ -10,6 +10,7 @@ import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/date-picker"
+import { ItemListSchema } from "@/components/seo/structured-data"
 import { WinnerCard } from "@/components/winners/winner-card"
 import { getWinnersByDate } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
@@ -117,6 +118,18 @@ export default async function WinnersPage({
               </div>
             </div>
 
+            {winners.length > 0 && (
+              <ItemListSchema
+                name={`Daily Winners — ${formattedDate}`}
+                description={`Top projects of ${formattedDate} on aat.ee`}
+                items={winners.map((w) => ({
+                  name: w.name,
+                  slug: w.slug,
+                  logoUrl: w.logoUrl ?? "",
+                }))}
+                listType="project"
+              />
+            )}
             {winners.length === 0 ? (
               <NoWinnersFound />
             ) : (

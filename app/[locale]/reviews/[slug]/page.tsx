@@ -31,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { TableOfContents } from "@/components/blog/table-of-contents"
+import { ArticleSchema } from "@/components/seo/structured-data"
 
 export async function generateMetadata({
   params,
@@ -109,6 +110,18 @@ export default async function ReviewPage({
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Structured Data - Article Schema (reviews were previously the only
+          long-form pages without it) */}
+      <ArticleSchema
+        basePath="/reviews"
+        headline={title}
+        description={description}
+        image={article[0].image}
+        datePublished={publishedAt}
+        dateModified={article[0].updatedAt}
+        author="aat.ee Team"
+        slug={slug}
+      />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back Button */}
         <div className="mb-4">
