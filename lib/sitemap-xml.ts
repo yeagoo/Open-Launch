@@ -25,6 +25,57 @@ export const SITEMAP_KINDS = [
 ] as const
 export type SitemapKind = (typeof SITEMAP_KINDS)[number]
 
+export const SHARDED_SITEMAP_KINDS = ["projects", "users"] as const
+export type ShardedSitemapKind = (typeof SHARDED_SITEMAP_KINDS)[number]
+
+// A source row expands to one URL per locale, with every hreflang alternate
+// repeated on each URL. The route caches only these bounded source rows, then
+// expands them after the Data Cache read so long slugs cannot overflow Next.js'
+// 2 MiB per-item cache limit.
+export const SITEMAP_SOURCE_ROWS_PER_SHARD = 250
+const MAX_SITEMAP_SHARDS = 1000
+
+export interface SitemapRoute {
+  kind: SitemapKind
+  shard: number
+}
+
+export interface SitemapShardCounts {
+  projects: number
+  users: number
+}
+
+export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
+  if (!rawKind.endsWith(".xml")) return null
+  const stem = rawKind.slice(0, -4)
+
+  // The legacy unsuffixed projects/users routes redirect to the complete
+  // sitemap index. Treating either as shard 1 would hide later shards from a
+  // crawler that still has the old URL on file.
+  if (SHARDED_SITEMAP_KINDS.includes(stem as ShardedSitemapKind)) return null
+
+  if (SITEMAP_KINDS.includes(stem as SitemapKind)) {
+    return { kind: stem as SitemapKind, shard: 1 }
+  }
+
+  const match = /^(projects|users)-([1-9]\d*)$/.exec(stem)
+  if (!match) return null
+  const shard = Number(match[2])
+  if (!Number.isSafeInteger(shard) || shard > MAX_SITEMAP_SHARDS) return null
+
+  return { kind: match[1] as ShardedSitemapKind, shard }
+}
+
+export function getSitemapIndexPaths(counts: SitemapShardCounts): string[] {
+  return SITEMAP_KINDS.flatMap((kind) => {
+    if (!SHARDED_SITEMAP_KINDS.includes(kind as ShardedSitemapKind)) return [kind]
+
+    const sourceRows = counts[kind as ShardedSitemapKind]
+    const shardCount = Math.max(1, Math.ceil(sourceRows / SITEMAP_SOURCE_ROWS_PER_SHARD))
+    return Array.from({ length: shardCount }, (_, index) => `${kind}-${index + 1}`)
+  })
+}
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -103,11 +154,11 @@ export function serializeSitemap(entries: SitemapEntry[]): string {
   ].join("")
 }
 
-export function serializeSitemapIndex(): string {
+export function serializeSitemapIndex(paths: readonly string[]): string {
   const baseUrl = getSitemapBaseUrl()
-  const entries = SITEMAP_KINDS.map(
-    (kind) => `<sitemap><loc>${escapeXml(`${baseUrl}/sitemaps/${kind}.xml`)}</loc></sitemap>`,
-  ).join("")
+  const entries = paths
+    .map((path) => `<sitemap><loc>${escapeXml(`${baseUrl}/sitemaps/${path}.xml`)}</loc></sitemap>`)
+    .join("")
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',

@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import {
   englishSitemapEntry,
+  getSitemapIndexPaths,
   localizedSitemapEntries,
+  parseSitemapRoute,
   serializeSitemap,
   serializeSitemapIndex,
 } from "@/lib/sitemap-xml"
@@ -15,12 +17,30 @@ afterEach(() => {
 })
 
 describe("sitemap XML", () => {
-  it("builds a small index for the split sitemap routes", () => {
+  it("builds an index with one entry per computed project and user shard", () => {
     process.env.NEXT_PUBLIC_URL = "https://www.aat.ee/"
-    const xml = serializeSitemapIndex()
+    const paths = getSitemapIndexPaths({ projects: 501, users: 578 })
+    const xml = serializeSitemapIndex(paths)
+
     expect(xml).toContain("<sitemapindex")
-    expect(xml).toContain("https://www.aat.ee/sitemaps/projects.xml")
+    expect(xml).toContain("https://www.aat.ee/sitemaps/projects-1.xml")
+    expect(xml).toContain("https://www.aat.ee/sitemaps/projects-3.xml")
+    expect(xml).not.toContain("https://www.aat.ee/sitemaps/projects-4.xml")
+    expect(xml).toContain("https://www.aat.ee/sitemaps/users-3.xml")
     expect(xml).toContain("https://www.aat.ee/sitemaps/tags.xml")
+  })
+
+  it("keeps one empty shard and parses only bounded shard routes", () => {
+    expect(getSitemapIndexPaths({ projects: 0, users: 0 })).toContain("projects-1")
+    expect(parseSitemapRoute("projects.xml")).toBeNull()
+    expect(parseSitemapRoute("users.xml")).toBeNull()
+    expect(parseSitemapRoute("tags.xml")).toEqual({ kind: "tags", shard: 1 })
+    expect(parseSitemapRoute("projects-12.xml")).toEqual({ kind: "projects", shard: 12 })
+    expect(parseSitemapRoute("users-3.xml")).toEqual({ kind: "users", shard: 3 })
+    expect(parseSitemapRoute("projects-0.xml")).toBeNull()
+    expect(parseSitemapRoute("projects-1001.xml")).toBeNull()
+    expect(parseSitemapRoute("tags-2.xml")).toBeNull()
+    expect(parseSitemapRoute("projects-1.json")).toBeNull()
   })
 
   it("uses stable optional dates and escapes dynamic URL content", () => {

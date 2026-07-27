@@ -15,7 +15,7 @@ import { cache } from "react"
 
 import { db } from "@/drizzle/db"
 import { launchStatus, project, user } from "@/drizzle/db/schema"
-import { and, desc, eq, isNull, or, type SQL } from "drizzle-orm"
+import { and, countDistinct, desc, eq, isNull, or, type SQL } from "drizzle-orm"
 
 export const PUBLIC_PROFILE_PROJECT_WHERE: SQL = and(
   or(
@@ -119,32 +119,42 @@ export async function hasPublicProfile(userId: string): Promise<boolean> {
   return rows.length > 0
 }
 
+const PUBLIC_PROFILE_USER_WHERE: SQL = and(
+  or(eq(user.banned, false), isNull(user.banned)),
+  // Bots have real-looking projects (ProductHunt imports) but the page
+  // 404s them — don't submit dead URLs to search engines.
+  or(eq(user.isBot, false), isNull(user.isBot)),
+  PUBLIC_PROFILE_PROJECT_WHERE,
+)!
+
+/** Count users eligible for the sitemap index (same predicate as the page). */
+export async function countPublicProfileUsers(): Promise<number> {
+  const [row] = await db
+    .select({ count: countDistinct(user.id) })
+    .from(user)
+    .innerJoin(project, eq(project.createdBy, user.id))
+    .where(PUBLIC_PROFILE_USER_WHERE)
+  return row?.count ?? 0
+}
+
 /**
- * User ids eligible for the sitemap shard (same predicate as the page).
- * Bounded: 5000 users × 8 locales = 40k URLs, under the 50k/file sitemap
- * limit. Deterministic order so the capped set is stable; a WARN fires
- * when the cap is hit — that's the signal to split this shard.
+ * One deterministic page of user ids eligible for a sitemap shard.
+ * Callers clamp limit/offset before reaching this shared query.
  */
-export async function listPublicProfileUserIds(limit = 5000): Promise<string[]> {
+export async function listPublicProfileUserIds({
+  limit,
+  offset,
+}: {
+  limit: number
+  offset: number
+}): Promise<string[]> {
   const rows = await db
     .selectDistinct({ id: user.id })
     .from(user)
     .innerJoin(project, eq(project.createdBy, user.id))
     .orderBy(user.id)
-    .where(
-      and(
-        or(eq(user.banned, false), isNull(user.banned)),
-        // Bots have real-looking projects (ProductHunt imports) but the
-        // page 404s them — don't submit dead URLs to search engines.
-        or(eq(user.isBot, false), isNull(user.isBot)),
-        PUBLIC_PROFILE_PROJECT_WHERE,
-      ),
-    )
+    .where(PUBLIC_PROFILE_USER_WHERE)
     .limit(limit)
-  if (rows.length === limit) {
-    console.warn(
-      `[sitemap] public-profile user cap (${limit}) reached — split the users sitemap shard`,
-    )
-  }
+    .offset(offset)
   return rows.map((r) => r.id)
 }

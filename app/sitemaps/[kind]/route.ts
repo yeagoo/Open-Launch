@@ -17,8 +17,9 @@ import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import {
   englishSitemapEntry,
   localizedSitemapEntries,
+  parseSitemapRoute,
   serializeSitemap,
-  SITEMAP_KINDS,
+  SITEMAP_SOURCE_ROWS_PER_SHARD,
   type SitemapEntry,
   type SitemapKind,
 } from "@/lib/sitemap-xml"
@@ -50,19 +51,52 @@ function staticEntries(): SitemapEntry[] {
   ]
 }
 
-async function entriesFor(kind: SitemapKind): Promise<SitemapEntry[]> {
+async function projectSourceRowsFor(shard: number) {
+  const offset = (shard - 1) * SITEMAP_SOURCE_ROWS_PER_SHARD
+  return db
+    .select({ slug: project.slug, updatedAt: project.updatedAt })
+    .from(project)
+    .where(
+      or(
+        eq(project.launchStatus, launchStatus.ONGOING),
+        eq(project.launchStatus, launchStatus.LAUNCHED),
+      ),
+    )
+    .orderBy(project.slug)
+    .limit(SITEMAP_SOURCE_ROWS_PER_SHARD)
+    .offset(offset)
+}
+
+const cachedProjectSourceRowsFor = unstable_cache(
+  projectSourceRowsFor,
+  ["sitemap-project-source-rows"],
+  {
+    revalidate: 3600,
+    tags: [SITEMAP_ENTRIES_TAG],
+  },
+)
+
+async function publicUserSourceRowsFor(shard: number) {
+  return listPublicProfileUserIds({
+    limit: SITEMAP_SOURCE_ROWS_PER_SHARD,
+    offset: (shard - 1) * SITEMAP_SOURCE_ROWS_PER_SHARD,
+  })
+}
+
+const cachedPublicUserSourceRowsFor = unstable_cache(
+  publicUserSourceRowsFor,
+  ["sitemap-public-user-source-rows"],
+  {
+    revalidate: 3600,
+    tags: [SITEMAP_ENTRIES_TAG],
+  },
+)
+
+async function entriesFor(kind: SitemapKind, shard: number): Promise<SitemapEntry[]> {
   if (kind === "static") return staticEntries()
 
   if (kind === "projects") {
-    const projects = await db
-      .select({ slug: project.slug, updatedAt: project.updatedAt })
-      .from(project)
-      .where(
-        or(
-          eq(project.launchStatus, launchStatus.ONGOING),
-          eq(project.launchStatus, launchStatus.LAUNCHED),
-        ),
-      )
+    const projects = await cachedProjectSourceRowsFor(shard)
     return projects.flatMap((item) =>
       localizedSitemapEntries(`/projects/${item.slug}`, {
         lastModified: item.updatedAt,
@@ -106,7 +140,7 @@ async function entriesFor(kind: SitemapKind): Promise<SitemapEntry[]> {
   if (kind === "users") {
     // Only users with at least one publicly-visible project (same
     // predicate as the profile page — no empty/banned profiles).
-    const userIds = await listPublicProfileUserIds()
+    const userIds = await cachedPublicUserSourceRowsFor(shard)
     return userIds.flatMap((id) =>
       localizedSitemapEntries(`/users/${id}`, {
         changeFrequency: "weekly",
@@ -160,16 +194,26 @@ const cachedEntriesFor = unstable_cache(entriesFor, ["sitemap-entries"], {
 })
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ kind: string }> },
 ): Promise<Response> {
   const rawKind = (await params).kind
-  const kind = rawKind.endsWith(".xml") ? rawKind.slice(0, -4) : ""
-  if (!SITEMAP_KINDS.includes(kind as SitemapKind)) {
+  if (rawKind === "projects.xml" || rawKind === "users.xml") {
+    return Response.redirect(new URL("/sitemap.xml", request.url), 308)
+  }
+
+  const route = parseSitemapRoute(rawKind)
+  if (!route) {
     return new Response("Not Found", { status: 404 })
   }
 
-  const entries = await cachedEntriesFor(kind as SitemapKind)
+  // Sharded routes cache only their compact source rows above. Caching the
+  // expanded hreflang objects would reintroduce the 2 MiB Data Cache failure
+  // this split is designed to remove.
+  const entries =
+    route.kind === "projects" || route.kind === "users"
+      ? await entriesFor(route.kind, route.shard)
+      : await cachedEntriesFor(route.kind, route.shard)
   return new Response(serializeSitemap(entries), {
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",

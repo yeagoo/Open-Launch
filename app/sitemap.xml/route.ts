@@ -1,9 +1,39 @@
-import { serializeSitemapIndex } from "@/lib/sitemap-xml"
+import { unstable_cache } from "next/cache"
 
-export const dynamic = "force-static"
+import { db } from "@/drizzle/db"
+import { launchStatus, project } from "@/drizzle/db/schema"
+import { count, eq, or } from "drizzle-orm"
 
-export function GET() {
-  return new Response(serializeSitemapIndex(), {
+import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
+import { getSitemapIndexPaths, serializeSitemapIndex } from "@/lib/sitemap-xml"
+import { countPublicProfileUsers } from "@/lib/user-profile-query"
+
+export const dynamic = "force-dynamic"
+
+async function countShardedSitemapRows() {
+  const [[projectRow], users] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(project)
+      .where(
+        or(
+          eq(project.launchStatus, launchStatus.ONGOING),
+          eq(project.launchStatus, launchStatus.LAUNCHED),
+        ),
+      ),
+    countPublicProfileUsers(),
+  ])
+  return { projects: projectRow?.count ?? 0, users }
+}
+
+const cachedShardCounts = unstable_cache(countShardedSitemapRows, ["sitemap-shard-counts"], {
+  revalidate: 3600,
+  tags: [SITEMAP_ENTRIES_TAG],
+})
+
+export async function GET() {
+  const paths = getSitemapIndexPaths(await cachedShardCounts())
+  return new Response(serializeSitemapIndex(paths), {
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",
       "Content-Type": "application/xml; charset=utf-8",
