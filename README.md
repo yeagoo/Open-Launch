@@ -160,8 +160,13 @@ Visit `http://localhost:3000` to see your app running.
 ## Deployment
 
 Open Launch is deployed to `8.210.175.190` through
-`/home/ivmm/tools/deploy-tools` as a Next.js standalone artifact. It can run
-under systemd or Docker; see the [production runtime checklist](./docs/production-runtime.md).
+`/home/ivmm/tools/deploy-tools` as a Next.js standalone artifact in a managed
+Docker Compose service. See the
+[production deployment runbook](./docs/production-deployment-runbook.md) for
+the exact SSH connection, managed paths, safety gates, and production
+verification, and the
+[production runtime checklist](./docs/production-runtime.md) for application
+runtime requirements.
 
 ```bash
 # Build the application

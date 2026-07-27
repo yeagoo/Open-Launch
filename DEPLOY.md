@@ -4,14 +4,22 @@ Rollout guide for the feature that auto-publishes paid **Plus / Pro / Ultra**
 directory listings from aat.ee to the partner sites **bigkr**, **mf8**, and
 **hicyou**. Design & internals: [`docs/launch-syndication.md`](docs/launch-syndication.md).
 
-Four repos, all on Zeabur:
+> **Current infrastructure notice (2026-07-26):** aat.ee is not deployed on
+> Zeabur. It is deployed to `8.210.175.190` through
+> `/home/ivmm/tools/deploy-tools`. The canonical connection and production
+> procedure is [`docs/production-deployment-runbook.md`](docs/production-deployment-runbook.md).
+> This file is a feature-specific syndication rollout guide. Verify the current
+> hosting platform of each receiver instead of assuming that the original
+> Zeabur setup still applies.
 
-| Service | Repo           | Role                                   | Deploy branch | DB migration?              |
-| ------- | -------------- | -------------------------------------- | ------------- | -------------------------- |
-| aat.ee  | Open-Launch    | sender (Stripe webhook + cron worker)  | `main`        | **yes** (0026, 0027, 0030) |
-| bigkr   | bigkr          | receiver (`POST /api/external/launch`) | `main`        | no                         |
-| mf8     | mf8            | receiver                               | `main`        | no                         |
-| hicyou  | hicyou-pravite | receiver                               | `main`        | no                         |
+Four repositories participate in the feature:
+
+| Service | Repo           | Role                                   | Production deployment                                    | DB migration?              |
+| ------- | -------------- | -------------------------------------- | -------------------------------------------------------- | -------------------------- |
+| aat.ee  | Open-Launch    | sender (Stripe webhook + cron worker)  | `opsctl` on `8.210.175.190`; `main` is the source branch | **yes** (0026, 0027, 0030) |
+| bigkr   | bigkr          | receiver (`POST /api/external/launch`) | verify current platform                                  | no                         |
+| mf8     | mf8            | receiver                               | verify current platform                                  | no                         |
+| hicyou  | hicyou-pravite | receiver                               | verify current platform                                  | no                         |
 
 ## 0. One shared secret
 
@@ -29,10 +37,13 @@ posts them once the receivers + env are ready. Nothing is lost.
 
 ## 2. aat.ee (sender)
 
-Zeabur deploys `main`, so merge/push to `main` to ship.
+Push the reviewed source to `main`, then perform the separate production
+deployment through the
+[production runbook](docs/production-deployment-runbook.md). A successful push
+or CI run is not evidence that production changed.
 
-**a. Run migrations** against the production `DATABASE_URL` (e.g. in the Zeabur
-service shell):
+**a. Run migrations** against the production `DATABASE_URL` through a reviewed,
+typed deployment plan:
 
 ```bash
 bun run db:migrate     # drizzle-kit migrate + apply-pending-sql.ts (idempotent)
@@ -42,7 +53,7 @@ Applies (at least) `0026_launch_syndication.sql` (queue table + cron registratio
 `0027_directory_order_amount_verified.sql` (held-order flag), and
 `0030_register_refresh_dr_cron.sql` (registers the DR refresh cron — see below).
 Crons are auto-registered in `cron_schedule`; the existing `/api/cron/dispatch`
-picks them up — **no new Zeabur cron job needed**.
+picks them up — **no new platform cron job is needed**.
 
 > 🔄 `0030` finally schedules `/api/cron/refresh-dr` (`0 4 */3 * *`), which had
 > existed since `0020` but was never registered, so the home + pricing DR badges
@@ -58,7 +69,7 @@ picks them up — **no new Zeabur cron job needed**.
 > orders page error until it runs. (Recoverable: Stripe retries the webhook once
 > the DB is migrated.)
 
-**b. Variables** (Zeabur → aat.ee → Variables):
+**b. Variables** (production environment managed by the deployment contract):
 
 ```
 EXTERNAL_LAUNCH_API_KEY=<shared secret>
@@ -66,15 +77,18 @@ SYNDICATION_BIGKR_URL=https://bigkr.com/api/external/launch
 SYNDICATION_MF8_URL=https://<mf8-domain>/api/external/launch
 SYNDICATION_HICYOU_URL=https://hicyou.com/api/external/launch
 # optional per-site key overrides (default to EXTERNAL_LAUNCH_API_KEY):
-# SYNDICATION_BIGKR_API_KEY=   SYNDICATION_MF8_API_KEY=   SYNDICATION_HICYOU_API_KEY=
+# SYNDICATION_BIGKR_API_KEY=<optional override>
+# SYNDICATION_MF8_API_KEY=<optional override>
+# SYNDICATION_HICYOU_API_KEY=<optional override>
 ```
 
-Redeploy / restart so the vars take effect.
+Deploy/restart through the reviewed `opsctl` plan so the variables take effect.
 
 ## 3. bigkr / mf8 / hicyou (receivers)
 
-No DB migration — the endpoint reuses existing tables. Zeabur → each service →
-Variables:
+No DB migration — the endpoint reuses existing tables. Configure these values
+on each receiver's current deployment platform (the original rollout used
+Zeabur Variables):
 
 ```
 EXTERNAL_LAUNCH_API_KEY=<shared secret>          # MUST equal aat.ee's value
