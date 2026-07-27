@@ -11,6 +11,15 @@ export async function register() {
   if (globalForInstrumentation.__aatRequestErrorMonitorRegistered) return
 
   globalForInstrumentation.__aatRequestErrorMonitorRegistered = true
+
+  // Fail fast on missing critical env in production — but never during the
+  // build: the Docker builder intentionally has no runtime secrets, and
+  // register() is also evaluated while building.
+  if (process.env.NEXT_PHASE !== "phase-production-build") {
+    const { validateRuntimeEnv } = await import("./lib/env")
+    validateRuntimeEnv()
+  }
+
   const [{ registerNodeRuntimeErrorMonitor }, { startEmbeddedCron }] = await Promise.all([
     import("./lib/node-runtime-error-monitor"),
     import("./lib/embedded-cron"),
