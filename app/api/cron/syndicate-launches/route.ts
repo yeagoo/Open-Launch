@@ -32,6 +32,9 @@ const BATCH = 25
 // failure, or an admin marking an order paid by hand). Bounded so we never
 // reprocess the back-catalogue.
 const RECONCILE_WINDOW_HOURS = 6
+// A row claimed ('sending') for longer than this is considered abandoned by
+// a crashed worker and is reset to 'pending' for another tick to retry.
+const STALE_CLAIM_MINUTES = 10
 // Promotion sweep window: how far back to look for `paid` orders that are
 // fully `sent` but weren't promoted (e.g. the worker crashed after the last
 // send, before flipping the order to fulfilled).
@@ -99,7 +102,20 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 1. Due rows — joined to a still-live, verified order so canceled/refunded/
+  // 1. Recover rows whose worker died after claiming them (crash between
+  // claim and outcome write). updated_at is stamped at claim time, so a
+  // row still 'sending' after 10 minutes is abandoned, not merely slow.
+  await db
+    .update(launchSyndication)
+    .set({ status: "pending", updatedAt: now })
+    .where(
+      and(
+        eq(launchSyndication.status, "sending"),
+        lt(launchSyndication.updatedAt, new Date(now.getTime() - STALE_CLAIM_MINUTES * 60_000)),
+      ),
+    )
+
+  // 2. Due rows — joined to a still-live, verified order so canceled/refunded/
   // held orders are never posted.
   const due = await db
     .select({
@@ -153,10 +169,30 @@ export async function GET(request: NextRequest) {
     if (res.rowCount && res.rowCount > 0) orphaned++
   }
 
-  if (deliverable.length > 0) {
+  // Claim each row BEFORE posting so an overlapping tick (the dispatcher
+  // fires every 2 minutes and a slow tick can outlive the interval) can't
+  // read the same pending row and double-post to partner sites. The claim
+  // stamps updated_at, which the stale-claim reaper above uses to recover
+  // rows whose worker died mid-post.
+  const claimed: typeof deliverable = []
+  for (const row of deliverable) {
+    const res = await db
+      .update(launchSyndication)
+      .set({ status: "sending", updatedAt: now })
+      .where(
+        and(
+          eq(launchSyndication.id, row.id),
+          inArray(launchSyndication.status, ["pending", "failed"]),
+        ),
+      )
+      .returning({ id: launchSyndication.id })
+    if (res.length > 0) claimed.push(row)
+  }
+
+  if (claimed.length > 0) {
     // Build each project's payload once, sequentially — no cache race.
     const payloads = new Map<string, LaunchPayload | null>()
-    for (const row of deliverable) {
+    for (const row of claimed) {
       // Key by (project, tier): the gateway derives reach from the payload tier
       // (+ maxSites), so a Plus and a Pro row for the same project need distinct
       // payloads.
@@ -174,8 +210,8 @@ export async function GET(request: NextRequest) {
     // under-delivered. Post once per group and apply the outcome to every row in
     // it (receivers dedupe by URL, so posting the same listing twice across
     // tiers is harmless).
-    const groups = new Map<string, typeof deliverable>()
-    for (const row of deliverable) {
+    const groups = new Map<string, typeof claimed>()
+    for (const row of claimed) {
       const key = `${row.site}::${row.projectId}::${row.tier}`
       const g = groups.get(key)
       if (g) g.push(row)
@@ -208,12 +244,18 @@ export async function GET(request: NextRequest) {
               })
               .where(eq(launchSyndication.id, row.id))
           } else if (result.configError) {
-            // Local misconfig — record but DON'T burn an attempt; the row stays
-            // pending and recovers automatically once the env var is set.
+            // Local misconfig — record but DON'T burn an attempt, and hand
+            // the row straight back to 'pending' (it was claimed as
+            // 'sending' above) so it retries on the very next tick once the
+            // env var is set, instead of waiting for the stale-claim reaper.
             deferred++
             await db
               .update(launchSyndication)
-              .set({ lastError: result.error ?? "not configured", updatedAt: now })
+              .set({
+                status: "pending",
+                lastError: result.error ?? "not configured",
+                updatedAt: now,
+              })
               .where(eq(launchSyndication.id, row.id))
           } else {
             failed++
@@ -338,7 +380,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ranAt: now.toISOString(),
     reconciled,
-    drained: deliverable.length,
+    drained: claimed.length,
     sent,
     failed,
     deferred,
