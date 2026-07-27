@@ -241,7 +241,18 @@
       "justNow": "agora mesmo",
       "minutesAgo": "há {count, plural, one {# minuto} other {# minutos}}",
       "hoursAgo": "há {count, plural, one {# hora} other {# horas}}",
-      "daysAgo": "há {count, plural, one {# dia} other {# dias}}"
+      "daysAgo": "há {count, plural, one {# dia} other {# dias}}",
+      "report": "Denunciar",
+      "reportTitle": "Denunciar comentário",
+      "reportDesc": "Conte-nos por que este comentário deve ser revisado.",
+      "reportReason_spam": "Spam",
+      "reportReason_abuse": "Abuso",
+      "reportReason_offtopic": "Fora do tema",
+      "reportReason_other": "Outro",
+      "reportDetailsPlaceholder": "Detalhes adicionais (opcional)",
+      "reportSubmit": "Enviar denúncia",
+      "reportSuccess": "Denúncia enviada. Obrigado!",
+      "reportError": "Falha ao enviar denúncia"
     }
   },
   "pricing": {
@@ -267,11 +278,7 @@
       "plus": {
         "blurb": "5 domínios independentes que o Google lê como orgânicos.",
         "cta": "Obter Plus",
-        "features": [
-          "Tudo do Basic",
-          "5 sites de diretório",
-          "5 domínios dofollow independentes"
-        ]
+        "features": ["Tudo do Basic", "5 sites de diretório", "5 domínios dofollow independentes"]
       },
       "pro": {
         "blurb": "Toda a nossa rede de diretórios — autoridade em força máxima.",
@@ -859,13 +866,7 @@
     "hero": {
       "kicker": "Listagens em diretórios",
       "heading": "Faça seu <rotate>produto</rotate> ser visto em nossa <accent>rede de diretórios</accent>",
-      "headingRotateWords": [
-        "produto",
-        "site",
-        "SaaS",
-        "app",
-        "ferramenta"
-      ],
+      "headingRotateWords": ["produto", "site", "SaaS", "app", "ferramenta"],
       "subheading": "Pule a fila. Ganhe backlinks dofollow. Alcance makers e early adopters em <num>{n}+</num> sites selecionados com mais de <num>700k+</num> visitantes mensais combinados.",
       "limited": "Preço de lançamento — os descontos diminuem à medida que nosso DR e tráfego crescem.",
       "outcomes": {

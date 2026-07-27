@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { poolAvatarUrl } from "@/lib/avatar-pool"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ReportCommentButton } from "@/components/project/report-comment-button"
 
 interface AuthorInfo {
   id: string
@@ -406,6 +407,7 @@ function CommentRowView({
                 <span>{t("delete")}</span>
               </Button>
             )}
+            {isAuth && !isOwner && <ReportCommentButton commentId={Number(comment.id)} />}
           </div>
 
           {/* Reply form */}
@@ -524,6 +526,7 @@ function ReplyView({
               <span>{t("delete")}</span>
             </Button>
           )}
+          {isAuth && !isOwner && <ReportCommentButton commentId={Number(comment.id)} />}
         </div>
       </div>
     </div>

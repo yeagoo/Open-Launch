@@ -241,7 +241,18 @@
       "justNow": "justo ahora",
       "minutesAgo": "hace {count, plural, one {# minuto} other {# minutos}}",
       "hoursAgo": "hace {count, plural, one {# hora} other {# horas}}",
-      "daysAgo": "hace {count, plural, one {# día} other {# días}}"
+      "daysAgo": "hace {count, plural, one {# día} other {# días}}",
+      "report": "Reportar",
+      "reportTitle": "Reportar comentario",
+      "reportDesc": "Cuéntanos por qué este comentario debe ser revisado.",
+      "reportReason_spam": "Spam",
+      "reportReason_abuse": "Abuso",
+      "reportReason_offtopic": "Fuera de tema",
+      "reportReason_other": "Otro",
+      "reportDetailsPlaceholder": "Detalles adicionales (opcional)",
+      "reportSubmit": "Enviar reporte",
+      "reportSuccess": "Reporte enviado. ¡Gracias!",
+      "reportError": "Error al enviar el reporte"
     }
   },
   "pricing": {
@@ -859,13 +870,7 @@
     "hero": {
       "kicker": "Listados en directorios",
       "heading": "Haz que vean tu <rotate>producto</rotate> en nuestra <accent>red de directorios</accent>",
-      "headingRotateWords": [
-        "producto",
-        "sitio web",
-        "SaaS",
-        "app",
-        "herramienta"
-      ],
+      "headingRotateWords": ["producto", "sitio web", "SaaS", "app", "herramienta"],
       "subheading": "Salta la cola. Consigue enlaces dofollow. Llega a creadores y early adopters en <num>{n}+</num> sitios seleccionados con más de <num>700k+</num> visitantes mensuales combinados.",
       "limited": "Precio de lanzamiento — los descuentos se reducen a medida que nuestro DR y tráfico crecen.",
       "outcomes": {

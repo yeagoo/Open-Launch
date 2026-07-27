@@ -241,7 +241,18 @@
       "justNow": "たった今",
       "minutesAgo": "{count, plural, one {# 分前} other {# 分前}}",
       "hoursAgo": "{count, plural, one {# 時間前} other {# 時間前}}",
-      "daysAgo": "{count, plural, one {# 日前} other {# 日前}}"
+      "daysAgo": "{count, plural, one {# 日前} other {# 日前}}",
+      "report": "報告",
+      "reportTitle": "コメントを報告",
+      "reportDesc": "このコメントを審査すべき理由を教えてください。",
+      "reportReason_spam": "スパム",
+      "reportReason_abuse": "攻撃的",
+      "reportReason_offtopic": "話題外れ",
+      "reportReason_other": "その他",
+      "reportDetailsPlaceholder": "追加の詳細（任意）",
+      "reportSubmit": "報告を送信",
+      "reportSuccess": "報告を送信しました。ありがとうございます！",
+      "reportError": "報告の送信に失敗しました"
     }
   },
   "pricing": {
@@ -277,11 +288,7 @@
         "blurb": "ディレクトリネットワークのすべて——オーソリティをフルパワーで。",
         "cta": "Pro を選ぶ",
         "badge": "一番人気",
-        "features": [
-          "Plus のすべてを含む",
-          "全13のディレクトリサイト",
-          "多言語・多国展開のリーチ"
-        ]
+        "features": ["Plus のすべてを含む", "全13のディレクトリサイト", "多言語・多国展開のリーチ"]
       },
       "ultra": {
         "blurb": "フルリーチに加え、AIエンジンが引用するGEO記事を。",
@@ -859,13 +866,7 @@
     "hero": {
       "kicker": "ディレクトリ掲載",
       "heading": "あなたの<rotate>プロダクト</rotate>を<accent>ディレクトリネットワーク</accent>全体で見てもらう",
-      "headingRotateWords": [
-        "プロダクト",
-        "ウェブサイト",
-        "SaaS",
-        "アプリ",
-        "ツール"
-      ],
+      "headingRotateWords": ["プロダクト", "ウェブサイト", "SaaS", "アプリ", "ツール"],
       "subheading": "列に並ばずに済みます。dofollowバックリンクを獲得し、<num>{n}+</num>の厳選サイトでメーカーやアーリーアダプターにリーチ。月間訪問者数は合計<num>70万+</num>。",
       "limited": "ローンチ価格 — DRとトラフィックが増えるにつれて割引は縮小します。",
       "outcomes": {

@@ -241,7 +241,18 @@
       "justNow": "just nüüd",
       "minutesAgo": "{count, plural, one {# minut} other {# minutit}} tagasi",
       "hoursAgo": "{count, plural, one {# tund} other {# tundi}} tagasi",
-      "daysAgo": "{count, plural, one {# päev} other {# päeva}} tagasi"
+      "daysAgo": "{count, plural, one {# päev} other {# päeva}} tagasi",
+      "report": "Teata",
+      "reportTitle": "Teata kommentaarist",
+      "reportDesc": "Ütle meile, miks see kommentaar vajab läbivaatamist.",
+      "reportReason_spam": "Rämps",
+      "reportReason_abuse": "Solvang",
+      "reportReason_offtopic": "Teemast väljas",
+      "reportReason_other": "Muu",
+      "reportDetailsPlaceholder": "Lisainfo (valikuline)",
+      "reportSubmit": "Saada teade",
+      "reportSuccess": "Teade saadetud. Aitäh!",
+      "reportError": "Teate saatmine ebaõnnestus"
     }
   },
   "pricing": {
@@ -267,11 +278,7 @@
       "plus": {
         "blurb": "5 sõltumatut domeeni, mida Google loeb orgaanilisteks.",
         "cta": "Vali Plus",
-        "features": [
-          "Kõik, mis on Basicus",
-          "5 kataloogisaiti",
-          "5 sõltumatut dofollow domeeni"
-        ]
+        "features": ["Kõik, mis on Basicus", "5 kataloogisaiti", "5 sõltumatut dofollow domeeni"]
       },
       "pro": {
         "blurb": "Kogu meie kataloogivõrk — autoriteet täisvõimsusel.",
@@ -859,13 +866,7 @@
     "hero": {
       "kicker": "Kataloogikirjed",
       "heading": "Näita oma <rotate>toodet</rotate> kogu meie <accent>kataloogivõrgustikus</accent>",
-      "headingRotateWords": [
-        "toode",
-        "veebileht",
-        "SaaS",
-        "rakendus",
-        "tööriist"
-      ],
+      "headingRotateWords": ["toode", "veebileht", "SaaS", "rakendus", "tööriist"],
       "subheading": "Jäta järjekord vahele. Teenige dofollow tagasilinke. Jõudke loojate ja varajaste kasutajateni <num>{n}+</num> kureeritud saidil, millel on kokku <num>700k+</num> igakuist külastajat.",
       "limited": "Käivitushinnad — allahindlused vähenevad, kui meie DR ja liiklus kasvavad.",
       "outcomes": {

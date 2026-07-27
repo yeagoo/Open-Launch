@@ -241,7 +241,18 @@
       "justNow": "à l'instant",
       "minutesAgo": "il y a {count, plural, one {# minute} other {# minutes}}",
       "hoursAgo": "il y a {count, plural, one {# heure} other {# heures}}",
-      "daysAgo": "il y a {count, plural, one {# jour} other {# jours}}"
+      "daysAgo": "il y a {count, plural, one {# jour} other {# jours}}",
+      "report": "Signaler",
+      "reportTitle": "Signaler le commentaire",
+      "reportDesc": "Dites-nous pourquoi ce commentaire doit être examiné.",
+      "reportReason_spam": "Spam",
+      "reportReason_abuse": "Abus",
+      "reportReason_offtopic": "Hors sujet",
+      "reportReason_other": "Autre",
+      "reportDetailsPlaceholder": "Détails supplémentaires (facultatif)",
+      "reportSubmit": "Envoyer le signalement",
+      "reportSuccess": "Signalement envoyé. Merci !",
+      "reportError": "Échec de l'envoi du signalement"
     }
   },
   "pricing": {
@@ -859,13 +870,7 @@
     "hero": {
       "kicker": "Annuaires",
       "heading": "Faites voir votre <rotate>produit</rotate> sur notre <accent>réseau d'annuaires</accent>",
-      "headingRotateWords": [
-        "produit",
-        "site web",
-        "SaaS",
-        "app",
-        "outil"
-      ],
+      "headingRotateWords": ["produit", "site web", "SaaS", "app", "outil"],
       "subheading": "Sautez la file d'attente. Gagnez des backlinks dofollow. Touchez les créateurs et les early adopters sur <num>{n}+</num> sites sélectionnés avec <num>700k+</num> visiteurs mensuels combinés.",
       "limited": "Prix de lancement — les réductions diminuent à mesure que notre DR et notre trafic augmentent.",
       "outcomes": {

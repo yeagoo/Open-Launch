@@ -241,7 +241,18 @@
       "justNow": "just now",
       "minutesAgo": "{count, plural, one {# minute} other {# minutes}} ago",
       "hoursAgo": "{count, plural, one {# hour} other {# hours}} ago",
-      "daysAgo": "{count, plural, one {# day} other {# days}} ago"
+      "daysAgo": "{count, plural, one {# day} other {# days}} ago",
+      "report": "Report",
+      "reportTitle": "Report comment",
+      "reportDesc": "Tell us why this comment should be reviewed.",
+      "reportReason_spam": "Spam",
+      "reportReason_abuse": "Abuse",
+      "reportReason_offtopic": "Off-topic",
+      "reportReason_other": "Other",
+      "reportDetailsPlaceholder": "Additional details (optional)",
+      "reportSubmit": "Submit report",
+      "reportSuccess": "Report submitted. Thank you!",
+      "reportError": "Failed to submit report"
     }
   },
   "pricing": {
@@ -267,11 +278,7 @@
       "plus": {
         "blurb": "5 independent domains Google reads as organic.",
         "cta": "Get Plus",
-        "features": [
-          "Everything in Basic",
-          "5 directory sites",
-          "5 independent dofollow domains"
-        ]
+        "features": ["Everything in Basic", "5 directory sites", "5 independent dofollow domains"]
       },
       "pro": {
         "blurb": "Our entire directory network — authority at full strength.",
@@ -859,13 +866,7 @@
     "hero": {
       "kicker": "Directory listings",
       "heading": "Get your <rotate>product</rotate> seen across our <accent>directory network</accent>",
-      "headingRotateWords": [
-        "product",
-        "website",
-        "SaaS",
-        "app",
-        "tool"
-      ],
+      "headingRotateWords": ["product", "website", "SaaS", "app", "tool"],
       "subheading": "Skip the queue. Earn dofollow backlinks. Reach makers and early adopters across <num>{n}+</num> curated sites with combined <num>700k+</num> monthly visitors.",
       "limited": "Launch pricing — discounts shrink as our DR & traffic grow.",
       "outcomes": {

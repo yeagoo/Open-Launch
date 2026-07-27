@@ -241,7 +241,18 @@
       "justNow": "방금 전",
       "minutesAgo": "{count, plural, one {#분} other {#분}} 전",
       "hoursAgo": "{count, plural, one {#시간} other {#시간}} 전",
-      "daysAgo": "{count, plural, one {#일} other {#일}} 전"
+      "daysAgo": "{count, plural, one {#일} other {#일}} 전",
+      "report": "신고",
+      "reportTitle": "댓글 신고",
+      "reportDesc": "이 댓글을 검토해야 하는 이유를 알려주세요.",
+      "reportReason_spam": "스팸",
+      "reportReason_abuse": "욕설/공격",
+      "reportReason_offtopic": "주제 무관",
+      "reportReason_other": "기타",
+      "reportDetailsPlaceholder": "추가 설명 (선택)",
+      "reportSubmit": "신고 제출",
+      "reportSuccess": "신고가 접수되었습니다. 감사합니다!",
+      "reportError": "신고 제출에 실패했습니다"
     }
   },
   "pricing": {
@@ -267,21 +278,13 @@
       "plus": {
         "blurb": "Google이 오가닉으로 읽는 5개의 독립 도메인.",
         "cta": "Plus 선택",
-        "features": [
-          "Basic의 모든 기능",
-          "디렉터리 사이트 5개",
-          "5개의 독립 dofollow 도메인"
-        ]
+        "features": ["Basic의 모든 기능", "디렉터리 사이트 5개", "5개의 독립 dofollow 도메인"]
       },
       "pro": {
         "blurb": "디렉터리 네트워크 전체 — 권위를 최대 출력으로.",
         "cta": "Pro 선택",
         "badge": "가장 인기",
-        "features": [
-          "Plus의 모든 기능",
-          "13개 디렉터리 사이트 전체",
-          "다국어, 다국가 도달"
-        ]
+        "features": ["Plus의 모든 기능", "13개 디렉터리 사이트 전체", "다국어, 다국가 도달"]
       },
       "ultra": {
         "blurb": "완전한 도달, 그리고 AI 엔진이 인용하는 GEO 아티클까지.",
@@ -859,13 +862,7 @@
     "hero": {
       "kicker": "디렉토리 등록",
       "heading": "당신의 <rotate>제품</rotate>을 <accent>디렉토리 네트워크</accent>에서 알리세요",
-      "headingRotateWords": [
-        "제품",
-        "웹사이트",
-        "SaaS",
-        "앱",
-        "도구"
-      ],
+      "headingRotateWords": ["제품", "웹사이트", "SaaS", "앱", "도구"],
       "subheading": "대기열을 건너뛰세요. dofollow 백링크를 얻으세요. <num>{n}+</num>개의 엄선된 사이트에서 메이커와 얼리어답터에게 도달하세요. 월간 방문자 <num>70만+</num>명.",
       "limited": "런칭 가격 — DR과 트래픽이 증가함에 따라 할인이 줄어듭니다.",
       "outcomes": {
