@@ -320,6 +320,34 @@ export const bookmark = pgTable(
   ],
 )
 
+// In-app notification center (0055). dedupeKey UNIQUE makes producers
+// idempotent (milestone votes can race; launch-status cron may rerun).
+export const notification = pgTable(
+  "notification",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type").notNull(), // 'comment' | 'reply' | 'mention' | 'upvote_milestone' | 'launch_status'
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    projectId: text("project_id").references(() => project.id, { onDelete: "cascade" }),
+    // Logical pointer to fuma_comments.id — deliberately no FK (comment
+    // hard-deletes must not take the notification with them).
+    commentId: integer("comment_id"),
+    metadata: json("metadata"),
+    dedupeKey: text("dedupe_key").unique(),
+    readAt: timestamp("read_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("notification_user_created_idx").on(table.userId, table.createdAt),
+    index("notification_user_unread_idx")
+      .on(table.userId)
+      .where(sql`${table.readAt} IS NULL`),
+  ],
+)
+
 // Tables pour Fuma Comment
 export const fumaRoles = pgTable("fuma_roles", {
   userId: varchar("user_id", { length: 256 }).primaryKey(),
