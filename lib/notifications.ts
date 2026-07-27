@@ -74,6 +74,9 @@ export async function notifyNewComment(
       .where(eq(project.id, projectId))
       .limit(1)
     if (!proj?.createdBy || proj.createdBy === commentAuthorId) return
+    // ProductHunt-imported projects are owned by bot accounts — notifying
+    // them just accumulates unread rows nobody will ever see.
+    if (await isBotUser(proj.createdBy)) return
     if (await isBotUser(commentAuthorId)) return
 
     await createNotification({
@@ -179,7 +182,7 @@ export async function notifyUpvoteMilestone(
       .from(project)
       .where(eq(project.id, projectId))
       .limit(1)
-    if (!proj?.createdBy) return
+    if (!proj?.createdBy || (await isBotUser(proj.createdBy))) return
 
     for (const milestone of crossed) {
       await createNotification({
@@ -201,6 +204,8 @@ export async function notifyLaunchStatus(
   ownerId: string,
   newStatus: string,
 ): Promise<void> {
+  // Bot-owned (ProductHunt-imported) projects never read notifications.
+  if (await isBotUser(ownerId)) return
   await createNotification({
     userId: ownerId,
     type: "launch_status",
