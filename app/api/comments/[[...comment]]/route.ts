@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server"
 
+import { db } from "@/drizzle/db"
+import { fumaComments } from "@/drizzle/db/schema"
 import { NextComment } from "@fuma-comment/next"
+import { eq } from "drizzle-orm"
 
 import { checkCommentRateLimit, checkUpvoteRateLimit } from "@/lib/comment-rate-limit"
 import { commentAuth, commentStorage } from "@/lib/comment.config"
@@ -166,6 +169,23 @@ export async function POST(req: NextRequest, context: any) {
           { status: 429 },
         )
       }
+
+      // Votes are rejected on moderator-hidden comments (tombstones are
+      // read-only except un-voting, which is a DELETE on the same path).
+      const rateCommentId = commentParams.length >= 2 ? Number(commentParams[1]) : NaN
+      if (Number.isInteger(rateCommentId)) {
+        const [row] = await db
+          .select({ hiddenAt: fumaComments.hiddenAt })
+          .from(fumaComments)
+          .where(eq(fumaComments.id, rateCommentId))
+          .limit(1)
+        if (row?.hiddenAt) {
+          return NextResponse.json(
+            { message: "This comment has been removed by a moderator." },
+            { status: 403 },
+          )
+        }
+      }
     }
 
     // Strip links. Fail closed on a malformed body so it can't bypass link
@@ -183,6 +203,25 @@ export async function POST(req: NextRequest, context: any) {
         },
         { status: error instanceof RequestBodyTooLargeError ? 413 : 400 },
       )
+    }
+
+    // Replies to a moderator-hidden comment are rejected: tombstones are
+    // read-only, so nothing may append to a removed thread.
+    if (isNewComment && processed.body?.thread) {
+      const parentId = Number(processed.body.thread)
+      if (Number.isInteger(parentId)) {
+        const [parent] = await db
+          .select({ hiddenAt: fumaComments.hiddenAt })
+          .from(fumaComments)
+          .where(eq(fumaComments.id, parentId))
+          .limit(1)
+        if (parent?.hiddenAt) {
+          return NextResponse.json(
+            { message: "This comment has been removed by a moderator." },
+            { status: 403 },
+          )
+        }
+      }
     }
 
     // Persist first, notify second. The Discord alert used to fire BEFORE
@@ -250,6 +289,29 @@ export async function PATCH(req: NextRequest, context: any) {
       }
     }
 
+    // Tombstoned comments are read-only for EVERYONE at the storage layer:
+    // fuma's adapter only matches author/id/page, so the original author
+    // could otherwise edit a moderator-hidden comment back to its original
+    // content.
+    const params = await context.params
+    const commentParams = params.comment || []
+    if (commentParams.length >= 2) {
+      const commentId = Number(commentParams[1])
+      if (Number.isInteger(commentId)) {
+        const [row] = await db
+          .select({ hiddenAt: fumaComments.hiddenAt })
+          .from(fumaComments)
+          .where(eq(fumaComments.id, commentId))
+          .limit(1)
+        if (row?.hiddenAt) {
+          return NextResponse.json(
+            { message: "This comment has been removed by a moderator." },
+            { status: 403 },
+          )
+        }
+      }
+    }
+
     let processed: { req: NextRequest; body: Record<string, any> | null }
     try {
       processed = await processRequestWithLinkRemoval(req)
@@ -279,5 +341,33 @@ export async function GET(req: NextRequest, context: any) {
 }
 
 export async function DELETE(req: NextRequest, context: any) {
+  // Tombstoned comments are read-only for everyone (same guard as PATCH):
+  // the author must not hard-delete a moderator-hidden comment and detach
+  // its replies.
+  try {
+    const params = await context.params
+    const commentParams = params.comment || []
+    // Exactly two segments = comment delete. The three-segment
+    // /[id]/rate DELETE is an un-vote and must stay possible (otherwise a
+    // user's like on a hidden comment could never be retracted).
+    if (commentParams.length === 2) {
+      const commentId = Number(commentParams[1])
+      if (Number.isInteger(commentId)) {
+        const [row] = await db
+          .select({ hiddenAt: fumaComments.hiddenAt })
+          .from(fumaComments)
+          .where(eq(fumaComments.id, commentId))
+          .limit(1)
+        if (row?.hiddenAt) {
+          return NextResponse.json(
+            { message: "This comment has been removed by a moderator." },
+            { status: 403 },
+          )
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error checking comment hidden state:", error)
+  }
   return commentHandler.DELETE(req, context)
 }
