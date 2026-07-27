@@ -82,6 +82,13 @@ export function UpvoteButton({
       <button
         onClick={handleUpvote}
         disabled={isPending}
+        type="button"
+        aria-pressed={optimisticState.upvoted}
+        aria-label={
+          optimisticState.upvoted
+            ? `Remove upvote (${optimisticState.count} upvotes)`
+            : `Upvote (${optimisticState.count} upvotes)`
+        }
         className={cn(
           "hover:border-primary dark:hover:border-primary flex h-12 w-12 cursor-pointer flex-col items-center justify-center rounded-xl border-2 transition-all duration-300",
           optimisticState.upvoted && "border-primary",
@@ -109,6 +116,8 @@ export function UpvoteButton({
     <button
       onClick={handleUpvote}
       disabled={isPending}
+      type="button"
+      aria-pressed={optimisticState.upvoted}
       className={cn(
         "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 transition-colors",
         optimisticState.upvoted
