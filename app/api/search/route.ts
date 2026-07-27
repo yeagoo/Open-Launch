@@ -3,12 +3,13 @@ import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { category, project, tag, tagModerationStatus } from "@/drizzle/db/schema"
-import { and, eq, ilike, sql } from "drizzle-orm"
+import { category, tag, tagModerationStatus } from "@/drizzle/db/schema"
+import { and, eq, ilike } from "drizzle-orm"
 
 import { getClientIp } from "@/lib/client-ip"
 import { API_RATE_LIMITS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { searchProjects } from "@/lib/search-projects"
 
 // Définir le type de retour pour la recherche
 export interface SearchResult {
@@ -20,103 +21,79 @@ export interface SearchResult {
   type: "project" | "category" | "tag"
 }
 
-// Fonction de recherche avec mise en cache
-const getSearchResults = unstable_cache(
-  async (query: string, limit: number = 10): Promise<SearchResult[]> => {
-    console.log(`[Search API] Searching for: "${query}"`)
+export interface SearchResponse {
+  results: SearchResult[]
+  totalCount: number
+}
 
-    // Vérifier si la requête est valide
-    if (!query || query.length < 2) {
-      return []
+// Category/tag matches are small lookup tables — ILIKE is plenty there.
+// They're only included on the first page (the ⌘K palette use case);
+// the results page paginates projects only.
+async function searchCategories(query: string, limit: number): Promise<SearchResult[]> {
+  const categories = await db
+    .select({ id: category.id, name: category.name })
+    .from(category)
+    .where(ilike(category.name, `%${query}%`))
+    .limit(limit)
+  return categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: null,
+    description: null,
+    logoUrl: null,
+    type: "category" as const,
+  }))
+}
+
+async function searchTags(query: string, limit: number): Promise<SearchResult[]> {
+  const tags = await db
+    .select({ id: tag.id, name: tag.name, slug: tag.slug })
+    .from(tag)
+    .where(
+      and(ilike(tag.name, `%${query}%`), eq(tag.moderationStatus, tagModerationStatus.APPROVED)),
+    )
+    .limit(limit)
+  return tags.map((t) => ({
+    id: t.id,
+    name: `#${t.name}`,
+    slug: t.slug,
+    description: null,
+    logoUrl: null,
+    type: "tag" as const,
+  }))
+}
+
+const getSearchResults = unstable_cache(
+  async (query: string, limit: number, offset: number): Promise<SearchResponse> => {
+    if (!query || query.trim().length < 2) {
+      return { results: [], totalCount: 0 }
     }
 
     try {
-      // Rechercher dans les projets
-      const projects = await db
-        .select({
-          id: project.id,
-          name: project.name,
-          slug: project.slug,
-          description: project.description,
-          logoUrl: project.logoUrl,
-          type: sql<"project">`'project'`.as("type"),
-        })
-        .from(project)
-        .where(
-          and(
-            ilike(project.name, `%${query}%`),
-            sql`${project.launchStatus} IN ('ongoing', 'launched')`,
-          ),
-        )
-        .limit(limit)
+      const projectPage = await searchProjects({ query, limit, offset })
 
-      // Rechercher dans les catégories
-      const categories = await db
-        .select({
-          id: category.id,
-          name: category.name,
-          slug: sql<string | null>`null`.as("slug"),
-          description: sql<string | null>`null`.as("description"),
-          logoUrl: sql<string | null>`null`.as("logoUrl"),
-          type: sql<"category">`'category'`.as("type"),
-        })
-        .from(category)
-        .where(ilike(category.name, `%${query}%`))
-        .limit(limit)
-
-      // Formater les résultats
-      const formattedProjects: SearchResult[] = projects.map((proj) => ({
-        id: proj.id,
-        name: proj.name,
-        slug: proj.slug,
-        description: proj.description,
-        logoUrl: proj.logoUrl,
+      const projectResults: SearchResult[] = projectPage.hits.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        description: p.description,
+        logoUrl: p.logoUrl,
         type: "project" as const,
       }))
 
-      const formattedCategories: SearchResult[] = categories.map((category) => ({
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        description: category.description,
-        logoUrl: category.logoUrl,
-        type: "category" as const,
-      }))
+      if (offset > 0) {
+        return { results: projectResults, totalCount: projectPage.totalCount }
+      }
 
-      // Rechercher dans les tags
-      const tags = await db
-        .select({
-          id: tag.id,
-          name: tag.name,
-          slug: tag.slug,
-        })
-        .from(tag)
-        .where(
-          and(
-            ilike(tag.name, `%${query}%`),
-            eq(tag.moderationStatus, tagModerationStatus.APPROVED),
-          ),
-        )
-        .limit(5)
+      const [categories, tags] = await Promise.all([
+        searchCategories(query.trim(), 5),
+        searchTags(query.trim(), 5),
+      ])
 
-      const formattedTags: SearchResult[] = tags.map((t) => ({
-        id: t.id,
-        name: `#${t.name}`,
-        slug: t.slug,
-        description: null,
-        logoUrl: null,
-        type: "tag" as const,
-      }))
-
-      // Combiner et limiter les résultats
-      const combinedResults = [
-        ...formattedProjects,
-        ...formattedCategories,
-        ...formattedTags,
-      ].slice(0, limit)
-
-      console.log(`[Search API] Found ${combinedResults.length} results`)
-      return combinedResults
+      return {
+        results: [...projectResults, ...categories, ...tags].slice(0, limit),
+        totalCount: projectPage.totalCount,
+      }
     } catch (error) {
       // Re-throw rather than returning []: unstable_cache would otherwise
       // cache the empty result for the full revalidate window, so users keep
@@ -166,13 +143,15 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get("q") || ""
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10", 10) || 10))
+    // Offset is capped to the same deep-page window as the results page:
+    // an unbounded offset would make Postgres sort/skip huge sets AND
+    // create unbounded unstable_cache keys.
+    const offset = Math.min(5000, Math.max(0, parseInt(searchParams.get("offset") || "0", 10) || 0))
 
-    // Obtenir les résultats de recherche
-    const results = await getSearchResults(query, limit)
+    const { results, totalCount } = await getSearchResults(query, limit, offset)
 
-    // Retourner les résultats avec les en-têtes de rate limit
     return NextResponse.json(
-      { results },
+      { results, totalCount },
       {
         headers: {
           "X-RateLimit-Limit": API_RATE_LIMITS.SEARCH.REQUESTS.toString(),
