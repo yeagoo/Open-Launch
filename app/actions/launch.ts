@@ -215,6 +215,17 @@ export async function scheduleLaunch(
   }
   const userId = session.user.id
 
+  // ─── Launch type allowlist (runs before any other logic) ──────────────────
+  // Server action arguments are untrusted at runtime: the TS type is erased
+  // and callers can post any string. Anything outside the allowlist must be
+  // rejected — otherwise an unknown type skips every per-type quota/badge
+  // check below and lands as SCHEDULED (free of payment) with a paid-tier
+  // launch_type written to the row.
+  const ALLOWED_LAUNCH_TYPES: readonly string[] = Object.values(LAUNCH_TYPES)
+  if (!ALLOWED_LAUNCH_TYPES.includes(launchTypeValue)) {
+    throw new Error(`Invalid launch type: ${String(launchTypeValue)}`)
+  }
+
   // ─── Input validation (no DB I/O yet) ──────────────────────────────────────
   let parsedDate: Date
   try {
