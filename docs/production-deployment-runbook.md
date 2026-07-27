@@ -145,7 +145,7 @@ At the last verification, `status --json` reported:
 The application artifact currently serving public traffic was built from:
 
 ```text
-065fe148e34c2540a441025a7f47b0d1ec527d05
+805c25efb2188bb23d3b998eb29affd60f081118
 ```
 
 Current runtime facts:
@@ -153,17 +153,19 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.prebuilt.security-cron-seo-r8.yml`
+  `compose.sitemap-hotfix-r12.yml`
 - deployment marker:
-  `065fe148e34c2540a441025a7f47b0d1ec527d05-security-cron-seo-r7`
+  `20260728-sitemap-hotfix-r12`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 
-The repository's later commit
-`cc7162a3b3255f736094e6ec992a2b5a44e0a945` only changed the bounded,
-one-shot avatar migration script. That exact script was deployed and completed
-through the `r9` operations artifact; it did not require restarting the public
-application.
+The audit-remediation release first deployed commit
+`1fc846d79882420b7b78cabfb66f378397969ee2` through the `r10` plan, including
+migrations 0048–0057. Production sitemap verification then found a cached-Date
+serialization bug; commit `805c25efb2188bb23d3b998eb29affd60f081118`
+fixed it and was deployed as the application-only `r12` hotfix. The exact
+plans, snapshots, journals, migration evidence, and backup records are in
+`docs/deployments/2026-07-27-audit-remediation.md`.
 
 ## Required deployment sequence
 

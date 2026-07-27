@@ -1,6 +1,8 @@
 # 2026-07-27 全站审计修复 + 新功能（0–9 阶段）
 
-Status: 开发完成（42 commits，已推送 main）；**生产部署待执行，迁移必须先于/随部署应用**
+Status: **生产部署完成**（2026-07-28，最终应用 commit
+`805c25efb2188bb23d3b998eb29affd60f081118`）；0048–0057 已应用，评论 FK
+已验证，部署后 hotfix 已发布
 
 本次改造源于四路并行审计（安全 / 数据正确性 / 前端·SEO / 基础设施），覆盖
 0–9 十个阶段：紧急安全修复、数据并发、运维可靠性、SEO 前端、搜索升级、
@@ -116,7 +118,10 @@ tombstone 评论的作者无法编辑/删除它（403）。
 4. **fuma author 匿名化策略**：删用户时评论 author 由清理脚本改为
    `deleted-user`；admin removeUser 路径暂不含自动匿名化（better-auth 无
    delete hook），依赖定期清理。
-5. **0050 FK 手动 VALIDATE**（见上第 2 步）是唯一不能自动化的收尾。
+5. **大型 sitemap 不进入 Next Data Cache**：`users.xml` 与 `projects.xml`
+   未压缩响应分别约 3.6MB / 9.8MB，超过 Next.js 单项 2MB cache 上限。
+   当前请求均返回 200，搜索引擎 50MB 上限也未触及，但每次会重新查询并序列化；
+   后续宜按条目数继续分片，而不是依赖 `unstable_cache`。
 
 ## 四、相关文档
 
@@ -124,3 +129,61 @@ tombstone 评论的作者无法编辑/删除它（403）。
 - 环境变量清单：`lib/env.ts` + `docs/production-runtime.md`
 - 生产 runbook：`docs/production-deployment-runbook.md`
 - 计划档案：`~/.claude/plans/tender-beaming-lerdorf.md`
+
+## 五、生产执行记录（2026-07-28）
+
+### 主部署
+
+- 应用源 commit：
+  `1fc846d79882420b7b78cabfb66f378397969ee2`
+- 计划：
+  `deploy_aat-ee-audit-remediation-r10-20260728`
+- 快照：
+  `snap_aat-ee-audit-remediation-r10-20260728_1785171879384142497`
+- journal：
+  `deploy-deploy_aat-ee-audit-remediation-r10-20260728-20260727171337`
+- 结果：7/7 操作成功，0 失败；应用容器和 `127.0.0.1:8080` 健康检查通过。
+
+迁移容器按顺序应用并登记了 0048–0057 共 10 个手写迁移。清理脚本在应用前后
+均确认四类评论孤儿为 0；三条 Fuma FK 的 `pg_constraint.convalidated` 均为
+`true`；`pg_index` 中 INVALID 索引为 0。
+
+### sitemap hotfix
+
+主部署后的连续 sitemap 验证发现：`unstable_cache` 命中时会把 `Date` 恢复为
+ISO 字符串，blog sitemap 序列化仍调用 `toISOString()`，导致缓存命中请求
+500。修复加入字符串日期兼容与缓存往返回归测试：
+
+- 最终应用 commit：
+  `805c25efb2188bb23d3b998eb29affd60f081118`
+- CI：
+  `30288857076`（TypeScript、Lint、227 tests、Build、dependency audit、
+  Semgrep 全部通过）
+- 计划：
+  `deploy_aat-ee-sitemap-hotfix-r12-20260728`
+- 快照：
+  `snap_aat-ee-sitemap-hotfix-r12-20260728_1785173220403871261`
+- journal：
+  `deploy-deploy_aat-ee-sitemap-hotfix-r12-20260728-20260727172810`
+- 结果：仅替换 `aat-ee-app`，7/7 操作成功，0 失败；未重跑迁移或执行其他
+  数据写入。
+
+### 部署后证据
+
+- `/api/health` 返回 200；容器内带授权调用 deep health 返回 200，
+  Postgres/Redis 均为 `ok`。
+- 同一 `/sitemaps/blog.xml` 连续三次返回 200，覆盖首次生成与缓存命中；
+  sitemap index、reviews、users、projects 均返回 200 和 XML content type。
+- `q=prduct` 返回 10 个搜索结果，搜索页返回 200。
+- AVIF-logo 项目 `fluentdb` 与 CJK 名项目“拼豆AI”（slug `ai`）的 OG 路由
+  均返回有效 PNG。
+- 未授权 deep health、cron 和 upload 请求均返回 401。
+- `drain-email-outbox` 在 `2026-07-27T17:30:29.195Z` 返回 200、无错误；
+  email outbox 当时为空。
+- 未执行会制造生产评论、收藏、通知或举报记录的认证写入抽查。
+- 部署后备份记录：
+  `backup-aat-ee-restic-20260727173253`，状态 success。
+- restic 仓库检查：
+  `check-restic-idrive-e2-20260727173405`，状态 success。
+- 最终 `opsctl status`：doctor errors/warnings 均为 0；deploy gates、backup
+  readiness/history、snapshot coverage 均为 ready。
