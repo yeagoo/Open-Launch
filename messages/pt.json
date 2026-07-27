@@ -1114,5 +1114,15 @@
     "trending": "Projetos em alta",
     "exploreCategories": "Explorar categorias",
     "welcome": "Bem-vindo, {name}"
+  },
+  "bookmark": {
+    "added": "Salvo nos favoritos",
+    "removed": "Removido dos favoritos",
+    "failed": "Ação falhou",
+    "addLabel": "Salvar este projeto",
+    "removeLabel": "Remover favorito",
+    "tab": "Favoritos",
+    "emptyTitle": "Nenhum favorito ainda",
+    "emptyDesc": "Salve projetos para encontrá-los rapidamente"
   }
 }

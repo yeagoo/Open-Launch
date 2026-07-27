@@ -301,6 +301,25 @@ export const upvote = pgTable(
   ],
 )
 
+// User-saved projects (0054). Mirrors the upvote table's integrity model.
+export const bookmark = pgTable(
+  "bookmark",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("bookmark_user_project_uniq").on(table.userId, table.projectId),
+    index("bookmark_project_idx").on(table.projectId),
+  ],
+)
+
 // Tables pour Fuma Comment
 export const fumaRoles = pgTable("fuma_roles", {
   userId: varchar("user_id", { length: 256 }).primaryKey(),

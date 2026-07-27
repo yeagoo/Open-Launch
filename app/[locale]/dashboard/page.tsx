@@ -29,6 +29,7 @@ import { BoostListingButton } from "@/components/dashboard/boost-listing-button"
 import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-card"
 import { DraftProjectRow } from "@/components/dashboard/draft-project-row"
 import { SkillApiKeysCard } from "@/components/dashboard/skill-api-keys-card"
+import { getUserBookmarkedProjects } from "@/app/actions/bookmarks"
 import { getUserCreatedProjects, getUserUpvotedProjects } from "@/app/actions/projects"
 import { listSkillApiKeys } from "@/app/actions/skill-api-keys"
 
@@ -64,6 +65,7 @@ export default async function Dashboard({
     redirect("/sign-in")
   }
   const t = await getTranslations("dashboardPage")
+  const tBookmark = await getTranslations("bookmark")
 
   // Set when the Stripe Payment Link redirected here via
   // /payment/verify after a successful directory-order checkout.
@@ -76,10 +78,12 @@ export default async function Dashboard({
   // Get data from actions
   const upvotedProjectsData = await getUserUpvotedProjects()
   const createdProjectsData = await getUserCreatedProjects()
+  const bookmarkedProjectsData = await getUserBookmarkedProjects()
   const skillApiKeys = await listSkillApiKeys()
 
   // Process the data to match our expected formats
   const upvotedProjects = upvotedProjectsData.map((item) => item.project) as BaseProject[]
+  const bookmarkedProjects = bookmarkedProjectsData.map((item) => item.project) as BaseProject[]
   const createdProjects = createdProjectsData as BaseProject[]
 
   // projects with badge (launched + top 3)
@@ -195,7 +199,7 @@ export default async function Dashboard({
               </CardHeader>
               <CardContent className="pb-1">
                 <Tabs defaultValue="active">
-                  <TabsList className="mb-4 grid w-full grid-cols-3">
+                  <TabsList className="mb-4 grid w-full grid-cols-4">
                     <TabsTrigger
                       value="active"
                       className="cursor-pointer px-1 py-1.5 text-xs sm:px-3 sm:py-1 sm:text-sm"
@@ -213,6 +217,12 @@ export default async function Dashboard({
                       className="cursor-pointer px-1 py-1.5 text-xs sm:px-3 sm:py-1 sm:text-sm"
                     >
                       {t("past")} ({previousLaunches.length})
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="bookmarks"
+                      className="cursor-pointer px-1 py-1.5 text-xs sm:px-3 sm:py-1 sm:text-sm"
+                    >
+                      {tBookmark("tab")} ({bookmarkedProjects.length})
                     </TabsTrigger>
                   </TabsList>
 
@@ -286,6 +296,33 @@ export default async function Dashboard({
                         <p className="text-muted-foreground mb-4 text-sm">{t("noPastDesc")}</p>
                         <Button size="sm" asChild>
                           <Link href="/projects/submit">{t("submitProject")}</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </TabsContent>
+                  <TabsContent value="bookmarks" className="mt-0">
+                    {bookmarkedProjects.length > 0 ? (
+                      <div className="space-y-3">
+                        {
+                          // No boost button: bookmarked projects belong to
+                          // other users, and the boost action only works on
+                          // your own projects.
+                          bookmarkedProjects.map((project) => (
+                            <DashboardProjectCard key={project.id} {...project} />
+                          ))
+                        }
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="bg-secondary/50 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
+                          <RiCalendarLine className="text-muted-foreground h-6 w-6" />
+                        </div>
+                        <h3 className="mb-1 font-medium">{tBookmark("emptyTitle")}</h3>
+                        <p className="text-muted-foreground mb-4 text-sm">
+                          {tBookmark("emptyDesc")}
+                        </p>
+                        <Button size="sm" asChild>
+                          <Link href="/trending">{t("exploreProjects")}</Link>
                         </Button>
                       </div>
                     )}

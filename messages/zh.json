@@ -1102,5 +1102,15 @@
     "trending": "热门项目",
     "exploreCategories": "探索分类",
     "welcome": "欢迎，{name}"
+  },
+  "bookmark": {
+    "added": "已收藏",
+    "removed": "已取消收藏",
+    "failed": "操作失败",
+    "addLabel": "收藏该项目",
+    "removeLabel": "取消收藏",
+    "tab": "收藏",
+    "emptyTitle": "暂无收藏",
+    "emptyDesc": "收藏项目后可在此快速找到"
   }
 }

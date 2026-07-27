@@ -1118,5 +1118,15 @@
     "trending": "Proyectos en tendencia",
     "exploreCategories": "Explorar categorías",
     "welcome": "Bienvenido, {name}"
+  },
+  "bookmark": {
+    "added": "Guardado en marcadores",
+    "removed": "Eliminado de marcadores",
+    "failed": "Acción fallida",
+    "addLabel": "Guardar este proyecto",
+    "removeLabel": "Quitar marcador",
+    "tab": "Marcadores",
+    "emptyTitle": "Aún no hay marcadores",
+    "emptyDesc": "Guarda proyectos para encontrarlos rápidamente"
   }
 }

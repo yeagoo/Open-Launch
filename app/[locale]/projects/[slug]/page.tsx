@@ -22,6 +22,7 @@ import { getCurrentUserId } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
+import { BookmarkButton } from "@/components/project/bookmark-button"
 import { CommentsLazy } from "@/components/project/comments-lazy"
 import { EditButton } from "@/components/project/edit-button"
 import { LongDescription } from "@/components/project/long-description"
@@ -34,6 +35,7 @@ import { RelatedPagesCard } from "@/components/project/sidebar/related-pages-car
 import { VisitWebsiteCard } from "@/components/project/sidebar/visit-website-card"
 import { UpvoteButton } from "@/components/project/upvote-button"
 import { BreadcrumbSchema, ProjectSchema } from "@/components/seo/structured-data"
+import { hasUserBookmarked } from "@/app/actions/bookmarks"
 
 // Types
 interface ProjectPageProps {
@@ -132,12 +134,16 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   // in this project) calls it internally too.
   const userId = await getCurrentUserId()
   const hasUpvoted = userId ? await hasUserUpvoted(projectData.id) : false
+  const hasBookmarked = userId ? await hasUserBookmarked(projectData.id) : false
 
   const scheduledDate = projectData.scheduledLaunchDate
     ? new Date(projectData.scheduledLaunchDate)
     : null
 
   const isActiveLaunch = projectData.launchStatus === "ongoing"
+  // Mirror the server-side toggleBookmark guard: only publicly live
+  // projects can be bookmarked, so don't offer the button otherwise.
+  const canBookmark = isActiveLaunch || projectData.launchStatus === "launched"
 
   const isScheduled = projectData.launchStatus === "scheduled"
 
@@ -280,6 +286,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       <span className="text-foreground">{projectData.upvoteCount} upvotes</span>
                     </div>
                   )}
+                  {canBookmark && (
+                    <BookmarkButton
+                      projectId={projectData.id}
+                      initialBookmarked={hasBookmarked}
+                      isAuthenticated={Boolean(userId)}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -347,6 +360,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     <div className="border-muted bg-muted flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium">
                       <span className="text-foreground">{projectData.upvoteCount} upvotes</span>
                     </div>
+                  )}
+                  {canBookmark && (
+                    <BookmarkButton
+                      projectId={projectData.id}
+                      initialBookmarked={hasBookmarked}
+                      isAuthenticated={Boolean(userId)}
+                    />
                   )}
                 </div>
               </div>

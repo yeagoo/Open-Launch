@@ -1114,5 +1114,15 @@
     "trending": "Trending Projects",
     "exploreCategories": "Explore categories",
     "welcome": "Welcome, {name}"
+  },
+  "bookmark": {
+    "added": "Saved to bookmarks",
+    "removed": "Removed from bookmarks",
+    "failed": "Action failed",
+    "addLabel": "Bookmark this project",
+    "removeLabel": "Remove bookmark",
+    "tab": "Bookmarks",
+    "emptyTitle": "No bookmarks yet",
+    "emptyDesc": "Save projects to find them quickly later"
   }
 }

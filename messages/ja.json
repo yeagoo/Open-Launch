@@ -1114,5 +1114,15 @@
     "trending": "トレンドプロジェクト",
     "exploreCategories": "カテゴリを探す",
     "welcome": "ようこそ、{name}"
+  },
+  "bookmark": {
+    "added": "ブックマークに保存しました",
+    "removed": "ブックマークを解除しました",
+    "failed": "操作に失敗しました",
+    "addLabel": "このプロジェクトをブックマーク",
+    "removeLabel": "ブックマークを解除",
+    "tab": "ブックマーク",
+    "emptyTitle": "ブックマークはまだありません",
+    "emptyDesc": "プロジェクトを保存するとここに表示されます"
   }
 }

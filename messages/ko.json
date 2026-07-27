@@ -1110,5 +1110,15 @@
     "trending": "인기 프로젝트",
     "exploreCategories": "카테고리 둘러보기",
     "welcome": "환영합니다, {name}"
+  },
+  "bookmark": {
+    "added": "북마크에 저장했습니다",
+    "removed": "북마크를 해제했습니다",
+    "failed": "작업 실패",
+    "addLabel": "이 프로젝트 북마크",
+    "removeLabel": "북마크 해제",
+    "tab": "북마크",
+    "emptyTitle": "북마크가 없습니다",
+    "emptyDesc": "프로젝트를 저장하면 여기에서 빠르게 찾을 수 있습니다"
   }
 }

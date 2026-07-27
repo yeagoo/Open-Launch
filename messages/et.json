@@ -1114,5 +1114,15 @@
     "trending": "Populaarsed projektid",
     "exploreCategories": "Avasta kategooriaid",
     "welcome": "Tere tulemast, {name}"
+  },
+  "bookmark": {
+    "added": "Salvestatud järjehoidjatesse",
+    "removed": "Eemaldatud järjehoidjatest",
+    "failed": "Toiming ebaõnnestus",
+    "addLabel": "Lisa see projekt järjehoidjatesse",
+    "removeLabel": "Eemalda järjehoidja",
+    "tab": "Järjehoidjad",
+    "emptyTitle": "Järjehoidjaid pole",
+    "emptyDesc": "Salvesta projekte, et leida need hiljem kiiresti"
   }
 }
