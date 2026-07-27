@@ -19,6 +19,7 @@ import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata
 import { getProjectOutboundHref, getProjectWebsiteRelAttribute } from "@/lib/link-utils"
 import { getProjectBySlug, hasUserUpvoted } from "@/lib/project-details-query"
 import { getCurrentUserId } from "@/lib/server-auth"
+import { hasPublicProfile } from "@/lib/user-profile-query"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -135,6 +136,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const userId = await getCurrentUserId()
   const hasUpvoted = userId ? await hasUserUpvoted(projectData.id) : false
   const hasBookmarked = userId ? await hasUserBookmarked(projectData.id) : false
+  // The maker card links to the public profile only when one exists —
+  // banned users, bots, and profile-less creators 404 there.
+  const creatorLinkable = projectData.creator?.id
+    ? await hasPublicProfile(projectData.creator.id)
+    : false
 
   const scheduledDate = projectData.scheduledLaunchDate
     ? new Date(projectData.scheduledLaunchDate)
@@ -484,7 +490,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 7. Share (utility, lowest priority) */}
           <div className="lg:sticky lg:top-14 lg:h-fit">
             <div className="space-y-4 py-6">
-              <MakerCard creator={projectData.creator ?? null} />
+              <MakerCard creator={projectData.creator ?? null} linkable={creatorLinkable} />
 
               <VisitWebsiteCard
                 websiteUrl={projectData.websiteUrl}

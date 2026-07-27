@@ -22,6 +22,7 @@ import {
   type SitemapEntry,
   type SitemapKind,
 } from "@/lib/sitemap-xml"
+import { listPublicProfileUserIds } from "@/lib/user-profile-query"
 
 // The database-backed variants must not execute during `next build`: CI and a
 // clean standalone build intentionally have no production database. Runtime
@@ -98,6 +99,18 @@ async function entriesFor(kind: SitemapKind): Promise<SitemapEntry[]> {
         lastModified: item.updatedAt,
         changeFrequency: "weekly",
         priority: 0.7,
+      }),
+    )
+  }
+
+  if (kind === "users") {
+    // Only users with at least one publicly-visible project (same
+    // predicate as the profile page — no empty/banned profiles).
+    const userIds = await listPublicProfileUserIds()
+    return userIds.flatMap((id) =>
+      localizedSitemapEntries(`/users/${id}`, {
+        changeFrequency: "weekly",
+        priority: 0.5,
       }),
     )
   }

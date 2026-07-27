@@ -11,7 +11,15 @@ export interface SitemapEntry {
   alternates?: Record<string, string>
 }
 
-export const SITEMAP_KINDS = ["static", "projects", "tags", "blog", "reviews", "editorial"] as const
+export const SITEMAP_KINDS = [
+  "static",
+  "projects",
+  "tags",
+  "blog",
+  "reviews",
+  "users",
+  "editorial",
+] as const
 export type SitemapKind = (typeof SITEMAP_KINDS)[number]
 
 function escapeXml(value: string): string {

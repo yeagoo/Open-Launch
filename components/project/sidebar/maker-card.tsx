@@ -4,6 +4,8 @@
 // to be in next.config.ts remotePatterns; an unknown host would throw at
 // runtime. A 40px <img> tag is the right tool here — small, plenty of
 // browser cache, no optimization win to gain.
+import Link from "next/link"
+
 import { useTranslations } from "next-intl"
 
 interface MakerCardProps {
@@ -12,6 +14,9 @@ interface MakerCardProps {
     name: string | null
     image: string | null
   } | null
+  // Only link to the public profile when one actually exists (banned
+  // users, bots, and users with no publicly-visible project 404 there).
+  linkable?: boolean
 }
 
 /**
@@ -19,7 +24,7 @@ interface MakerCardProps {
  * "Publisher" row — a 12px avatar disappears, a 40px one establishes
  * "this is a real person who made this".
  */
-export function MakerCard({ creator }: MakerCardProps) {
+export function MakerCard({ creator, linkable = false }: MakerCardProps) {
   const t = useTranslations("project.sidebar")
 
   if (!creator) {
@@ -55,9 +60,18 @@ export function MakerCard({ creator }: MakerCardProps) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-foreground truncate text-sm font-medium">
-            {creator.name || "Anonymous"}
-          </p>
+          {linkable ? (
+            <Link
+              href={`/users/${creator.id}`}
+              className="text-foreground hover:text-primary block truncate text-sm font-medium transition-colors"
+            >
+              {creator.name || "Anonymous"}
+            </Link>
+          ) : (
+            <p className="text-foreground truncate text-sm font-medium">
+              {creator.name || "Anonymous"}
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ async function requireUserId(): Promise<string> {
 export interface NotificationItem {
   id: string
   type: string
+  actorId: string | null
   actorName: string | null
   projectName: string | null
   projectSlug: string | null
@@ -53,6 +54,7 @@ export async function getNotifications(page = 1): Promise<{
         metadata: notification.metadata,
         readAt: notification.readAt,
         createdAt: notification.createdAt,
+        actorId: notification.actorId,
         actorName: user.name,
         projectName: project.name,
         projectSlug: project.slug,
@@ -86,6 +88,7 @@ export async function getRecentUnreadNotifications(limit = 5): Promise<Notificat
       metadata: notification.metadata,
       readAt: notification.readAt,
       createdAt: notification.createdAt,
+      actorId: notification.actorId,
       actorName: user.name,
       projectName: project.name,
       projectSlug: project.slug,
