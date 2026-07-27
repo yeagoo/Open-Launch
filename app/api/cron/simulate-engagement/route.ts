@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache"
+import { revalidateTag } from "next/cache"
 import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
@@ -7,6 +7,7 @@ import { and, eq, gte, inArray, lt, sql } from "drizzle-orm"
 
 import { BANNED_OPENINGS, formatCommentContent, generateComment } from "@/lib/ai-comment"
 import { dailyVoteTarget, isPaidLaunchType, votesDueByNow } from "@/lib/bot-upvote-plan"
+import { HOME_PROJECTS_TAG } from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
@@ -101,66 +102,76 @@ export async function GET(request: Request) {
       const windowEndMs = launchWindowEnd.getTime()
       const botIds = new Set(bots.map((b) => b.id))
 
-      // Current vote rows (real + bot) for every ongoing project in one pass.
-      const existingVotes = await db
-        .select({ projectId: upvote.projectId, userId: upvote.userId })
-        .from(upvote)
-        .where(
-          inArray(
-            upvote.projectId,
-            ongoingProjects.map((p) => p.id),
-          ),
-        )
+      // Serialize the whole read-plan-insert against overlapping ticks: two
+      // concurrent runs each pick DISJOINT random bot subsets for the same
+      // gap, so onConflictDoNothing doesn't catch the overshoot (only dup
+      // bots conflict). A single transaction-scoped advisory lock makes the
+      // second tick re-read AFTER the first tick's votes are visible.
+      await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('simulate-engagement-upvotes'))`)
 
-      const totalVotes = new Map<string, number>()
-      const botVoters = new Map<string, Set<string>>()
-      for (const row of existingVotes) {
-        totalVotes.set(row.projectId, (totalVotes.get(row.projectId) ?? 0) + 1)
-        if (botIds.has(row.userId)) {
-          const set = botVoters.get(row.projectId) ?? new Set<string>()
-          set.add(row.userId)
-          botVoters.set(row.projectId, set)
+        // Current vote rows (real + bot) for every ongoing project in one pass.
+        const existingVotes = await tx
+          .select({ projectId: upvote.projectId, userId: upvote.userId })
+          .from(upvote)
+          .where(
+            inArray(
+              upvote.projectId,
+              ongoingProjects.map((p) => p.id),
+            ),
+          )
+
+        const totalVotes = new Map<string, number>()
+        const botVoters = new Map<string, Set<string>>()
+        for (const row of existingVotes) {
+          totalVotes.set(row.projectId, (totalVotes.get(row.projectId) ?? 0) + 1)
+          if (botIds.has(row.userId)) {
+            const set = botVoters.get(row.projectId) ?? new Set<string>()
+            set.add(row.userId)
+            botVoters.set(row.projectId, set)
+          }
         }
-      }
 
-      const pending: Array<{ id: string; userId: string; projectId: string; createdAt: Date }> = []
+        const pending: Array<{ id: string; userId: string; projectId: string; createdAt: Date }> =
+          []
 
-      for (const proj of ongoingProjects) {
-        const isPaid = isPaidLaunchType(proj.launchType)
-        const target = dailyVoteTarget(proj.id, windowStartMs, isPaid)
-        const due = votesDueByNow(target, windowStartMs, windowEndMs, nowMs)
-        const current = totalVotes.get(proj.id) ?? 0
-        const alreadyVoted = botVoters.get(proj.id) ?? new Set<string>()
-        const eligibleBots = bots.filter((b) => !alreadyVoted.has(b.id))
+        for (const proj of ongoingProjects) {
+          const isPaid = isPaidLaunchType(proj.launchType)
+          const target = dailyVoteTarget(proj.id, windowStartMs, isPaid)
+          const due = votesDueByNow(target, windowStartMs, windowEndMs, nowMs)
+          const current = totalVotes.get(proj.id) ?? 0
+          const alreadyVoted = botVoters.get(proj.id) ?? new Set<string>()
+          const eligibleBots = bots.filter((b) => !alreadyVoted.has(b.id))
 
-        // Only fill the gap, capped by bots that haven't voted on this project.
-        const need = Math.min(Math.max(due - current, 0), eligibleBots.length)
-        if (need === 0) continue
+          // Only fill the gap, capped by bots that haven't voted on this project.
+          const need = Math.min(Math.max(due - current, 0), eligibleBots.length)
+          if (need === 0) continue
 
-        for (const bot of shuffle(eligibleBots).slice(0, need)) {
-          pending.push({
-            id: crypto.randomUUID(),
-            userId: bot.id,
-            projectId: proj.id,
-            createdAt: new Date(),
-          })
+          for (const bot of shuffle(eligibleBots).slice(0, need)) {
+            pending.push({
+              id: crypto.randomUUID(),
+              userId: bot.id,
+              projectId: proj.id,
+              createdAt: new Date(),
+            })
+          }
+
+          console.log(
+            `  👍 ${proj.name}${isPaid ? " (paid)" : ""}: target ${target}, due ${due}, have ${current} → +${need}`,
+          )
+        }
+
+        if (pending.length > 0) {
+          // Single batch insert; onConflictDoNothing absorbs the rare race where a
+          // real user voted between the read above and this write.
+          await tx.insert(upvote).values(pending).onConflictDoNothing()
+          results.upvotesAdded += pending.length
         }
 
         console.log(
-          `  👍 ${proj.name}${isPaid ? " (paid)" : ""}: target ${target}, due ${due}, have ${current} → +${need}`,
+          `👍 Daily distribution: +${pending.length} bot votes across ${ongoingProjects.length} projects (${launchWindowStart.toISOString()} → ${launchWindowEnd.toISOString()})`,
         )
-      }
-
-      if (pending.length > 0) {
-        // Single batch insert; onConflictDoNothing absorbs the rare race where a
-        // real user voted between the read above and this write.
-        await db.insert(upvote).values(pending).onConflictDoNothing()
-        results.upvotesAdded += pending.length
-      }
-
-      console.log(
-        `👍 Daily distribution: +${pending.length} bot votes across ${ongoingProjects.length} projects (${launchWindowStart.toISOString()} → ${launchWindowEnd.toISOString()})`,
-      )
+      })
     }
 
     // 4. COMMENT LOGIC — 5 unique bots cycle across 2-5 projects.
@@ -334,8 +345,11 @@ export async function GET(request: Request) {
       results.commentsRewritten > 0
     ) {
       console.log("🔄 Revalidating cache...")
-      revalidatePath("/")
-      revalidatePath("/trending")
+      // The home/trending data lives in unstable_cache (HOME_PROJECTS_TAG),
+      // which revalidatePath cannot touch — and "/"/"/trending" aren't even
+      // the locale-prefixed page paths. Bust the tag so bot votes surface
+      // immediately instead of at the 10-minute TTL.
+      revalidateTag(HOME_PROJECTS_TAG, "max")
     }
 
     console.log("🎉 Virtual engagement simulation completed!")
