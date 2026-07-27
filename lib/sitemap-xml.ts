@@ -5,7 +5,10 @@ export type SitemapChangeFrequency =
 
 export interface SitemapEntry {
   url: string
-  lastModified?: Date
+  // `unstable_cache` JSON-serializes Date values before returning a cache hit.
+  // Keep the serialized shape valid instead of assuming every caller still
+  // holds the original Date instance.
+  lastModified?: Date | string
   changeFrequency?: SitemapChangeFrequency
   priority?: number
   alternates?: Record<string, string>
@@ -77,10 +80,13 @@ export function serializeSitemap(entries: SitemapEntry[]): string {
             `<xhtml:link rel="alternate" hreflang="${escapeXml(language)}" href="${escapeXml(href)}" />`,
         )
         .join("")
+      const lastModified = entry.lastModified
+        ? new Date(entry.lastModified).toISOString()
+        : undefined
       return [
         "<url>",
         `<loc>${escapeXml(entry.url)}</loc>`,
-        entry.lastModified ? `<lastmod>${entry.lastModified.toISOString()}</lastmod>` : "",
+        lastModified ? `<lastmod>${lastModified}</lastmod>` : "",
         entry.changeFrequency ? `<changefreq>${entry.changeFrequency}</changefreq>` : "",
         entry.priority === undefined ? "" : `<priority>${entry.priority.toFixed(1)}</priority>`,
         alternates,

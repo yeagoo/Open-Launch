@@ -34,6 +34,18 @@ describe("sitemap XML", () => {
     expect(xml).toContain("<lastmod>2026-07-01T00:00:00.000Z</lastmod>")
   })
 
+  it("accepts dates restored from the unstable cache JSON payload", () => {
+    const cachedEntries = JSON.parse(
+      JSON.stringify([
+        englishSitemapEntry("/blog/cached", {
+          lastModified: new Date("2026-07-27T12:34:56.000Z"),
+        }),
+      ]),
+    )
+
+    expect(serializeSitemap(cachedEntries)).toContain("<lastmod>2026-07-27T12:34:56.000Z</lastmod>")
+  })
+
   it("emits every locale and x-default without inventing lastmod", () => {
     const entries = localizedSitemapEntries("/projects/example")
     expect(entries).toHaveLength(8)
