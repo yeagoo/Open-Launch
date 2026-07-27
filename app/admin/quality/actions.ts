@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
@@ -8,6 +8,7 @@ import { project } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { PROJECT_RELATED_TAG } from "@/lib/cache-tags"
 
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -34,4 +35,7 @@ export async function setProjectLowQuality(projectId: string, isLowQuality: bool
     })
     .where(eq(project.id, projectId))
   revalidatePath("/admin/quality")
+  // Low-quality projects are filtered out of the "related products"
+  // recommendations (6h TTL cache) — bust so a flag takes effect now.
+  revalidateTag(PROJECT_RELATED_TAG, "max")
 }

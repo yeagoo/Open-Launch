@@ -4,9 +4,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { crawledData, launchStatus, project, upvote } from "@/drizzle/db/schema"
 import { subHours } from "date-fns"
-import { and, count, desc, eq, gte, inArray, lt, lte } from "drizzle-orm"
+import { and, count, desc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm"
 
-import { HOME_PROJECTS_TAG, SITEMAP_ENTRIES_TAG, TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
+import {
+  HOME_PROJECTS_TAG,
+  SITEMAP_ENTRIES_TAG,
+  TOP_CATEGORIES_TAG,
+  WINNERS_TAG,
+} from "@/lib/cache-tags"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { getCurrentLaunchWindow, getLaunchWindowForDate } from "@/lib/launch-window"
 
@@ -164,6 +169,7 @@ export async function GET(request: NextRequest) {
           )
 
           let currentRank = 1
+          const rankUpdates: Array<{ id: string; rank: number; name: string; votes: number }> = []
           for (const group of rankGroups) {
             if (currentRank > 3) break
 
@@ -172,21 +178,33 @@ export async function GET(request: NextRequest) {
             )
 
             for (const projectData of group) {
-              await tx
-                .update(project)
-                .set({
-                  dailyRanking: currentRank,
-                  updatedAt: now,
-                })
-                .where(eq(project.id, projectData.projectId))
-
-              console.log(
-                `Classé #${currentRank}: ${projectData.projectName} (${projectData.projectId}) avec ${projectData.upvoteCount} upvotes [ex-aequo: ${group.length > 1 ? "oui" : "non"}]`,
-              )
-
+              rankUpdates.push({
+                id: projectData.projectId,
+                rank: currentRank,
+                name: projectData.projectName,
+                votes: projectData.upvoteCount,
+              })
               totalRanked++
             }
             currentRank++
+          }
+
+          // One UPDATE ... FROM (VALUES ...) instead of N serial updates:
+          // this runs inside the ONGOING→LAUNCHED transaction, so every
+          // extra statement extends how long those row locks are held.
+          if (rankUpdates.length > 0) {
+            await tx.execute(sql`
+              UPDATE ${project}
+              SET daily_ranking = v.rank, updated_at = ${now}
+              FROM (VALUES ${sql.join(
+                rankUpdates.map((u) => sql`(${u.id}::text, ${u.rank}::integer)`),
+                sql`, `,
+              )}) AS v(id, rank)
+              WHERE ${project.id} = v.id
+            `)
+            for (const u of rankUpdates) {
+              console.log(`Classé #${u.rank}: ${u.name} (${u.id}) avec ${u.votes} upvotes`)
+            }
           }
         }
         console.log(`Total de projets classés: ${totalRanked}`)
@@ -231,7 +249,8 @@ export async function GET(request: NextRequest) {
       revalidateTag(SITEMAP_ENTRIES_TAG, "max")
       revalidateTag(HOME_PROJECTS_TAG, "max")
       revalidateTag(TOP_CATEGORIES_TAG, "max")
-      console.log("✅ Project sitemap regenerated + home/category caches busted")
+      revalidateTag(WINNERS_TAG, "max")
+      console.log("✅ Project sitemap regenerated + home/category/winners caches busted")
     }
 
     return NextResponse.json({

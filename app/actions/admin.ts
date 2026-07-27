@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
@@ -8,6 +9,7 @@ import { addDays, format } from "date-fns"
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
 
 import { auth } from "@/lib/auth"
+import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
 import { countInt } from "@/lib/db-utils"
 
@@ -183,6 +185,9 @@ export async function addCategory(name: string) {
       createdAt: new Date(),
       updatedAt: new Date(),
     })
+    // Home sidebar top-categories cache (1h TTL) — reflect the new
+    // category immediately.
+    revalidateTag(TOP_CATEGORIES_TAG, "max")
     return { success: true }
   } catch (error) {
     console.error("Error adding category:", error)
