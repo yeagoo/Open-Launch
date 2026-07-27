@@ -3,8 +3,8 @@
 import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
-import { commentReport, fumaComments } from "@/drizzle/db/schema"
-import { and, eq, isNull } from "drizzle-orm"
+import { commentReport, fumaComments, notification } from "@/drizzle/db/schema"
+import { and, eq, inArray, isNull } from "drizzle-orm"
 
 import { logAdminAction } from "@/lib/admin-audit"
 import { auth } from "@/lib/auth"
@@ -54,6 +54,23 @@ export async function listPendingCommentReports(): Promise<CommentReportRow[]> {
   return rows.map((row) => ({ ...row, reportCount: counts.get(row.commentId) ?? 1 }))
 }
 
+// Notifications quoting a comment (comment/reply/mention excerpt) must
+// not outlive its moderation — otherwise a victim's notification center
+// keeps displaying the exact abusive text the admin just removed.
+async function deleteNotificationsForComment(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  commentId: number,
+) {
+  await tx
+    .delete(notification)
+    .where(
+      and(
+        eq(notification.commentId, commentId),
+        inArray(notification.type, ["comment", "reply", "mention"]),
+      ),
+    )
+}
+
 // Tombstone content that replaces a hidden comment's body. Plain-text
 // Tiptap doc — rendered by the same ContentRenderer as normal comments.
 const TOMBSTONE_CONTENT = {
@@ -90,6 +107,8 @@ export async function hideReportedComment(reportId: string): Promise<void> {
       .where(
         and(eq(commentReport.commentId, report.commentId), eq(commentReport.status, "pending")),
       )
+
+    await deleteNotificationsForComment(tx, report.commentId)
   })
 
   await logAdminAction({
@@ -118,6 +137,7 @@ export async function deleteReportedComment(reportId: string): Promise<void> {
     await tx.delete(fumaComments).where(eq(fumaComments.id, report.commentId))
     // The comment FK cascades the report rows themselves, so there is
     // nothing to mark actioned.
+    await deleteNotificationsForComment(tx, report.commentId)
   })
 
   await logAdminAction({
