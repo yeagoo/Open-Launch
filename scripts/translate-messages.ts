@@ -20,6 +20,16 @@ import * as path from "path"
 type LocaleCode = "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
 
 const ALL_LOCALES: LocaleCode[] = ["zh", "es", "pt", "fr", "ja", "ko", "et"]
+const MESSAGE_OUTPUT_PATHS: Record<LocaleCode, string> = {
+  zh: path.join(process.cwd(), "messages", "zh.json"),
+  es: path.join(process.cwd(), "messages", "es.json"),
+  pt: path.join(process.cwd(), "messages", "pt.json"),
+  fr: path.join(process.cwd(), "messages", "fr.json"),
+  ja: path.join(process.cwd(), "messages", "ja.json"),
+  ko: path.join(process.cwd(), "messages", "ko.json"),
+  et: path.join(process.cwd(), "messages", "et.json"),
+}
+const FORBIDDEN_PATH_SEGMENTS = new Set(["__proto__", "prototype", "constructor"])
 
 const LOCALE_NAMES: Record<LocaleCode, string> = {
   zh: "Simplified Chinese",
@@ -94,15 +104,19 @@ function flatten(obj: Record<string, unknown>, prefix = ""): FlatEntry[] {
 }
 
 function unflatten(entries: FlatEntry[]): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
+  const out = Object.create(null) as Record<string, unknown>
   for (const { path, value } of entries) {
     const parts = path.split(".")
+    if (parts.some((part) => FORBIDDEN_PATH_SEGMENTS.has(part))) {
+      throw new Error(`Unsafe translation key path: ${path}`)
+    }
     let current: Record<string, unknown> = out
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i]
       if (!(part in current) || typeof current[part] !== "object") {
-        current[part] = {}
+        current[part] = Object.create(null) as Record<string, unknown>
       }
+      // nosemgrep: javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop -- every path segment is rejected above if it can reach Object.prototype, and every container has a null prototype.
       current = current[part] as Record<string, unknown>
     }
     current[parts[parts.length - 1]] = value
@@ -118,7 +132,7 @@ async function translateBatch(
   if (!apiKey) throw new Error("DEEPSEEK_API_KEY is not set")
   const model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash"
 
-  const inputMap: Record<string, string> = {}
+  const inputMap = Object.create(null) as Record<string, string>
   for (const e of entries) inputMap[e.path] = e.value
 
   const systemPrompt = `You are a professional UI translator. Translate the values of the JSON object below from English to ${LOCALE_NAMES[targetLocale]}.
@@ -199,7 +213,7 @@ async function translateLocale(targetLocale: LocaleCode, enFlat: FlatEntry[]): P
 
   // Chunk the catalog so each DeepSeek response stays under the output
   // token cap. Merge the partial maps back into one.
-  const merged: Record<string, string> = {}
+  const merged = Object.create(null) as Record<string, string>
   for (let i = 0; i < enFlat.length; i += CHUNK_SIZE) {
     const chunk = enFlat.slice(i, i + CHUNK_SIZE)
     const partial = await translateBatch(chunk, targetLocale)
@@ -212,7 +226,7 @@ async function translateLocale(targetLocale: LocaleCode, enFlat: FlatEntry[]): P
   }))
 
   const out = unflatten(translatedEntries)
-  const filePath = path.join(process.cwd(), "messages", `${targetLocale}.json`)
+  const filePath = MESSAGE_OUTPUT_PATHS[targetLocale]
   await fs.writeFile(filePath, JSON.stringify(out, null, 2) + "\n", "utf-8")
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
@@ -243,7 +257,7 @@ async function main() {
     try {
       await translateLocale(locale, enFlat)
     } catch (error) {
-      console.error(`  ✗ ${locale} failed:`, error instanceof Error ? error.message : error)
+      console.error("Translation failed:", locale, error instanceof Error ? error.message : error)
     }
   }
 

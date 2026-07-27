@@ -5,6 +5,7 @@
 ## 快速开始
 
 1. 复制示例文件：
+
 ```bash
 cp .env.example .env
 ```
@@ -33,11 +34,13 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 **示例**:
+
 ```env
-BETTER_AUTH_SECRET=Kj8sN2mQ9pL4xV7wR3tY6uH5gF8dS1aZ
+BETTER_AUTH_SECRET=<使用上方命令生成>
 ```
 
 ⚠️ **安全提示**:
+
 - 必须是随机生成的字符串
 - 长度至少 32 字符
 - 生产环境中绝不要使用示例值
@@ -63,6 +66,7 @@ DATABASE_URL=postgresql://postgres:pass@db.xxx.supabase.co:5432/postgres
 ```
 
 **如何获取**:
+
 - 本地: 安装 PostgreSQL
 - 云服务: Vercel Postgres, Supabase, Neon, Railway
 
@@ -102,6 +106,7 @@ R2_PUBLIC_DOMAIN=https://files.yourdomain.com
 ```
 
 **获取步骤**:
+
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. 进入 R2 存储
 3. 创建存储桶
@@ -120,6 +125,7 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 ```
 
 **获取步骤**:
+
 1. 注册 [Resend](https://resend.com/)
 2. 验证域名
 3. 创建 API 密钥
@@ -134,8 +140,8 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 ### 📍 OAuth 回调地址（重要！）
 
-| 平台 | 本地开发 | 生产环境 |
-|-----|---------|---------|
+| 平台       | 本地开发                                         | 生产环境                                          |
+| ---------- | ------------------------------------------------ | ------------------------------------------------- |
 | **Google** | `http://localhost:3000/api/auth/callback/google` | `https://yourdomain.com/api/auth/callback/google` |
 | **GitHub** | `http://localhost:3000/api/auth/callback/github` | `https://yourdomain.com/api/auth/callback/github` |
 
@@ -185,7 +191,8 @@ GITHUB_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 4. 创建后点击 **"Generate a new client secret"**
 5. 复制 Client ID 和 Client Secret
 
-⚠️ **注意**: 
+⚠️ **注意**:
+
 - GitHub 每个 OAuth App 只能配置一个回调 URL
 - 建议为开发和生产创建两个独立的 OAuth App
 - Client Secret 只显示一次，请立即复制保存
@@ -219,6 +226,7 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx
 ### 2. STRIPE_WEBHOOK_SECRET
 
 **本地开发（推荐）：**
+
 ```bash
 # 1. 安装 Stripe CLI
 brew install stripe/stripe-cli/stripe  # macOS
@@ -233,6 +241,7 @@ stripe listen --forward-to localhost:3000/api/auth/stripe/webhook
 ```
 
 **生产环境：**
+
 1. 访问 [Stripe Webhooks](https://dashboard.stripe.com/webhooks)
 2. 点击 **"+ Add endpoint"**
 3. URL: `https://yourdomain.com/api/auth/stripe/webhook`
@@ -296,7 +305,8 @@ DISCORD_LAUNCH_WEBHOOK_URL=https://discord.com/api/webhooks/xxxxx/xxxxx
    - 右键频道 > 编辑频道 > 集成 > Webhooks
    - 创建 Webhook > 复制 URL
 
-**用途**: 
+**用途**:
+
 - `DISCORD_WEBHOOK_URL` - 接收新评论通知
 - `DISCORD_LAUNCH_WEBHOOK_URL` - 接收新项目发布通知
 
@@ -330,11 +340,11 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 **DNS 记录示例**:
 
-| 类型 | 名称 | 值 |
-|------|------|---|
-| TXT | `@` | `resend-verification=abc123...` |
-| MX | `@` | `feedback-smtp.resend.com` (优先级 10) |
-| TXT | `resend._domainkey` | `p=MIGfMA0GC...` |
+| 类型 | 名称                | 值                                     |
+| ---- | ------------------- | -------------------------------------- |
+| TXT  | `@`                 | `resend-verification=abc123...`        |
+| MX   | `@`                 | `feedback-smtp.resend.com` (优先级 10) |
+| TXT  | `resend._domainkey` | `p=MIGfMA0GC...`                       |
 
 **用途**: 发送验证邮件、密码重置邮件
 
@@ -351,6 +361,7 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 在启动应用前，请确保已配置：
 
 ### 最小配置 (必需)
+
 - [ ] `BETTER_AUTH_SECRET` - 认证密钥
 - [ ] `DATABASE_URL` - PostgreSQL 数据库
 - [ ] `REDIS_URL` - Redis 缓存
@@ -358,11 +369,13 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 - [ ] `RESEND_API_KEY` - 邮件服务
 
 ### 推荐配置
+
 - [ ] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - Google 登录
 - [ ] `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` - GitHub 登录
 - [ ] `TURNSTILE_*` - Bot 防护
 
 ### 可选配置
+
 - [ ] `STRIPE_*` - 支付功能
 - [ ] `DISCORD_WEBHOOK_URL` - Discord 通知
 
@@ -385,6 +398,7 @@ NEXT_PUBLIC_URL=https://yourdomain.com
 ```
 
 ⚠️ **注意**: 生产环境中必须使用：
+
 - 强随机的 `BETTER_AUTH_SECRET`
 - HTTPS URLs
 - 生产环境的 API 密钥
@@ -400,6 +414,7 @@ bun dev
 ```
 
 访问 http://localhost:3000 并测试：
+
 1. 用户注册/登录
 2. 文件上传
 3. OAuth 登录
@@ -410,19 +425,23 @@ bun dev
 ## 故障排查
 
 ### 认证失败
+
 - 检查 `BETTER_AUTH_SECRET` 是否已设置
 - 检查 `DATABASE_URL` 连接是否正常
 
 ### 文件上传失败
+
 - 检查所有 `R2_*` 变量
 - 验证 R2 存储桶权限
 - 确认 `R2_PUBLIC_DOMAIN` 正确
 
 ### 邮件发送失败
+
 - 验证 `RESEND_API_KEY`
 - 确认域名已验证
 
 ### OAuth 登录失败
+
 - 检查回调 URL 配置
 - 验证 Client ID 和 Secret
 
@@ -449,4 +468,3 @@ bun dev
 ---
 
 需要帮助？查看 [GitHub Issues](https://github.com/drdruide/open-launch/issues)
-

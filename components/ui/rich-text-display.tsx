@@ -28,6 +28,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
   return (
     <div
       className={cn(RICH_TEXT_DISPLAY_STYLES, className)}
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- sanitizeRichText applies a strict tag, attribute, and URL-scheme allowlist immediately before this sink. */
       dangerouslySetInnerHTML={{ __html: safeContent }}
     />
   )

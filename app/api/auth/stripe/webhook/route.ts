@@ -900,7 +900,8 @@ async function handleDirectoryOrderCompleted(
   }
 
   console.log(
-    `✅ Directory order ${cfg.autoFulfil && !held ? "auto-fulfilled" : "marked paid"}:`,
+    "✅ Directory order status:",
+    cfg.autoFulfil && !held ? "auto-fulfilled" : "marked paid",
     orderId,
     "tier:",
     tier,

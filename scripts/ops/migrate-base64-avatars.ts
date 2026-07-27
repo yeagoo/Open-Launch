@@ -83,7 +83,8 @@ async function main() {
       } catch (error) {
         failed++
         console.error(
-          `[migrate-base64-avatars] failed user ${row.id.slice(0, 8)}:`,
+          "[migrate-base64-avatars] failed user:",
+          row.id.slice(0, 8),
           error instanceof Error ? error.message : "unknown error",
         )
       }

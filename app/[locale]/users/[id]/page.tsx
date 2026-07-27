@@ -54,6 +54,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     <main className="bg-secondary/20 min-h-screen">
       <script
         type="application/ld+json"
+        /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(profileSchema) }}
       />
       <div className="container mx-auto max-w-4xl px-4 pt-8 pb-12">

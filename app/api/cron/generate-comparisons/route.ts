@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
             // (rethrow to the outer catch) instead of recording a failure that
             // would blacklist the pair for 24h and starve it after top-up.
             if (error instanceof AiUnavailableError || aiCircuitOpen()) throw error
-            console.error(`Error generating comparison ${projA.name} vs ${projB.name}:`, error)
+            console.error("Error generating comparison:", projA.name, "vs", projB.name, error)
             errors++
             // Record the failure so we skip this pair for the next 24h.
             // Postgres upsert: bump attempt_count + lastFailedAt on
@@ -235,7 +235,7 @@ export async function GET(request: NextRequest) {
                   },
                 })
             } catch (recordErr) {
-              console.error(`Failed to record comparison_attempt for ${slug}:`, recordErr)
+              console.error("Failed to record comparison_attempt:", slug, recordErr)
             }
           }
         }

@@ -96,8 +96,7 @@ async function verifyMetaTag(domain: string, token: string): Promise<SkillDomain
 }
 
 type TextFetchResult =
-  | { ok: true; text: string }
-  | { ok: false; reason: string; terminal?: boolean }
+  { ok: true; text: string } | { ok: false; reason: string; terminal?: boolean }
 
 interface FetchFirstTextOptions {
   expectedHostname: string
@@ -231,8 +230,12 @@ function extractHtmlHead(html: string): string | null {
   return rest.slice(0, headClose.index)
 }
 
-function getHtmlAttribute(tag: string, attr: string): string | null {
-  const match = tag.match(new RegExp(`\\b${attr}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s"'>]+))`, "i"))
+function getHtmlAttribute(tag: string, attr: "name" | "content"): string | null {
+  const attributePattern =
+    attr === "name"
+      ? /\bname\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i
+      : /\bcontent\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/i
+  const match = tag.match(attributePattern)
   return match?.[2] ?? match?.[3] ?? match?.[4] ?? null
 }
 

@@ -35,6 +35,7 @@ import { to as copyTo } from "pg-copy-streams"
 const CONTAINER_MAGIC = Buffer.from("OLBK1\n")
 // Encryption framing: MAGIC | headerLen(u32) | headerJSON | ciphertext
 const ENC_MAGIC = Buffer.from("OLPW1\n")
+const GCM_AUTH_TAG_LENGTH = 16
 // scrypt KDF params, stored in each header so restore re-derives the same key.
 // maxmem must exceed 128*N*r (~32MB at N=2^15) — give it headroom.
 const SCRYPT = { N: 1 << 15, r: 8, p: 1, keylen: 32, maxmem: 64 * 1024 * 1024 }
@@ -173,7 +174,9 @@ export function passphraseEncrypt(plaintext: Buffer, passphrase: string): Buffer
     p: SCRYPT.p,
     maxmem: SCRYPT.maxmem,
   })
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv)
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv, {
+    authTagLength: GCM_AUTH_TAG_LENGTH,
+  })
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()])
   const authTag = cipher.getAuthTag()
   const header = Buffer.from(
@@ -211,7 +214,9 @@ export function passphraseDecrypt(blob: Buffer, passphrase: string): Buffer {
     p: header.p,
     maxmem: SCRYPT.maxmem,
   })
-  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(header.iv, "base64"))
+  const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(header.iv, "base64"), {
+    authTagLength: GCM_AUTH_TAG_LENGTH,
+  })
   decipher.setAuthTag(Buffer.from(header.authTag, "base64"))
   // Wrong passphrase → GCM auth fails here with a clear error.
   return Buffer.concat([decipher.update(ciphertext), decipher.final()])

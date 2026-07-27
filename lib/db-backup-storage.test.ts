@@ -5,6 +5,8 @@ import {
   copyTableExpression,
   getBackupStorageClient,
   manualMigrationCoverage,
+  passphraseDecrypt,
+  passphraseEncrypt,
 } from "./db-backup"
 
 const ENV_NAMES = [
@@ -141,5 +143,15 @@ describe("manualMigrationCoverage", () => {
         [{ filename: "001.sql", contentHash: "target-drift" }],
       ),
     ).toEqual({ missing: ["002.sql"], mismatched: ["001.sql"] })
+  })
+})
+
+describe("backup passphrase encryption", () => {
+  it("round-trips with an explicit 128-bit GCM authentication tag", () => {
+    const plaintext = Buffer.from("synthetic backup payload")
+    const encrypted = passphraseEncrypt(plaintext, "synthetic-passphrase")
+
+    expect(passphraseDecrypt(encrypted, "synthetic-passphrase")).toEqual(plaintext)
+    expect(() => passphraseDecrypt(encrypted, "wrong-passphrase")).toThrow()
   })
 })

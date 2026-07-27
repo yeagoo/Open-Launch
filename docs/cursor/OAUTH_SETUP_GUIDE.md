@@ -24,11 +24,13 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=xxxxx.apps.googleusercontent.com
 ### 📍 回调地址（重要！）
 
 **本地开发：**
+
 ```
 http://localhost:3000/api/auth/callback/google
 ```
 
 **生产环境：**
+
 ```
 https://yourdomain.com/api/auth/callback/google
 ```
@@ -43,12 +45,14 @@ https://yourdomain.com/api/auth/callback/google
 ### 步骤 2: 创建或选择项目
 
 **创建新项目：**
+
 1. 点击顶部的项目选择器
 2. 点击 **"新建项目"** 或 **"New Project"**
 3. 输入项目名称：`Open Launch` 或您喜欢的名称
 4. 点击 **"创建"** 或 **"Create"**
 
 **使用现有项目：**
+
 - 在项目选择器中选择您的项目
 
 ### 步骤 3: 启用 Google+ API
@@ -67,24 +71,26 @@ https://yourdomain.com/api/auth/callback/google
 
 **填写应用信息：**
 
-| 字段 | 填写内容 |
-|-----|---------|
-| **应用名称** | `Open Launch` |
-| **用户支持电子邮件** | 您的邮箱 |
-| **应用首页** | `https://yourdomain.com` |
+| 字段                   | 填写内容                               |
+| ---------------------- | -------------------------------------- |
+| **应用名称**           | `Open Launch`                          |
+| **用户支持电子邮件**   | 您的邮箱                               |
+| **应用首页**           | `https://yourdomain.com`               |
 | **应用隐私权政策链接** | `https://yourdomain.com/legal/privacy` |
-| **应用服务条款链接** | `https://yourdomain.com/legal/terms` |
-| **已获授权的网域** | `yourdomain.com` |
-| **开发者联系信息** | 您的邮箱 |
+| **应用服务条款链接**   | `https://yourdomain.com/legal/terms`   |
+| **已获授权的网域**     | `yourdomain.com`                       |
+| **开发者联系信息**     | 您的邮箱                               |
 
 4. 点击 **"保存并继续"**
 
 **作用域（Scopes）：**
+
 - 使用默认作用域即可
 - 通常包括：email, profile, openid
 - 点击 **"保存并继续"**
 
 **测试用户（开发阶段）：**
+
 - 添加用于测试的 Google 账号邮箱
 - 点击 **"保存并继续"**
 
@@ -97,6 +103,7 @@ https://yourdomain.com/api/auth/callback/google
 **配置 Web 应用：**
 
 **应用名称：**
+
 ```
 Open Launch Web App
 ```
@@ -104,11 +111,13 @@ Open Launch Web App
 **已获授权的 JavaScript 来源（Authorized JavaScript origins）：**
 
 本地开发添加：
+
 ```
 http://localhost:3000
 ```
 
 生产环境添加：
+
 ```
 https://yourdomain.com
 https://www.yourdomain.com
@@ -119,17 +128,20 @@ https://www.yourdomain.com
 ⚠️ **这是最重要的配置！**
 
 本地开发添加：
+
 ```
 http://localhost:3000/api/auth/callback/google
 ```
 
 生产环境添加：
+
 ```
 https://yourdomain.com/api/auth/callback/google
 https://www.yourdomain.com/api/auth/callback/google
 ```
 
 **示例完整配置：**
+
 ```
 JavaScript 来源：
 ├── http://localhost:3000
@@ -170,6 +182,7 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.
 ```
 
 ⚠️ **注意**：
+
 - `GOOGLE_CLIENT_ID` 也可以作为 `NEXT_PUBLIC_GOOGLE_CLIENT_ID` 在前端使用
 - Client Secret 必须保密，只能在服务端使用
 
@@ -180,11 +193,13 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.
 ### 📍 回调地址（重要！）
 
 **本地开发：**
+
 ```
 http://localhost:3000/api/auth/callback/github
 ```
 
 **生产环境：**
+
 ```
 https://yourdomain.com/api/auth/callback/github
 ```
@@ -206,28 +221,31 @@ https://yourdomain.com/api/auth/callback/github
 
 ### 步骤 3: 填写应用信息
 
-| 字段 | 填写内容 |
-|-----|---------|
-| **Application name** | `Open Launch` |
-| **Homepage URL** | `https://yourdomain.com` 或 `http://localhost:3000` (开发) |
-| **Application description** | `Open source Product Hunt alternative` (可选) |
-| **Authorization callback URL** | 见下方 ⬇️ |
+| 字段                           | 填写内容                                                   |
+| ------------------------------ | ---------------------------------------------------------- |
+| **Application name**           | `Open Launch`                                              |
+| **Homepage URL**               | `https://yourdomain.com` 或 `http://localhost:3000` (开发) |
+| **Application description**    | `Open source Product Hunt alternative` (可选)              |
+| **Authorization callback URL** | 见下方 ⬇️                                                  |
 
 **Authorization callback URL（最重要！）：**
 
 ⚠️ GitHub OAuth App 只能配置一个回调 URL
 
 **开发环境 OAuth App：**
+
 ```
 http://localhost:3000/api/auth/callback/github
 ```
 
 **生产环境 OAuth App：**
+
 ```
 https://yourdomain.com/api/auth/callback/github
 ```
 
 💡 **建议**：创建两个 OAuth App：
+
 - 一个用于开发（callback URL 用 localhost）
 - 一个用于生产（callback URL 用实际域名）
 
@@ -245,6 +263,7 @@ Iv1.xxxxxxxxxxxxx
 ```
 
 **生成 Client Secret：**
+
 1. 点击 **"Generate a new client secret"**
 2. 会显示密钥（只显示一次！）：
    ```
@@ -255,6 +274,7 @@ Iv1.xxxxxxxxxxxxx
 ### 步骤 6: 配置环境变量
 
 **开发环境 (.env.local)：**
+
 ```env
 # GitHub OAuth (开发环境)
 GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxx  # 开发环境 OAuth App 的 ID
@@ -262,6 +282,7 @@ GITHUB_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx  # 对应的 Secret
 ```
 
 **生产环境：**
+
 ```env
 # GitHub OAuth (生产环境)
 GITHUB_CLIENT_ID=Iv1.yyyyyyyyyyyyyyy  # 生产环境 OAuth App 的 ID
@@ -288,7 +309,7 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=123456789-abc123.apps.googleusercontent.com
 
 # GitHub OAuth (使用开发环境 OAuth App)
 GITHUB_CLIENT_ID=Iv1.1234567890abcdef
-GITHUB_CLIENT_SECRET=abcdef1234567890abcdef1234567890abcdef12
+GITHUB_CLIENT_SECRET=<github-client-secret>
 
 # ==========================================
 # 回调 URL（仅供参考，不需要配置）
@@ -313,7 +334,7 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=123456789-abc123.apps.googleusercontent.com
 
 # GitHub OAuth (使用生产环境 OAuth App)
 GITHUB_CLIENT_ID=Iv1.fedcba0987654321
-GITHUB_CLIENT_SECRET=12345678901234567890123456789012345678ab
+GITHUB_CLIENT_SECRET=<github-client-secret>
 
 # ==========================================
 # 回调 URL（仅供参考，不需要配置）
@@ -358,6 +379,7 @@ http://localhost:3000/sign-in
 ### ❌ 错误: "redirect_uri_mismatch"
 
 **完整错误信息：**
+
 ```
 Error: redirect_uri_mismatch
 The redirect URI in the request: http://localhost:3000/api/auth/callback/google
@@ -374,6 +396,7 @@ does not match the ones authorized for the OAuth client.
 4. 确认协议是 http 还是 https
 
 **正确格式：**
+
 ```
 ✅ http://localhost:3000/api/auth/callback/google
 ❌ http://localhost:3000/api/auth/callback/google/
@@ -386,6 +409,7 @@ does not match the ones authorized for the OAuth client.
 **原因：** Client ID 或 Client Secret 错误
 
 **解决方案：**
+
 1. 检查 `.env` 文件中的配置
 2. 确认没有多余的空格或换行
 3. 重新生成 Client Secret
@@ -396,6 +420,7 @@ does not match the ones authorized for the OAuth client.
 **原因：** GitHub OAuth App 的回调 URL 不匹配
 
 **解决方案：**
+
 1. 访问 GitHub Settings > Developer settings > OAuth Apps
 2. 点击您的应用
 3. 检查 "Authorization callback URL" 是否正确
@@ -406,6 +431,7 @@ does not match the ones authorized for the OAuth client.
 **原因：** 可能是会话存储问题或重定向配置问题
 
 **解决方案：**
+
 1. 检查浏览器控制台错误
 2. 清除浏览器 Cookie
 3. 检查 `trustedOrigins` 配置
@@ -426,10 +452,12 @@ does not match the ones authorized for the OAuth client.
 ### 2. 限制授权域名
 
 **Google OAuth：**
+
 - 只添加实际使用的域名
 - 不要使用通配符域名
 
 **GitHub OAuth：**
+
 - 为开发和生产创建独立的 OAuth App
 - 不要共享 Client Secret
 
@@ -442,10 +470,12 @@ does not match the ones authorized for the OAuth client.
 ### 4. 监控 OAuth 使用
 
 **Google Cloud Console：**
+
 - 查看 API 使用情况
 - 监控异常登录
 
 **GitHub Settings：**
+
 - 查看授权应用列表
 - 撤销可疑的授权
 
@@ -453,17 +483,19 @@ does not match the ones authorized for the OAuth client.
 
 ## 📊 回调 URL 快速参考
 
-| 平台 | 本地开发 | 生产环境 |
-|-----|---------|---------|
+| 平台       | 本地开发                                         | 生产环境                                          |
+| ---------- | ------------------------------------------------ | ------------------------------------------------- |
 | **Google** | `http://localhost:3000/api/auth/callback/google` | `https://yourdomain.com/api/auth/callback/google` |
 | **GitHub** | `http://localhost:3000/api/auth/callback/github` | `https://yourdomain.com/api/auth/callback/github` |
 
 **回调路径格式：**
+
 ```
 /api/auth/callback/{provider}
 ```
 
 其中 `{provider}` 可以是：
+
 - `google`
 - `github`
 
@@ -472,16 +504,19 @@ does not match the ones authorized for the OAuth client.
 ## 🔗 相关资源
 
 ### Google OAuth
+
 - [Google Cloud Console](https://console.cloud.google.com/)
 - [OAuth 2.0 文档](https://developers.google.com/identity/protocols/oauth2)
 - [设置 OAuth 2.0](https://support.google.com/cloud/answer/6158849)
 
 ### GitHub OAuth
+
 - [GitHub OAuth Apps](https://github.com/settings/developers)
 - [OAuth Apps 文档](https://docs.github.com/en/developers/apps/building-oauth-apps)
 - [授权 OAuth Apps](https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps)
 
 ### Better Auth
+
 - [Better Auth 文档](https://better-auth.com/docs)
 - [Social Providers](https://better-auth.com/docs/authentication/social)
 
@@ -490,6 +525,7 @@ does not match the ones authorized for the OAuth client.
 ## 📞 需要帮助？
 
 如果遇到问题：
+
 1. 检查回调 URL 是否完全匹配
 2. 查看浏览器控制台错误信息
 3. 检查服务器日志
@@ -499,10 +535,9 @@ does not match the ones authorized for the OAuth client.
 ---
 
 **关键要点总结：**
+
 - ✅ Google 可以配置多个回调 URL，GitHub 只能配置一个
 - ✅ 回调 URL 格式：`/api/auth/callback/{provider}`
 - ✅ 开发和生产使用不同的回调 URL
 - ✅ Client Secret 必须保密
 - ✅ 配置后需要重启服务器
-
-

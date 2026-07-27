@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
         translated++
       } catch (err) {
         failed++
-        console.error(`[translate-blog] ${article.slug} → ${locale} failed:`, err)
+        console.error("[translate-blog] translation failed:", article.slug, locale, err)
       }
     }
 

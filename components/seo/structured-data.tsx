@@ -30,6 +30,7 @@ export function OrganizationSchema() {
     <script
       id="schema-organization"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
@@ -103,6 +104,7 @@ export function ProjectSchema({
     <script
       id="schema-product"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
@@ -164,6 +166,7 @@ export function ArticleSchema({
     <script
       id="schema-article"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
@@ -195,6 +198,7 @@ export function BreadcrumbSchema({ items }: BreadcrumbSchemaProps) {
     <script
       id="schema-breadcrumb"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
@@ -250,6 +254,7 @@ export function ComparisonSchema({
     <script
       id="schema-comparison"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )
@@ -297,6 +302,7 @@ export function ItemListSchema({
     <script
       id="schema-itemlist"
       type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   )

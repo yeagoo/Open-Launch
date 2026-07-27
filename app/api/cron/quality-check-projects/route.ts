@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           .set({ qualityCheckedAt: new Date() })
           .where(eq(project.id, cand.id))
       } catch (stampErr) {
-        console.error(`quality-check: failed to cool down ${cand.id}`, stampErr)
+        console.error("quality-check: failed to cool down project", cand.id, stampErr)
       }
     }
   }

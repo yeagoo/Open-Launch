@@ -128,7 +128,7 @@ export const auth = betterAuth({
         })
         console.log(`✅ Verification email sent to ${redactEmail(user.email)}`)
       } catch (error) {
-        console.error(`❌ Failed to send verification email to ${redactEmail(user.email)}:`, error)
+        console.error("❌ Failed to send verification email:", redactEmail(user.email), error)
         throw error
       }
     },

@@ -293,7 +293,7 @@ export async function GET(request: Request) {
           status: "imported",
         })
       } catch (error) {
-        console.error(`❌ Failed to import "${post.name}":`, error)
+        console.error("❌ Failed to import Product Hunt post:", post.name, error)
         results.push({
           name: post.name,
           status: "error",

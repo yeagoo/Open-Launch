@@ -105,7 +105,8 @@ export async function GET(request: NextRequest) {
       // 3. Calculate top projects for each launch window we just closed.
       const justLaunchedProjectIds = ongoingToLaunched.map((p) => p.id)
       console.log(
-        `Projets passés à LAUNCHED: ${justLaunchedProjectIds.length}`,
+        "Projets passés à LAUNCHED:",
+        justLaunchedProjectIds.length,
         justLaunchedProjectIds,
       )
 
@@ -143,7 +144,7 @@ export async function GET(request: NextRequest) {
             })
             .sort((a, b) => b.upvoteCount - a.upvoteCount)
 
-          console.log(`Projets avec des upvotes pour ${windowKey}:`, projectsWithUpvotes)
+          console.log("Projets avec des upvotes pour la fenêtre:", windowKey, projectsWithUpvotes)
 
           const rankGroups: Array<
             Array<{ projectId: string; projectName: string; upvoteCount: number }>

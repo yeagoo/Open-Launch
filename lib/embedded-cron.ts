@@ -88,7 +88,8 @@ export function startEmbeddedCron(): void {
         // take a few seconds to accept loopback traffic during startup.
         if (state.consecutiveFailures === 1 || state.consecutiveFailures % 10 === 0) {
           console.error(
-            `[embedded-cron] dispatch failed (${state.consecutiveFailures} consecutive):`,
+            "[embedded-cron] dispatch failed; consecutive failures:",
+            state.consecutiveFailures,
             error,
           )
         }

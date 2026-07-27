@@ -1,6 +1,9 @@
 import fs from "fs"
 import path from "path"
 
+const BLOG_CONTENT_DIR = path.resolve(process.cwd(), "content", "blog")
+const SAFE_BLOG_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
 // Fonction pour calculer le temps de lecture d'un article
 export function calculateReadingTime(content: string): string {
   // Supprimer les balises MDX/HTML et le frontmatter
@@ -27,11 +30,18 @@ export function calculateReadingTime(content: string): string {
 // Fonction pour lire le contenu d'un fichier MDX et calculer le temps de lecture
 export async function getReadingTimeForArticle(slug: string): Promise<string> {
   try {
-    const filePath = path.join(process.cwd(), "content", "blog", `${slug}.mdx`)
+    if (!SAFE_BLOG_SLUG.test(slug)) {
+      throw new Error("Invalid blog slug")
+    }
+    // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal -- slug is restricted to lowercase kebab-case and the resolved parent is checked below.
+    const filePath = path.resolve(BLOG_CONTENT_DIR, `${slug}.mdx`)
+    if (path.dirname(filePath) !== BLOG_CONTENT_DIR) {
+      throw new Error("Blog path escaped its content directory")
+    }
     const content = fs.readFileSync(filePath, "utf8")
     return calculateReadingTime(content)
   } catch (error) {
-    console.warn(`Failed to calculate reading time for ${slug}:`, error)
+    console.warn("Failed to calculate reading time for article:", slug, error)
     return "5 min" // Fallback par défaut
   }
 }
