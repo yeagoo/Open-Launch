@@ -11,6 +11,12 @@
 // calls fail fast (no network) for a short cooldown, so the system degrades
 // gracefully until the balance is topped up. Transient errors (429, 5xx) do
 // NOT trip it — those are worth retrying.
+//
+// KNOWN LIMITATION (accepted 2026-07): the tripped state is per-process
+// memory. The deployment is a single self-hosted container, so this is
+// correct today; before scaling to multiple instances the state MUST move
+// to Redis (see lib/rate-limit.ts's getSharedRedisClient) or each instance
+// will keep calling a dead API independently.
 
 const COOLDOWN_MS = 5 * 60_000 // 5 min; cron cadence is per-minute
 

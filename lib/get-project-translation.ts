@@ -19,6 +19,9 @@ import { and, eq, inArray, or } from "drizzle-orm"
  */
 export const getLocalizedProjectDescription = cache(
   async (projectId: string, locale: string, fallback: string): Promise<string> => {
+    // One query covers exact-locale, English AND the source row (via the
+    // isSource flag) — the previous version ran a second serial query for
+    // the source row on every non-en render.
     const rows = await db
       .select({
         locale: projectTranslation.locale,
@@ -29,21 +32,17 @@ export const getLocalizedProjectDescription = cache(
       .where(
         and(
           eq(projectTranslation.projectId, projectId),
-          inArray(projectTranslation.locale, [locale, "en"]),
+          or(
+            inArray(projectTranslation.locale, [locale, "en"]),
+            eq(projectTranslation.isSource, true),
+          ),
         ),
       )
 
     const exact = rows.find((r) => r.locale === locale)
     if (exact) return exact.description
 
-    // Try the source row (one extra query when locale != en and source != en)
-    const [source] = await db
-      .select({ description: projectTranslation.description })
-      .from(projectTranslation)
-      .where(
-        and(eq(projectTranslation.projectId, projectId), eq(projectTranslation.isSource, true)),
-      )
-      .limit(1)
+    const source = rows.find((r) => r.isSource)
     if (source) return source.description
 
     const en = rows.find((r) => r.locale === "en")
