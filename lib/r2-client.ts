@@ -1,7 +1,14 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import { NodeHttpHandler } from "@smithy/node-http-handler"
 
 export type UploadFolder = "avatars" | "logos" | "products"
+
+// Every other external dependency in this repo goes through
+// fetchWithTimeout; the S3 client had NO timeout, so a stalled R2
+// connection could hang an upload (or presign) forever.
+const R2_REQUEST_TIMEOUT_MS = 30_000
+const R2_CONNECTION_TIMEOUT_MS = 10_000
 
 // 初始化 R2 客户端
 export function getR2Client() {
@@ -20,6 +27,10 @@ export function getR2Client() {
       accessKeyId,
       secretAccessKey,
     },
+    requestHandler: new NodeHttpHandler({
+      connectionTimeout: R2_CONNECTION_TIMEOUT_MS,
+      requestTimeout: R2_REQUEST_TIMEOUT_MS,
+    }),
   })
 }
 
