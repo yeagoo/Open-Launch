@@ -22,6 +22,17 @@ function getRedisClient(): Redis {
   return redis
 }
 
+/**
+ * Shared Redis connection for infrastructure beyond the rate limiter
+ * (better-auth secondaryStorage). Lazily connects on first command, so
+ * importing it at build time is safe. Callers must still gate on
+ * `process.env.REDIS_URL` being set — an empty URL yields a client that
+ * never connects.
+ */
+export function getSharedRedisClient(): Redis {
+  return getRedisClient()
+}
+
 export type RateLimitResult = {
   success: boolean
   remaining: number

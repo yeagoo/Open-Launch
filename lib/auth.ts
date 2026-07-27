@@ -8,6 +8,7 @@ import { buildBetterAuthApiErrorLog } from "@/lib/auth-error-log"
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
 import { redactEmail } from "@/lib/log-redaction"
+import { getSharedRedisClient } from "@/lib/rate-limit"
 import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
 import { isSafeProfileImageUrl } from "@/lib/user-profile-validation"
 
@@ -18,12 +19,72 @@ const authSecret =
   process.env.BETTER_AUTH_SECRET ||
   (process.env.CI ? "open-launch-ci-build-secret-do-not-use-in-production" : undefined)
 
+// Shared Redis secondary storage: better-auth's built-in rate limiter is
+// per-process memory by default, which multiplies the effective limit by
+// the instance count. The optional atomic `increment` keeps its counting
+// correct across instances; without REDIS_URL we keep the library default.
+const authRedis = process.env.REDIS_URL ? getSharedRedisClient() : null
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
   secret: authSecret,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  secondaryStorage: authRedis
+    ? {
+        // All wrappers degrade gracefully on Redis errors: reads miss to
+        // null (Better Auth then falls back to Postgres, which stays
+        // authoritative via storeSessionInDatabase/storeInDatabase below),
+        // writes are best-effort cache writes. A transient Redis outage
+        // must never take down auth.
+        get: async (key) => {
+          try {
+            return await authRedis.get(key)
+          } catch (err) {
+            console.error("[auth-secondary-storage] get failed:", (err as Error).message)
+            return null
+          }
+        },
+        set: async (key, value, ttl) => {
+          try {
+            if (ttl) await authRedis.set(key, value, "EX", ttl)
+            else await authRedis.set(key, value)
+          } catch (err) {
+            console.error("[auth-secondary-storage] set failed:", (err as Error).message)
+          }
+        },
+        delete: async (key) => {
+          try {
+            await authRedis.del(key)
+          } catch (err) {
+            console.error("[auth-secondary-storage] delete failed:", (err as Error).message)
+          }
+        },
+        // Atomic INCR/EXPIRE keeps the built-in rate limiter correct when
+        // more than one instance serves traffic. On Redis error, allow the
+        // request (count=1): auth availability beats rate-limit strictness
+        // during a cache outage, same trade-off as lib/rate-limit.ts's
+        // memory fallback.
+        increment: async (key, ttl) => {
+          try {
+            const count = await authRedis.incr(key)
+            if (count === 1 && ttl) await authRedis.expire(key, ttl)
+            return count
+          } catch (err) {
+            console.error("[auth-secondary-storage] increment failed:", (err as Error).message)
+            return 1
+          }
+        },
+      }
+    : undefined,
+  verification: {
+    // Keep verification / password-reset tokens in Postgres. With
+    // secondaryStorage configured they'd otherwise live in Redis only — a
+    // flush or redeploy would silently invalidate every outstanding
+    // verification and reset email.
+    storeInDatabase: true,
+  },
   databaseHooks: {
     user: {
       create: {
@@ -80,6 +141,12 @@ export const auth = betterAuth({
     // token stays usable.
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
+    // Keep the AUTHORITATIVE session store in Postgres even though
+    // secondaryStorage (Redis) is configured above. Without this, sessions
+    // move to Redis-only: existing DB sessions stop resolving (instant
+    // logout on deploy) and any Redis flush kills every session. Redis is
+    // only the shared rate-limit counter + session cache here.
+    storeSessionInDatabase: true,
   },
   advanced: {
     ipAddress: {
@@ -132,7 +199,16 @@ export const auth = betterAuth({
     captcha({
       provider: "cloudflare-turnstile", // or "google-recaptcha"
       secretKey: process.env.TURNSTILE_SECRET_KEY!,
-      endpoints: ["/sign-up/email", "/sign-in/email", "/forget-password"],
+      // NOTE: /change-password is deliberately NOT here — the settings page
+      // submits only passwords (no Turnstile token), so captcha-gating it
+      // would 400 every legitimate change. Adding it requires wiring a
+      // Turnstile widget into the settings UI first.
+      endpoints: [
+        "/sign-up/email",
+        "/sign-in/email",
+        "/forget-password",
+        "/send-verification-email",
+      ],
     }),
     oneTap({
       clientId: process.env.NEXT_PUBLIC_ONE_TAP_CLIENT_ID!,
