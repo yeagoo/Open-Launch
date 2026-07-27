@@ -213,7 +213,8 @@ export const projectTranslation = pgTable(
     return {
       pk: primaryKey(table.projectId, table.locale),
       projectIdIdx: index("project_translation_project_id_idx").on(table.projectId),
-      localeIdx: index("project_translation_locale_idx").on(table.locale),
+      // NOTE: the old locale-only index was dropped in 0049 — every read
+      // goes through the (projectId, locale) PK, so it only cost writes.
       longDescAttemptIdx: index("project_translation_long_desc_attempt_idx").on(
         table.longDescriptionAttemptedAt,
       ),
@@ -312,7 +313,12 @@ export const fumaComments = pgTable(
   {
     id: serial("id").primaryKey().notNull(),
     page: varchar("page", { length: 256 }).notNull(),
+    // Self-reference ON DELETE SET NULL (0050, NOT VALID until orphans are
+    // cleaned): hard-deleting a root comment turns its replies into roots.
     thread: integer("thread"),
+    // Deliberately NO FK to user.id — user deletion must not be blocked by
+    // comment history; orphan authors are anonymized to 'deleted-user' by
+    // scripts/ops/cleanup-comment-orphans.ts instead.
     author: varchar("author", { length: 256 }).notNull(),
     content: json("content").notNull(),
     timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
@@ -335,8 +341,13 @@ export const fumaComments = pgTable(
 export const fumaRates = pgTable(
   "fuma_rates",
   {
-    userId: varchar("user_id", { length: 256 }).notNull(),
-    commentId: integer("comment_id").notNull(),
+    // FKs added in 0050 (NOT VALID until orphan cleanup + VALIDATE).
+    userId: varchar("user_id", { length: 256 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    commentId: integer("comment_id")
+      .notNull()
+      .references(() => fumaComments.id, { onDelete: "cascade" }),
     like: boolean("like").notNull(),
   },
   (table) => [
@@ -354,15 +365,6 @@ export const launchQuota = pgTable("launch_quota", {
   premiumCount: integer("premium_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-})
-
-// New table for tracking project submissions during coming soon phase
-export const waitlistSubmission = pgTable("waitlist_submission", {
-  id: text("id").primaryKey(),
-  projectUrl: text("project_url").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
 })
 
 export const seoArticle = pgTable(
