@@ -39,7 +39,13 @@ async function fetchLogoDataUrl(url: string): Promise<string | null> {
       label: "OG logo image",
     })
     const { default: sharp } = await import("sharp")
-    const png = await sharp(Buffer.from(buffer)).resize(280, 280, { fit: "cover" }).png().toBuffer()
+    // Same pixel ceiling as the upload pipeline (16MP): a crafted logo
+    // URL could otherwise serve a decompression bomb that sharp's
+    // 268MP default would happily expand into gigabytes of memory.
+    const png = await sharp(Buffer.from(buffer), { limitInputPixels: 16_000_000 })
+      .resize(280, 280, { fit: "cover" })
+      .png()
+      .toBuffer()
     return `data:image/png;base64,${png.toString("base64")}`
   } catch (err) {
     if (!(err instanceof SafeFetchError)) {
