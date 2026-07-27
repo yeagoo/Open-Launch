@@ -729,6 +729,27 @@ export const cronRunLog = pgTable(
   },
 )
 
+// Durable notification-email queue (0052). Senders enqueue one row per
+// (event, recipient) with a stable event_key, then drain; the drain cron
+// retries failures every 10 minutes. event_key doubles as the Resend
+// Idempotency-Key so a crash between provider-accept and mark-sent can
+// never double-deliver.
+export const emailOutbox = pgTable(
+  "email_outbox",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventKey: text("event_key").notNull().unique(),
+    kind: text("kind").notNull(), // 'winner_badge' | 'launch_reminder'
+    payload: json("payload").notNull(),
+    status: text("status").notNull().default("pending"), // 'pending' | 'sent' | 'failed'
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    sentAt: timestamp("sent_at"),
+  },
+  (table) => [index("email_outbox_status_idx").on(table.status, table.createdAt)],
+)
+
 // One row per `/api/cron/webhook-health` run — richer than cron_run_log
 // (which only has status_code) so admin can see matched/unmatched
 // counts + sample session ids without re-running the cron. See

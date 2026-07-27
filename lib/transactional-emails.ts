@@ -49,12 +49,14 @@ export async function sendWinnerBadgeEmail({
   ranking,
   user,
   launchType,
+  idempotencyKey,
 }: {
   user: BasicUser
   ranking: number
   projectName: string
   projectSlug: string
   launchType: string | null
+  idempotencyKey?: string
 }) {
   const badgeName = getBadgeName(ranking)
   const effectiveUserName = escapeHtml(user.name || "Winner")
@@ -97,6 +99,7 @@ export async function sendWinnerBadgeEmail({
     to: effectiveUserEmail,
     subject,
     html: htmlBody,
+    idempotencyKey,
   })
 }
 
@@ -104,10 +107,12 @@ export async function sendLaunchReminderEmail({
   projectName,
   projectSlug,
   user,
+  idempotencyKey,
 }: {
   user: BasicUser
   projectName: string
   projectSlug: string
+  idempotencyKey?: string
 }) {
   const effectiveUserName = escapeHtml(user.name || "Creator")
   const effectiveUserEmail = user.email
@@ -132,6 +137,7 @@ export async function sendLaunchReminderEmail({
     to: effectiveUserEmail,
     subject,
     html: htmlBody,
+    idempotencyKey,
   })
 }
 
@@ -521,9 +527,30 @@ export async function sendAdminPaymentNotification({
     </div>
   `
 
-  return sendEmail({
-    to: adminEmail,
-    subject,
-    html: htmlBody,
-  })
+  // Email is the primary channel; Discord is the fallback so an alert
+  // never dies silently with Resend itself (cron-health and webhook
+  // failure alerts both funnel through here).
+  try {
+    return await sendEmail({
+      to: adminEmail,
+      subject,
+      html: htmlBody,
+    })
+  } catch (err) {
+    console.error("Admin payment email failed, falling back to Discord:", err)
+    const { sendDiscordAlert } = await import("@/lib/discord-notification")
+    const alerted = await sendDiscordAlert(
+      subject,
+      `Project: ${projectName}\nWebsite: ${websiteUrl}\nUser: ${userEmail}\n(email channel down — ${(err as Error).message})`,
+    )
+    if (!alerted) {
+      // BOTH channels are down. Propagate so callers that track alert
+      // success (e.g. cron-health's stateful suppression) don't record
+      // this as delivered and go silent for the whole outage.
+      throw err
+    }
+    // The alert reached an admin channel; don't propagate the email error
+    // into the caller (webhook handlers must not 5xx on alert failure).
+    return { success: false, data: null }
+  }
 }

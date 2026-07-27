@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { launchStatus, project, user } from "@/drizzle/db/schema"
-import { endOfDay, startOfDay, subDays } from "date-fns"
+import { format, startOfDay, subDays } from "date-fns"
 import { and, eq, gte, inArray, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
-import { redactEmail } from "@/lib/log-redaction"
-import { sendWinnerBadgeEmail } from "@/lib/transactional-emails"
+import { drainEmailOutbox, enqueueEmail } from "@/lib/email-outbox"
+
+// Compensation window: scan the last 3 days of winners, not just
+// yesterday. Enqueue is idempotent on event_key, so a day whose cron run
+// failed entirely is caught by the next run instead of being lost.
+const COMPENSATION_WINDOW_DAYS = 3
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,121 +20,78 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     const now = new Date()
-    const yesterday = subDays(startOfDay(now), 1)
-    const endOfYesterday = endOfDay(yesterday)
+    const windowStart = startOfDay(subDays(now, COMPENSATION_WINDOW_DAYS))
+    const windowEnd = startOfDay(now)
 
     console.log(`[${now.toISOString()}] Starting cron: Send Winner Notifications`)
-    console.log(
-      `Looking for winners from: ${yesterday.toISOString()} to ${endOfYesterday.toISOString()}`,
-    )
 
+    // Join the creator up front (one query, not per winner) so bot users
+    // and missing emails are filtered before enqueueing.
     const winners = await db
       .select({
         projectId: project.id,
         projectName: project.name,
         projectSlug: project.slug,
         projectRanking: project.dailyRanking,
-        projectCreatorId: project.createdBy,
         projectLaunchType: project.launchType,
+        scheduledLaunchDate: project.scheduledLaunchDate,
+        creatorEmail: user.email,
+        creatorName: user.name,
+        creatorIsBot: user.isBot,
       })
       .from(project)
+      .innerJoin(user, eq(user.id, project.createdBy))
       .where(
         and(
           eq(project.launchStatus, launchStatus.LAUNCHED),
           inArray(project.dailyRanking, [1, 2, 3]),
-          gte(project.scheduledLaunchDate, yesterday),
-          lt(project.scheduledLaunchDate, startOfDay(now)),
+          gte(project.scheduledLaunchDate, windowStart),
+          lt(project.scheduledLaunchDate, windowEnd),
         ),
       )
       .execute()
 
-    if (winners.length === 0) {
-      console.log("No new winners found to notify.")
-      return NextResponse.json({ message: "No new winners to notify." })
-    }
-
-    console.log(`Found ${winners.length} winning projects to notify.`)
-    let emailsSentCount = 0
-    let emailsFailedCount = 0
-
+    let enqueued = 0
     for (const winner of winners) {
-      if (!winner.projectCreatorId || !winner.projectRanking) {
-        console.warn(`Skipping project ${winner.projectName} due to missing creator ID or ranking.`)
-        continue
-      }
-
-      const projectCreator = await db
-        .select({
-          email: user.email,
-          name: user.name,
-          isBot: user.isBot,
-        })
-        .from(user)
-        .where(eq(user.id, winner.projectCreatorId))
-        .limit(1)
-        .then((res) => res[0])
-
-      if (!projectCreator || !projectCreator.email) {
-        console.warn(
-          `User not found or email missing for creator ID ${winner.projectCreatorId} of project ${winner.projectName}.`,
-        )
-        emailsFailedCount++
-        continue
-      }
-
-      // Skip bot users - they don't need email notifications
-      if (projectCreator.isBot) {
-        console.log(
-          `Skipping bot user ${redactEmail(projectCreator.email)} for project ${winner.projectName}.`,
-        )
-        continue
-      }
-
-      try {
-        console.log(
-          `Sending winner email to ${redactEmail(projectCreator.email)} for project ${winner.projectName}`,
-        )
-
-        await sendWinnerBadgeEmail({
-          user: { email: projectCreator.email, name: projectCreator.name },
-          projectName: winner.projectName,
-          projectSlug: winner.projectSlug,
-          ranking: winner.projectRanking,
-          launchType: winner.projectLaunchType,
-        })
-        emailsSentCount++
-      } catch (error) {
-        emailsFailedCount++
-        console.error(
-          `Failed to send winner email for project ${winner.projectName} to ${redactEmail(projectCreator.email)}:`,
-          error,
-        )
-      }
+      if (!winner.projectRanking || !winner.creatorEmail || winner.creatorIsBot) continue
+      if (!winner.scheduledLaunchDate) continue
+      // event_key is scoped to the launch DAY so a re-ranked project can't
+      // produce a second row for the same win.
+      const day = format(winner.scheduledLaunchDate, "yyyy-MM-dd")
+      await enqueueEmail("winner_badge", `winner:${day}:${winner.projectId}`, {
+        email: winner.creatorEmail,
+        name: winner.creatorName,
+        projectName: winner.projectName,
+        projectSlug: winner.projectSlug,
+        ranking: winner.projectRanking,
+        launchType: winner.projectLaunchType,
+      })
+      enqueued++
     }
 
-    console.log(`[${now.toISOString()}] Winner notification process completed.`)
-    console.log(`- Emails sent successfully: ${emailsSentCount}`)
-    // Only log failures when there are any — an always-on "failed: 0" line gets
-    // mis-tagged ERROR by log drains that key off the word "failed".
-    if (emailsFailedCount > 0) {
-      console.warn(`- Emails failed: ${emailsFailedCount}`)
-    }
+    console.log(`Enqueued winner notifications for ${enqueued}/${winners.length} winners.`)
 
-    // Total failure (winners present, none notified) → 500 so cron monitoring
-    // alerts during a Resend outage/misconfig instead of showing green.
+    const drain = await drainEmailOutbox()
+    console.log(`Drain: sent=${drain.sent} failed=${drain.failed} remaining=${drain.remaining}`)
+
     return NextResponse.json(
       {
         message: "Winner notification process completed.",
         details: {
           winnersFound: winners.length,
-          emailsSent: emailsSentCount,
-          emailsFailed: emailsFailedCount,
+          enqueued,
+          emailsSent: drain.sent,
+          emailsFailed: drain.failed,
+          pending: drain.remaining,
         },
       },
       {
+        // Total failure (work due, nothing sent) → 500 so cron monitoring
+        // alerts during a Resend outage instead of showing green. Failed
+        // rows stay in the outbox and retry on the 10-minute drain cron.
         status: cronStatusFromResult({
-          errorCount: emailsFailedCount,
-          successCount: emailsSentCount,
+          errorCount: drain.failed,
+          successCount: drain.sent,
         }),
       },
     )

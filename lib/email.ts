@@ -5,6 +5,11 @@ interface EmailPayload {
   to: string
   subject: string
   html: string
+  // Resend Idempotency-Key: retries with the same key return the original
+  // send result instead of delivering twice. Used by the email outbox,
+  // which keys on the stable event id so a crash between provider-accept
+  // and mark-sent cannot double-deliver.
+  idempotencyKey?: string
   // Optional reply-to. When omitted, falls back to
   // `RESEND_REPLY_TO` env (typical: contact@aat.ee). This way
   // users who hit "Reply" land in support instead of the noreply
@@ -55,6 +60,7 @@ export async function sendEmail(payload: EmailPayload) {
       subject,
       html,
       replyTo: effectiveReplyTo,
+      idempotencyKey: payload.idempotencyKey ?? null,
     })
 
     console.log("Email sent successfully:", { to: redactEmail(to), subject, id: data?.id })
@@ -85,6 +91,7 @@ async function sendResendEmail(payload: {
   subject: string
   html: string
   replyTo: string | null
+  idempotencyKey: string | null
 }): Promise<ResendSendSuccess> {
   const deadline = Date.now() + RESEND_TIMEOUT_MS
   const response = await fetchWithTimeout(
@@ -95,6 +102,7 @@ async function sendResendEmail(payload: {
         Authorization: `Bearer ${payload.apiKey}`,
         "Content-Type": "application/json",
         "User-Agent": "aat.ee/1.0",
+        ...(payload.idempotencyKey ? { "Idempotency-Key": payload.idempotencyKey } : {}),
       },
       body: JSON.stringify({
         from: payload.from,

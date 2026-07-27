@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { launchStatus, project, user } from "@/drizzle/db/schema"
-import { endOfDay, startOfDay } from "date-fns"
-import { and, eq, gte, lt } from "drizzle-orm"
+import { format, startOfDay, subDays } from "date-fns"
+import { and, eq, gte, inArray } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
-import { redactEmail } from "@/lib/log-redaction"
-import { sendLaunchReminderEmail } from "@/lib/transactional-emails"
+import { drainEmailOutbox, enqueueEmail } from "@/lib/email-outbox"
+
+// Event-compensation instead of a fixed "today only" window: any project
+// that went ONGOING in the last 2 days gets a reminder row, and the
+// event_key makes re-enqueueing a no-op. The old today-only selection
+// lost the reminder entirely when update-launches flipped a project to
+// ONGOING after this cron's daily minute (e.g. after a launch-transition
+// failure).
+const COMPENSATION_WINDOW_DAYS = 2
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,116 +23,68 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     const now = new Date()
-    const today = startOfDay(now)
-    const endOfToday = endOfDay(now)
+    const windowStart = startOfDay(subDays(now, COMPENSATION_WINDOW_DAYS))
 
     console.log(`[${now.toISOString()}] Starting cron: Send Ongoing Launch Reminders`)
-    console.log(
-      `Looking for projects ongoing from: ${today.toISOString()} to ${endOfToday.toISOString()}`,
-    )
 
+    // ONGOING alone is not enough: update-launches flips ONGOING→LAUNCHED
+    // the next morning, so a reminder missed on launch day (e.g. the
+    // transition ran late) would never be recoverable by a later run —
+    // the project would no longer match. Include LAUNCHED rows from the
+    // window; the event_key dedupe means they still get exactly one email.
     const ongoingProjects = await db
       .select({
         projectId: project.id,
         projectName: project.name,
         projectSlug: project.slug,
-        projectCreatorId: project.createdBy,
+        scheduledLaunchDate: project.scheduledLaunchDate,
+        creatorEmail: user.email,
+        creatorName: user.name,
+        creatorIsBot: user.isBot,
       })
       .from(project)
+      .innerJoin(user, eq(user.id, project.createdBy))
       .where(
         and(
-          eq(project.launchStatus, launchStatus.ONGOING),
-          gte(project.scheduledLaunchDate, today),
-          lt(project.scheduledLaunchDate, endOfToday),
+          inArray(project.launchStatus, [launchStatus.ONGOING, launchStatus.LAUNCHED]),
+          gte(project.scheduledLaunchDate, windowStart),
         ),
       )
       .execute()
 
-    if (ongoingProjects.length === 0) {
-      console.log("No ongoing projects found to remind.")
-      return NextResponse.json({ message: "No ongoing projects to remind." })
-    }
-
-    console.log(`Found ${ongoingProjects.length} ongoing projects to remind.`)
-    let emailsSentCount = 0
-    let emailsFailedCount = 0
-
+    let enqueued = 0
     for (const proj of ongoingProjects) {
-      if (!proj.projectCreatorId) {
-        console.warn(`Skipping project ${proj.projectName} due to missing creator ID.`)
-        continue
-      }
-
-      const projectCreator = await db
-        .select({
-          email: user.email,
-          name: user.name,
-          isBot: user.isBot,
-        })
-        .from(user)
-        .where(eq(user.id, proj.projectCreatorId))
-        .limit(1)
-        .then((res) => res[0])
-
-      if (!projectCreator || !projectCreator.email) {
-        console.warn(
-          `User not found or email missing for creator ID ${proj.projectCreatorId} of project ${proj.projectName}.`,
-        )
-        emailsFailedCount++
-        continue
-      }
-
-      // Skip bot users - they don't need email notifications
-      if (projectCreator.isBot) {
-        console.log(
-          `Skipping bot user ${redactEmail(projectCreator.email)} for project ${proj.projectName}.`,
-        )
-        continue
-      }
-
-      try {
-        console.log(
-          `Sending launch reminder email to ${redactEmail(projectCreator.email)} for project ${proj.projectName}`,
-        )
-
-        await sendLaunchReminderEmail({
-          user: { email: projectCreator.email, name: projectCreator.name },
-          projectName: proj.projectName,
-          projectSlug: proj.projectSlug,
-        })
-        emailsSentCount++
-      } catch (error) {
-        emailsFailedCount++
-        console.error(
-          `Failed to send launch reminder email for project ${proj.projectName} to ${redactEmail(projectCreator.email)}:`,
-          error,
-        )
-      }
+      if (!proj.creatorEmail || proj.creatorIsBot || !proj.scheduledLaunchDate) continue
+      const day = format(proj.scheduledLaunchDate, "yyyy-MM-dd")
+      await enqueueEmail("launch_reminder", `reminder:${day}:${proj.projectId}`, {
+        email: proj.creatorEmail,
+        name: proj.creatorName,
+        projectName: proj.projectName,
+        projectSlug: proj.projectSlug,
+      })
+      enqueued++
     }
 
-    console.log(`[${now.toISOString()}] Launch reminder process completed.`)
-    console.log(`- Emails sent successfully: ${emailsSentCount}`)
-    // Only log failures when there are any — an always-on "failed: 0" line gets
-    // mis-tagged ERROR by log drains that key off the word "failed".
-    if (emailsFailedCount > 0) {
-      console.warn(`- Emails failed: ${emailsFailedCount}`)
-    }
+    console.log(`Enqueued launch reminders for ${enqueued}/${ongoingProjects.length} projects.`)
 
-    // Total failure (reminders due, none sent) → 500 so cron monitoring alerts
-    // during a Resend outage/misconfig instead of showing green.
+    const drain = await drainEmailOutbox()
+    console.log(`Drain: sent=${drain.sent} failed=${drain.failed} remaining=${drain.remaining}`)
+
     return NextResponse.json(
       {
         message: "Launch reminder process completed.",
         details: {
           projectsFound: ongoingProjects.length,
-          emailsSent: emailsSentCount,
-          emailsFailed: emailsFailedCount,
+          enqueued,
+          emailsSent: drain.sent,
+          emailsFailed: drain.failed,
+          pending: drain.remaining,
         },
       },
       {
         status: cronStatusFromResult({
-          errorCount: emailsFailedCount,
-          successCount: emailsSentCount,
+          errorCount: drain.failed,
+          successCount: drain.sent,
         }),
       },
     )

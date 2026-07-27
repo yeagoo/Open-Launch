@@ -29,6 +29,44 @@ interface DiscordMessage {
 }
 
 /**
+ * Minimal ops alert over the Discord webhook — plain text, no embeds, so
+ * it doubles as the fallback channel when the email path (Resend) itself
+ * is down. Monitoring call sites: cron-health, webhook-health, and the
+ * orphan-payment alerts all funnel here on email failure.
+ */
+export async function sendDiscordAlert(title: string, details: string): Promise<boolean> {
+  try {
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL
+    if (!webhookUrl) {
+      console.error("DISCORD_WEBHOOK_URL is not defined in environment variables")
+      return false
+    }
+    // Discord caps content at 2000 chars. allowed_mentions is empty so a
+    // user-controlled value (project name, URL, email) containing
+    // @everyone/@here/role mentions can never ping the ops channel.
+    const content = `**${title}**\n${details}`.slice(0, 1900)
+    const response = await fetchWithTimeout(
+      webhookUrl,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+      },
+      10_000,
+      "discord alert webhook",
+    )
+    if (!response.ok) {
+      console.error(`Error sending Discord alert: ${response.status} ${response.statusText}`)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error("Error sending Discord alert:", error)
+    return false
+  }
+}
+
+/**
  * Send a Discord notification for a new comment
  * @param projectId ID of the project where the comment was posted
  * @param userId ID of the user who posted the comment
