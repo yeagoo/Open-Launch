@@ -367,7 +367,10 @@ export async function DELETE(req: NextRequest, context: any) {
       }
     }
   } catch (error) {
+    // Fail CLOSED like the POST/PATCH guards: a DB hiccup during the check
+    // must not let the author hard-delete a moderator-hidden comment.
     console.error("Error checking comment hidden state:", error)
+    return NextResponse.json({ message: "Failed to process delete" }, { status: 500 })
   }
   return commentHandler.DELETE(req, context)
 }

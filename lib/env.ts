@@ -33,7 +33,11 @@ const REQUIRED_RUNTIME_ENV = [
   // Payments.
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
-  // Rate limiting / cron dedupe / auth secondary storage.
+  // Rate limiting / cron dedupe / auth secondary storage. HARD dependency
+  // by explicit decision (2026-07): fail-closed endpoints (payments,
+  // votes, reports) need it, and a boot without it would silently run at
+  // multiplied per-instance limits. Runtime failures AFTER boot still
+  // degrade per-endpoint as designed.
   "REDIS_URL",
   // Transactional email + admin alerts.
   "RESEND_API_KEY",
