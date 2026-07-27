@@ -244,18 +244,23 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
   // Stripe auto-expires an unpaid session after 24h, and if a payment still
   // lands on a now-`canceled` order the webhook routes it to
   // `handleOrphanPayment` (auto-refund + admin alert). So just cancel locally.
-  for (const order of pendingOrders) {
-    await db
-      .update(directoryOrder)
-      .set({ status: "canceled", updatedAt: new Date() })
-      .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "pending")))
-  }
+  //
+  // Order flips + project delete in ONE transaction: a crash between the
+  // two would otherwise leave pending orders whose Stripe session can
+  // still be paid against a project the user believes is canceled.
+  await db.transaction(async (tx) => {
+    for (const order of pendingOrders) {
+      await tx
+        .update(directoryOrder)
+        .set({ status: "canceled", updatedAt: new Date() })
+        .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "pending")))
+    }
 
-  // Project delete cascades the (now-canceled) directory_order rows;
-  // keeping them as `canceled` first means if a Stripe session somehow
-  // pays AFTER expire returned, the orphan alert + audit trail still
-  // surface the issue cleanly.
-  await db.delete(project).where(eq(project.id, projectId))
+    // Since 0048 the delete SET NULLs (not cascades) the order rows, so the
+    // canceled orders survive as the audit trail for any late-arriving
+    // payment on the burned Stripe session.
+    await tx.delete(project).where(eq(project.id, projectId))
+  })
 
   return { canceled: true }
 }

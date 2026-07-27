@@ -240,7 +240,11 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
           .from(projectToTag)
           .where(eq(projectToTag.projectId, projectId))
 
-        for (const tag of normalizedTags) {
+        // Touch tag rows in ascending id order — concurrent updates sharing
+        // tags would otherwise take the same row locks in different orders
+        // and deadlock (AB-BA).
+        const orderedTags = [...normalizedTags].sort((a, b) => a.id.localeCompare(b.id))
+        for (const tag of orderedTags) {
           await tx
             .insert(tagTable)
             .values({
@@ -256,15 +260,15 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
         }
 
         await tx.delete(projectToTag).where(eq(projectToTag.projectId, projectId))
-        if (normalizedTags.length > 0) {
+        if (orderedTags.length > 0) {
           await tx
             .insert(projectToTag)
-            .values(normalizedTags.map((tag) => ({ projectId, tagId: tag.id })))
+            .values(orderedTags.map((tag) => ({ projectId, tagId: tag.id })))
         }
 
         const affectedTagIds = [
-          ...new Set([...oldRows.map((row) => row.tagId), ...normalizedTags.map((tag) => tag.id)]),
-        ]
+          ...new Set([...oldRows.map((row) => row.tagId), ...orderedTags.map((tag) => tag.id)]),
+        ].sort((a, b) => a.localeCompare(b))
         for (const tagId of affectedTagIds) {
           await tx
             .update(tagTable)

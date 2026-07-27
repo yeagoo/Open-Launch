@@ -227,29 +227,39 @@ export async function toggleUpvote(projectId: string) {
     }
   }
 
-  // Check if the user has already upvoted the project
-  const existingUpvote = await db
-    .select()
-    .from(upvote)
-    .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
-    .limit(1)
+  // Toggle atomically. The previous SELECT-then-act flow had a TOCTOU
+  // race: two concurrent requests could both read "no vote" and invert
+  // the user's intended end state. Serialize per (user, project) with a
+  // transaction-scoped advisory lock so the check and the write are one
+  // linearizable unit. The (user_id, project_id) unique index remains as
+  // the last-resort integrity net.
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id} || ':' || ${projectId}))`,
+    )
 
-  // If upvote exists, remove it, otherwise add it
-  if (existingUpvote.length > 0) {
-    await db
-      .delete(upvote)
+    const existingUpvote = await tx
+      .select({ id: upvote.id })
+      .from(upvote)
       .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
-  } else {
-    await db
-      .insert(upvote)
-      .values({
-        id: crypto.randomUUID(),
-        userId: session.user.id,
-        projectId,
-        createdAt: new Date(),
-      })
-      .onConflictDoNothing()
-  }
+      .limit(1)
+
+    if (existingUpvote.length > 0) {
+      await tx
+        .delete(upvote)
+        .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
+    } else {
+      await tx
+        .insert(upvote)
+        .values({
+          id: crypto.randomUUID(),
+          userId: session.user.id,
+          projectId,
+          createdAt: new Date(),
+        })
+        .onConflictDoNothing()
+    }
+  })
 
   revalidatePath("/dashboard")
   // Temporairement commenter la revalidation spécifique au projet
@@ -454,9 +464,13 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
         )
       }
 
-      // Upsert tags + associations
-      if (normalizedTags.length > 0) {
-        for (const t of normalizedTags) {
+      // Upsert tags + associations. Everything below touches tag rows in
+      // ASCENDING id order: two concurrent submissions sharing multiple
+      // tags would otherwise take the same row locks in different orders
+      // and deadlock (classic AB-BA).
+      const orderedTags = [...normalizedTags].sort((a, b) => a.id.localeCompare(b.id))
+      if (orderedTags.length > 0) {
+        for (const t of orderedTags) {
           await tx
             .insert(tagTable)
             .values({
@@ -473,9 +487,9 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
 
         await tx
           .insert(projectToTag)
-          .values(normalizedTags.map((t) => ({ projectId: inserted.id, tagId: t.id })))
+          .values(orderedTags.map((t) => ({ projectId: inserted.id, tagId: t.id })))
 
-        for (const t of normalizedTags) {
+        for (const t of orderedTags) {
           // Atomic recount in a single statement: the correlated subquery
           // re-derives the count from project_to_tag under the tag row's
           // own write lock, instead of a read-then-write that two
