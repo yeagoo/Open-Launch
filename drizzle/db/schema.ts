@@ -825,6 +825,9 @@ export const emailOutbox = pgTable(
     lastError: text("last_error"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     sentAt: timestamp("sent_at"),
+    // Stamped on every drain attempt; dead letters only alert while this
+    // is fresh (< 24h) so an exhausted row can't keep the drain red.
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [index("email_outbox_status_idx").on(table.status, table.createdAt)],
 )

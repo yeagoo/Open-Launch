@@ -21,7 +21,7 @@
 
 import { db } from "@/drizzle/db"
 import { emailOutbox } from "@/drizzle/db/schema"
-import { and, asc, eq, gte, inArray, lt, or } from "drizzle-orm"
+import { and, asc, eq, gte, inArray, lt, or, sql } from "drizzle-orm"
 
 import { sendLaunchReminderEmail, sendWinnerBadgeEmail } from "@/lib/transactional-emails"
 
@@ -127,24 +127,27 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
       // the 10-minute cron, or two instances) may work the same row
       // concurrently — never flip a row another worker already sent.
       // (A duplicate SEND itself is absorbed by the Resend Idempotency-Key.)
-      await db
+      const res = await db
         .update(emailOutbox)
-        .set({ status: "sent", sentAt: now, lastError: null })
+        .set({ status: "sent", sentAt: now, updatedAt: now, lastError: null })
         .where(and(eq(emailOutbox.id, row.id), inArray(emailOutbox.status, ["pending", "failed"])))
-      sent++
+      // Only count when WE won the transition — a concurrent drainer may
+      // have flipped the row first; counting it anyway would misreport.
+      if (res.rowCount && res.rowCount > 0) sent++
     } catch (err) {
-      // Same guard in reverse: a concurrent winner may have marked the row
-      // sent while this attempt was in flight — a stale failure must not
-      // revert it (which would cause duplicate retries).
-      await db
+      // Same guard in reverse + atomic attempts increment (a concurrent
+      // failure must not overwrite the other drainer's +1 with the same
+      // snapshot value, silently stretching the retry budget).
+      const res = await db
         .update(emailOutbox)
         .set({
           status: "failed",
-          attempts: row.attempts + 1,
+          attempts: sql`${emailOutbox.attempts} + 1`,
           lastError: err instanceof Error ? err.message : String(err),
+          updatedAt: now,
         })
         .where(and(eq(emailOutbox.id, row.id), inArray(emailOutbox.status, ["pending", "failed"])))
-      failed++
+      if (res.rowCount && res.rowCount > 0) failed++
     }
   }
 
@@ -154,10 +157,19 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
     .where(inArray(emailOutbox.status, ["pending"]))
     .limit(1)
 
+  // Dead letters alert only while FRESH (last attempt within 24h). A
+  // permanently-exhausted row must not keep every drain red forever —
+  // that would mask real new failures behind alert fatigue.
   const deadLettered = await db
     .select({ id: emailOutbox.id })
     .from(emailOutbox)
-    .where(and(eq(emailOutbox.status, "failed"), gte(emailOutbox.attempts, MAX_ATTEMPTS)))
+    .where(
+      and(
+        eq(emailOutbox.status, "failed"),
+        gte(emailOutbox.attempts, MAX_ATTEMPTS),
+        gte(emailOutbox.updatedAt, new Date(Date.now() - 24 * 3600_000)),
+      ),
+    )
     .limit(1)
 
   return { sent, failed, remaining: remaining.length, deadLettered: deadLettered.length }
