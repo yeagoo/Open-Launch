@@ -1136,5 +1136,10 @@
     "typeMilestone": "{project} 获得了 {count} 个赞 🎉",
     "typeLaunchStatus": "{project} 已上线！",
     "typeLaunchEnded": "{project} 的发布日已结束"
+  },
+  "userProfile": {
+    "memberSince": "注册于 {date}",
+    "launches": "发布的项目",
+    "profileTitle": "{name} 的主页 - aat.ee"
   }
 }

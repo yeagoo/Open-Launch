@@ -1148,5 +1148,10 @@
     "typeMilestone": "{project} jõudis {count} hääleni 🎉",
     "typeLaunchStatus": "{project} on nüüd avaldatud!",
     "typeLaunchEnded": "Projekti {project} väljalaskepäev on lõppenud"
+  },
+  "userProfile": {
+    "memberSince": "Liitunud {date}",
+    "launches": "Väljalased",
+    "profileTitle": "{name} - aat.ee"
   }
 }

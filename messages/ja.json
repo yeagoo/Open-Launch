@@ -1148,5 +1148,10 @@
     "typeMilestone": "{project} が {count} 票に達しました 🎉",
     "typeLaunchStatus": "{project} が公開されました！",
     "typeLaunchEnded": "{project} のローンチ日が終了しました"
+  },
+  "userProfile": {
+    "memberSince": "{date} に登録",
+    "launches": "ローンチ",
+    "profileTitle": "{name} - aat.ee"
   }
 }

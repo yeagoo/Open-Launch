@@ -1144,5 +1144,10 @@
     "typeMilestone": "{project}이(가) {count}표를 달성했습니다 🎉",
     "typeLaunchStatus": "{project}이(가) 라이브되었습니다!",
     "typeLaunchEnded": "{project}의 런치 데이가 종료되었습니다"
+  },
+  "userProfile": {
+    "memberSince": "{date} 가입",
+    "launches": "런치",
+    "profileTitle": "{name} - aat.ee"
   }
 }

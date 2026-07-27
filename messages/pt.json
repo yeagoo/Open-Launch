@@ -1148,5 +1148,10 @@
     "typeMilestone": "{project} alcançou {count} votos 🎉",
     "typeLaunchStatus": "{project} está no ar!",
     "typeLaunchEnded": "O dia de lançamento de {project} terminou"
+  },
+  "userProfile": {
+    "memberSince": "Membro desde {date}",
+    "launches": "Lançamentos",
+    "profileTitle": "{name} na aat.ee"
   }
 }
