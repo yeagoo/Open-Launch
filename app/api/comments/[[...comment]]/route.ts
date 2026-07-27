@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { NextComment } from "@fuma-comment/next"
 
-import { checkCommentRateLimit } from "@/lib/comment-rate-limit"
+import { checkCommentRateLimit, checkUpvoteRateLimit } from "@/lib/comment-rate-limit"
 import { commentAuth, commentStorage } from "@/lib/comment.config"
 import { extractTextFromContent } from "@/lib/content-utils"
 import { sendDiscordCommentNotification } from "@/lib/discord-notification"
@@ -123,6 +123,24 @@ export async function POST(req: NextRequest, context: any) {
             message:
               "You've posted too many comments. Please wait a few minutes before adding another one.",
             details: `Rate limit exceeded. You can comment again in ${rateLimit.reset} seconds. You have ${rateLimit.remaining} comments left for this period.`,
+            type: "rate_limit_exceeded",
+            resetInSeconds: rateLimit.reset,
+          },
+          { status: 429 },
+        )
+      }
+    }
+
+    // Like/rate actions hit deeper paths (>/[project]/[comment]/...), not the
+    // new-comment branch — they get their own, more permissive bucket. Until
+    // this was wired they were completely unlimited, so a logged-in script
+    // could mass-like its own comments and skew comment ranking.
+    if (!isNewComment && session) {
+      const rateLimit = await checkUpvoteRateLimit(session.id)
+      if (!rateLimit.success) {
+        return NextResponse.json(
+          {
+            message: "Too many votes. Please wait a moment before trying again.",
             type: "rate_limit_exceeded",
             resetInSeconds: rateLimit.reset,
           },

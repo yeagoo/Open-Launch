@@ -19,11 +19,14 @@ const VOTE_LIMITS = {
  * @returns Result of the rate limit check
  */
 export async function checkCommentRateLimit(userId: string) {
-  // Key starts with 'comment:' to clearly separate from other limits
+  // Key starts with 'comment:' to clearly separate from other limits.
+  // Fail closed: comments trigger notifications and public content, so a
+  // limiter outage must not multiply the effective limit across instances.
   return checkRateLimit(
     `comment:${userId}`,
     COMMENT_LIMITS.ACTIONS_PER_WINDOW,
     COMMENT_LIMITS.TIME_WINDOW_MS,
+    { onRedisError: "fail-closed" },
   )
 }
 
@@ -38,5 +41,6 @@ export async function checkUpvoteRateLimit(userId: string) {
     `vote:${userId}`,
     VOTE_LIMITS.ACTIONS_PER_WINDOW,
     VOTE_LIMITS.TIME_WINDOW_MS,
+    { onRedisError: "fail-closed" },
   )
 }

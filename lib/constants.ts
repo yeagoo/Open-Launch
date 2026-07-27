@@ -76,6 +76,20 @@ export const UPVOTE_LIMITS = {
   DEBOUNCE_TIME_MS: 500, // Temps de debounce côté client (500ms)
 } as const
 
+// Limits for project submissions. Unbounded submits let an attacker
+// mass-insert project rows, and every `hasBadgeVerified: true` claim
+// triggers a server-side badge fetch that can fall back to the metered
+// Tinyfish crawler — a cost amplifier. The badge re-verify gets its own,
+// stricter bucket for the same reason.
+export const SUBMIT_PROJECT_LIMITS = {
+  ACTIONS_PER_WINDOW: 10,
+  TIME_WINDOW_MS: 60 * 60 * 1000, // 1 hour
+} as const
+export const BADGE_VERIFY_LIMITS = {
+  ACTIONS_PER_WINDOW: 10,
+  TIME_WINDOW_MS: 60 * 60 * 1000, // 1 hour
+} as const
+
 // Premium Launch 支付链接 ($3.99/次)
 export const PREMIUM_PAYMENT_LINK = process.env.NEXT_PUBLIC_PREMIUM_PAYMENT_LINK!
 // SEO Growth Package 支付链接 ($50)

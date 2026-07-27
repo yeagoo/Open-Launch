@@ -187,11 +187,14 @@ export async function toggleUpvote(projectId: string) {
   const { UPVOTE_LIMITS } = await import("@/lib/constants")
   const rateLimit = await import("@/lib/rate-limit")
 
-  // Rate limiting pour les upvotes en utilisant les constantes
+  // Rate limiting pour les upvotes en utilisant les constantes.
+  // Fail closed on Redis trouble: upvotes move money-adjacent rankings, so a
+  // limiter outage must not multiply the effective limit across instances.
   const { success, reset } = await rateLimit.checkRateLimit(
     `upvote:${session.user.id}`,
     UPVOTE_LIMITS.ACTIONS_PER_WINDOW,
     UPVOTE_LIMITS.TIME_WINDOW_MS,
+    { onRedisError: "fail-closed" },
   )
 
   if (!success) {
@@ -268,6 +271,22 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
     return { success: false, error: "Authentication required" }
   }
 
+  // Rate limit submissions: unbounded submits let an attacker mass-insert
+  // project rows, and each `hasBadgeVerified: true` claim triggers a
+  // server-side badge fetch that can fall back to the metered Tinyfish
+  // crawler — a cost amplifier. Fail closed on Redis trouble.
+  const { checkRateLimit } = await import("@/lib/rate-limit")
+  const { SUBMIT_PROJECT_LIMITS, BADGE_VERIFY_LIMITS } = await import("@/lib/constants")
+  const { success: withinSubmitLimit } = await checkRateLimit(
+    `submit-project:${session.user.id}`,
+    SUBMIT_PROJECT_LIMITS.ACTIONS_PER_WINDOW,
+    SUBMIT_PROJECT_LIMITS.TIME_WINDOW_MS,
+    { onRedisError: "fail-closed" },
+  )
+  if (!withinSubmitLimit) {
+    return { success: false, error: "Too many submissions. Please try again later." }
+  }
+
   try {
     const parsedProject = projectSubmissionSchema.safeParse(projectData)
     if (!parsedProject.success) {
@@ -310,9 +329,19 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
 
     // Server-side badge re-verification — do not trust the client claim.
     // Only re-fetch when the client claims true (avoid wasted requests).
+    // Separately rate limited: the fetch can fall back to the metered
+    // Tinyfish crawler, so this bucket caps paid-crawl spend per user.
     let serverVerifiedBadge = false
     if (hasBadgeVerified) {
-      serverVerifiedBadge = await verifyAatBadgeServerSide(websiteUrl)
+      const { success: withinBadgeLimit } = await checkRateLimit(
+        `badge-verify:${session.user.id}`,
+        BADGE_VERIFY_LIMITS.ACTIONS_PER_WINDOW,
+        BADGE_VERIFY_LIMITS.TIME_WINDOW_MS,
+        { onRedisError: "fail-closed" },
+      )
+      if (withinBadgeLimit) {
+        serverVerifiedBadge = await verifyAatBadgeServerSide(websiteUrl)
+      }
     }
 
     // Resubmit guard for the same URL:
