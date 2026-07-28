@@ -3,6 +3,7 @@ import { request } from "undici"
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage, type DeepSeekUsage } from "@/lib/ai-usage"
+import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { FetchTimeoutError, withTimeout } from "@/lib/fetch-timeout"
 
 export const SKILL_REVIEW_REJECT_THRESHOLD = 30
@@ -146,6 +147,7 @@ async function callDeepSeekReview({
     },
     body: JSON.stringify({
       model,
+      ...getDeepSeekThinkingOptions(model),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

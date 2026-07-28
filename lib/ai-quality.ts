@@ -13,6 +13,7 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
+import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 
 export const LOW_QUALITY_THRESHOLD = 30
@@ -75,6 +76,7 @@ ${wrapInput("website_url", input.websiteUrl ?? "")}`
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
+        ...getDeepSeekThinkingOptions(model),
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },

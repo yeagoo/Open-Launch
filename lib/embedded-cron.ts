@@ -31,6 +31,18 @@ const globalForCron = globalThis as typeof globalThis & {
   __aatEmbeddedCronState?: EmbeddedCronState
 }
 
+export function shouldStartEmbeddedCron(env: {
+  NODE_ENV?: string
+  NEXT_PHASE?: string
+  EMBEDDED_CRON_DISABLED?: string
+}): boolean {
+  return (
+    env.NODE_ENV === "production" &&
+    env.NEXT_PHASE !== "phase-production-build" &&
+    env.EMBEDDED_CRON_DISABLED !== "true"
+  )
+}
+
 /**
  * Redundant in-process trigger for self-hosted Next.js.
  *
@@ -40,8 +52,7 @@ const globalForCron = globalThis as typeof globalThis & {
  * deduplicates overlapping processes and external calls.
  */
 export function startEmbeddedCron(): void {
-  if (process.env.NODE_ENV !== "production") return
-  if (process.env.EMBEDDED_CRON_DISABLED === "true") return
+  if (!shouldStartEmbeddedCron(process.env)) return
   if (globalForCron.__aatEmbeddedCronState) return
 
   const apiKey = process.env.CRON_API_KEY

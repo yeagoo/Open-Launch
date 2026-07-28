@@ -10,6 +10,7 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { INPUT_SAFETY_BLOCK, stripHtml, wrapInput } from "@/lib/ai-input"
 import { logAiUsage } from "@/lib/ai-usage"
+import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 
 const PERSONAS = [
@@ -264,6 +265,7 @@ async function callDeepSeek(
       },
       body: JSON.stringify({
         model,
+        ...getDeepSeekThinkingOptions(model),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

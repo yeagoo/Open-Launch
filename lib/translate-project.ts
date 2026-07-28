@@ -1,5 +1,6 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
+import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 import { sanitizeRichText } from "@/lib/sanitize"
 
@@ -96,6 +97,7 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
       },
       body: JSON.stringify({
         model,
+        ...getDeepSeekThinkingOptions(model),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -178,6 +180,7 @@ Rules:
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
+        ...getDeepSeekThinkingOptions(model),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

@@ -17,6 +17,8 @@
 import { promises as fs } from "fs"
 import * as path from "path"
 
+import { getDeepSeekThinkingOptions } from "../lib/deepseek-request"
+
 type LocaleCode = "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
 
 const ALL_LOCALES: LocaleCode[] = ["zh", "es", "pt", "fr", "ja", "ko", "et"]
@@ -160,6 +162,7 @@ Output ONLY a valid JSON object. No prose, no markdown fences.`
     },
     body: JSON.stringify({
       model,
+      ...getDeepSeekThinkingOptions(model),
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

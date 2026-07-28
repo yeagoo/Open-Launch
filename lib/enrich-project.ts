@@ -7,6 +7,7 @@
 
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
+import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 import { sanitizeMarkdown } from "@/lib/sanitize-markdown"
 import { type ProjectLocale } from "@/lib/translate-project"
@@ -56,6 +57,7 @@ async function callDeepSeek(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
+        ...getDeepSeekThinkingOptions(model),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },

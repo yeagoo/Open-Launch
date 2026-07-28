@@ -58,6 +58,7 @@ function deepSeekResponse(content: string | null) {
 
 beforeEach(() => {
   process.env.DEEPSEEK_API_KEY = "test-deepseek-key"
+  process.env.DEEPSEEK_MODEL = "deepseek-v4-flash"
   mocks.fetchWithTimeout.mockReset()
   mocks.logAiUsage.mockReset().mockResolvedValue(undefined)
   mocks.assertAiAvailable.mockReset()
@@ -66,6 +67,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.DEEPSEEK_API_KEY
+  delete process.env.DEEPSEEK_MODEL
 })
 
 describe("prescreenAlternatives", () => {
@@ -73,6 +75,13 @@ describe("prescreenAlternatives", () => {
     mocks.fetchWithTimeout.mockResolvedValue(deepSeekResponse("[]"))
 
     await expect(prescreenAlternatives(subject, candidates)).resolves.toEqual([])
+
+    const request = mocks.fetchWithTimeout.mock.calls[0]?.[1] as RequestInit
+    expect(JSON.parse(String(request.body))).toMatchObject({
+      model: "deepseek-v4-flash",
+      thinking: { type: "disabled" },
+      max_tokens: 200,
+    })
   })
 
   it("returns known candidate IDs in provider order", async () => {
