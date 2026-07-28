@@ -513,3 +513,33 @@ healthy、restart count 0。
   <https://api-docs.deepseek.com/api/create-chat-completion>
 - DeepSeek Reasoning Model 文档：
   <https://api-docs.deepseek.com/guides/reasoning_model>
+
+### 旧 Zeabur Cron 告警隔离
+
+2026-07-28 收到的 9 项 stale 告警并非来自当前 ECS 生产库，而是已停用应用
+仍保留的 Zeabur `openlaunch` 数据库。证据链如下：
+
+- Zeabur 旧库的 `cron_run_log` 固定在每分钟第 56 秒写入；当前 ECS 生产库在
+  第 40 秒写入；
+- 以旧库 12:00 UTC 的 health run 为截点重算最后成功时间，逐项复现告警中的
+  9 个 quiet 分钟数；
+- 同期 ECS 生产环境的 cron-health 正常，应用容器 healthy、restart count
+  为 0。
+
+经明确批准，仅对旧 Zeabur 数据库执行可回滚隔离：
+
+1. 在同一事务中锁定 `cron_schedule`，核对恰好 21 行且 21 行启用；
+2. 创建 `ops_cron_schedule_backup_20260728_approved`，核对备份为 21 行；
+3. 将旧表全部 21 行设为 `enabled=false`，更新行数不是 21 即回滚；
+4. 未删除 Zeabur Postgres/Redis，未重启已 suspended 的旧应用，也未改动
+   当前 ECS 生产数据库。
+
+隔离前旧库最后一条记录为 `2026-07-28 13:00:56.965 UTC`。隔离后跨过
+13:02:56 与 13:04:56 两个原调度周期，旧库新增记录仍为 0，启用计划仍为
+0；备份表保持 21 行且原状态全部启用。同期 ECS 生产库继续写入到
+`2026-07-28 13:04:40.423 UTC`，`aat-ee-app` 仍为 healthy、0 重启。
+
+如未来经明确批准需要回滚，先核对备份完整性，再在事务中按 `id` 从
+`ops_cron_schedule_backup_20260728_approved` 恢复 `enabled` 与
+`updated_at`。在 ECS embedded Cron 仍为生产权威时不得恢复旧计划，否则会
+重新引入重复执行和旧环境告警。

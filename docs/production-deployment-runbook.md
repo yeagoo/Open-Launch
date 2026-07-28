@@ -9,6 +9,11 @@ values or private-key contents.
 ## Hosting authority
 
 - aat.ee is **not deployed on Zeabur**.
+- The retired Zeabur `open-launch` application is suspended. Its retained
+  `openlaunch` database and Redis service are not production authorities; all
+  21 rows in that database's `cron_schedule` table were disabled on 2026-07-28
+  to isolate the legacy scheduler. See
+  [Retired Zeabur scheduler isolation](#retired-zeabur-scheduler-isolation).
 - Production host: `8.210.175.190`
 - SSH user: `ecs-user`
 - Remote hostname: `iZj6c7t3zvc5p481sn85jtZ`
@@ -298,6 +303,47 @@ POST /api/upload
 For cron incidents, inspect the database's run/attempt records without calling
 an authenticated cron-health endpoint unless sending its alert email is
 intentional.
+
+## Retired Zeabur scheduler isolation
+
+On 2026-07-28, a nine-task stale alert was traced to the retained Zeabur
+`openlaunch` database, not the ECS production database:
+
+- the Zeabur database received `cron_run_log` rows at second `:56`, while ECS
+  production received them at second `:40`;
+- recalculating last-success ages immediately before the legacy 12:00 UTC
+  health run reproduced all nine values in the alert;
+- ECS production had successful health runs and did not emit that alert.
+
+With explicit approval, the old database's 21 schedule rows were copied to
+`ops_cron_schedule_backup_20260728_approved` and then all set to
+`enabled=false` in one transaction. No Zeabur service was deleted, the
+suspended application was not restarted, and no ECS production row or resource
+was changed.
+
+Verification crossed two former dispatch cycles: the old database remained at
+`2026-07-28 13:00:56.965 UTC` with zero later run rows, while ECS production
+advanced through `2026-07-28 13:04:40.423 UTC`; `aat-ee-app` remained healthy
+with restart count 0.
+
+If rollback is explicitly approved, first confirm the backup still contains
+exactly 21 rows and all are enabled, then restore by ID in a transaction:
+
+```sql
+BEGIN;
+LOCK TABLE cron_schedule IN SHARE ROW EXCLUSIVE MODE;
+
+UPDATE cron_schedule AS current
+SET enabled = backup.enabled,
+    updated_at = backup.updated_at
+FROM ops_cron_schedule_backup_20260728_approved AS backup
+WHERE current.id = backup.id;
+
+COMMIT;
+```
+
+Do not re-enable the retired schedules while ECS embedded Cron is authoritative:
+doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
