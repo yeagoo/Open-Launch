@@ -184,7 +184,12 @@ export default async function RootLayout({
             <NextIntlClientProvider locale={locale} messages={navMessages}>
               <Nav />
             </NextIntlClientProvider>
-            <main className="flex-grow">{children}</main>
+            {/* Every route still needs the locale context for next-intl's
+                navigation primitives. Route-level providers add only the
+                message namespaces their client components consume. */}
+            <NextIntlClientProvider locale={locale} messages={{}}>
+              <main className="flex-grow">{children}</main>
+            </NextIntlClientProvider>
             <NextIntlClientProvider locale={locale} messages={footerMessages}>
               <Footer navSites={footerNavSites} />
             </NextIntlClientProvider>
