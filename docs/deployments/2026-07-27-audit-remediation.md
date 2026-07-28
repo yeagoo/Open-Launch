@@ -447,3 +447,69 @@ deep health 为 200，Postgres/Redis 均为 `ok`；Node `v24.18.0` / x64、
 不属于允许小时，所以下一次自然执行为 10:05 UTC。08:30–08:38 期间调度器
 持续运行，产生的 13 条其他任务记录全部为 200；目标行在发布验收结束时仍为
 NULL，等待自然调度领取。
+
+### DeepSeek V4 默认 thinking 修复（r18）
+
+r17 按设计让临时失败返回 500 并在一小时后重试，因此后续告警收敛为唯一的
+`generate-alternatives` stale task，而不再被错误的 30 天冷却掩盖。生产自然
+调度在 10:05、10:35、11:05、11:35 和 12:05 UTC 均得到 500；日志中的共同
+原因是 `No content generated from DeepSeek API`。
+
+对生产所用 `deepseek-v4-flash` 做了不写应用数据的精确 API 复现。相同的
+7,619 字符 Orvo 预筛选请求在默认 thinking、`max_tokens: 200` 时以
+`finish_reason: length` 结束：正文 0 字符、reasoning 632 字符、200 个
+completion tokens；扩大到 600/1,200 后才得到两个字符的正文。按 DeepSeek
+V4 官方接口显式发送 `thinking: { type: "disabled" }` 后，相同请求在
+`max_tokens: 200` 下以 `finish_reason: stop` 返回合法 JSON 空数组，正文
+2 字符且只消耗 1 个 completion token。由此确认根因不是余额、网络或模型
+不存在，而是 V4 默认 thinking 与现有短响应 token 上限的组合。
+
+r18 增加一个共享请求选项 helper，只对 `deepseek-v4-*` 显式禁用 thinking，
+旧模型及自定义模型不发送该字段；所有 DeepSeek chat-completion 入口复用
+该 helper。构建期还增加 `NEXT_PHASE=phase-production-build` 守卫，避免在
+带生产环境变量的构建进程中启动 embedded Cron。
+
+发布证据：
+
+- 最终应用 commit：
+  `8c771ae8da0d5ba022409aa375a8ef298bb885b6`
+- CI：
+  `30356619329`（TypeScript、Lint、243 tests / 6 skipped、Build、
+  standalone x64 `sharp`、dependency audit、Semgrep 全部通过）
+- 应用计划：
+  `deploy_aat-ee-deepseek-thinking-r18-20260728`
+- 应用快照：
+  `snap_aat-ee-deepseek-thinking-r18-20260728_1785240361957133115`
+  （`snapshot-verify` 状态 `verified`）
+- 应用 journal：
+  `deploy-deploy_aat-ee-deepseek-thinking-r18-20260728-20260728120651`
+- 结果：7 项操作全部成功，仅替换 `aat-ee-app`；未运行迁移或数据修复。
+
+r18 即时生产回归确认：容器 healthy，部署标记为
+`20260728-deepseek-thinking-r18`；源站 `/`、英语/西语 Ogtv 与
+`/sitemap.xml` 为 200，使用浏览器 UA 的 Cloudflare 公网检查也均为 200；
+服务器自身访问公网域名触发的 403 明确带 `cf-mitigated: challenge`，不是
+源站错误。deep health 为 200，Postgres/Redis 均为 `ok`；Node
+`v24.18.0` / x64、`sharp 0.35.3`、libvips `8.18.3`；新容器错误日志匹配
+为 0。最终 `opsctl doctor` 为 0 errors / 0 warnings，deploy gates 为
+ready。
+
+- 发布前备份：
+  `backup-aat-ee-restic-20260728120225`，状态 success。
+- 发布后备份：
+  `backup-aat-ee-restic-20260728121130`，状态 success。
+- 发布后独立 Restic repository check：状态 success。
+
+没有为验收人工调用 `generate-alternatives`。r18 部署后的第一次自然调度于
+12:35:40 UTC 执行：日志确认 MintedSaaS 的 25 个候选池正常得到 1 个预筛选
+结果，并按“少于 2 个候选”的既有规则安全跳过；`cron_run_log` 记录 HTTP
+200、2,644ms、`error` 为 NULL。随后只读复核 `/api/cron/cron-health` 返回
+HTTP 200、`status: healthy`、检查 21 个任务且成功清除旧告警状态。容器仍为
+healthy、restart count 0。
+
+根因依据：
+
+- DeepSeek Create Chat Completion 文档：
+  <https://api-docs.deepseek.com/api/create-chat-completion>
+- DeepSeek Reasoning Model 文档：
+  <https://api-docs.deepseek.com/guides/reasoning_model>

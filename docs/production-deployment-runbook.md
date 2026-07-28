@@ -140,16 +140,16 @@ At the last verification, `status --json` reported:
 - deployment gates `ready`
 - snapshot coverage `ready`
 
-The r17 post-deploy backup is
-`backup-aat-ee-restic-20260728082210`; the independent repository check is
-`check-restic-idrive-e2-20260728082442`. Both completed successfully.
+The r18 post-deploy backup is
+`backup-aat-ee-restic-20260728121130`; the post-deploy independent repository
+check also completed successfully.
 
 ## Current application state
 
 The application artifact currently serving public traffic was built from:
 
 ```text
-ea606e9cf65099272615b14ea595cd5daed14bc8
+8c771ae8da0d5ba022409aa375a8ef298bb885b6
 ```
 
 Current runtime facts:
@@ -157,9 +157,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.alternative-retry-r17.yml`
+  `compose.deepseek-thinking-r18.yml`
 - deployment marker:
-  `20260728-alternative-retry-r17`
+  `20260728-deepseek-thinking-r18`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
@@ -186,8 +186,12 @@ failures: definitive results retain the 30-day cooldown, while failures become
 eligible for retry after one hour and surface as failed cron runs when nothing
 was generated. A separately approved, exact-row, rollback-on-mismatch one-shot
 plan cleared the stale Hero Widget attempt timestamp created by the pre-r17
-behavior. The exact plans, snapshots, journals, migration evidence, performance
-measurements, and backup records are in
+behavior. Commit `8c771ae8da0d5ba022409aa375a8ef298bb885b6` (`r18`) explicitly
+disables DeepSeek V4's default thinking mode for the application's bounded JSON,
+translation, and short-prose requests, preventing reasoning tokens from
+exhausting `max_tokens` before any content is returned. It also blocks embedded
+Cron startup during `phase-production-build`. The exact plans, snapshots,
+journals, migration evidence, performance measurements, and backup records are in
 `docs/deployments/2026-07-27-audit-remediation.md`.
 
 Cloudflare Rocket Loader was disabled and verified on 2026-07-28. Public English
