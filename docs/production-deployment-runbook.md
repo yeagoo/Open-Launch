@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-07-26 (Asia/Shanghai)
+Last verified: 2026-07-28 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -140,12 +140,16 @@ At the last verification, `status --json` reported:
 - deployment gates `ready`
 - snapshot coverage `ready`
 
+The r16 post-deploy backup is
+`backup-aat-ee-restic-20260728045256`; the independent repository check is
+`check-restic-idrive-e2-20260728045515`. Both completed successfully.
+
 ## Current application state
 
 The application artifact currently serving public traffic was built from:
 
 ```text
-176b6d37ac32d80fca66a0ab8010a8becb03b59a
+7db3e9abff0ff6c45f5f479948662d08c0fe306a
 ```
 
 Current runtime facts:
@@ -153,9 +157,10 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.sitemap-sharding-r13.yml`
+  `compose.intl-context-r16.yml`
 - deployment marker:
-  `20260728-sitemap-sharding-r13`
+  `20260728-intl-context-r16`
+- runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 
@@ -166,9 +171,26 @@ serialization bug; commit `805c25efb2188bb23d3b998eb29affd60f081118`
 fixed it and was deployed as the application-only `r12` hotfix. Commit
 `176b6d37ac32d80fca66a0ab8010a8becb03b59a`, deployed as `r13`, then split
 projects/users into bounded sitemap shards and moved the expanded hreflang
-objects out of the Next Data Cache. The exact plans, snapshots, journals,
-migration evidence, and backup records are in
+objects out of the Next Data Cache. Commit
+`45758f2cd62e619c45ebf162a291d8cc4f0dd925` (`r14`) fixed the x64 `sharp`
+artifact, added tags sharding, trusted the non-www HTTPS origin, and reduced
+project-detail mobile LCP work. Final commit
+`5704b6a60a178ed11bf7f169e04c6b58cad4af0e` (`r15`) corrected legacy sitemap
+redirects to the public canonical origin. Commit
+`7db3e9abff0ff6c45f5f479948662d08c0fe306a` (`r16`) then restored the minimal
+locale context required by route navigation primitives without expanding the
+scoped client message payloads. The exact plans, snapshots, journals, migration
+evidence, performance measurements, and backup records are in
 `docs/deployments/2026-07-27-audit-remediation.md`.
+
+Known edge issue: Cloudflare Rocket Loader was still enabled at the last
+verification and rewrote Next.js/React streaming reveal scripts. The production
+origin does not contain those rewrites. The final r16 sample observed mobile LCP
+at 2.68s through Cloudflare and 1.27s when directly reaching the same origin;
+public HTML had 82 rewritten Next streaming scripts while origin HTML had zero.
+Disable Rocket Loader in `Speed → Settings → Content Optimization`, then verify
+that public HTML contains neither `rocket-loader` nor `data-cf-settings`. R2
+credentials cannot change this zone setting.
 
 ## Required deployment sequence
 
@@ -185,9 +207,9 @@ replacement of production files.
 4. Check `opsctl status`, `deploy-gates`, backup history, and snapshot coverage.
 5. Run the registered before-deploy backup for `aat-ee` and verify its systemd
    result. Check `restic-idrive-e2`.
-6. Create a new, uniquely named typed deploy plan. Run `preflight`, then
-   `deploy <plan> --dry-run --json`.
-7. Create and verify the required snapshot.
+6. Create a new, uniquely named typed deploy plan and run `preflight`.
+7. Create and verify the required snapshot, then run
+   `deploy <plan> --dry-run --snapshot <snapshot-id> --json`.
 8. Request human approval for the exact ready plan and snapshot. Destructive
    operations require their own typed approval scope.
 9. Execute only the approved plan, snapshot, and approval token. Preserve the
@@ -229,19 +251,23 @@ Verify at least:
 ```text
 https://aat.ee/
 https://www.aat.ee/
+https://www.aat.ee/zh
+https://www.aat.ee/es
+https://www.aat.ee/et
 https://www.aat.ee/sitemap.xml
 https://www.aat.ee/sitemaps/static.xml
 https://www.aat.ee/sitemaps/projects-1.xml
 https://www.aat.ee/sitemaps/users-1.xml
-https://www.aat.ee/sitemaps/tags.xml
+https://www.aat.ee/sitemaps/tags-1.xml
 https://www.aat.ee/sitemaps/editorial.xml
 https://www.aat.ee/et/projects/serena
 ```
 
-The legacy `/sitemaps/projects.xml` and `/sitemaps/users.xml` routes must return
-`308` to `/sitemap.xml`. Sharded routes use one-based suffixes; zero, suffixes
-above the bounded parser limit, and suffixes on unsharded kinds must return
-`404`.
+The legacy `/sitemaps/projects.xml`, `/sitemaps/users.xml`, and
+`/sitemaps/tags.xml` routes must return `308` to the exact public canonical URL
+`https://www.aat.ee/sitemap.xml`; an internal `0.0.0.0:8080` Location is a
+regression. Sharded routes use one-based suffixes; zero, suffixes above the
+bounded parser limit, and suffixes on unsharded kinds must return `404`.
 
 For the Serena page, confirm one server-rendered `BreadcrumbList` with exactly
 three ordered items (`Avaleht`, `Projektid`, `Serena`), each containing `name`

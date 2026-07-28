@@ -1,8 +1,9 @@
 # 2026-07-27 全站审计修复 + 新功能（0–9 阶段）
 
 Status: **生产部署完成**（2026-07-28，最终应用 commit
-`176b6d37ac32d80fca66a0ab8010a8becb03b59a`）；0048–0057 已应用，评论 FK
-已验证，部署后 sitemap hotfix 与分片已发布
+`7db3e9abff0ff6c45f5f479948662d08c0fe306a`）；0048–0057 已应用，评论 FK
+已验证，sitemap hotfix/分片、runtime/LCP 修复及 canonical redirect hotfix
+与 locale context hotfix 均已发布
 
 本次改造源于四路并行审计（安全 / 数据正确性 / 前端·SEO / 基础设施），覆盖
 0–9 十个阶段：紧急安全修复、数据并发、运维可靠性、SEO 前端、搜索升级、
@@ -83,7 +84,8 @@ curl -fsS -H "Authorization: Bearer $CRON_API_KEY" \
   "https://www.aat.ee/api/health?deep=1"                # DB+Redis readiness
 curl -fsS https://www.aat.ee/sitemaps/blog.xml | head   # 含文章、无 draft
 curl -fsS https://www.aat.ee/sitemaps/reviews.xml | head
-curl -fsS https://www.aat.ee/sitemaps/users.xml | head
+curl -fsS https://www.aat.ee/sitemaps/users-1.xml | head
+curl -fsS https://www.aat.ee/sitemaps/tags-1.xml | head
 # 抽查一个 AVIF-logo 项目 + 一个 CJK 名项目：
 curl -fsS -o /tmp/og.png https://www.aat.ee/projects/<slug>/opengraph-image
 curl -fsS "https://www.aat.ee/search?q=prduct"          # typo 容忍应有结果
@@ -118,6 +120,21 @@ tombstone 评论的作者无法编辑/删除它（403）。
 4. **fuma author 匿名化策略**：删用户时评论 author 由清理脚本改为
    `deleted-user`；admin removeUser 路径暂不含自动匿名化（better-auth 无
    delete hook），依赖定期清理。
+5. **Cloudflare Rocket Loader 必须关闭**：公网响应仍注入
+   `rocket-loader.min.js`，并把 Next.js/React 流式 reveal 脚本改写为非标准
+   script type；生产源站对照没有这些改写。当前没有 Zone Settings API Token，
+   R2 凭据无权修改该设置。需在 Cloudflare
+   `Speed → Settings → Content Optimization` 将 Rocket Loader 切为 Off，
+   再确认 HTML 中 `rocket-loader`、`data-cf-settings` 均为 0。
+6. **轮换 `X-RapidAPI-Key`**：本次本地制品构建前，误用 shell 读取非标准
+   dotenv 键名时，该凭据曾进入工具错误输出。后续已改用 Bun dotenv parser，
+   但该 key 仍应在提供方后台轮换。
+7. **Aegis systemd 状态漂移**：`aegis.service` 因 2026-07-28
+   unattended-upgrade 后遗留进程而显示 failed；标准 restart 仍被旧 updater
+   的 SIGKILL 中断。`AliYunDunUpdate`、`AliYunDun`、
+   `AliYunDunMonitor` 三个核心进程实际都在运行（客户端
+   `aegis_12_93`）。未强杀在线安全代理；后续应在阿里云控制台确认在线状态，
+   再安排维护窗修正 unit 接管。
 
 ## 四、相关文档
 
@@ -215,4 +232,145 @@ cached`。
 - restic 仓库检查：
   `check-restic-idrive-e2-20260727175936`，状态 success。
 - 最终 `opsctl status`：doctor errors/warnings 均为 0；deploy gates、backup
+  readiness/history、snapshot coverage 均为 ready。
+
+### runtime 与移动 LCP 修复（r14）
+
+近两天日志审计确认三类应用问题：x64 生产容器装入 arm64 `sharp` 可选包、
+tags sitemap 单项 Data Cache 超过 2 MiB，以及 Better Auth 拒绝
+`https://aat.ee` Origin。移动 LCP 的关键链路还包括：五个字体 preload、完整
+next-intl messages 下发、首屏同时 SSR 移动抽屉、analytics 过早下载，以及
+项目详情页 viewer/below-fold 查询阻塞公开描述。
+
+- 最终应用 commit：
+  `45758f2cd62e619c45ebf162a291d8cc4f0dd925`
+- CI：
+  `30326006194`（TypeScript、Lint、Test、Build、dependency audit、
+  standalone x64 `sharp` 校验、Semgrep 全部通过）
+- 计划：
+  `deploy_aat-ee-lcp-sharp-r14-20260728`
+- 快照：
+  `snap_aat-ee-lcp-sharp-r14-20260728_1785210312707185261`
+- journal：
+  `deploy-deploy_aat-ee-lcp-sharp-r14-20260728-20260728034632`
+- 结果：仅替换 `aat-ee-app`，7/7 操作成功，0 失败；未运行迁移或写业务数据。
+
+发布内容：
+
+- Bun install 明确 `--os=linux --cpu=x64`，CI、Docker dependency stage 与
+  standalone stage 均实际 import `sharp`；生产为 Node `v24.18.0` /
+  `x64`、`sharp 0.35.3`、libvips `8.18.3`。
+- tags 与 projects/users 一样按每片 250 个源行分片；生产 index 为
+  projects 8 片、users 3 片、tags 6 片，日志不再出现 2 MiB cache 报错。
+- trusted origins 同时包含 `https://www.aat.ee` 与 `https://aat.ee`。
+- 仅预加载 sans 字体；analytics 外部下载延后 7 秒；next-intl 只向各客户端
+  子树下发所需 namespace；移动抽屉首次点击才动态加载。
+- 项目公开描述不再等待 owner/viewer 状态；translation 查询在 request 内共享；
+  related/sidebar/creator 与 viewer 状态并行，并在各自 Suspense 边界中流式返回。
+
+生产验收：容器 healthy，liveness/deep health 均 200，Postgres/Redis 为
+`ok`；OG 返回 1200×630 PNG；未授权 deep/cron 为 401；部署后新容器日志中
+`sharp`、cache oversize、invalid origin、error/fatal/exception 匹配均为 0。
+以上错误统计来自首轮项目页与 API 验收；后续补充四语言首页遍历时发现
+message scope 调整遗漏 route children 的 locale context，已由 r16 修复。
+初始项目 HTML 不再包含移动抽屉，公网西语页面约 169 KiB（Cloudflare 注入后）。
+
+Lighthouse 13.4.1 的公网移动模拟 LCP 仍有明显长尾：西语两次为
+3.76s / 6.85s，英语为 6.24s；TBT 89–118ms，CLS 约为 0。trace 实际观测的
+公网 LCP 为 6.06s / 3.17s / 2.69s。绕过 Cloudflare、直接命中同一生产源站
+时，HTML 中 Rocket Loader 改写为 0，两次 trace 实际观测 LCP 为
+1.98s / 2.90s（中位 2.44s）。因此代码侧瓶颈已显著收敛，但 Search Console
+的 4.4s 群组在 28 天窗口更新前不会立即变化，且关闭 Rocket Loader 仍是消除
+公网长尾的必要步骤。
+
+部署前备份：
+`backup-aat-ee-restic-20260728034049`；仓库检查：
+`check-restic-idrive-e2-20260728034201`，均为 success。
+
+### canonical sitemap redirect hotfix（r15）
+
+r14 验收发现 legacy `projects.xml`、`users.xml`、`tags.xml` 虽返回 308，
+但用 `request.url` 构造的 Location 暴露了内部
+`https://0.0.0.0:8080/sitemap.xml`。r15 改为由
+`NEXT_PUBLIC_URL` 的 canonical origin 构造，并增加回归测试：
+
+- 最终应用 commit：
+  `5704b6a60a178ed11bf7f169e04c6b58cad4af0e`
+- CI：
+  `30327108270`（全部关卡通过）
+- 计划：
+  `deploy_aat-ee-sitemap-redirect-r15-20260728`
+- 快照：
+  `snap_aat-ee-sitemap-redirect-r15-20260728_1785211763201191327`
+- journal：
+  `deploy-deploy_aat-ee-sitemap-redirect-r15-20260728-20260728040948`
+- 结果：仅替换 `aat-ee-app`，7/7 操作成功，0 失败；三条 legacy URL 现均
+  308 到 `https://www.aat.ee/sitemap.xml`。
+
+r15 验收同时确认：非法 `projects-0.xml`、`tags-1001.xml` 为 404；Serena
+页只有一个三项 `BreadcrumbList`；非 www Origin 的 session 请求为 200；
+容器健康、deep health、`sharp` x64 和项目页错误日志检查全部通过。补充遍历
+`/`、`/zh`、`/es`、`/et` 时发现它们均因缺少 `next-intl` locale context
+返回 500，因此立即进入 r16 热修复；没有把 r15 误记为最终健康版本。
+
+- r15 部署前备份：
+  `backup-aat-ee-restic-20260728040045`；仓库检查：
+  `check-restic-idrive-e2-20260728040600`。
+- 最终部署后备份：
+  `backup-aat-ee-restic-20260728041917`；仓库检查：
+  `check-restic-idrive-e2-20260728042031`。
+- 四条记录均为 success。
+
+本地 standalone 早期烟测曾沿用生产环境变量，整点触发一次内置冗余 cron：
+数据库结果为 0 个项目变更，但发出一封“14 个任务 stale”运维告警邮件。进程
+随后停止，所有后续本地运行均强制 `EMBEDDED_CRON_DISABLED=true`，未再触发
+调度或邮件。
+
+### locale context hotfix（r16）
+
+r14 为降低客户端消息体积，把 `NextIntlClientProvider` 收窄到 Nav、Footer
+和各 route 自己需要的 namespace。项目详情页正常，但 route children 内的
+`next-intl/navigation` Link 仍需要 locale context；四个首页因此在 r15
+容器中返回 500。r16 在 route children 外恢复一个 `messages={{}}` 的最小
+provider，继续保留 route-level 消息分片，不重新下发整份 messages：
+
+- 最终应用 commit：
+  `7db3e9abff0ff6c45f5f479948662d08c0fe306a`
+- CI：
+  `30328777000`（TypeScript、Lint、Test、Build、dependency audit、
+  standalone x64 `sharp` 校验、Semgrep 全部通过）
+- 计划：
+  `deploy_aat-ee-intl-context-r16-20260728`
+- 快照：
+  `snap_aat-ee-intl-context-r16-20260728_1785213876969201865`
+- journal：
+  `deploy-deploy_aat-ee-intl-context-r16-20260728-20260728044557`
+- 结果：仅替换 `aat-ee-app`，7/7 操作成功，0 失败、0 跳过；未运行迁移或
+  写业务数据。
+
+r16 生产回归：
+
+- 源站与公网的 `/`、`/zh`、`/es`、`/et`、`/projects/ogtv`、
+  `/es/projects/ogtv` 均为 200，且没有应用错误页。
+- 新容器日志中 `next-request-error`、`use-intl`/locale context 和通用
+  error 匹配均为 0。
+- 容器 healthy；Node `v24.18.0` / x64、`sharp 0.35.3`、libvips `8.18.3`；
+  deep health 为 200，Postgres/Redis 均为 `ok`。
+- sitemap index 为 projects 8 片、users 3 片、tags 6 片；合法首片为 200，
+  非法 `projects-0.xml`、`tags-1001.xml` 为 404；三条 legacy URL 均 308
+  到 `https://www.aat.ee/sitemap.xml`。
+- Ogtv OG 图为有效的 1200×630 PNG。
+
+r16 的单次 Lighthouse 13.4.1 西语移动复测：公网模拟 LCP 4.42s、trace
+实际观测 2.68s；直连源站模拟 LCP 3.83s、trace 实际观测 1.27s，TBT 分别
+89ms / 69ms，CLS 均为 0。公网 HTML 仍有 1 个 Rocket Loader 脚本、
+1 个 `data-cf-settings` 和 82 个被改写的 Next 流式脚本；源站三项均为 0。
+因此应用与源站已发布完成，但 Cloudflare 设置仍须按“遗留事项”第 5 项关闭。
+
+- r16 部署前备份：
+  `backup-aat-ee-restic-20260728043558`，状态 success。
+- r16 部署后备份：
+  `backup-aat-ee-restic-20260728045256`；仓库检查：
+  `check-restic-idrive-e2-20260728045515`，均为 success。
+- 最终 `opsctl` 状态：doctor errors/warnings 均为 0；deploy gates、backup
   readiness/history、snapshot coverage 均为 ready。
