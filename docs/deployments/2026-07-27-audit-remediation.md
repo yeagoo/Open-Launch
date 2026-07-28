@@ -1,9 +1,9 @@
 # 2026-07-27 全站审计修复 + 新功能（0–9 阶段）
 
 Status: **生产部署完成**（2026-07-28，最终应用 commit
-`7db3e9abff0ff6c45f5f479948662d08c0fe306a`）；0048–0057 已应用，评论 FK
+`ea606e9cf65099272615b14ea595cd5daed14bc8`）；0048–0057 已应用，评论 FK
 已验证，sitemap hotfix/分片、runtime/LCP 修复及 canonical redirect hotfix
-与 locale context hotfix 均已发布
+、locale context hotfix 与 alternatives 临时失败重试修复均已发布
 
 本次改造源于四路并行审计（安全 / 数据正确性 / 前端·SEO / 基础设施），覆盖
 0–9 十个阶段：紧急安全修复、数据并发、运维可靠性、SEO 前端、搜索升级、
@@ -383,3 +383,67 @@ Rocket Loader 关闭后的闭环复测：
   `check-restic-idrive-e2-20260728045515`，均为 success。
 - 最终 `opsctl` 状态：doctor errors/warnings 均为 0；deploy gates、backup
   readiness/history、snapshot coverage 均为 ready。
+
+### alternatives 临时失败重试修复（r17）
+
+2026-07-28 的近两天日志复核发现 `generate-alternatives` 在 DeepSeek 返回空内容
+时记录了 `prescreenAlternatives failed: No content generated from DeepSeek API`，
+但调用方把该异常吞掉并按“明确没有替代项目”处理：Hero Widget
+（`09d87bce-579b-4b5a-935f-2972514a6059` / `hero-widget`）被写入 30 天冷却
+时间，同时 cron 仍返回 200。r17 将“明确的空数组”与临时提供商、抓取、解析
+或数据库失败分开处理：
+
+- 只有结构正确的显式空数组进入 30 天确定性冷却；
+- 临时失败写入可在 1 小时后重新入选的兼容时间戳，不增加数据库字段；
+- 当本轮没有任何成功生成且出现错误时，cron 返回 500，使现有调度告警可见；
+- 候选分析不足也进入短重试与错误计数，不再静默休眠 30 天。
+
+发布证据：
+
+- 最终应用 commit：
+  `ea606e9cf65099272615b14ea595cd5daed14bc8`
+- CI：
+  `30340560869`（TypeScript、Lint、238 tests、Build、standalone x64
+  `sharp`、dependency audit、Semgrep 全部通过）
+- 应用计划：
+  `deploy_aat-ee-alternative-retry-r17-20260728`
+- 应用快照：
+  `snap_aat-ee-alternative-retry-r17-20260728_1785226485727744734`
+- 应用 journal：
+  `deploy-deploy_aat-ee-alternative-retry-r17-20260728-20260728081509`
+- 结果：7 项操作全部成功，仅替换 `aat-ee-app`；未运行迁移。
+
+为让已被错误置入 30 天冷却的唯一记录立即恢复，另行执行了受控的一次性计划。
+该计划在独立数据库快照后取得
+`destructive_operation_requires_approval` 风险审批和发布执行审批；SQL 同时
+匹配项目 ID、slug 与原时间戳 `2026-07-28 05:35:32.201`，只将
+`alternatives_attempted_at` 设为 NULL，且非恰好更新一行就回滚：
+
+- 一次性计划：
+  `deploy_aat-ee-alternative-retry-reset-r17-20260728`
+- 数据快照：
+  `snap_aat-ee-alternative-retry-reset-r17-20260728_1785226676330130550`
+- journal：
+  `deploy-deploy_aat-ee-alternative-retry-reset-r17-20260728-20260728082132`
+- 结果：任务容器退出码 0，日志精确报告 `updated: 1`；随后数据库查询确认
+  唯一目标行的 `alternatives_attempted_at` 为 NULL。
+
+r17 生产回归确认：容器 healthy，部署标记为
+`20260728-alternative-retry-r17`；`/`、四语言入口、英语/西语 Ogtv 和
+`/sitemap.xml` 在源站与使用浏览器 UA 的 Cloudflare 公网检查中均为 200；
+deep health 为 200，Postgres/Redis 均为 `ok`；Node `v24.18.0` / x64、
+`sharp 0.35.3`、libvips `8.18.3`；新容器错误日志匹配为 0。最终
+`opsctl doctor` 为 0 errors / 0 warnings，deploy gates 为 ready。
+
+- 发布前备份：
+  `backup-aat-ee-restic-20260728081143`，状态 success。
+- 发布后备份：
+  `backup-aat-ee-restic-20260728082210`，状态 success。
+- 独立仓库检查：
+  `check-restic-idrive-e2-20260728082442`，状态 success。
+
+本次没有为验收人工调用 `generate-alternatives`，避免额外制造生产内容写入。
+其正式表达式为 `5,35 0,4,5,10-23 * * *`；重置发生在 08:21 UTC，08:35
+不属于允许小时，所以下一次自然执行为 10:05 UTC。08:30–08:38 期间调度器
+持续运行，产生的 13 条其他任务记录全部为 200；目标行在发布验收结束时仍为
+NULL，等待自然调度领取。
