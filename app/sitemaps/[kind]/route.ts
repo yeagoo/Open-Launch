@@ -16,6 +16,7 @@ import { eq, or } from "drizzle-orm"
 import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import {
   englishSitemapEntry,
+  getSitemapIndexUrl,
   localizedSitemapEntries,
   parseSitemapRoute,
   serializeSitemap,
@@ -209,12 +210,12 @@ const cachedEntriesFor = unstable_cache(entriesFor, ["sitemap-entries"], {
 })
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ kind: string }> },
 ): Promise<Response> {
   const rawKind = (await params).kind
   if (SHARDED_SITEMAP_KINDS.some((kind) => rawKind === `${kind}.xml`)) {
-    return Response.redirect(new URL("/sitemap.xml", request.url), 308)
+    return Response.redirect(getSitemapIndexUrl(), 308)
   }
 
   const route = parseSitemapRoute(rawKind)

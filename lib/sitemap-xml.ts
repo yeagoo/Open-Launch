@@ -50,7 +50,7 @@ export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
   if (!rawKind.endsWith(".xml")) return null
   const stem = rawKind.slice(0, -4)
 
-  // The legacy unsuffixed projects/users routes redirect to the complete
+  // The legacy unsuffixed projects/tags/users routes redirect to the complete
   // sitemap index. Treating either as shard 1 would hide later shards from a
   // crawler that still has the old URL on file.
   if (SHARDED_SITEMAP_KINDS.includes(stem as ShardedSitemapKind)) return null
@@ -89,6 +89,10 @@ function escapeXml(value: string): string {
 export function getSitemapBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
   return new URL(configured).origin
+}
+
+export function getSitemapIndexUrl(): string {
+  return `${getSitemapBaseUrl()}/sitemap.xml`
 }
 
 export function localizedSitemapEntries(

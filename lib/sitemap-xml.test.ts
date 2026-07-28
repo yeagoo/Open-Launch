@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   englishSitemapEntry,
   getSitemapIndexPaths,
+  getSitemapIndexUrl,
   localizedSitemapEntries,
   parseSitemapRoute,
   serializeSitemap,
@@ -45,6 +46,11 @@ describe("sitemap XML", () => {
     expect(parseSitemapRoute("projects-0.xml")).toBeNull()
     expect(parseSitemapRoute("projects-1001.xml")).toBeNull()
     expect(parseSitemapRoute("projects-1.json")).toBeNull()
+  })
+
+  it("builds legacy redirects from the canonical origin, not the internal request host", () => {
+    process.env.NEXT_PUBLIC_URL = "https://www.aat.ee/"
+    expect(getSitemapIndexUrl()).toBe("https://www.aat.ee/sitemap.xml")
   })
 
   it("uses stable optional dates and escapes dynamic URL content", () => {
