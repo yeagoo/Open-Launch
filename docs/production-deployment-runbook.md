@@ -183,14 +183,16 @@ scoped client message payloads. The exact plans, snapshots, journals, migration
 evidence, performance measurements, and backup records are in
 `docs/deployments/2026-07-27-audit-remediation.md`.
 
-Known edge issue: Cloudflare Rocket Loader was still enabled at the last
-verification and rewrote Next.js/React streaming reveal scripts. The production
-origin does not contain those rewrites. The final r16 sample observed mobile LCP
-at 2.68s through Cloudflare and 1.27s when directly reaching the same origin;
-public HTML had 82 rewritten Next streaming scripts while origin HTML had zero.
-Disable Rocket Loader in `Speed → Settings → Content Optimization`, then verify
-that public HTML contains neither `rocket-loader` nor `data-cf-settings`. R2
-credentials cannot change this zone setting.
+Cloudflare Rocket Loader was disabled and verified on 2026-07-28. Public English
+and Spanish Ogtv HTML now contain zero `rocket-loader` scripts, zero
+`data-cf-settings` attributes, and zero rewritten Next.js streaming script
+types. Before the change, the Spanish page had 1 / 1 / 82 respectively.
+
+After the change, three standard mobile traces observed LCP at 0.97s, 1.78s,
+and 3.63s (median 1.78s). A provided-network comparison measured public LCP at
+1.99s versus 1.41s at the same production origin, with TBT 0 in both runs.
+Simulated throttling remains volatile and Search Console group LCP must be
+evaluated over its rolling field-data window.
 
 ## Required deployment sequence
 

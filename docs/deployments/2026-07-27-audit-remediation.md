@@ -120,12 +120,11 @@ tombstone 评论的作者无法编辑/删除它（403）。
 4. **fuma author 匿名化策略**：删用户时评论 author 由清理脚本改为
    `deleted-user`；admin removeUser 路径暂不含自动匿名化（better-auth 无
    delete hook），依赖定期清理。
-5. **Cloudflare Rocket Loader 必须关闭**：公网响应仍注入
+5. **Cloudflare Rocket Loader 已关闭**（2026-07-28）：关闭前公网响应注入
    `rocket-loader.min.js`，并把 Next.js/React 流式 reveal 脚本改写为非标准
-   script type；生产源站对照没有这些改写。当前没有 Zone Settings API Token，
-   R2 凭据无权修改该设置。需在 Cloudflare
-   `Speed → Settings → Content Optimization` 将 Rocket Loader 切为 Off，
-   再确认 HTML 中 `rocket-loader`、`data-cf-settings` 均为 0。
+   script type；生产源站对照没有这些改写。关闭后英语与西语 Ogtv 页面中的
+   `rocket-loader`、`data-cf-settings`、改写 script type 均为 0，闭环证据见
+   r16 执行记录。
 6. **轮换 `X-RapidAPI-Key`**：本次本地制品构建前，误用 shell 读取非标准
    dotenv 键名时，该凭据曾进入工具错误输出。后续已改用 Bun dotenv parser，
    但该 key 仍应在提供方后台轮换。
@@ -279,9 +278,8 @@ Lighthouse 13.4.1 的公网移动模拟 LCP 仍有明显长尾：西语两次为
 3.76s / 6.85s，英语为 6.24s；TBT 89–118ms，CLS 约为 0。trace 实际观测的
 公网 LCP 为 6.06s / 3.17s / 2.69s。绕过 Cloudflare、直接命中同一生产源站
 时，HTML 中 Rocket Loader 改写为 0，两次 trace 实际观测 LCP 为
-1.98s / 2.90s（中位 2.44s）。因此代码侧瓶颈已显著收敛，但 Search Console
-的 4.4s 群组在 28 天窗口更新前不会立即变化，且关闭 Rocket Loader 仍是消除
-公网长尾的必要步骤。
+1.98s / 2.90s（中位 2.44s）。因此代码侧瓶颈已显著收敛；Rocket Loader
+随后已关闭，但 Search Console 的 4.4s 群组在 28 天窗口更新前不会立即变化。
 
 部署前备份：
 `backup-aat-ee-restic-20260728034049`；仓库检查：
@@ -361,11 +359,22 @@ r16 生产回归：
   到 `https://www.aat.ee/sitemap.xml`。
 - Ogtv OG 图为有效的 1200×630 PNG。
 
-r16 的单次 Lighthouse 13.4.1 西语移动复测：公网模拟 LCP 4.42s、trace
-实际观测 2.68s；直连源站模拟 LCP 3.83s、trace 实际观测 1.27s，TBT 分别
-89ms / 69ms，CLS 均为 0。公网 HTML 仍有 1 个 Rocket Loader 脚本、
-1 个 `data-cf-settings` 和 82 个被改写的 Next 流式脚本；源站三项均为 0。
-因此应用与源站已发布完成，但 Cloudflare 设置仍须按“遗留事项”第 5 项关闭。
+r16 发布后、关闭 Rocket Loader 前的单次 Lighthouse 13.4.1 西语移动复测：
+公网模拟 LCP 4.42s、trace 实际观测 2.68s；直连源站模拟 LCP 3.83s、trace
+实际观测 1.27s，TBT 分别 89ms / 69ms，CLS 均为 0。当时公网 HTML 有 1 个
+Rocket Loader 脚本、1 个 `data-cf-settings` 和 82 个被改写的 Next 流式
+脚本；源站三项均为 0。
+
+Rocket Loader 关闭后的闭环复测：
+
+- 英语与西语 Ogtv 公网页面的 `rocket-loader`、`data-cf-settings` 和改写
+  script type 均为 0（关闭前为 1 / 1 / 82）。
+- 三次标准移动测试的 trace 实际观测 LCP 为 0.97s / 1.78s / 3.63s，
+  中位数 1.78s；标准模拟 LCP 仍受网络与节流模型影响，在 1.95–8.29s 波动。
+- 使用 `throttling-method=provided` 的同条件对照中，公网 LCP 为 1.99s、
+  直连源站为 1.41s；TTFB 分别 168ms / 150ms，TBT 均为 0。
+- Search Console 群组指标仍需等待最近 28 天的 CrUX 窗口更新；不能用一次
+  Lighthouse 结果替代群组第 75 百分位 field data。
 
 - r16 部署前备份：
   `backup-aat-ee-restic-20260728043558`，状态 success。
