@@ -52,6 +52,8 @@ export function MakerCard({ creator, linkable = false }: MakerCardProps) {
             alt={creator.name || "Maker"}
             width={40}
             height={40}
+            loading="lazy"
+            decoding="async"
             className="h-10 w-10 rounded-full object-cover"
           />
         ) : (

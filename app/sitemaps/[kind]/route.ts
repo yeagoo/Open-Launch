@@ -19,7 +19,9 @@ import {
   localizedSitemapEntries,
   parseSitemapRoute,
   serializeSitemap,
+  SHARDED_SITEMAP_KINDS,
   SITEMAP_SOURCE_ROWS_PER_SHARD,
+  type ShardedSitemapKind,
   type SitemapEntry,
   type SitemapKind,
 } from "@/lib/sitemap-xml"
@@ -76,6 +78,22 @@ const cachedProjectSourceRowsFor = unstable_cache(
   },
 )
 
+async function tagSourceRowsFor(shard: number) {
+  const offset = (shard - 1) * SITEMAP_SOURCE_ROWS_PER_SHARD
+  return db
+    .select({ slug: tag.slug, updatedAt: tag.updatedAt })
+    .from(tag)
+    .where(eq(tag.moderationStatus, tagModerationStatus.APPROVED))
+    .orderBy(tag.slug)
+    .limit(SITEMAP_SOURCE_ROWS_PER_SHARD)
+    .offset(offset)
+}
+
+const cachedTagSourceRowsFor = unstable_cache(tagSourceRowsFor, ["sitemap-tag-source-rows"], {
+  revalidate: 3600,
+  tags: [SITEMAP_ENTRIES_TAG],
+})
+
 async function publicUserSourceRowsFor(shard: number) {
   return listPublicProfileUserIds({
     limit: SITEMAP_SOURCE_ROWS_PER_SHARD,
@@ -107,10 +125,7 @@ async function entriesFor(kind: SitemapKind, shard: number): Promise<SitemapEntr
   }
 
   if (kind === "tags") {
-    const tags = await db
-      .select({ slug: tag.slug, updatedAt: tag.updatedAt })
-      .from(tag)
-      .where(eq(tag.moderationStatus, tagModerationStatus.APPROVED))
+    const tags = await cachedTagSourceRowsFor(shard)
     return tags.flatMap((item) =>
       localizedSitemapEntries(`/tags/${item.slug}`, {
         lastModified: item.updatedAt,
@@ -198,7 +213,7 @@ export async function GET(
   { params }: { params: Promise<{ kind: string }> },
 ): Promise<Response> {
   const rawKind = (await params).kind
-  if (rawKind === "projects.xml" || rawKind === "users.xml") {
+  if (SHARDED_SITEMAP_KINDS.some((kind) => rawKind === `${kind}.xml`)) {
     return Response.redirect(new URL("/sitemap.xml", request.url), 308)
   }
 
@@ -210,10 +225,10 @@ export async function GET(
   // Sharded routes cache only their compact source rows above. Caching the
   // expanded hreflang objects would reintroduce the 2 MiB Data Cache failure
   // this split is designed to remove.
-  const entries =
-    route.kind === "projects" || route.kind === "users"
-      ? await entriesFor(route.kind, route.shard)
-      : await cachedEntriesFor(route.kind, route.shard)
+  const isShardedKind = SHARDED_SITEMAP_KINDS.includes(route.kind as ShardedSitemapKind)
+  const entries = isShardedKind
+    ? await entriesFor(route.kind, route.shard)
+    : await cachedEntriesFor(route.kind, route.shard)
   return new Response(serializeSitemap(entries), {
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",

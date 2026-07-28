@@ -16,6 +16,7 @@ import {
   MATOMO_SENSITIVE_QUERY_PARAMETERS,
   MATOMO_SITE_ID,
 } from "@/lib/analytics/matomo"
+import { pickClientMessages } from "@/lib/client-messages"
 import { footerNavSites } from "@/lib/directories-links"
 import { MatomoRouteTracker } from "@/components/analytics/matomo-route-tracker"
 import Footer from "@/components/layout/footer"
@@ -33,6 +34,7 @@ const fontSans = FontSans({
 const fontHeading = FontHeading({
   subsets: ["latin"],
   variable: "--font-heading",
+  preload: false,
 })
 
 // Editorial-feel serif used for the editorial home feed's hero titles
@@ -42,6 +44,7 @@ const fontEditorial = FontEditorial({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--font-editorial",
+  preload: false,
 })
 
 const publicBaseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
@@ -103,31 +106,25 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RR1YB886D7"
-  const locale = await getLocale()
-  const messages = await getMessages()
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()])
+  const navMessages = pickClientMessages(messages, ["common", "nav", "notifications", "search"])
+  const footerMessages = pickClientMessages(messages, ["footer"])
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         {/* Google Analytics */}
         {process.env.NODE_ENV === "production" && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
+          <Script id="deferred-analytics" strategy="afterInteractive">
+            {`
+              (function() {
+                var gaId = ${JSON.stringify(GA_MEASUREMENT_ID)};
                 window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
+                function gtag(){window.dataLayer.push(arguments);}
+                window.gtag = window.gtag || gtag;
                 gtag('js', new Date());
-                gtag('config', '${GA_MEASUREMENT_ID}');
-              `}
-            </Script>
+                gtag('config', gaId);
 
-            {/* Matomo Analytics: the bootstrap tracks the initial page load. */}
-            <Script id="matomo-analytics" strategy="afterInteractive">
-              {`
                 var _paq = window._paq = window._paq || [];
                 var matomoUrl = new URL(window.location.href);
                 var sensitiveParameters = new Set(${JSON.stringify(MATOMO_SENSITIVE_QUERY_PARAMETERS)});
@@ -139,16 +136,27 @@ export default async function RootLayout({
                 _paq.push(['setCustomUrl', matomoUrl.toString()]);
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
-                (function() {
+
+                // Preserve both analytics queues immediately, but keep their
+                // external downloads out of the LCP window.
+                window.setTimeout(function() {
+                  var d = document;
+                  var ga = d.createElement('script');
+                  ga.async = true;
+                  ga.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(gaId);
+                  d.head.appendChild(ga);
+
                   var u=${JSON.stringify(MATOMO_BASE_URL)};
                   _paq.push(['setTrackerUrl', u+'matomo.php']);
                   _paq.push(['setSiteId', ${JSON.stringify(MATOMO_SITE_ID)}]);
-                  var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                  g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-                })();
-              `}
-            </Script>
-          </>
+                  var matomo = d.createElement('script');
+                  matomo.async = true;
+                  matomo.src = u+'matomo.js';
+                  d.head.appendChild(matomo);
+                }, 7000);
+              })();
+            `}
+          </Script>
         )}
 
         {/* RSS Feed */}
@@ -166,26 +174,28 @@ export default async function RootLayout({
         className={`font-sans antialiased ${fontSans.variable} ${fontHeading.variable} ${fontEditorial.variable} sm:overflow-y-scroll`}
         suppressHydrationWarning
       >
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <div className="flex min-h-dvh flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="flex min-h-dvh flex-col">
+            <NextIntlClientProvider locale={locale} messages={navMessages}>
               <Nav />
-              <main className="flex-grow">{children}</main>
+            </NextIntlClientProvider>
+            <main className="flex-grow">{children}</main>
+            <NextIntlClientProvider locale={locale} messages={footerMessages}>
               <Footer navSites={footerNavSites} />
-            </div>
-          </ThemeProvider>
-          <Toaster />
-          {process.env.NODE_ENV === "production" && (
-            <Suspense fallback={null}>
-              <MatomoRouteTracker />
-            </Suspense>
-          )}
-        </NextIntlClientProvider>
+            </NextIntlClientProvider>
+          </div>
+        </ThemeProvider>
+        <Toaster />
+        {process.env.NODE_ENV === "production" && (
+          <Suspense fallback={null}>
+            <MatomoRouteTracker />
+          </Suspense>
+        )}
       </body>
     </html>
   )

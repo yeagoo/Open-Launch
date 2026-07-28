@@ -25,7 +25,7 @@ export const SITEMAP_KINDS = [
 ] as const
 export type SitemapKind = (typeof SITEMAP_KINDS)[number]
 
-export const SHARDED_SITEMAP_KINDS = ["projects", "users"] as const
+export const SHARDED_SITEMAP_KINDS = ["projects", "tags", "users"] as const
 export type ShardedSitemapKind = (typeof SHARDED_SITEMAP_KINDS)[number]
 
 // A source row expands to one URL per locale, with every hreflang alternate
@@ -42,6 +42,7 @@ export interface SitemapRoute {
 
 export interface SitemapShardCounts {
   projects: number
+  tags: number
   users: number
 }
 
@@ -58,7 +59,7 @@ export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
     return { kind: stem as SitemapKind, shard: 1 }
   }
 
-  const match = /^(projects|users)-([1-9]\d*)$/.exec(stem)
+  const match = /^(projects|tags|users)-([1-9]\d*)$/.exec(stem)
   if (!match) return null
   const shard = Number(match[2])
   if (!Number.isSafeInteger(shard) || shard > MAX_SITEMAP_SHARDS) return null

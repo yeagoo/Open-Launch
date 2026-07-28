@@ -178,8 +178,8 @@ export const auth = betterAuth({
   },
   trustedOrigins:
     process.env.NODE_ENV === "development"
-      ? ["http://localhost:3000", "https://www.aat.ee"]
-      : ["https://www.aat.ee"],
+      ? ["http://localhost:3000", "https://www.aat.ee", "https://aat.ee"]
+      : ["https://www.aat.ee", "https://aat.ee"],
   plugins: [
     stripe({
       stripeClient: stripeClient ?? createBuildSafeStripeClient(),

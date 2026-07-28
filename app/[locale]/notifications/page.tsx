@@ -4,9 +4,11 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { RiBellLine } from "@remixicon/react"
-import { getTranslations } from "next-intl/server"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages, getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { pickClientMessages } from "@/lib/client-messages"
 import { getNotifications, type NotificationItem } from "@/app/actions/notifications"
 
 import { MarkAllReadButton } from "./mark-all-read-button"
@@ -37,7 +39,7 @@ export default async function NotificationsPage({
     redirect("/sign-in")
   }
 
-  const t = await getTranslations("notifications")
+  const [t, messages] = await Promise.all([getTranslations("notifications"), getMessages()])
   const { page: pageParam } = await searchParams
   // Same ceiling as getNotifications (100): the fetch and the rendered
   // page indicator must agree, or page=999 shows "999 / 2".
@@ -74,70 +76,72 @@ export default async function NotificationsPage({
   }
 
   return (
-    <main className="bg-secondary/20 min-h-screen">
-      <div className="container mx-auto max-w-3xl px-4 pt-8 pb-12">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            <RiBellLine className="h-6 w-6" />
-            {t("title")}
-          </h1>
-          <MarkAllReadButton />
-        </div>
-
-        {items.length === 0 ? (
-          <div className="bg-card border-border rounded-xl border border-dashed py-16 text-center">
-            <p className="text-muted-foreground">{t("empty")}</p>
+    <NextIntlClientProvider messages={pickClientMessages(messages, ["notifications"])}>
+      <main className="bg-secondary/20 min-h-screen">
+        <div className="container mx-auto max-w-3xl px-4 pt-8 pb-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
+              <RiBellLine className="h-6 w-6" />
+              {t("title")}
+            </h1>
+            <MarkAllReadButton />
           </div>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <Link
-                key={item.id}
-                href={item.projectSlug ? `/projects/${item.projectSlug}` : "/notifications"}
-                className={`block rounded-xl border p-4 transition-colors ${
-                  item.readAt
-                    ? "bg-card border-border"
-                    : "bg-primary/5 border-primary/30 hover:border-primary/50"
-                }`}
-              >
-                <p className="text-sm font-medium">{labelFor(item)}</p>
-                {excerptOf(item) && (
-                  <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
-                    {excerptOf(item)}
+
+          {items.length === 0 ? (
+            <div className="bg-card border-border rounded-xl border border-dashed py-16 text-center">
+              <p className="text-muted-foreground">{t("empty")}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.projectSlug ? `/projects/${item.projectSlug}` : "/notifications"}
+                  className={`block rounded-xl border p-4 transition-colors ${
+                    item.readAt
+                      ? "bg-card border-border"
+                      : "bg-primary/5 border-primary/30 hover:border-primary/50"
+                  }`}
+                >
+                  <p className="text-sm font-medium">{labelFor(item)}</p>
+                  {excerptOf(item) && (
+                    <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                      {excerptOf(item)}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    {item.createdAt.toLocaleString()}
                   </p>
-                )}
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {item.createdAt.toLocaleString()}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
+                </Link>
+              ))}
+            </div>
+          )}
 
-        {totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            {page > 1 && (
-              <Link
-                href={`/notifications?page=${page - 1}`}
-                className="border-border hover:bg-muted rounded-md border px-4 py-2 text-sm transition-colors"
-              >
-                ←
-              </Link>
-            )}
-            <span className="text-muted-foreground text-sm">
-              {page} / {totalPages}
-            </span>
-            {page < totalPages && (
-              <Link
-                href={`/notifications?page=${page + 1}`}
-                className="border-border hover:bg-muted rounded-md border px-4 py-2 text-sm transition-colors"
-              >
-                →
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-4">
+              {page > 1 && (
+                <Link
+                  href={`/notifications?page=${page - 1}`}
+                  className="border-border hover:bg-muted rounded-md border px-4 py-2 text-sm transition-colors"
+                >
+                  ←
+                </Link>
+              )}
+              <span className="text-muted-foreground text-sm">
+                {page} / {totalPages}
+              </span>
+              {page < totalPages && (
+                <Link
+                  href={`/notifications?page=${page + 1}`}
+                  className="border-border hover:bg-muted rounded-md border px-4 py-2 text-sm transition-colors"
+                >
+                  →
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </NextIntlClientProvider>
   )
 }

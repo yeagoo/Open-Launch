@@ -5,6 +5,33 @@ import { projectTranslation } from "@/drizzle/db/schema"
 import { and, eq, inArray, or } from "drizzle-orm"
 
 /**
+ * A detail render needs description, tagline, and long description for the
+ * same project/locale. Keep that lookup behind one request cache so metadata,
+ * the page header, and deferred below-the-fold sections do not issue three
+ * equivalent translation queries.
+ */
+const getLocalizedProjectTranslationRows = cache(async (projectId: string, locale: string) => {
+  return db
+    .select({
+      locale: projectTranslation.locale,
+      description: projectTranslation.description,
+      longDescription: projectTranslation.longDescription,
+      tagline: projectTranslation.tagline,
+      isSource: projectTranslation.isSource,
+    })
+    .from(projectTranslation)
+    .where(
+      and(
+        eq(projectTranslation.projectId, projectId),
+        or(
+          inArray(projectTranslation.locale, [locale, "en"]),
+          eq(projectTranslation.isSource, true),
+        ),
+      ),
+    )
+})
+
+/**
  * Resolve the description to display for a given (projectId, locale).
  *
  * Fallback order:
@@ -19,25 +46,7 @@ import { and, eq, inArray, or } from "drizzle-orm"
  */
 export const getLocalizedProjectDescription = cache(
   async (projectId: string, locale: string, fallback: string): Promise<string> => {
-    // One query covers exact-locale, English AND the source row (via the
-    // isSource flag) — the previous version ran a second serial query for
-    // the source row on every non-en render.
-    const rows = await db
-      .select({
-        locale: projectTranslation.locale,
-        description: projectTranslation.description,
-        isSource: projectTranslation.isSource,
-      })
-      .from(projectTranslation)
-      .where(
-        and(
-          eq(projectTranslation.projectId, projectId),
-          or(
-            inArray(projectTranslation.locale, [locale, "en"]),
-            eq(projectTranslation.isSource, true),
-          ),
-        ),
-      )
+    const rows = await getLocalizedProjectTranslationRows(projectId, locale)
 
     const exact = rows.find((r) => r.locale === locale)
     if (exact) return exact.description
@@ -94,14 +103,7 @@ export async function getLocalizedLongDescription(
   projectId: string,
   locale: string,
 ): Promise<string | null> {
-  const rows = await db
-    .select({
-      locale: projectTranslation.locale,
-      longDescription: projectTranslation.longDescription,
-      isSource: projectTranslation.isSource,
-    })
-    .from(projectTranslation)
-    .where(eq(projectTranslation.projectId, projectId))
+  const rows = await getLocalizedProjectTranslationRows(projectId, locale)
 
   const exact = rows.find((r) => r.locale === locale && r.longDescription)
   if (exact?.longDescription) return exact.longDescription
@@ -130,14 +132,7 @@ export async function getLocalizedProjectTagline(
   projectId: string,
   locale: string,
 ): Promise<string | null> {
-  const rows = await db
-    .select({
-      locale: projectTranslation.locale,
-      tagline: projectTranslation.tagline,
-      isSource: projectTranslation.isSource,
-    })
-    .from(projectTranslation)
-    .where(eq(projectTranslation.projectId, projectId))
+  const rows = await getLocalizedProjectTranslationRows(projectId, locale)
 
   const exact = rows.find((r) => r.locale === locale && r.tagline)?.tagline
   if (exact) return exact

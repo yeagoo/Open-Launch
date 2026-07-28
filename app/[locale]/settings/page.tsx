@@ -1,7 +1,11 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages } from "next-intl/server"
+
 import { auth } from "@/lib/auth"
+import { pickClientMessages } from "@/lib/client-messages"
 
 import { SettingsClient } from "./settings-client"
 
@@ -18,5 +22,10 @@ export default async function SettingsPage() {
     redirect("/sign-in")
   }
 
-  return <SettingsClient />
+  const messages = await getMessages()
+  return (
+    <NextIntlClientProvider messages={pickClientMessages(messages, ["settingsPage"])}>
+      <SettingsClient />
+    </NextIntlClientProvider>
+  )
 }

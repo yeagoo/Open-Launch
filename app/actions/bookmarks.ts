@@ -1,14 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { bookmark, project as projectTable } from "@/drizzle/db/schema"
 import { and, desc, eq, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { getCurrentUserId } from "@/lib/server-auth"
 
 // Per-user toggle budget. Fail closed: bookmarks are cheap but the toggle
 // writes rows, and a limiter outage shouldn't multiply limits per instance.
@@ -16,10 +15,6 @@ const BOOKMARK_LIMITS = {
   ACTIONS_PER_WINDOW: 60,
   TIME_WINDOW_MS: 5 * 60 * 1000,
 } as const
-
-async function getSession() {
-  return auth.api.getSession({ headers: await headers() })
-}
 
 export interface ToggleBookmarkResult {
   success: boolean
@@ -34,13 +29,13 @@ export interface ToggleBookmarkResult {
  * (user_id, project_id) unique index is the last-resort integrity net.
  */
 export async function toggleBookmark(projectId: string): Promise<ToggleBookmarkResult> {
-  const session = await getSession()
-  if (!session?.user?.id) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
     return { success: false, message: "Authentication required" }
   }
 
   const { success: withinLimit } = await checkRateLimit(
-    `bookmark:${session.user.id}`,
+    `bookmark:${userId}`,
     BOOKMARK_LIMITS.ACTIONS_PER_WINDOW,
     BOOKMARK_LIMITS.TIME_WINDOW_MS,
     { onRedisError: "fail-closed" },
@@ -65,26 +60,24 @@ export async function toggleBookmark(projectId: string): Promise<ToggleBookmarkR
 
   let bookmarked = false
   await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id} || ':' || ${projectId}))`,
-    )
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId} || ':' || ${projectId}))`)
     const existing = await tx
       .select({ id: bookmark.id })
       .from(bookmark)
-      .where(and(eq(bookmark.userId, session.user.id), eq(bookmark.projectId, projectId)))
+      .where(and(eq(bookmark.userId, userId), eq(bookmark.projectId, projectId)))
       .limit(1)
 
     if (existing.length > 0) {
       await tx
         .delete(bookmark)
-        .where(and(eq(bookmark.userId, session.user.id), eq(bookmark.projectId, projectId)))
+        .where(and(eq(bookmark.userId, userId), eq(bookmark.projectId, projectId)))
       bookmarked = false
     } else {
       await tx
         .insert(bookmark)
         .values({
           id: crypto.randomUUID(),
-          userId: session.user.id,
+          userId,
           projectId,
           createdAt: new Date(),
         })
@@ -98,20 +91,20 @@ export async function toggleBookmark(projectId: string): Promise<ToggleBookmarkR
 }
 
 export async function hasUserBookmarked(projectId: string): Promise<boolean> {
-  const session = await getSession()
-  if (!session?.user?.id) return false
+  const userId = await getCurrentUserId()
+  if (!userId) return false
 
   const rows = await db
     .select({ id: bookmark.id })
     .from(bookmark)
-    .where(and(eq(bookmark.userId, session.user.id), eq(bookmark.projectId, projectId)))
+    .where(and(eq(bookmark.userId, userId), eq(bookmark.projectId, projectId)))
     .limit(1)
   return rows.length > 0
 }
 
 export async function getUserBookmarkedProjects() {
-  const session = await getSession()
-  if (!session?.user?.id) return []
+  const userId = await getCurrentUserId()
+  if (!userId) return []
 
   // Explicit field list (never the full project row): server-action
   // results are serialized to the browser, and project carries internal
@@ -136,7 +129,7 @@ export async function getUserBookmarkedProjects() {
       })
       .from(bookmark)
       .innerJoin(projectTable, eq(bookmark.projectId, projectTable.id))
-      .where(eq(bookmark.userId, session.user.id))
+      .where(eq(bookmark.userId, userId))
       .orderBy(desc(bookmark.createdAt))
       // Generous cap: the dashboard tab has no pagination, so anything
       // smaller silently strands older saves.

@@ -1,9 +1,11 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { getTranslations } from "next-intl/server"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages, getTranslations } from "next-intl/server"
 
 import { auth } from "@/lib/auth"
+import { pickClientMessages } from "@/lib/client-messages"
 import { getDRBatch } from "@/lib/dr"
 import { DIRECTORY_NETWORK_DOMAINS } from "@/lib/site-network"
 import { SubmitProjectForm } from "@/components/project/submit-form"
@@ -31,22 +33,24 @@ export default async function SubmitProject() {
   // sites it covers. Cached every 3 days by the refresh-dr cron.
   const drRecords = await getDRBatch(DIRECTORY_NETWORK_DOMAINS)
 
-  const t = await getTranslations("submitProject.page")
+  const [t, messages] = await Promise.all([getTranslations("submitProject.page"), getMessages()])
 
   return (
-    <div className="from-background to-background/80 min-h-[calc(100vh-5rem)] bg-gradient-to-b">
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-12">
-        <div className="mb-6 space-y-2 sm:mb-8">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("title")}</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">{t("subtitle")}</p>
-        </div>
+    <NextIntlClientProvider messages={pickClientMessages(messages, ["submitProject"])}>
+      <div className="from-background to-background/80 min-h-[calc(100vh-5rem)] bg-gradient-to-b">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-12">
+          <div className="mb-6 space-y-2 sm:mb-8">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("title")}</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">{t("subtitle")}</p>
+          </div>
 
-        <div className="bg-card rounded-lg border shadow-sm sm:rounded-xl">
-          <div className="p-4 sm:p-6 md:p-8">
-            <SubmitProjectForm userId={userId} popularTags={popularTags} drRecords={drRecords} />
+          <div className="bg-card rounded-lg border shadow-sm sm:rounded-xl">
+            <div className="p-4 sm:p-6 md:p-8">
+              <SubmitProjectForm userId={userId} popularTags={popularTags} drRecords={drRecords} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </NextIntlClientProvider>
   )
 }

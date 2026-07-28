@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache"
 
 import { db } from "@/drizzle/db"
-import { launchStatus, project } from "@/drizzle/db/schema"
+import { launchStatus, project, tag, tagModerationStatus } from "@/drizzle/db/schema"
 import { count, eq, or } from "drizzle-orm"
 
 import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
@@ -11,7 +11,7 @@ import { countPublicProfileUsers } from "@/lib/user-profile-query"
 export const dynamic = "force-dynamic"
 
 async function countShardedSitemapRows() {
-  const [[projectRow], users] = await Promise.all([
+  const [[projectRow], [tagRow], users] = await Promise.all([
     db
       .select({ count: count() })
       .from(project)
@@ -21,9 +21,17 @@ async function countShardedSitemapRows() {
           eq(project.launchStatus, launchStatus.LAUNCHED),
         ),
       ),
+    db
+      .select({ count: count() })
+      .from(tag)
+      .where(eq(tag.moderationStatus, tagModerationStatus.APPROVED)),
     countPublicProfileUsers(),
   ])
-  return { projects: projectRow?.count ?? 0, users }
+  return {
+    projects: projectRow?.count ?? 0,
+    tags: tagRow?.count ?? 0,
+    users,
+  }
 }
 
 const cachedShardCounts = unstable_cache(countShardedSitemapRows, ["sitemap-shard-counts"], {

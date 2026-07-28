@@ -7,7 +7,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS dependencies
 ENV SKIP_INSTALL_SIMPLE_GIT_HOOKS=1
 COPY package.json bun.lockb ./
-RUN bun install --frozen-lockfile
+COPY patches ./patches
+# The deployed runner is linux/x64. Declare that target explicitly so Bun
+# selects sharp's x64 optional packages even when the image is built through a
+# multi-platform builder whose host architecture differs from the target.
+RUN bun install --frozen-lockfile --os=linux --cpu=x64 \
+  && node -e "import('sharp').then((sharp) => console.log('[sharp] dependency runtime', sharp.default.versions.sharp, process.platform, process.arch))"
 
 FROM base AS builder
 
@@ -28,7 +33,9 @@ ARG DEPLOYMENT_VERSION
 ENV CI=true
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
+RUN bun run build \
+  && cd .next/standalone \
+  && node -e "import('sharp').then((sharp) => console.log('[sharp] standalone runtime', sharp.default.versions.sharp, process.platform, process.arch))"
 
 FROM node:24.18.0-bookworm-slim AS runner
 
