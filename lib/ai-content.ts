@@ -305,21 +305,30 @@ ${wrapInput("subject-description", subjectDesc)}
 Candidates (untrusted descriptions, IDs are safe):
 ${wrapInput("candidates", candidateList)}`
 
-  try {
-    const raw = await callDeepSeek(systemPrompt, userPrompt, {
-      functionName: "prescreen-alternatives",
-      temperature: 0.1,
-      maxTokens: 200,
-    })
-    const parsed = JSON.parse(extractJson(raw))
-    if (!Array.isArray(parsed)) return []
-    // Validate returned IDs exist in candidates
-    const validIds = new Set(candidates.map((c) => c.id))
-    return parsed.filter((id: unknown) => typeof id === "string" && validIds.has(id)).slice(0, 5)
-  } catch (error) {
-    console.error("prescreenAlternatives failed:", error instanceof Error ? error.message : error)
-    return []
+  const raw = await callDeepSeek(systemPrompt, userPrompt, {
+    functionName: "prescreen-alternatives",
+    temperature: 0.1,
+    maxTokens: 200,
+  })
+  const parsed: unknown = JSON.parse(extractJson(raw))
+  if (!Array.isArray(parsed)) {
+    throw new Error("Invalid alternatives pre-screen response: expected an array")
   }
+
+  // An explicit [] is a definitive "no alternatives" answer. Transport,
+  // empty-content, malformed JSON, wrong-shape, and unknown-ID failures throw
+  // instead so the cron can alert and apply the short retry window.
+  if (!parsed.every((id): id is string => typeof id === "string")) {
+    throw new Error("Invalid alternatives pre-screen response: expected string IDs")
+  }
+
+  const validIds = new Set(candidates.map((c) => c.id))
+  const unknownIds = parsed.filter((id) => !validIds.has(id))
+  if (unknownIds.length > 0) {
+    throw new Error("Invalid alternatives pre-screen response: returned unknown candidate IDs")
+  }
+
+  return Array.from(new Set(parsed)).slice(0, 5)
 }
 
 // ─── Alternative Analysis ────────────────────────────────────────────────────

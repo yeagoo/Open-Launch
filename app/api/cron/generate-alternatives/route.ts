@@ -16,6 +16,12 @@ import {
   generateAlternativesPageContent,
   prescreenAlternatives,
 } from "@/lib/ai-content"
+import {
+  ALTERNATIVE_DEFINITIVE_REATTEMPT_DAYS,
+  getAlternativeAttemptTimestamp,
+  getAlternativeReattemptCutoff,
+  type AlternativeAttemptOutcome,
+} from "@/lib/alternative-attempt"
 import { PROJECT_SIDEBAR_LINKS_TAG, SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import { getCachedOrCrawl } from "@/lib/crawl4ai"
 import { verifyCronAuth } from "@/lib/cron-auth"
@@ -31,11 +37,6 @@ const MAX_DEEP_ANALYZE = 5 // Phase 2: crawl + AI, expensive
 const MIN_ALTERNATIVES = 2
 const MIN_CONFIDENCE_SCORE = 30 // Phase 2 enrichment threshold — Phase 1 prescreening is the quality gate
 const CRAWL_TIMEOUT = 15000
-// Don't re-evaluate subjects that already failed (no pool / no en translations
-// / no AI matches) until this many days have passed. Lets the catalog grow
-// without burning DeepSeek calls on the same dead-ends every 5 minutes.
-const REATTEMPT_DAYS = 30
-
 export async function GET(request: NextRequest) {
   try {
     const authError = verifyCronAuth(request)
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
       WHERE pc1.project_id = ${projectTable.id}
     )`
 
-    const reattemptCutoff = new Date(Date.now() - REATTEMPT_DAYS * 24 * 60 * 60 * 1000)
+    const reattemptCutoff = getAlternativeReattemptCutoff()
 
     const candidateProjects = await db
       .select({
@@ -87,10 +88,13 @@ export async function GET(request: NextRequest) {
     // Stamp `alternatives_attempted_at` so projects that fail any criterion
     // (insufficient pool, no en translations yet, AI rejected all candidates)
     // don't loop back into the candidate set on the very next tick.
-    const markAttempted = async (projectId: string) => {
+    const markAttempted = async (
+      projectId: string,
+      outcome: AlternativeAttemptOutcome = "definitive",
+    ) => {
       await db
         .update(projectTable)
-        .set({ alternativesAttemptedAt: new Date() })
+        .set({ alternativesAttemptedAt: getAlternativeAttemptTimestamp(outcome) })
         .where(eq(projectTable.id, projectId))
     }
 
@@ -240,6 +244,7 @@ export async function GET(request: NextRequest) {
           cons: string[]
           useCases: string
         }> = []
+        let analysisFailures = 0
 
         for (const candidate of prescreenedCandidates) {
           try {
@@ -278,10 +283,20 @@ export async function GET(request: NextRequest) {
           } catch (error) {
             const msg = error instanceof Error ? error.message : String(error)
             console.error(`Error analyzing ${candidate.name} as alternative: ${msg}`)
+            analysisFailures++
           }
         }
 
         if (confirmedAlternatives.length < MIN_ALTERNATIVES) {
+          if (analysisFailures > 0) {
+            console.error(
+              `Alternative analysis incomplete for "${subjectProject.name}": ${analysisFailures} candidate failures`,
+            )
+            errors++
+            await markAttempted(subjectProject.id, "retryable")
+            continue
+          }
+
           console.log(
             `⏭️  Skipping "${subjectProject.name}": only ${confirmedAlternatives.length} confirmed (need ${MIN_ALTERNATIVES})`,
           )
@@ -343,17 +358,13 @@ export async function GET(request: NextRequest) {
         console.log(`✅ Generated alternatives page for "${subjectProject.name}"`)
         generated++
       } catch (error) {
-        // Stamp on catch too. Tradeoff: a transient outage (Crawl4AI / DeepSeek
-        // 5xx, DB blip) suppresses the subject for ~30 days when it would have
-        // succeeded on retry. The alternative — never stamping — lets a single
-        // permanently-broken project (dead websiteUrl, malformed URL) sit at
-        // the head of the priority queue and starve every other candidate
-        // forever, since the cron only processes 1 project per tick. The
-        // starvation case is recurring; the false-positive case is one-shot,
-        // so we stamp.
+        // Unexpected API, crawl, parse, or DB failures are retryable. Backdate
+        // the attempt so this subject becomes eligible in one hour: it cannot
+        // monopolize the one-project queue every tick, but a transient outage
+        // no longer suppresses otherwise-valid work for 30 days.
         console.error("Error generating alternatives for project:", subjectProject.name, error)
         errors++
-        await markAttempted(subjectProject.id).catch(() => {})
+        await markAttempted(subjectProject.id, "retryable").catch(() => {})
       }
     }
 
@@ -375,6 +386,7 @@ export async function GET(request: NextRequest) {
         generated,
         skipped,
         errors,
+        definitiveReattemptDays: ALTERNATIVE_DEFINITIVE_REATTEMPT_DAYS,
       },
       { status: cronStatusFromResult({ errorCount: errors, successCount: generated }) },
     )
