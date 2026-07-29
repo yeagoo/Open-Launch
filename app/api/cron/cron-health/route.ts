@@ -13,7 +13,7 @@ import {
 } from "@/lib/cron-health-alert"
 import { evaluateCronTaskStaleness } from "@/lib/cron-health-staleness"
 import { clearStatefulAlert, decideStatefulAlert, releaseStatefulAlert } from "@/lib/rate-limit"
-import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
+import { sendAdminOperationalAlert } from "@/lib/transactional-emails"
 
 /**
  * Cron self-monitor.
@@ -198,17 +198,14 @@ export async function GET(request: NextRequest) {
     let alertStateReleased: boolean | null = null
     if (alertDecision.shouldSend) {
       try {
-        await sendAdminPaymentNotification({
-          userEmail: "cron-health-monitor",
-          amount: 0,
-          currency: "usd",
-          projectName: dispatcherSilent
+        await sendAdminOperationalAlert({
+          monitor: "cron-health",
+          title: dispatcherSilent
             ? `CRON HEALTH alert: dispatcher down (no runs in ${Math.round(
                 DISPATCHER_SILENCE_MS / 60000,
               )} min)`
             : `CRON HEALTH alert: ${stale.length} stale task(s)`,
-          websiteUrl: body,
-          orphan: true,
+          details: body,
         })
         alertNotification = "sent"
       } catch (err) {

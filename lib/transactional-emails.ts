@@ -460,6 +460,51 @@ export async function sendSkillAdminAlert({
   })
 }
 
+export async function sendAdminOperationalAlert({
+  monitor,
+  title,
+  details,
+}: {
+  monitor: "cron-health" | "webhook-health"
+  title: string
+  details: string
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL || "cjwbbs@gmail.com"
+  const safeTitle = title.replace(/[\r\n\t]+/g, " ").trim()
+  const subject = `⚠️ ${safeTitle}`
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 680px; margin: 0 auto; padding: 20px;">
+      <h1 style="font-size: 22px; color: #991b1b;">Open Launch operational alert</h1>
+      <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 17px; font-weight: bold;">${escapeHtml(safeTitle)}</p>
+        <p style="margin: 8px 0 0; color: #7f1d1d; font-size: 13px;">Monitor: ${escapeHtml(monitor)}</p>
+      </div>
+      <pre style="white-space: pre-wrap; overflow-wrap: anywhere; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">${escapeHtml(details)}</pre>
+      <p style="margin-top: 25px; color: #666; font-size: 12px;">
+        This is an automated operational notification from your Open Launch system.
+      </p>
+    </div>
+  `
+
+  try {
+    return await sendEmail({
+      to: adminEmail,
+      subject,
+      html: htmlBody,
+    })
+  } catch (err) {
+    console.error("Operational alert email failed, falling back to Discord:", err)
+    const { sendDiscordAlert } = await import("@/lib/discord-notification")
+    const emailFailure = err instanceof Error ? err.message : String(err)
+    const alerted = await sendDiscordAlert(
+      subject,
+      `Monitor: ${monitor}\n${details}\n(email channel down — ${emailFailure})`,
+    )
+    if (!alerted) throw err
+    return { success: false, data: null }
+  }
+}
+
 export async function sendAdminPaymentNotification({
   userEmail,
   amount,
@@ -527,9 +572,8 @@ export async function sendAdminPaymentNotification({
     </div>
   `
 
-  // Email is the primary channel; Discord is the fallback so an alert
-  // never dies silently with Resend itself (cron-health and webhook
-  // failure alerts both funnel through here).
+  // Email is the primary channel; Discord is the fallback so a payment alert
+  // never dies silently with Resend itself.
   try {
     return await sendEmail({
       to: adminEmail,

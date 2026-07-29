@@ -8,7 +8,7 @@ import type Stripe from "stripe"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
 import { createStripeClient } from "@/lib/stripe"
-import { sendAdminPaymentNotification } from "@/lib/transactional-emails"
+import { sendAdminOperationalAlert } from "@/lib/transactional-emails"
 
 /**
  * Stripe webhook health monitor.
@@ -209,13 +209,10 @@ export async function GET(request: NextRequest) {
     ].join("\n")
 
     try {
-      await sendAdminPaymentNotification({
-        userEmail: "webhook-health-monitor",
-        amount: 0,
-        currency: "usd",
-        projectName: `WEBHOOK HEALTH alert: ${unmatched.length} unprocessed Stripe events in last ${LOOKBACK_HOURS}h`,
-        websiteUrl: body,
-        orphan: true,
+      await sendAdminOperationalAlert({
+        monitor: "webhook-health",
+        title: `WEBHOOK HEALTH alert: ${unmatched.length} unprocessed Stripe events in last ${LOOKBACK_HOURS}h`,
+        details: body,
       })
     } catch (err) {
       console.error("⚠️ Failed to send webhook-health alert email:", err)
