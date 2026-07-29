@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-07-28 (Asia/Shanghai)
+Last verified: 2026-07-29 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -145,16 +145,18 @@ At the last verification, `status --json` reported:
 - deployment gates `ready`
 - snapshot coverage `ready`
 
-The r18 post-deploy backup is
-`backup-aat-ee-restic-20260728121130`; the post-deploy independent repository
-check also completed successfully.
+The r19 post-deploy backup is
+`backup-aat-ee-restic-20260729061509` (Restic snapshot `ee8bd41e`); the
+independent repository check is
+`check-restic-idrive-e2-20260729061631`. Both completed successfully without
+limitations.
 
 ## Current application state
 
 The application artifact currently serving public traffic was built from:
 
 ```text
-8c771ae8da0d5ba022409aa375a8ef298bb885b6
+93f7349fa8efee4bd144a48f0b31ca6b548f7d90
 ```
 
 Current runtime facts:
@@ -162,9 +164,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.deepseek-thinking-r18.yml`
+  `compose.health-alert-boundary-r19.yml`
 - deployment marker:
-  `20260728-deepseek-thinking-r18`
+  `20260729-health-alert-boundary-r19`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
@@ -195,9 +197,49 @@ behavior. Commit `8c771ae8da0d5ba022409aa375a8ef298bb885b6` (`r18`) explicitly
 disables DeepSeek V4's default thinking mode for the application's bounded JSON,
 translation, and short-prose requests, preventing reasoning tokens from
 exhausting `max_tokens` before any content is returned. It also blocks embedded
-Cron startup during `phase-production-build`. The exact plans, snapshots,
-journals, migration evidence, performance measurements, and backup records are in
-`docs/deployments/2026-07-27-audit-remediation.md`.
+Cron startup during `phase-production-build`. Commit
+`93f7349fa8efee4bd144a48f0b31ca6b548f7d90` (`r19`) moves Cron and webhook
+health email onto a dedicated operational-alert template, escapes dynamic HTML,
+hardens the Discord fallback, and corrects the two-minute schedule-window
+boundary without shortening the real-time grace period. The exact plans,
+snapshots, journals, migration evidence, performance measurements, and backup
+records are in `docs/deployments/2026-07-27-audit-remediation.md`.
+
+The r19 standalone artifact was built locally for Linux/amd64 and verified on
+the production host before image assembly. Two earlier direct production-host
+Next.js/Turbopack build attempts exhausted most RAM and swap and briefly caused
+SSH/public request timeouts; the serving r18 container stayed healthy with zero
+restarts throughout. Do not run a full application build on this 3.4 GiB host
+while production is serving traffic. Build off-host, bind the source and public
+build-input hashes, and use production only for artifact verification and the
+lightweight runner-image assembly.
+
+A build diagnostic process listing exposed a build-time encryption credential
+to internal tool output. The value is not recorded in this repository. Rotate
+that credential only as a separately approved environment change, then rebuild,
+redeploy, and verify any runtime that consumes it.
+
+The r19 controller run has one state-path exception. Preflight, snapshot, and
+deploy were invoked from the project without the canonical `--state-dir`, so
+their local state resolved to the project's `.opsctl` directory; the
+post-deploy backup invocation resolved local state under
+`/home/ecs-user/.opsctl`. Registry approvals and backup history are intact, and
+the r19 snapshot and successful journal remain verifiable through the explicit
+alternate project state path, but `/var/lib/opsctl` does not list them. Do not
+manually copy or merge these state directories. Any audit reconciliation needs
+a separately approved, reviewed procedure. Every future production invocation
+must explicitly include both:
+
+```text
+--registry /srv/server-registry --state-dir /var/lib/opsctl
+```
+
+One handled r19 runtime log remains: an Ogtv logo larger than the 512 KiB OG
+fetch limit correctly falls back to a letter tile but is logged as
+`[og] logo fetch failed` because the body-limit exception in r19 is an untyped
+`Error`. The reviewed main-branch follow-up classifies body-size and read-deadline
+failures as `SafeFetchError`; deploy that change as a separate exact release
+before expecting this log line to disappear.
 
 Cloudflare Rocket Loader was disabled and verified on 2026-07-28. Public English
 and Spanish Ogtv HTML now contain zero `rocket-loader` scripts, zero

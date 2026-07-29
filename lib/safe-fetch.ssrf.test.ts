@@ -184,7 +184,28 @@ describe("safeFetch SSRF guard", () => {
         maxBytes: 5,
         label: "Image download",
       }),
-    ).rejects.toThrow("Image download exceeded 5 bytes")
+    ).rejects.toMatchObject({
+      code: "body_too_large",
+      message: "Image download exceeded 5 bytes",
+    })
+    expect(clientInstances[0].destroy).toHaveBeenCalledTimes(1)
+  })
+
+  it("classifies buffered body deadline failures and closes the response", async () => {
+    lookupMock.mockResolvedValueOnce([{ address: "93.184.216.34", family: 4 }])
+    requestMock.mockResolvedValueOnce(undiciResponse("late"))
+
+    const response = await safeFetch("https://public.example/image.png")
+
+    await expect(
+      readSafeFetchBuffer(response, {
+        deadline: Date.now() - 1,
+        label: "Image download",
+      }),
+    ).rejects.toMatchObject({
+      code: "body_timeout",
+      message: "Image download timed out",
+    })
     expect(clientInstances[0].destroy).toHaveBeenCalledTimes(1)
   })
 

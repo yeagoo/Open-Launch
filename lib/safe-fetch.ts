@@ -84,7 +84,9 @@ export class SafeFetchError extends Error {
       | "too_many_redirects"
       | "invalid_redirect"
       | "timeout"
-      | "dns_failure",
+      | "dns_failure"
+      | "body_timeout"
+      | "body_too_large",
   ) {
     super(message)
     this.name = "SafeFetchError"
@@ -464,7 +466,7 @@ async function readUndiciBodyText(
     }
 
     if (maxBytes && bytes > maxBytes) {
-      throw new Error(byteLimitMessage(options, maxBytes))
+      throw new SafeFetchError(byteLimitMessage(options, maxBytes), "body_too_large")
     }
   }
 
@@ -476,7 +478,7 @@ async function readUndiciBodyText(
 
 function checkReadDeadline(options: ReadSafeFetchTextOptions): void {
   if (options.deadline && Date.now() > options.deadline) {
-    throw new Error(`${options.label ?? "response body"} timed out`)
+    throw new SafeFetchError(`${options.label ?? "response body"} timed out`, "body_timeout")
   }
 }
 
@@ -487,7 +489,7 @@ function enforceTextByteLimit(
 ): void {
   if (!maxBytes) return
   if (new TextEncoder().encode(text).byteLength > maxBytes) {
-    throw new Error(byteLimitMessage(options, maxBytes))
+    throw new SafeFetchError(byteLimitMessage(options, maxBytes), "body_too_large")
   }
 }
 
@@ -504,7 +506,7 @@ function enforceBufferByteLimit(
   if (!maxBytes) return
   if (bytes > maxBytes) {
     const label = options.label ? options.label.replace(/\s+body$/i, "") : "Response"
-    throw new Error(`${label} exceeded ${maxBytes} bytes`)
+    throw new SafeFetchError(`${label} exceeded ${maxBytes} bytes`, "body_too_large")
   }
 }
 

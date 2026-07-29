@@ -514,6 +514,89 @@ healthy、restart count 0。
 - DeepSeek Reasoning Model 文档：
   <https://api-docs.deepseek.com/guides/reasoning_model>
 
+### Cron health 通知与调度边界修复（r19）
+
+2026-07-29 部署 commit
+`93f7349fa8efee4bd144a48f0b31ca6b548f7d90`。Cron/webhook health
+告警改用独立的 `sendAdminOperationalAlert`，不再套用支付告警模板；动态 HTML
+统一转义，Discord fallback 也能安全处理非 `Error` 异常。Cron stale 计算在
+每个调度窗口开始后的两分钟执行边界内继续引用上一个窗口，同时宽限期仍按真实
+当前时间计算，避免把常规时段的容忍度意外缩短。01:59 与 02:01 的精确边界均有
+回归测试。
+
+发布证据：
+
+- 最终应用 commit：
+  `93f7349fa8efee4bd144a48f0b31ca6b548f7d90`
+- CI：
+  `30424736409`（TypeScript、Lint、249 tests / 6 skipped、Build、
+  standalone x64 `sharp`、dependency audit、Semgrep 全部通过）
+- 应用计划：
+  `deploy_aat-ee-health-alert-boundary-r19-20260729`
+- 应用快照：
+  `snap_aat-ee-health-alert-boundary-r19-20260729_1785305285807319852`
+  （7/7 制品校验成功，无 limitations）
+- 应用 journal：
+  `deploy-deploy_aat-ee-health-alert-boundary-r19-20260729-20260729060916`
+- 结果：7 项操作全部成功，仅替换 `aat-ee-app`；未运行迁移，未修改数据库、
+  数据、Caddy、DNS、环境变量、调度器或密钥。
+
+控制器状态路径有一项已知偏差：r19 的 preflight、snapshot 与 deploy 从项目
+目录调用时遗漏了 canonical `--state-dir /var/lib/opsctl`，因此默认 state
+解析为项目内的
+`/home/ecs-user/aat-ee-production-2a23d6b7202557d1b/app/project/.opsctl`。
+部署后备份从 `/home/ecs-user` 调用，其本地 state/audit 落到
+`/home/ecs-user/.opsctl`。审批与备份历史仍写入 `/srv/server-registry`；
+应用计划、r19 快照和 journal 也都存在并通过显式 alternate state 路径复核，
+但 canonical `/var/lib/opsctl` 不会列出本次快照和 journal。不得手工复制或合并
+这些状态目录；如需归并审计记录，应在取得独立批准后使用经 review 的受支持
+流程。后续所有生产 `opsctl` 命令必须显式同时传入
+`--registry /srv/server-registry --state-dir /var/lib/opsctl`。
+
+r19 制品在本地 Linux/amd64 构建并在生产机做完整性校验。源代码归档 SHA-256
+为 `35166a5b29529a53cca44da4e6fbe8ac250a982d1114d307fb21d3d0b4a91e0f`，
+standalone 应用归档 SHA-256 为
+`ec59f43e3a9837d817a16b49826783ee29fc2ba5acc55316e6109d5f629d3166`。
+构建使用的公开输入组合哈希与生产配置一致，最终镜像内再次核对 exact commit、
+修复标识和 x64 `sharp`。
+
+生产机上最初两次直接 Next.js/Turbopack 构建使 3.4 GiB 内存与 2 GiB swap
+接近耗尽，并导致 SSH banner 与公网请求短暂超时。相关临时构建进程被精确停止；
+当时正在服务的 r18 容器始终保持 healthy、restart count 0，资源回收后公网
+health 恢复 200。为避免再次争用，最终改用本地 Linux/amd64 制品，生产机只做
+归档校验和轻量运行镜像组装。
+
+一次构建诊断的内部进程列表输出包含了构建期加密凭据值。该值没有写入仓库、
+部署文档或最终交付内容，本次部署也没有修改任何环境变量。凭据轮换必须作为
+独立安全事项，在取得明确授权后执行并验证，不能夹带进应用部署。
+
+r19 即时生产回归确认：容器标记
+`20260729-health-alert-boundary-r19`，状态 healthy、restart count 0；
+exact commit 标识匹配；源站和公网 `/api/health`、`/`、英语/西语 Ogtv、
+`/sitemap.xml` 均为 200，未授权 `/api/cron/cron-health` 为 401。新容器
+初始 error/fatal 匹配为 0；两条 warning 都是 Node
+`DecompressInterceptor` experimental warning，不是应用错误。随后一次
+Ogtv OG 请求因 logo 超过 512 KiB 安全上限而按设计回退到字母占位图，但
+响应体限制使用普通 `Error`，因此多写了一条
+`[og] logo fetch failed`。页面和 OG 回退均未失败。部署后 review 已在主分支
+把响应体过大/读取超时分类为带 code 的 `SafeFetchError`，使这个预期回退不再
+进入 `console.error`；该 follow-up 尚未包含在 r19 生产镜像中。
+
+验收没有手动调用带鉴权 Cron。只读数据库核对显示最近 15 分钟 18/18 条
+`cron_run_log` 为成功；部署后自然调度继续写入。Import Product Hunt 最近一次
+于 `2026-07-29 00:00:40.899 UTC` 成功，因此先前 2880 分钟 stale 状态已经
+解除。
+
+- 发布前备份：
+  `backup-aat-ee-restic-20260729052657`，状态 success。
+- 发布前独立仓库检查：
+  `check-restic-idrive-e2-20260729052825`，状态 success。
+- 发布后备份：
+  `backup-aat-ee-restic-20260729061509`，Restic 快照 `ee8bd41e`，状态
+  success。
+- 发布后独立仓库检查：
+  `check-restic-idrive-e2-20260729061631`，状态 success。
+
 ### 旧 Zeabur Cron 告警隔离
 
 2026-07-28 收到的 9 项 stale 告警并非来自当前 ECS 生产库，而是已停用应用
