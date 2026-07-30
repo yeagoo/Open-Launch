@@ -81,6 +81,36 @@ Status: **准备版本生产部署完成；实际 Canary 未开启**
 批准；届时必须重新运行同一 commit 的 preflight，并要求 missing/extra、
 业务指标、配置问题和 active/attention job 全部为 0。
 
+## mf8 终态记录调查
+
+2026-07-30 15:08 UTC 完成了不修改生产数据的跨站核对：
+
+- 失败项属于 WallPreview Pro 订单；订单付款已验证，bigkr、hicyou 和 toolso
+  均已成功，只有 mf8 在 2026-07-01 连续 8 次收到 `Internal error`。
+- mf8 当前运行 revision
+  `533837ad6a89816a595185567e36f9956ca94ab8`，已包含 2026-07-02 发布的
+  receiver idempotency/unique-conflict 修复。
+- 从 aat.ee 生产容器使用现有 endpoint/key 发送空 payload，receiver 正确返回
+  400 `Invalid payload`，证明 HTTPS、认证和当前 validation path 可用；该请求
+  在数据库写入前结束。
+- mf8 数据库和公开页面确认已有一个 2026-07-06 创建的 WallPreview live
+  listing：
+  `https://www.mf8.biz/en/product/wallpreview-1782896531602`。
+- 该 listing 来自 hicyou 同步，不属于 launch bot，没有 aat.ee order
+  idempotency key；它是 dofollow，但仍启用了 backlink check。aat.ee 因此无法
+  把它自动识别为付费交付结果。
+- 当前 receiver 会按规范化 URL 找到该 listing，并因 key 不同返回 409。直接
+  重置 attempts 只能继续失败，不会修复订单，也不应尝试创建重复页面。
+
+推荐的业务处置是复用现有 live listing：先在 mf8 关闭该 listing 的 backlink
+check，再在 aat.ee 以该公开 URL 对账 syndication 行、把 Pro 订单标记为
+fulfilled，并向买家发送/补发交付通知。这个流程会修改两个生产数据库和财务订单
+状态，必须在新的备份、精确条件保护和人工批准后执行；当前调查没有进行这些写入。
+
+调查结束时 Shadow 为 263/263 匹配、missing 0、active Ledger job 0；历史
+extra 已自然下降到 5,098。aat.ee 容器仍为 healthy、restart 0，最近 60 分钟
+没有 error signature。
+
 ## 回滚
 
 本版本没有开启新的执行权威。如应用健康或 Shadow materialization 异常：
