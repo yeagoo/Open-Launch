@@ -133,6 +133,14 @@ environment. In particular, it maps `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the
 public `NEXT_PUBLIC_TURNSTILE_SITE_IDENTIFIER` build argument. Runtime
 credentials are never promoted to build arguments.
 
+The `cron_ledger_migrator` target is a bounded Phase 9 one-shot image. It runs
+as UID/GID 1001 and defaults only to
+`scripts/apply-pending-sql.ts --apply 0058_cron_job_ledger.sql`. Production has
+two older, intentionally unactivated Skill migrations (0044 and 0045), so the
+Phase 9 deployment must use this exact target instead of the broad
+`bun run db:migrate` adapter. Enabling those Skill migrations is a separate
+business change.
+
 The manual `Immutable runner validation` workflow packages one exact commit
 from `main` as linux/amd64 using a one-time validation key. It performs one
 BuildKit build with Docker/OCI/local exporters, produces a validation-only OCI

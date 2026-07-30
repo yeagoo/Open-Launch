@@ -42,4 +42,16 @@ describe("immutable runner public build contract", () => {
     )
     expect(buildScript).not.toMatch(/--build-arg\s+["']?NEXT_SERVER_ACTIONS_ENCRYPTION_KEY/)
   })
+
+  it("keeps the Phase 9 migrator scoped to migration 0058 and non-root", () => {
+    const migrator = dockerfile.match(
+      /FROM dependencies AS cron_ledger_migrator([\s\S]*?)\nFROM base AS builder/,
+    )?.[1]
+
+    expect(migrator).toBeDefined()
+    expect(migrator).toContain('ee.aat.open-launch.migration="0058_cron_job_ledger.sql"')
+    expect(migrator).toContain("USER nextjs")
+    expect(migrator).toContain('ENTRYPOINT ["bun", "scripts/apply-pending-sql.ts"]')
+    expect(migrator).toContain('CMD ["--apply", "0058_cron_job_ledger.sql"]')
+  })
 })

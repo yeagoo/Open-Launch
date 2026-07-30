@@ -1,9 +1,4 @@
 -- migrate: no-transaction
--- OPS NOTE: if a CONCURRENTLY build is interrupted (lock kill, dropped
--- connection), PostgreSQL leaves an INVALID index behind and IF NOT EXISTS
--- then SKIPS it on re-run. Before re-running after any failure:
---   SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;
--- and DROP INDEX CONCURRENTLY any invalid index from this file first.
 -- Full-text + typo-tolerant search indexes (audit 2026-07; pg_trgm already
 -- enabled by 0013). Search previously matched only project.name with ILIKE.
 --

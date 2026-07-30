@@ -16,6 +16,32 @@ COPY patches ./patches
 RUN bun install --frozen-lockfile --os=linux --cpu=x64 \
   && node -e "import('sharp').then((sharp) => console.log('[sharp] dependency runtime', sharp.default.versions.sharp, process.platform, process.arch))"
 
+FROM dependencies AS cron_ledger_migrator
+
+ARG GIT_COMMIT_SHA
+ARG DEPLOYMENT_VERSION
+ARG BUILD_INPUT_SHA256
+
+ENV NODE_ENV=production \
+    GIT_COMMIT_SHA=${GIT_COMMIT_SHA} \
+    DEPLOYMENT_VERSION=${DEPLOYMENT_VERSION} \
+    BUILD_INPUT_SHA256=${BUILD_INPUT_SHA256}
+
+LABEL org.opencontainers.image.source="https://github.com/yeagoo/Open-Launch" \
+      org.opencontainers.image.revision="${GIT_COMMIT_SHA}" \
+      org.opencontainers.image.version="${DEPLOYMENT_VERSION}" \
+      ee.aat.open-launch.build-input-sha256="${BUILD_INPUT_SHA256}" \
+      ee.aat.open-launch.migration="0058_cron_job_ledger.sql"
+
+COPY . .
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+USER nextjs
+ENTRYPOINT ["bun", "scripts/apply-pending-sql.ts"]
+CMD ["--apply", "0058_cron_job_ledger.sql"]
+
 FROM base AS builder
 
 # Only public/build identifiers and the dedicated Server Action key are needed
