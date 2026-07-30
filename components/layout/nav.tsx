@@ -1,12 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { headers } from "next/headers"
-
 import { Link } from "@/i18n/navigation"
 import { RiLoginBoxLine } from "@remixicon/react"
 import { User } from "better-auth"
 import { getTranslations } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
+import { getServerSession } from "@/lib/server-auth"
 
 import { ThemeToggle } from "../theme/theme-toggle"
 import { Button } from "../ui/button"
@@ -14,15 +12,12 @@ import { LanguageSwitcher } from "./language-switcher"
 import { MobileNavLazy } from "./mobile-nav-lazy"
 import { NavMenu } from "./nav-menu"
 import { NotificationBell } from "./notification-bell"
-import { SearchCommand } from "./search-command"
+import { SearchCommandLazy } from "./search-command-lazy"
 import { UserNav } from "./user-nav"
 
 export default async function Nav() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
+  const [session, t] = await Promise.all([getServerSession(), getTranslations("nav")])
   const user = session?.user
-  const t = await getTranslations("nav")
 
   return (
     <nav className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm">
@@ -42,7 +37,7 @@ export default async function Nav() {
 
         {/* Version Desktop - Recherche et actions */}
         <div className="hidden items-center gap-3 md:flex">
-          <SearchCommand isAuthenticated={!!session} />
+          <SearchCommandLazy isAuthenticated={!!session} />
           {session && <NotificationBell />}
 
           <LanguageSwitcher />

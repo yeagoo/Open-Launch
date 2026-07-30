@@ -3,6 +3,7 @@ import type { LookupFunction } from "node:net"
 
 import { Client, interceptors, request, type Dispatcher } from "undici"
 
+import { logger } from "@/lib/observability/structured-logger"
 import { isPrivateHostname } from "@/lib/utils"
 
 /**
@@ -96,6 +97,32 @@ export class SafeFetchError extends Error {
 export async function safeFetch(
   input: string | URL,
   init: SafeFetchOptions = {},
+): Promise<SafeFetchResponse> {
+  const startedAt = Date.now()
+  try {
+    const response = await safeFetchInternal(input, init)
+    const durationMs = Date.now() - startedAt
+    if (durationMs >= 5_000) {
+      logger.warn("safe_fetch_slow", {
+        status: response.status,
+        durationMs,
+        provider: "safe_fetch",
+      })
+    }
+    return response
+  } catch (error) {
+    logger.warn("safe_fetch_failed", {
+      status: error instanceof SafeFetchError ? error.code : "request_failed",
+      durationMs: Date.now() - startedAt,
+      provider: "safe_fetch",
+    })
+    throw error
+  }
+}
+
+async function safeFetchInternal(
+  input: string | URL,
+  init: SafeFetchOptions,
 ): Promise<SafeFetchResponse> {
   const maxRedirects = init.maxRedirects ?? DEFAULT_MAX_REDIRECTS
   const timeoutMs = init.timeoutMs ?? DEFAULT_TIMEOUT_MS

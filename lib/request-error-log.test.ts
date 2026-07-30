@@ -34,7 +34,7 @@ describe("request error log helpers", () => {
       "/zh/skill/free-directory-submission?token=[redacted]&q=[redacted]",
     )
     expect(log.request.userAgent).toBe("Googlebot bad")
-    expect(log.request.referer).toBe("https://www.aat.ee/dashboard?apiKey=[redacted]")
+    expect(log.request.referer).toBe("[redacted-url]")
     expect(log.request.zeaburRequestId).toBe("z-1")
     expect(JSON.stringify(log)).not.toContain("session=secret")
     expect(JSON.stringify(log)).not.toContain("Bearer secret")

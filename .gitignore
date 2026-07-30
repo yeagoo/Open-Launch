@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/artifacts/
 
 # next.js
 /.next/
@@ -63,3 +66,8 @@ logs/
 *.sqlite
 admin-*.csv
 outdated.txt
+
+# Local agent working memory; durable delivery records live under docs/
+/task_plan.md
+/progress.md
+/findings.md

@@ -1,9 +1,7 @@
-import { redactEmailsInText } from "@/lib/log-redaction"
+import { redactLogText } from "@/lib/log-redaction"
 
 const MAX_FIELD_LENGTH = 300
 const MAX_STACK_LINES = 8
-const SENSITIVE_VALUE =
-  /\b(access_token|refresh_token|id_token|client_secret|code|state|token|secret|password)\b(\s*[=:]\s*)([^\s&,}\]]+)/gi
 
 export interface BetterAuthApiErrorLog {
   source: "better_auth_api_error"
@@ -45,14 +43,8 @@ export function buildBetterAuthApiErrorLog(
 }
 
 function sanitize(value: string): string {
-  const cleaned = redactEmailsInText(
-    value
-      .replace(/Bearer\s+[^\s,}\]]+/gi, "Bearer [redacted]")
-      .replace(SENSITIVE_VALUE, (_match, key: string, separator: string) => {
-        return `${key}${separator}[redacted]`
-      })
-      .replace(/[\r\n\t]+/g, " ")
-      .trim(),
-  )
+  const cleaned = redactLogText(value)
+    .replace(/[\r\n\t]+/g, " ")
+    .trim()
   return cleaned.length > MAX_FIELD_LENGTH ? `${cleaned.slice(0, MAX_FIELD_LENGTH)}...` : cleaned
 }

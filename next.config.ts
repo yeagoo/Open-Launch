@@ -35,7 +35,19 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     // OG-image fonts are read from disk at runtime (lib/og-fonts.ts);
     // without tracing, the standalone container has no assets/fonts.
-    "/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*", "./assets/fonts/**/*"],
+    "/*": [
+      "./node_modules/sharp/**/*",
+      "./node_modules/@img/**/*",
+      "./assets/fonts/Inter-Bold.ttf",
+      "./assets/fonts/noto-sans-sc-bold-shards/**/*",
+    ],
+  },
+  // lib/og-fonts selects shard filenames dynamically, so the file tracer
+  // conservatively discovers every sibling in assets/fonts. The full TTF is
+  // only an input to generate-og-font-shards and must never enter a runtime
+  // trace; the standalone packager verifies the resulting inventory again.
+  outputFileTracingExcludes: {
+    "/*": ["./assets/fonts/NotoSansSC-Bold.ttf"],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]

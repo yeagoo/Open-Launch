@@ -14,7 +14,13 @@ import { auth } from "@/lib/auth"
  * to call this independently, costing 3x the auth round-trip per
  * render. `cache()` collapses it back to 1.
  */
+export const getServerSession = cache(async () =>
+  auth.api.getSession({
+    headers: await headers(),
+  }),
+)
+
 export const getCurrentUserId = cache(async (): Promise<string | null> => {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getServerSession()
   return session?.user?.id ?? null
 })

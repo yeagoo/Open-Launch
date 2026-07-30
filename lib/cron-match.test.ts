@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { cronMatches, isValidCronExpression } from "./cron-match"
+import { cronMatches, isValidCronExpression, scheduledFireTimesBetween } from "./cron-match"
 
 // Helper: build a UTC Date at the given parts. Avoids local-tz drift in tests.
 function utc(year: number, month: number, day: number, hour: number, minute: number): Date {
@@ -125,5 +125,32 @@ describe("isValidCronExpression", () => {
     expect(isValidCronExpression("")).toBe(false)
     expect(isValidCronExpression("* * *")).toBe(false) // 3 fields
     expect(isValidCronExpression("99 * * * *")).toBe(false)
+  })
+})
+
+describe("scheduledFireTimesBetween", () => {
+  it("enumerates an inclusive UTC range with one result per scheduled minute", () => {
+    expect(
+      scheduledFireTimesBetween("*/5 * * * *", utc(2026, 5, 8, 12, 0), utc(2026, 5, 8, 12, 16)).map(
+        (date) => date.toISOString(),
+      ),
+    ).toEqual([
+      "2026-05-08T12:00:00.000Z",
+      "2026-05-08T12:05:00.000Z",
+      "2026-05-08T12:10:00.000Z",
+      "2026-05-08T12:15:00.000Z",
+    ])
+  })
+
+  it("returns empty for invalid/reversed ranges and bounds output", () => {
+    expect(
+      scheduledFireTimesBetween("invalid", utc(2026, 5, 8, 12, 0), utc(2026, 5, 8, 12, 5)),
+    ).toEqual([])
+    expect(
+      scheduledFireTimesBetween("* * * * *", utc(2026, 5, 8, 12, 5), utc(2026, 5, 8, 12, 0)),
+    ).toEqual([])
+    expect(() =>
+      scheduledFireTimesBetween("* * * * *", utc(2026, 5, 8, 12, 0), utc(2026, 5, 8, 12, 5), 5),
+    ).toThrow(/exceeded/)
   })
 })

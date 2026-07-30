@@ -5,11 +5,25 @@ node_modules
 coverage
 email-previews
 logs
+artifacts
+playwright-report
+test-results
 *.log
 *.db
 *.sqlite
+*.pem
+*.tsbuildinfo
+.DS_Store
+.vercel
 .env
 .env.*
 !.env.example
 jietu
 docs
+# Generated inside the builder from the checked-in deterministic generator.
+# Excluding a local ignored pool keeps BUILD_INPUT_SHA256 bound to every
+# runtime public asset that can affect the final image.
+public/avatars/pool
+# Development source for reproducible OG font shards. The final runtime reads
+# only the checked-in WOFF shards and Inter font.
+assets/fonts/NotoSansSC-Bold.ttf

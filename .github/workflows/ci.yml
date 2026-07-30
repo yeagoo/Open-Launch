@@ -13,6 +13,19 @@ jobs:
     name: Bun checks
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+        env:
+          POSTGRES_DB: open_launch_cron_test
+          POSTGRES_PASSWORD: cron_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d open_launch_cron_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -39,6 +52,14 @@ jobs:
       - name: TypeScript
         run: bunx tsc --noEmit
 
+      - name: Cron policy inventory
+        run: bun run cron:policy:check
+
+      - name: Cron ledger migration
+        env:
+          CRON_LEDGER_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
+        run: bun run test:cron-ledger-db
+
       - name: Lint
         run: bun run lint
 
@@ -47,6 +68,13 @@ jobs:
 
       - name: Build
         run: bunx next build
+
+      - name: Package Cron worker entrypoint
+        run: bun run build:cron-worker
+
+      - name: Smoke Cron worker entrypoint
+        working-directory: .next/standalone
+        run: node cron-ledger-worker.mjs --check
 
       - name: Verify sharp standalone runtime
         working-directory: .next/standalone
@@ -62,3 +90,205 @@ jobs:
         run: |
           python -m pip install semgrep==1.171.0
           semgrep --config auto --error
+
+  release-gates:
+    name: Browser, database and performance release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+        env:
+          POSTGRES_DB: open_launch_e2e
+          POSTGRES_PASSWORD: release_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d open_launch_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/open_launch_e2e
+      E2E_REDIS_URL: redis://127.0.0.1:6379
+      BETTER_AUTH_SECRET: open-launch-e2e-auth-secret-32-bytes
+      NEXT_PUBLIC_URL: http://localhost:3100
+      GOOGLE_CLIENT_ID: open-launch-e2e
+      GOOGLE_CLIENT_SECRET: open-launch-e2e
+      GITHUB_CLIENT_ID: open-launch-e2e
+      GITHUB_CLIENT_SECRET: open-launch-e2e
+      TURNSTILE_SECRET_KEY: open-launch-e2e
+      STRIPE_SECRET_KEY: sk_test_open_launch_e2e
+      STRIPE_WEBHOOK_SECRET: whsec_open_launch_e2e
+      RESEND_API_KEY: re_open_launch_e2e
+      R2_ACCOUNT_ID: open-launch-e2e
+      R2_ACCESS_KEY_ID: open-launch-e2e
+      R2_SECRET_ACCESS_KEY: open-launch-e2e
+      R2_BUCKET_NAME: open-launch-e2e
+      R2_PUBLIC_DOMAIN: static.example.invalid
+      CRON_API_KEY: open-launch-e2e-cron-key
+      EMBEDDED_CRON_DISABLED: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .node-version
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies and Chromium
+        run: |
+          bun install --frozen-lockfile --os=linux --cpu=x64
+          bunx playwright install --with-deps chromium
+
+      - name: Create isolated empty release database
+        env:
+          ADMIN_DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/postgres
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from "pg"
+          const client = new pg.Client({ connectionString: process.env.ADMIN_DATABASE_URL })
+          await client.connect()
+          await client.query("CREATE DATABASE open_launch_release_test_ci")
+          await client.end()
+          NODE
+
+      - name: Apply full migration history and verify schema drift
+        env:
+          RELEASE_TEST_DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/open_launch_release_test_ci
+        run: bun run test:release-db
+
+      - name: Migrate browser fixture database
+        env:
+          DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
+        run: bun run db:migrate
+
+      - name: Build standalone application
+        run: bun run build
+
+      - name: Playwright release smoke
+        run: bun run e2e
+
+      - name: Enforce route JavaScript budgets
+        run: |
+          mkdir -p artifacts/performance
+          bun run perf:routes -- --config config/route-budgets.json \
+            > artifacts/performance/route-budgets.json
+
+      - name: Observe route, HTML and mobile Lighthouse budgets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/performance
+          bun run perf:build -- --route '/[locale]/page' > artifacts/performance/build-home.json
+          DATABASE_URL="$E2E_DATABASE_URL" \
+          REDIS_URL="$E2E_REDIS_URL" \
+          BETTER_AUTH_URL="http://localhost:3100" \
+          PORT=3100 \
+          HOSTNAME=localhost \
+            node .next/standalone/server.js > artifacts/performance/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for _ in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3100/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:3100/api/health >/dev/null
+          export CHROME_PATH
+          CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
+          bunx lighthouse http://localhost:3100/ \
+            --only-categories=performance \
+            --output=json \
+            --output-path=artifacts/performance/lighthouse-home.json \
+            --quiet \
+            --chrome-flags='--headless=new --no-sandbox --disable-dev-shm-usage'
+          bun run perf:budget -- \
+            --config config/performance-budgets.json \
+            --build artifacts/performance/build-home.json \
+            --lighthouse artifacts/performance/lighthouse-home.json \
+            --base-url http://localhost:3100
+
+      - name: Create bundle ownership report
+        run: bun run analyze:bundle
+
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-gate-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+            artifacts/performance/
+            .next/diagnostics/analyze/
+          if-no-files-found: warn
+          retention-days: 7
+
+  runner-smoke:
+    name: Final immutable runner HTTP smoke
+    needs:
+      - checks
+      - release-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .node-version
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install smoke dependencies
+        run: bun install --frozen-lockfile --os=linux --cpu=x64
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          driver: docker-container
+
+      - name: Create validation-only build secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          temporary_key="$(openssl rand -base64 32)"
+          echo "::add-mask::$temporary_key"
+          printf 'NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=%s\n' "$temporary_key" >> "$GITHUB_ENV"
+
+      - name: Build final runner
+        run: |
+          scripts/build-immutable-runner.sh \
+            --commit "${{ github.sha }}" \
+            --output-dir runner-artifacts \
+            --tag "open-launch:${{ github.sha }}" \
+            --validation-only
+
+      - name: Smoke final runner image
+        run: scripts/smoke-runner-image.sh "open-launch:${{ github.sha }}"

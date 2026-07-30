@@ -203,6 +203,7 @@ export async function sendBuyerDirectoryOrderConfirmation({
   amount,
   currency,
   locale,
+  idempotencyKey,
 }: {
   buyerEmail: string
   buyerName: string | null
@@ -215,6 +216,7 @@ export async function sendBuyerDirectoryOrderConfirmation({
   // omitted (older rows pre-locale column) we fall through to the
   // default locale and the link lands on the English dashboard.
   locale?: string | null
+  idempotencyKey?: string
 }) {
   const copy = BUYER_TIER_COPY[tier]
   const tierLabel = TIER_DISPLAY[tier]
@@ -279,6 +281,7 @@ export async function sendBuyerDirectoryOrderConfirmation({
     // `RESEND_REPLY_TO` env when omitted; the literal here is the
     // floor for environments that haven't set the env yet.
     replyTo: "contact@aat.ee",
+    idempotencyKey,
   })
 }
 
@@ -512,6 +515,7 @@ export async function sendAdminPaymentNotification({
   projectName,
   websiteUrl,
   orphan = false,
+  idempotencyKey,
 }: {
   userEmail: string
   amount: number
@@ -524,6 +528,7 @@ export async function sendAdminPaymentNotification({
    * admin can triage refunds / manual fulfilment quickly.
    */
   orphan?: boolean
+  idempotencyKey?: string
 }) {
   const adminEmail = process.env.ADMIN_EMAIL || "cjwbbs@gmail.com"
   const safeCurrency = escapeHtml(currency.toUpperCase())
@@ -579,6 +584,7 @@ export async function sendAdminPaymentNotification({
       to: adminEmail,
       subject,
       html: htmlBody,
+      idempotencyKey,
     })
   } catch (err) {
     console.error("Admin payment email failed, falling back to Discord:", err)

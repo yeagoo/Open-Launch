@@ -4,12 +4,7 @@ import { useEffect, useRef } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
 import { getMatomoPageUrl } from "@/lib/analytics/matomo"
-
-type MatomoCommand = [method: string, ...parameters: unknown[]]
-
-type MatomoWindow = Window & {
-  _paq?: MatomoCommand[]
-}
+import { pushBoundedMatomoCommand, type MatomoWindow } from "@/lib/analytics/matomo-queue"
 
 /**
  * Matomo's bootstrap snippet records the initial page load. This component
@@ -35,12 +30,10 @@ export function MatomoRouteTracker() {
     }
 
     const matomoWindow = window as MatomoWindow
-    const queue = (matomoWindow._paq = matomoWindow._paq || [])
-
-    queue.push(["setReferrerUrl", previousUrl.current])
-    queue.push(["setCustomUrl", currentUrl])
-    queue.push(["setDocumentTitle", document.title])
-    queue.push(["trackPageView"])
+    pushBoundedMatomoCommand(matomoWindow, ["setReferrerUrl", previousUrl.current])
+    pushBoundedMatomoCommand(matomoWindow, ["setCustomUrl", currentUrl])
+    pushBoundedMatomoCommand(matomoWindow, ["setDocumentTitle", document.title])
+    pushBoundedMatomoCommand(matomoWindow, ["trackPageView"])
 
     previousUrl.current = currentUrl
   }, [pathname, searchParams])

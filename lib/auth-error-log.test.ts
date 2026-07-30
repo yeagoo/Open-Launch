@@ -20,6 +20,6 @@ describe("buildBetterAuthApiErrorLog", () => {
     expect(serialized).not.toContain("bearer-value")
     expect(serialized).not.toContain("secret-state")
     expect(serialized).not.toContain("alice@example.com")
-    expect(serialized).toContain("al***@example.com")
+    expect(serialized).toContain("[redacted-email]")
   })
 })

@@ -5,6 +5,8 @@ import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 import { formatDistanceToNow } from "date-fns"
 import { asc, sql } from "drizzle-orm"
 
+import { parseCronSchedulerMode } from "@/lib/cron-ledger-core"
+import { cronLedgerBacklogSummary } from "@/lib/cron-ledger-db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -13,8 +15,11 @@ import { toggleCronEnabled, updateCronExpression } from "./actions"
 export const dynamic = "force-dynamic"
 
 export default async function AdminCronRunsPage() {
+  const schedulerMode = parseCronSchedulerMode(process.env.CRON_SCHEDULER_MODE)
+  const canaryTaskPath =
+    schedulerMode === "canary" ? process.env.CRON_LEDGER_CANARY_TASK_PATH?.trim() : undefined
   // Pull schedules + last 24h aggregate stats per task in one round trip.
-  const [schedules, statsRows] = await Promise.all([
+  const [schedules, statsRows, backlog] = await Promise.all([
     db.select().from(cronSchedule).orderBy(asc(cronSchedule.path)),
     db
       .select({
@@ -28,6 +33,7 @@ export default async function AdminCronRunsPage() {
       .from(cronRunLog)
       .where(sql`${cronRunLog.dispatchedAt} >= now() - interval '24 hours'`)
       .groupBy(cronRunLog.taskPath),
+    schedulerMode === "legacy" ? null : cronLedgerBacklogSummary(),
   ])
 
   const statsByPath = new Map(statsRows.map((s) => [s.taskPath, s]))
@@ -46,6 +52,34 @@ export default async function AdminCronRunsPage() {
         <Button asChild variant="outline" size="sm">
           <Link href="/admin">Back to admin</Link>
         </Button>
+      </div>
+
+      <div className="bg-card mb-4 rounded-lg border px-4 py-3 text-sm">
+        <span className="font-medium">Scheduler mode:</span>{" "}
+        <Badge variant={schedulerMode === "legacy" ? "secondary" : "outline"}>
+          {schedulerMode}
+        </Badge>
+        {schedulerMode === "canary" && (
+          <span className="text-muted-foreground ml-2">
+            Canary authority: <code>{canaryTaskPath || "not configured"}</code>
+          </span>
+        )}
+        {backlog && (
+          <div className="text-muted-foreground mt-2 grid gap-1">
+            <span>
+              pending {backlog.pending} · running {backlog.running} · retry {backlog.retryWait} ·
+              uncertain {backlog.uncertain} · dead letter {backlog.deadLettered} · oldest pending{" "}
+              {formatMetric(backlog.oldestPendingSeconds, "s")}
+            </span>
+            <span>
+              materialization lag {formatMetric(backlog.materializationLagSeconds, "s")} · 24h task
+              duration p50/p95 {formatMetric(backlog.taskDurationP50Ms, "ms")}/
+              {formatMetric(backlog.taskDurationP95Ms, "ms")} · scheduled-to-start p50/p95{" "}
+              {formatMetric(backlog.scheduledToStartP50Ms, "ms")}/
+              {formatMetric(backlog.scheduledToStartP95Ms, "ms")}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="bg-card overflow-x-auto rounded-lg border">
@@ -176,4 +210,8 @@ export default async function AdminCronRunsPage() {
       </div>
     </div>
   )
+}
+
+function formatMetric(value: number | null, unit: string): string {
+  return value === null ? "—" : `${value.toLocaleString()}${unit}`
 }

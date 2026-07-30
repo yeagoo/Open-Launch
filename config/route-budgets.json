@@ -1,0 +1,21 @@
+{
+  "mode": "enforce",
+  "routes": [
+    {
+      "route": "/[locale]/page",
+      "maxInitialGzipBytes": 160000
+    },
+    {
+      "route": "/[locale]/projects/submit/page",
+      "maxInitialGzipBytes": 310000
+    },
+    {
+      "route": "/[locale]/projects/[slug]/page",
+      "maxInitialGzipBytes": 165000
+    },
+    {
+      "route": "/[locale]/payment/success/page",
+      "maxInitialGzipBytes": 190000
+    }
+  ]
+}

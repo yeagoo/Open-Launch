@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sheet"
 
 import { ThemeToggleMenu } from "../theme/theme-toggle-menu"
-import { SearchCommand } from "./search-command"
+import { SearchCommandLazy } from "./search-command-lazy"
 
 interface MobileNavSheetProps {
   isAuthenticated: boolean
@@ -68,7 +68,7 @@ export function MobileNavSheet({ isAuthenticated, open, onOpenChange }: MobileNa
             </div>
 
             <div className="mt-2 mb-6 px-6">
-              <SearchCommand isAuthenticated={isAuthenticated} />
+              <SearchCommandLazy isAuthenticated={isAuthenticated} enableShortcut={false} />
             </div>
             <div className="bg-border my-4 h-px" />
 

@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client"
 
-import * as React from "react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -13,7 +12,6 @@ import {
   RiFireLine,
   RiLoader4Line,
   RiRocketLine,
-  RiSearchLine,
 } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 
@@ -21,10 +19,19 @@ import { useSearch } from "@/lib/hooks/use-search"
 import { CommandDialog, CommandInput } from "@/components/ui/command"
 import { DialogTitle } from "@/components/ui/dialog"
 
-export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+interface SearchCommandDialogProps {
+  isAuthenticated?: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function SearchCommandDialog({
+  isAuthenticated = false,
+  open,
+  onOpenChange,
+}: SearchCommandDialogProps) {
   const router = useRouter()
   const t = useTranslations("search")
-  const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const resultsRef = useRef<HTMLDivElement>(null)
 
@@ -33,19 +40,6 @@ export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: b
     debounceMs: 300,
     minLength: 2,
   })
-
-  // Raccourci clavier
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((open) => !open)
-      }
-    }
-
-    document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
-  }, [])
 
   // Gestion de la navigation au clavier
   useEffect(() => {
@@ -91,14 +85,14 @@ export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: b
           }
           break
         case "Escape":
-          setOpen(false)
+          onOpenChange(false)
           break
       }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [open, isLoading, results, totalCount, query, activeIndex, isAuthenticated])
+  }, [open, isLoading, results, totalCount, query, activeIndex, isAuthenticated, onOpenChange])
 
   // Réinitialiser l'index actif quand les résultats changent
   useEffect(() => {
@@ -106,22 +100,25 @@ export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: b
   }, [results, query])
 
   // Fonction pour naviguer vers un résultat
-  const runCommand = useCallback((command: () => unknown) => {
-    setOpen(false)
-    command()
-  }, [])
+  const runCommand = useCallback(
+    (command: () => unknown) => {
+      onOpenChange(false)
+      command()
+    },
+    [onOpenChange],
+  )
 
   // Réinitialiser l'état lors de l'ouverture/fermeture
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
-      setOpen(isOpen)
+      onOpenChange(isOpen)
       if (!isOpen) {
         // Réinitialiser l'état lors de la fermeture
         setQuery("")
         setActiveIndex(-1)
       }
     },
-    [setQuery],
+    [onOpenChange, setQuery],
   )
 
   // Rendu des résultats de recherche
@@ -220,136 +217,123 @@ export function SearchCommand({ isAuthenticated = false }: { isAuthenticated?: b
   }
 
   return (
-    <>
-      <button
-        type="button"
-        className="text-muted-foreground bg-muted/60 hover:bg-muted flex h-8 w-64 cursor-pointer items-center justify-start rounded-md border-none px-2 text-sm transition-colors focus:outline-none"
-        onClick={() => setOpen(true)}
+    <CommandDialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTitle className="sr-only">{t("placeholder")}</DialogTitle>
+      <CommandInput
+        placeholder={t("placeholder")}
+        value={query}
+        onValueChange={setQuery}
+        className="border-none focus:ring-0"
+      />
+      <div
+        className="scrollbar-hide overflow-y-auto p-2"
+        style={{
+          minHeight: getMinHeight(),
+          maxHeight: "350px",
+        }}
+        ref={resultsRef}
       >
-        <RiSearchLine className="mr-2 h-3.5 w-3.5" />
-        <span>{t("placeholder")}</span>
-        <kbd className="bg-muted pointer-events-none ml-auto hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </button>
-      <CommandDialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTitle className="sr-only">{t("placeholder")}</DialogTitle>
-        <CommandInput
-          placeholder={t("placeholder")}
-          value={query}
-          onValueChange={setQuery}
-          className="border-none focus:ring-0"
-        />
-        <div
-          className="scrollbar-hide overflow-y-auto p-2"
-          style={{
-            minHeight: getMinHeight(),
-            maxHeight: "350px",
-          }}
-          ref={resultsRef}
-        >
-          {/* Afficher le chargement */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-4 text-center">
-              <RiLoader4Line className="text-primary mr-2 h-5 w-5 animate-spin" />
-              <span className="text-sm">{t("searching")}</span>
-            </div>
-          )}
+        {/* Afficher le chargement */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-4 text-center">
+            <RiLoader4Line className="text-primary mr-2 h-5 w-5 animate-spin" />
+            <span className="text-sm">{t("searching")}</span>
+          </div>
+        )}
 
-          {/* Afficher l'erreur */}
-          {error && (
-            <div className="flex flex-col items-center justify-center py-4 text-center text-sm text-red-500">
-              <RiErrorWarningLine className="mb-2 h-5 w-5" />
-              <span>{error}</span>
-            </div>
-          )}
+        {/* Afficher l'erreur */}
+        {error && (
+          <div className="flex flex-col items-center justify-center py-4 text-center text-sm text-red-500">
+            <RiErrorWarningLine className="mb-2 h-5 w-5" />
+            <span>{error}</span>
+          </div>
+        )}
 
-          {/* Afficher "No results" */}
-          {!isLoading && !error && query.length >= 2 && (!results || results.length === 0) && (
-            <div className="text-muted-foreground py-4 text-center text-sm">{t("noResults")}</div>
-          )}
+        {/* Afficher "No results" */}
+        {!isLoading && !error && query.length >= 2 && (!results || results.length === 0) && (
+          <div className="text-muted-foreground py-4 text-center text-sm">{t("noResults")}</div>
+        )}
 
-          {/* Afficher les résultats */}
-          {!isLoading && !error && renderSearchResults()}
+        {/* Afficher les résultats */}
+        {!isLoading && !error && renderSearchResults()}
 
-          {/* Afficher les suggestions */}
-          {query.length === 0 && (
-            <div className="space-y-4">
-              <div>
-                <h4 className="mb-2 px-1 text-sm font-medium">{t("suggestions")}</h4>
-                <div className="space-y-1">
-                  <div
-                    data-index="0"
-                    className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                      activeIndex === 0 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => runCommand(() => router.push("/trending"))}
-                  >
-                    <RiFireLine className="mr-2 h-4 w-4 text-orange-500" />
-                    <span>{t("trendingProjects")}</span>
-                  </div>
-                  <div
-                    data-index="1"
-                    className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                      activeIndex === 1 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => runCommand(() => router.push("/categories"))}
-                  >
-                    <RiAppsLine className="mr-2 h-4 w-4 text-purple-500" />
-                    <span>{t("categories")}</span>
-                  </div>
+        {/* Afficher les suggestions */}
+        {query.length === 0 && (
+          <div className="space-y-4">
+            <div>
+              <h4 className="mb-2 px-1 text-sm font-medium">{t("suggestions")}</h4>
+              <div className="space-y-1">
+                <div
+                  data-index="0"
+                  className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                    activeIndex === 0 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => runCommand(() => router.push("/trending"))}
+                >
+                  <RiFireLine className="mr-2 h-4 w-4 text-orange-500" />
+                  <span>{t("trendingProjects")}</span>
+                </div>
+                <div
+                  data-index="1"
+                  className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                    activeIndex === 1 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => runCommand(() => router.push("/categories"))}
+                >
+                  <RiAppsLine className="mr-2 h-4 w-4 text-purple-500" />
+                  <span>{t("categories")}</span>
                 </div>
               </div>
+            </div>
 
-              <div className="border-border border-t pt-4">
-                <h4 className="mb-2 px-1 text-sm font-medium">{t("navigation")}</h4>
+            <div className="border-border border-t pt-4">
+              <h4 className="mb-2 px-1 text-sm font-medium">{t("navigation")}</h4>
 
-                <div className="space-y-1">
-                  {/* pour explore launches */}
+              <div className="space-y-1">
+                {/* pour explore launches */}
 
-                  <div
-                    data-index="2"
-                    className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                      activeIndex === 2 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => runCommand(() => router.push("/"))}
-                  >
-                    <RiRocketLine className="text-primary mr-2 h-4 w-4" />
-                    <span>{t("exploreLaunches")}</span>
-                  </div>
+                <div
+                  data-index="2"
+                  className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                    activeIndex === 2 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => runCommand(() => router.push("/"))}
+                >
+                  <RiRocketLine className="text-primary mr-2 h-4 w-4" />
+                  <span>{t("exploreLaunches")}</span>
+                </div>
 
-                  {/* Auth-only destinations are hidden for guests — a guest
+                {/* Auth-only destinations are hidden for guests — a guest
                       clicking Dashboard just bounces off the sign-in guard. */}
-                  {isAuthenticated && (
-                    <>
-                      <div
-                        data-index="3"
-                        className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                          activeIndex === 3 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => runCommand(() => router.push("/dashboard"))}
-                      >
-                        <RiDashboardLine className="mr-2 h-4 w-4 text-green-500" />
-                        <span>{t("dashboard")}</span>
-                      </div>
-                      <div
-                        data-index="4"
-                        className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
-                          activeIndex === 4 ? "bg-muted text-foreground" : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => runCommand(() => router.push("/projects/submit"))}
-                      >
-                        <RiAddCircleLine className="mr-2 h-4 w-4 text-sky-500" />
-                        <span>{t("submitProject")}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
+                {isAuthenticated && (
+                  <>
+                    <div
+                      data-index="3"
+                      className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                        activeIndex === 3 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => runCommand(() => router.push("/dashboard"))}
+                    >
+                      <RiDashboardLine className="mr-2 h-4 w-4 text-green-500" />
+                      <span>{t("dashboard")}</span>
+                    </div>
+                    <div
+                      data-index="4"
+                      className={`flex cursor-pointer items-center rounded-md p-2 transition-colors ${
+                        activeIndex === 4 ? "bg-muted text-foreground" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => runCommand(() => router.push("/projects/submit"))}
+                    >
+                      <RiAddCircleLine className="mr-2 h-4 w-4 text-sky-500" />
+                      <span>{t("submitProject")}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-          )}
-        </div>
-      </CommandDialog>
-    </>
+          </div>
+        )}
+      </div>
+    </CommandDialog>
   )
 }

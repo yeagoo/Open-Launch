@@ -5,6 +5,8 @@ import {
   index,
   integer,
   json,
+  jsonb,
+  numeric,
   pgTable,
   primaryKey,
   serial,
@@ -539,7 +541,9 @@ export const promoCode = pgTable(
   {
     id: text("id").primaryKey(),
     code: text("code").notNull().unique(),
-    discountAmount: text("discount_amount").notNull().default("2.99"),
+    discountAmount: numeric("discount_amount", { precision: 10, scale: 2 })
+      .notNull()
+      .default("2.99"),
     usageLimit: integer("usage_limit"), // NULL means unlimited
     usedCount: integer("used_count").notNull().default(0),
     expiresAt: timestamp("expires_at").notNull(),
@@ -785,6 +789,15 @@ export const cronSchedule = pgTable("cron_schedule", {
   enabled: boolean("enabled").notNull().default(true),
   expectedDurationMs: integer("expected_duration_ms"),
   description: text("description"),
+  // Phase 1 ledger policy. Nullable during legacy/shadow migration; ledger
+  // mode fails closed if any enabled row lacks one of these fields.
+  misfirePolicy: text("misfire_policy"),
+  maxCatchUpMinutes: integer("max_catch_up_minutes"),
+  retryPolicy: text("retry_policy"),
+  maxAttempts: integer("max_attempts"),
+  concurrencyGroup: text("concurrency_group"),
+  idempotencyClass: text("idempotency_class"),
+  requiresScheduledFor: boolean("requires_scheduled_for"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
@@ -808,6 +821,59 @@ export const cronRunLog = pgTable(
   },
 )
 
+// Persistent Phase 1 scheduling ledger. Each UTC task window has one durable
+// row; task_path and policy fields are immutable snapshots rather than foreign
+// keys to the admin-editable cron_schedule row.
+export const cronJob = pgTable(
+  "cron_job",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    scheduleId: integer("schedule_id"),
+    taskPath: text("task_path").notNull(),
+    scheduledFor: timestamp("scheduled_for", { withTimezone: true }).notNull(),
+    executionMode: text("execution_mode").notNull(),
+    status: text("status").notNull().default("pending"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
+    leaseOwner: text("lease_owner"),
+    leaseToken: uuid("lease_token"),
+    leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    statusCode: integer("status_code"),
+    durationMs: integer("duration_ms"),
+    lastError: text("last_error"),
+    cronExpression: text("cron_expression").notNull(),
+    misfirePolicy: text("misfire_policy").notNull(),
+    maxCatchUpMinutes: integer("max_catch_up_minutes").notNull(),
+    retryPolicy: text("retry_policy").notNull(),
+    maxAttempts: integer("max_attempts").notNull(),
+    concurrencyGroup: text("concurrency_group").notNull(),
+    idempotencyClass: text("idempotency_class").notNull(),
+    requiresScheduledFor: boolean("requires_scheduled_for").notNull(),
+    scheduleVersion: text("schedule_version").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("cron_job_task_window_unique").on(table.taskPath, table.scheduledFor),
+    index("cron_job_claim_idx").on(table.status, table.availableAt, table.scheduledFor),
+    index("cron_job_group_claim_idx").on(table.concurrencyGroup, table.status, table.availableAt),
+    index("cron_job_lease_idx").on(table.status, table.leaseExpiresAt),
+    index("cron_job_retention_idx").on(table.status, table.finishedAt),
+  ],
+)
+
+// A single row is locked by each materializer transaction. Job inserts and
+// cursor advancement commit atomically, so a failed insert cannot lose a
+// schedule window.
+export const cronMaterializationCursor = pgTable("cron_materialization_cursor", {
+  id: text("id").primaryKey(),
+  scannedThrough: timestamp("scanned_through", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 // Durable notification-email queue (0052). Senders enqueue one row per
 // (event, recipient) with a stable event_key, then drain; the drain cron
 // retries failures every 10 minutes. event_key doubles as the Resend
@@ -818,7 +884,9 @@ export const emailOutbox = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     eventKey: text("event_key").notNull().unique(),
-    kind: text("kind").notNull(), // 'winner_badge' | 'launch_reminder'
+    // Application-enforced EmailOutboxKind. Kept as text so new durable
+    // notification types do not require a blocking enum migration.
+    kind: text("kind").notNull(),
     payload: json("payload").notNull(),
     status: text("status").notNull().default("pending"), // 'pending' | 'sent' | 'failed'
     attempts: integer("attempts").notNull().default(0),
@@ -916,7 +984,7 @@ export const domainDrCache = pgTable(
     fetchedAt: timestamp("fetched_at"),
     source: text("source"),
     httpStatus: integer("http_status"),
-    rawResponse: json("raw_response"),
+    rawResponse: jsonb("raw_response"),
     lastAttemptAt: timestamp("last_attempt_at"),
     lastError: text("last_error"),
   },

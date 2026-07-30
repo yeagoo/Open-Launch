@@ -1,9 +1,9 @@
 /**
  * Durable email outbox.
  *
- * Notification senders (winner badges, launch reminders) ENQUEUE one row
- * per (event, recipient) with a stable event_key and then drain. This
- * replaces the old inline-send crons, which had two failure modes:
+ * Notification senders ENQUEUE one row per (event, recipient) with a stable
+ * event_key and then drain. Winner/reminder crons and payment webhooks share
+ * the same delivery and retry contract. This replaces inline sends, which had:
  *   - partial failure: the route still returned 200 and the failed
  *     recipients were silently lost until the next day (or forever), and
  *   - whole-run retry: recipients already mailed got a duplicate.
@@ -23,9 +23,17 @@ import { db } from "@/drizzle/db"
 import { emailOutbox } from "@/drizzle/db/schema"
 import { and, asc, eq, gte, inArray, lt, or, sql } from "drizzle-orm"
 
-import { sendLaunchReminderEmail, sendWinnerBadgeEmail } from "@/lib/transactional-emails"
+import type { DirectoryTier } from "@/lib/directory-tiers"
+import { redactLogText } from "@/lib/log-redaction"
+import {
+  sendAdminPaymentNotification,
+  sendBuyerDirectoryOrderConfirmation,
+  sendLaunchReminderEmail,
+  sendWinnerBadgeEmail,
+} from "@/lib/transactional-emails"
 
-export type EmailOutboxKind = "winner_badge" | "launch_reminder"
+export type EmailOutboxKind =
+  "winner_badge" | "launch_reminder" | "payment_admin" | "directory_order_confirmation"
 
 export interface WinnerBadgePayload {
   email: string
@@ -43,17 +51,53 @@ export interface LaunchReminderPayload {
   projectSlug: string
 }
 
+export interface PaymentAdminPayload {
+  userEmail: string
+  amount: number
+  currency: string
+  projectName: string
+  websiteUrl: string
+  orphan?: boolean
+}
+
+export interface DirectoryOrderConfirmationPayload {
+  buyerEmail: string
+  buyerName: string | null
+  tier: DirectoryTier
+  projectName: string
+  websiteUrl: string
+  amount: number
+  currency: string
+  locale: string | null
+}
+
+export interface EmailOutboxPayloadMap {
+  winner_badge: WinnerBadgePayload
+  launch_reminder: LaunchReminderPayload
+  payment_admin: PaymentAdminPayload
+  directory_order_confirmation: DirectoryOrderConfirmationPayload
+}
+
+type EmailOutboxPayload = EmailOutboxPayloadMap[EmailOutboxKind]
+
 // 12 attempts at the 10-minute drain cadence ≈ 2h of retries, long enough
 // to ride out a Resend incident. Rows that exhaust attempts stay `failed`
 // and surface via the drain route's failure count (and cron_run_log).
 const MAX_ATTEMPTS = 12
 const DRAIN_BATCH = 50
 
+function retryableOutboxRows() {
+  return or(
+    eq(emailOutbox.status, "pending"),
+    and(eq(emailOutbox.status, "failed"), lt(emailOutbox.attempts, MAX_ATTEMPTS)),
+  )
+}
+
 /** Idempotent: a duplicate event_key is silently absorbed. */
-export async function enqueueEmail(
-  kind: EmailOutboxKind,
+export async function enqueueEmail<K extends EmailOutboxKind>(
+  kind: K,
   eventKey: string,
-  payload: WinnerBadgePayload | LaunchReminderPayload,
+  payload: EmailOutboxPayloadMap[K],
 ): Promise<void> {
   await db
     .insert(emailOutbox)
@@ -61,30 +105,53 @@ export async function enqueueEmail(
     .onConflictDoNothing({ target: emailOutbox.eventKey })
 }
 
-async function sendForKind(
-  kind: EmailOutboxKind,
-  payload: WinnerBadgePayload | LaunchReminderPayload,
+export async function sendEmailOutboxItem<K extends EmailOutboxKind>(
+  kind: K,
+  payload: EmailOutboxPayloadMap[K],
   idempotencyKey: string,
 ): Promise<void> {
-  if (kind === "winner_badge") {
-    const p = payload as WinnerBadgePayload
-    await sendWinnerBadgeEmail({
-      user: { email: p.email, name: p.name ?? "" },
-      projectName: p.projectName,
-      projectSlug: p.projectSlug,
-      ranking: p.ranking,
-      launchType: p.launchType,
-      idempotencyKey,
-    })
-    return
+  switch (kind) {
+    case "winner_badge": {
+      const p = payload as WinnerBadgePayload
+      await sendWinnerBadgeEmail({
+        user: { email: p.email, name: p.name ?? "" },
+        projectName: p.projectName,
+        projectSlug: p.projectSlug,
+        ranking: p.ranking,
+        launchType: p.launchType,
+        idempotencyKey,
+      })
+      return
+    }
+    case "launch_reminder": {
+      const p = payload as LaunchReminderPayload
+      await sendLaunchReminderEmail({
+        user: { email: p.email, name: p.name ?? "" },
+        projectName: p.projectName,
+        projectSlug: p.projectSlug,
+        idempotencyKey,
+      })
+      return
+    }
+    case "payment_admin": {
+      await sendAdminPaymentNotification({
+        ...(payload as PaymentAdminPayload),
+        idempotencyKey,
+      })
+      return
+    }
+    case "directory_order_confirmation": {
+      await sendBuyerDirectoryOrderConfirmation({
+        ...(payload as DirectoryOrderConfirmationPayload),
+        idempotencyKey,
+      })
+      return
+    }
+    default: {
+      const unsupportedKind: never = kind
+      throw new Error(`Unsupported email outbox kind: ${String(unsupportedKind)}`)
+    }
   }
-  const p = payload as LaunchReminderPayload
-  await sendLaunchReminderEmail({
-    user: { email: p.email, name: p.name ?? "" },
-    projectName: p.projectName,
-    projectSlug: p.projectSlug,
-    idempotencyKey,
-  })
 }
 
 export interface DrainResult {
@@ -105,12 +172,7 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
   const due = await db
     .select()
     .from(emailOutbox)
-    .where(
-      or(
-        eq(emailOutbox.status, "pending"),
-        and(eq(emailOutbox.status, "failed"), lt(emailOutbox.attempts, MAX_ATTEMPTS)),
-      ),
-    )
+    .where(retryableOutboxRows())
     .orderBy(asc(emailOutbox.createdAt))
     .limit(batch)
 
@@ -118,9 +180,9 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
   let failed = 0
   for (const row of due) {
     try {
-      await sendForKind(
+      await sendEmailOutboxItem(
         row.kind as EmailOutboxKind,
-        row.payload as WinnerBadgePayload | LaunchReminderPayload,
+        row.payload as EmailOutboxPayload,
         row.eventKey,
       )
       // Guard the transition: overlapping drains (inline sender drain vs
@@ -143,7 +205,10 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
         .set({
           status: "failed",
           attempts: sql`${emailOutbox.attempts} + 1`,
-          lastError: err instanceof Error ? err.message : String(err),
+          lastError: redactLogText(err instanceof Error ? err.message : String(err)).slice(
+            0,
+            2_000,
+          ),
           updatedAt: now,
         })
         .where(and(eq(emailOutbox.id, row.id), inArray(emailOutbox.status, ["pending", "failed"])))
@@ -154,7 +219,7 @@ export async function drainEmailOutbox(batch: number = DRAIN_BATCH): Promise<Dra
   const remaining = await db
     .select({ id: emailOutbox.id })
     .from(emailOutbox)
-    .where(inArray(emailOutbox.status, ["pending"]))
+    .where(retryableOutboxRows())
     .limit(1)
 
   // Dead letters alert only while FRESH (last attempt within 24h). A

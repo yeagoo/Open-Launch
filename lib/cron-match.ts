@@ -54,6 +54,49 @@ export function previousFireTime(expression: string, now: Date = new Date()): Da
 }
 
 /**
+ * Enumerate scheduled UTC fire-times in an inclusive minute range while
+ * parsing the expression only once. Materialization uses this instead of
+ * calling cronMatches for every task × minute during catch-up.
+ */
+export function scheduledFireTimesBetween(
+  expression: string,
+  start: Date,
+  end: Date,
+  maxResults = 20_000,
+): Date[] {
+  if (!hasFiveFields(expression) || start.getTime() > end.getTime()) return []
+  if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 50_000) {
+    throw new Error("maxResults must be an integer between 1 and 50000")
+  }
+  const minuteStart = new Date(start)
+  minuteStart.setUTCSeconds(0, 0)
+  const minuteEnd = new Date(end)
+  minuteEnd.setUTCSeconds(0, 0)
+
+  try {
+    const interval = CronExpressionParser.parse(expression, {
+      currentDate: new Date(minuteStart.getTime() - 1),
+      tz: "UTC",
+    })
+    const results: Date[] = []
+    while (true) {
+      const next = interval.next().toDate()
+      if (next.getTime() > minuteEnd.getTime()) break
+      results.push(next)
+      if (results.length > maxResults) {
+        throw new Error(`cron fire-time enumeration exceeded ${maxResults} results`)
+      }
+    }
+    return results
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("cron fire-time enumeration")) {
+      throw error
+    }
+    return []
+  }
+}
+
+/**
  * Sanity-check a cron expression. Used by admin form server actions
  * before persisting an edit so we never store an unparseable schedule.
  */

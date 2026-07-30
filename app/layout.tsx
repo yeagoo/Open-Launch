@@ -11,14 +11,12 @@ import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { Toaster } from "sonner"
 
-import {
-  MATOMO_BASE_URL,
-  MATOMO_SENSITIVE_QUERY_PARAMETERS,
-  MATOMO_SITE_ID,
-} from "@/lib/analytics/matomo"
+import { MATOMO_BASE_URL, MATOMO_SITE_ID } from "@/lib/analytics/matomo"
+import { parseWebVitalsSampleRate } from "@/lib/analytics/web-vitals"
 import { pickClientMessages } from "@/lib/client-messages"
 import { footerNavSites } from "@/lib/directories-links"
 import { MatomoRouteTracker } from "@/components/analytics/matomo-route-tracker"
+import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter"
 import Footer from "@/components/layout/footer"
 import Nav from "@/components/layout/nav"
 import { OrganizationSchema } from "@/components/seo/structured-data"
@@ -106,6 +104,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RR1YB886D7"
+  const webVitalsSampleRate = parseWebVitalsSampleRate(process.env.WEB_VITALS_SAMPLE_RATE)
   const [locale, messages] = await Promise.all([getLocale(), getMessages()])
   const navMessages = pickClientMessages(messages, ["common", "nav", "notifications", "search"])
   const footerMessages = pickClientMessages(messages, ["footer"])
@@ -122,18 +121,14 @@ export default async function RootLayout({
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){window.dataLayer.push(arguments);}
                 window.gtag = window.gtag || gtag;
+                var analyticsPageUrl = new URL(window.location.href);
+                analyticsPageUrl.search = '';
+                analyticsPageUrl.hash = '';
                 gtag('js', new Date());
-                gtag('config', gaId);
+                gtag('config', gaId, { page_location: analyticsPageUrl.toString() });
 
                 var _paq = window._paq = window._paq || [];
-                var matomoUrl = new URL(window.location.href);
-                var sensitiveParameters = new Set(${JSON.stringify(MATOMO_SENSITIVE_QUERY_PARAMETERS)});
-                Array.from(matomoUrl.searchParams.keys()).forEach(function(parameter) {
-                  if (sensitiveParameters.has(parameter.toLowerCase())) {
-                    matomoUrl.searchParams.delete(parameter);
-                  }
-                });
-                _paq.push(['setCustomUrl', matomoUrl.toString()]);
+                _paq.push(['setCustomUrl', analyticsPageUrl.toString()]);
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
 
@@ -199,6 +194,7 @@ export default async function RootLayout({
         {process.env.NODE_ENV === "production" && (
           <Suspense fallback={null}>
             <MatomoRouteTracker />
+            {webVitalsSampleRate > 0 && <WebVitalsReporter sampleRate={webVitalsSampleRate} />}
           </Suspense>
         )}
       </body>

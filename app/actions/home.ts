@@ -10,15 +10,43 @@ import {
   project as projectTable,
   upvote,
 } from "@/drizzle/db/schema"
-import { endOfMonth, startOfMonth } from "date-fns"
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { localizeProjectDescriptionGroups } from "@/lib/get-project-translation"
+import {
+  attachUserUpvotesToGroups,
+  getUtcMonthWindow,
+  uniqueProjectIdsFromGroups,
+} from "@/lib/home-project-groups"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
 import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
+
+const homeUpvoteCounts = db
+  .select({
+    projectId: upvote.projectId,
+    upvoteCount: sql<number>`cast(count(${upvote.id}) as int)`.mapWith(Number).as("upvote_count"),
+  })
+  .from(upvote)
+  .groupBy(upvote.projectId)
+  .as("home_upvote_counts")
+
+const homeCommentCounts = db
+  .select({
+    // Preserve Drizzle's table/column ownership through the subquery. A raw
+    // SQL alias named `project_id` was emitted unqualified in the JOIN and
+    // became ambiguous next to the upvote aggregate's `project_id`.
+    projectId: fumaComments.page,
+    commentCount: sql<number>`cast(count(${fumaComments.id}) as int)`
+      .mapWith(Number)
+      .as("comment_count"),
+  })
+  .from(fumaComments)
+  .groupBy(fumaComments.page)
+  .as("home_comment_counts")
 
 // Reusable project-summary projection — the 4 listings on home /
 // winners all need the exact same columns, and duplicating them is
@@ -36,8 +64,8 @@ const projectSummarySelect = {
   dailyRanking: projectTable.dailyRanking,
   scheduledLaunchDate: projectTable.scheduledLaunchDate,
   createdAt: projectTable.createdAt,
-  upvoteCount: sql<number>`cast(count(distinct ${upvote.id}) as int)`.mapWith(Number),
-  commentCount: sql<number>`cast(count(distinct ${fumaComments.id}) as int)`.mapWith(Number),
+  upvoteCount: sql<number>`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`.mapWith(Number),
+  commentCount: sql<number>`coalesce(${homeCommentCounts.commentCount}, 0)`.mapWith(Number),
 } as const
 
 // ─── User-agnostic cached fetchers ──────────────────────────────────────────
@@ -51,8 +79,8 @@ const fetchTodayProjectsBase = unstable_cache(
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
+      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
+      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
       .where(
         and(
           eq(projectTable.launchStatus, launchStatus.ONGOING),
@@ -60,12 +88,11 @@ const fetchTodayProjectsBase = unstable_cache(
           lt(projectTable.scheduledLaunchDate, new Date(windowEndIso)),
         ),
       )
-      .groupBy(projectTable.id)
-      .orderBy(desc(sql`count(distinct ${upvote.id})`))
+      .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
       .limit(limit)
     return attachCategories(base)
   },
-  ["home-today-projects-v1"],
+  ["home-today-projects-v2"],
   // 10 minutes covers the "live counter" expectation — fresh
   // upvotes/comments lag by at most 10 min, acceptable for a
   // launches feed. The `update-launches` cron explicitly busts
@@ -78,8 +105,8 @@ const fetchYesterdayProjectsBase = unstable_cache(
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
+      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
+      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
       .where(
         and(
           eq(projectTable.launchStatus, launchStatus.LAUNCHED),
@@ -87,12 +114,11 @@ const fetchYesterdayProjectsBase = unstable_cache(
           sql`${projectTable.scheduledLaunchDate} < ${yesterdayEndIso}`,
         ),
       )
-      .groupBy(projectTable.id)
-      .orderBy(desc(sql`count(distinct ${upvote.id})`))
+      .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
       .limit(limit)
     return attachCategories(base)
   },
-  ["home-yesterday-projects-v1"],
+  ["home-yesterday-projects-v2"],
   // Yesterday's set is locked once we cross 8 AM UTC — 1h cache
   // is conservative; in practice it could be much longer.
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
@@ -103,21 +129,20 @@ const fetchMonthBestProjectsBase = unstable_cache(
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
+      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
+      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
       .where(
         and(
           eq(projectTable.launchStatus, launchStatus.LAUNCHED),
           sql`${projectTable.scheduledLaunchDate} >= ${monthStartIso}`,
-          sql`${projectTable.scheduledLaunchDate} <= ${monthEndIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${monthEndIso}`,
         ),
       )
-      .groupBy(projectTable.id)
-      .orderBy(desc(sql`count(distinct ${upvote.id})`))
+      .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
       .limit(limit)
     return attachCategories(base)
   },
-  ["home-month-projects-v1"],
+  ["home-month-projects-v2"],
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
 )
 
@@ -126,8 +151,8 @@ const fetchWinnersByDateBase = unstable_cache(
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`"fuma_comments"."page"::text = ${projectTable.id}`)
+      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
+      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
       .where(
         and(
           eq(projectTable.launchStatus, launchStatus.LAUNCHED),
@@ -137,11 +162,10 @@ const fetchWinnersByDateBase = unstable_cache(
           sql`${projectTable.scheduledLaunchDate} <= ${dayEndIso}`,
         ),
       )
-      .groupBy(projectTable.id)
       .orderBy(projectTable.dailyRanking)
     return attachCategories(base)
   },
-  ["winners-by-date-v1"],
+  ["winners-by-date-v2"],
   // Past winners are immutable once the 8 AM cron has stamped
   // `dailyRanking`. 6h is generous; tag-bust still catches the
   // initial transition.
@@ -149,6 +173,61 @@ const fetchWinnersByDateBase = unstable_cache(
 )
 
 // ─── Public entry points ────────────────────────────────────────────────────
+
+function getYesterdayQueryWindow(now = new Date()) {
+  const isBeforeLaunchTime = now.getUTCHours() < LAUNCH_SETTINGS.LAUNCH_HOUR_UTC
+  const yesterdayStart = new Date(now)
+  yesterdayStart.setUTCHours(LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0)
+  yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - (isBeforeLaunchTime ? 2 : 1))
+
+  const yesterdayEnd = new Date(yesterdayStart)
+  yesterdayEnd.setUTCDate(yesterdayEnd.getUTCDate() + 1)
+
+  // Extend window start to midnight to include projects launched at 00:00.
+  const queryStart = new Date(yesterdayStart)
+  queryStart.setUTCHours(0, 0, 0, 0)
+
+  return { queryStart, yesterdayEnd }
+}
+
+/**
+ * Homepage-specific grouped read. The three cached public project sets stay
+ * independent, while the request-scoped user augmentation is performed once
+ * across their combined project IDs.
+ */
+export async function getHomeProjectGroups(locale?: string) {
+  const todayWindow = getCurrentLaunchWindow()
+  const yesterdayWindow = getYesterdayQueryWindow()
+  const monthWindow = getUtcMonthWindow(new Date())
+
+  const [todayBase, yesterdayBase, monthBase, userId] = await Promise.all([
+    fetchTodayProjectsBase(
+      PROJECT_LIMITS_VARIABLES.TODAY_LIMIT,
+      todayWindow.start.toISOString(),
+      todayWindow.end.toISOString(),
+    ),
+    fetchYesterdayProjectsBase(
+      PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT,
+      yesterdayWindow.queryStart.toISOString(),
+      yesterdayWindow.yesterdayEnd.toISOString(),
+    ),
+    fetchMonthBestProjectsBase(
+      PROJECT_LIMITS_VARIABLES.MONTH_LIMIT,
+      monthWindow.start.toISOString(),
+      monthWindow.end.toISOString(),
+    ),
+    getCurrentUserId(),
+  ])
+
+  const baseGroups = [todayBase, yesterdayBase, monthBase]
+  const projectIds = uniqueProjectIdsFromGroups(baseGroups)
+  const [upvoted, displayGroups] = await Promise.all([
+    getUpvotedSet(userId, projectIds),
+    locale ? localizeProjectDescriptionGroups(baseGroups, locale) : Promise.resolve(baseGroups),
+  ])
+
+  return attachUserUpvotesToGroups(displayGroups, upvoted)
+}
 
 export async function getTodayProjects(limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT) {
   limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, 1, 100)
@@ -168,21 +247,7 @@ export async function getYesterdayProjects(
   limit: number = PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT,
 ) {
   limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.YESTERDAY_LIMIT, 1, 100)
-  const now = new Date()
-  const isBeforeLaunchTime = now.getUTCHours() < LAUNCH_SETTINGS.LAUNCH_HOUR_UTC
-  const yesterdayStart = new Date(now)
-  yesterdayStart.setUTCHours(LAUNCH_SETTINGS.LAUNCH_HOUR_UTC, 0, 0, 0)
-  if (isBeforeLaunchTime) {
-    yesterdayStart.setDate(yesterdayStart.getDate() - 2)
-  } else {
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1)
-  }
-  const yesterdayEnd = new Date(yesterdayStart)
-  yesterdayEnd.setDate(yesterdayEnd.getDate() + 1)
-
-  // Extend window start to midnight to include projects launched at 00:00
-  const queryStart = new Date(yesterdayStart)
-  queryStart.setUTCHours(0, 0, 0, 0)
+  const { queryStart, yesterdayEnd } = getYesterdayQueryWindow()
 
   const [base, userId] = await Promise.all([
     fetchYesterdayProjectsBase(limit, queryStart.toISOString(), yesterdayEnd.toISOString()),
@@ -197,12 +262,14 @@ export async function getYesterdayProjects(
 
 export async function getMonthBestProjects(limit: number = PROJECT_LIMITS_VARIABLES.MONTH_LIMIT) {
   limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.MONTH_LIMIT, 1, 100)
-  const now = new Date()
-  const monthStart = startOfMonth(now)
-  const monthEnd = endOfMonth(now)
+  const monthWindow = getUtcMonthWindow(new Date())
 
   const [base, userId] = await Promise.all([
-    fetchMonthBestProjectsBase(limit, monthStart.toISOString(), monthEnd.toISOString()),
+    fetchMonthBestProjectsBase(
+      limit,
+      monthWindow.start.toISOString(),
+      monthWindow.end.toISOString(),
+    ),
     getCurrentUserId(),
   ])
   const upvoted = await getUpvotedSet(

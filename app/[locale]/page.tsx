@@ -1,21 +1,19 @@
 import type { Metadata } from "next"
-import { headers } from "next/headers"
 import Image from "next/image"
 
 import { Link } from "@/i18n/navigation"
 import { getTranslations, setRequestLocale } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
 import { promoDirectorySites } from "@/lib/directories-links"
-import { localizeProjectDescriptionGroups } from "@/lib/get-project-translation"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
+import { getServerSession } from "@/lib/server-auth"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { DenseList } from "@/components/home/dense-list"
 import { EditorialHero } from "@/components/home/editorial-hero"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { ItemListSchema } from "@/components/seo/structured-data"
-import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
+import { getHomeProjectGroups } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
 export async function generateMetadata({
@@ -31,34 +29,26 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const { locale } = await params
   setRequestLocale(locale)
 
-  const t = await getTranslations("home")
-  const tSections = await getTranslations("home.sections")
-  const tCommon = await getTranslations("common")
+  const projectGroupsPromise = getHomeProjectGroups(locale)
 
-  // 4 reads in parallel. The 3 listing calls are wrapped in
-  // `unstable_cache` so the bulk of the work is cached; the
-  // user-upvotes augmentation inside each runs per request.
-  const [todayRaw, yesterdayRaw, monthRaw, topCategories] = await Promise.all([
-    getTodayProjects(),
-    getYesterdayProjects(),
-    getMonthBestProjects(),
+  const [
+    t,
+    tSections,
+    tCommon,
+    [todayProjects, yesterdayProjects, monthProjects],
+    topCategories,
+    session,
+  ] = await Promise.all([
+    getTranslations("home"),
+    getTranslations("home.sections"),
+    getTranslations("common"),
+    projectGroupsPromise,
     getTopCategories(5),
+    getServerSession(),
   ])
   // The promo banner showcases the highest-DR directories (always incl. aat.ee),
   // straight from the snapshot so the lineup tracks DR over time.
   const promoSites = promoDirectorySites(6)
-  // Single DB round-trip for translations across all 3 lists —
-  // previously this was 3 separate `localizeProjectDescriptions`
-  // calls (3 extra round-trips per home render).
-  const [todayProjects, yesterdayProjects, monthProjects] = await localizeProjectDescriptionGroups(
-    [todayRaw, yesterdayRaw, monthRaw],
-    locale,
-  )
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
-
   const itemListData = todayProjects.map((p) => ({
     name: p.name,
     slug: p.slug,

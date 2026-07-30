@@ -11,7 +11,7 @@ import {
   RiListOrdered,
   RiListUnordered,
 } from "@remixicon/react"
-import Placeholder from "@tiptap/extension-placeholder"
+import { Placeholder } from "@tiptap/extensions"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 
@@ -25,7 +25,7 @@ import { Button } from "./button"
 // in the page bundle).
 import { RICH_TEXT_DISPLAY_STYLES } from "./rich-text-display"
 
-interface RichTextEditorProps {
+export interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
   placeholder?: string
@@ -42,6 +42,12 @@ export function RichTextEditor({
   const isExternalUpdate = useRef(false)
 
   const editor = useEditor({
+    // Next.js renders the component shell on the server. Tiptap must create
+    // its ProseMirror view only after hydration.
+    immediatelyRender: false,
+    // Preserve the v2 toolbar behavior: active marks/headings update after
+    // every transaction instead of waiting for an unrelated React render.
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         heading: {

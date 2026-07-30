@@ -4,10 +4,9 @@ import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, captcha, oneTap } from "better-auth/plugins"
 
-import { buildBetterAuthApiErrorLog } from "@/lib/auth-error-log"
 import { sendEmail } from "@/lib/email"
 import { getPasswordResetTemplate, getVerificationEmailTemplate } from "@/lib/email-templates"
-import { redactEmail } from "@/lib/log-redaction"
+import { logger } from "@/lib/observability/structured-logger"
 import { getSharedRedisClient } from "@/lib/rate-limit"
 import { createBuildSafeStripeClient, createStripeClient } from "@/lib/stripe"
 import { isSafeProfileImageUrl } from "@/lib/user-profile-validation"
@@ -42,7 +41,11 @@ export const auth = betterAuth({
           try {
             return await authRedis.get(key)
           } catch (err) {
-            console.error("[auth-secondary-storage] get failed:", (err as Error).message)
+            logger.warn("auth_secondary_storage_failed", {
+              status: "get",
+              provider: "redis",
+              error: err,
+            })
             return null
           }
         },
@@ -51,14 +54,22 @@ export const auth = betterAuth({
             if (ttl) await authRedis.set(key, value, "EX", ttl)
             else await authRedis.set(key, value)
           } catch (err) {
-            console.error("[auth-secondary-storage] set failed:", (err as Error).message)
+            logger.warn("auth_secondary_storage_failed", {
+              status: "set",
+              provider: "redis",
+              error: err,
+            })
           }
         },
         delete: async (key) => {
           try {
             await authRedis.del(key)
           } catch (err) {
-            console.error("[auth-secondary-storage] delete failed:", (err as Error).message)
+            logger.warn("auth_secondary_storage_failed", {
+              status: "delete",
+              provider: "redis",
+              error: err,
+            })
           }
         },
         // Atomic INCR/EXPIRE keeps the built-in rate limiter correct when
@@ -72,7 +83,11 @@ export const auth = betterAuth({
             if (count === 1 && ttl) await authRedis.expire(key, ttl)
             return count
           } catch (err) {
-            console.error("[auth-secondary-storage] increment failed:", (err as Error).message)
+            logger.warn("auth_secondary_storage_failed", {
+              status: "increment",
+              provider: "redis",
+              error: err,
+            })
             return 1
           }
         },
@@ -126,9 +141,16 @@ export const auth = betterAuth({
           subject: "Verify Your Email - aat.ee",
           html,
         })
-        console.log(`✅ Verification email sent to ${redactEmail(user.email)}`)
+        logger.info("verification_email_sent", {
+          status: "sent",
+          provider: "email",
+        })
       } catch (error) {
-        console.error("❌ Failed to send verification email:", redactEmail(user.email), error)
+        logger.error("verification_email_failed", {
+          status: "failed",
+          provider: "email",
+          error,
+        })
         throw error
       }
     },
@@ -163,7 +185,12 @@ export const auth = betterAuth({
     // that remains after removing the global fetch monkey-patch is actionable,
     // while redacting OAuth codes/tokens before they reach production logs.
     onError(error) {
-      console.error("[better-auth-api-error]", JSON.stringify(buildBetterAuthApiErrorLog(error)))
+      logger.error("better_auth_api_error", {
+        route: "/api/auth",
+        status: "failed",
+        provider: "better_auth",
+        error,
+      })
     },
   },
   socialProviders: {

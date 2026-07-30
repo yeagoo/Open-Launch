@@ -2,9 +2,13 @@
 // Applies hand-written SQL files under `drizzle/migrations/` that aren't
 // tracked in `_journal.json`. Pairs with `drizzle-kit migrate` to cover
 // both auto-generated migrations (0000–0006) and the hand-written ones
-// the team writes directly as `.sql` files (0007+ and `add_*.sql`).
+// the team writes directly as `.sql` files. Legacy non-numbered files are
+// replayed at explicit Git-history positions; unknown non-numbered files fail
+// closed instead of being guessed into an alphabetical position.
 //
 // Applied state lives in `manual_migrations_applied` so re-runs are safe.
+// Every mode fails closed before writes if any tracked migration's SHA-256
+// differs from its reviewed file; applied migration history is immutable.
 //
 // Usage:
 //   bun scripts/apply-pending-sql.ts                       apply pending
@@ -39,6 +43,8 @@ import { join } from "node:path"
 import "dotenv/config"
 
 import { Client } from "pg"
+
+import { findMissingTrackedMigrations, orderHandWrittenMigrations } from "./lib/migration-order"
 
 const MIGRATIONS_DIR = "drizzle/migrations"
 const TRACKER_TABLE = "manual_migrations_applied"
@@ -92,7 +98,32 @@ async function main() {
     }>(`SELECT filename, content_hash FROM ${TRACKER_TABLE}`)
     const tracked = new Map(trackerRows.map((r) => [r.filename, r.content_hash]))
 
-    const candidates = allFiles.filter((f) => !journalFiles.has(f))
+    const candidates = orderHandWrittenMigrations(allFiles.filter((f) => !journalFiles.has(f)))
+
+    // An applied migration is an immutable part of the schema history. Do
+    // this check before every bootstrap/apply mode so no write can continue
+    // from a database whose recorded history differs from the reviewed files.
+    const missingTracked = findMissingTrackedMigrations(tracked.keys(), candidates)
+    if (missingTracked.length > 0) {
+      throw new Error(
+        `Applied migration file missing: ${missingTracked.join(", ")}. ` +
+          "Restore the reviewed files or reconcile the database explicitly; do not delete applied migrations.",
+      )
+    }
+    const drifted: string[] = []
+    for (const filename of candidates) {
+      const previousHash = tracked.get(filename)
+      if (!previousHash) continue
+      const content = await readFile(join(MIGRATIONS_DIR, filename), "utf-8")
+      const hash = createHash("sha256").update(content).digest("hex")
+      if (hash !== previousHash) drifted.push(filename)
+    }
+    if (drifted.length > 0) {
+      throw new Error(
+        `Applied migration hash drift: ${drifted.join(", ")}. ` +
+          "Restore the reviewed files or reconcile the database explicitly; do not edit applied migrations.",
+      )
+    }
 
     if (MARK_ALL || MARK_THROUGH) {
       let cutoffIdx: number
@@ -148,21 +179,6 @@ async function main() {
       pending = APPLY_ONLY.filter((f) => !tracked.has(f))
     } else {
       pending = candidates.filter((f) => !tracked.has(f))
-    }
-
-    // Warn if a tracked file's on-disk content has drifted from what we
-    // recorded — usually means someone hand-edited an applied migration.
-    for (const filename of candidates) {
-      const previousHash = tracked.get(filename)
-      if (!previousHash) continue
-      const content = await readFile(join(MIGRATIONS_DIR, filename), "utf-8")
-      const hash = createHash("sha256").update(content).digest("hex")
-      if (hash !== previousHash) {
-        console.warn(
-          `⚠ ${filename} content changed since application (hash drift). ` +
-            `If you edited an applied migration, write a follow-up file instead.`,
-        )
-      }
     }
 
     if (pending.length === 0) {

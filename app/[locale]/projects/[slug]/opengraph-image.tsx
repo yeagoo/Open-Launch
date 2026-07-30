@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og"
 
 import { getLocalizedProjectTagline } from "@/lib/get-project-translation"
-import { getOgFonts } from "@/lib/og-fonts"
+import { logger } from "@/lib/observability/structured-logger"
+import { getOgFontConfig } from "@/lib/og-fonts"
 import { getProjectBySlug } from "@/lib/project-details-query"
 import {
   closeSafeFetchResponse,
@@ -49,7 +50,12 @@ async function fetchLogoDataUrl(url: string): Promise<string | null> {
     return `data:image/png;base64,${png.toString("base64")}`
   } catch (err) {
     if (!(err instanceof SafeFetchError)) {
-      console.error("[og] logo fetch failed:", err)
+      logger.warn("og_logo_render_failed", {
+        route: "/projects/[param]",
+        status: "fallback",
+        provider: "sharp",
+        error: err,
+      })
     }
     return null
   } finally {
@@ -71,6 +77,9 @@ export default async function ProjectOgImage({
     : null
   const upvotes = project?.upvoteCount ?? 0
   const logoDataUrl = project?.logoUrl ? await fetchLogoDataUrl(project.logoUrl) : null
+  const displayName = name.length > 40 ? `${name.slice(0, 40)}…` : name
+  const displayTagline = tagline && tagline.length > 70 ? `${tagline.slice(0, 70)}…` : tagline
+  const fontConfig = getOgFontConfig(displayName, displayTagline ?? "")
 
   return new ImageResponse(
     <div
@@ -82,7 +91,7 @@ export default async function ProjectOgImage({
         justifyContent: "space-between",
         background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
         padding: 64,
-        fontFamily: "Inter, Noto Sans SC",
+        fontFamily: fontConfig.fontFamily,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
@@ -109,17 +118,15 @@ export default async function ProjectOgImage({
               fontWeight: 700,
             }}
           >
-            {name.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase()}
           </div>
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 900 }}>
           <div style={{ fontSize: 64, fontWeight: 700, color: "#fff", lineHeight: 1.15 }}>
-            {name.length > 40 ? `${name.slice(0, 40)}…` : name}
+            {displayName}
           </div>
-          {tagline && (
-            <div style={{ fontSize: 32, color: "#94a3b8", lineHeight: 1.3 }}>
-              {tagline.length > 70 ? `${tagline.slice(0, 70)}…` : tagline}
-            </div>
+          {displayTagline && (
+            <div style={{ fontSize: 32, color: "#94a3b8", lineHeight: 1.3 }}>{displayTagline}</div>
           )}
         </div>
       </div>
@@ -134,6 +141,6 @@ export default async function ProjectOgImage({
         <div style={{ fontSize: 36, fontWeight: 700, color: "#fff" }}>aat.ee</div>
       </div>
     </div>,
-    { ...size, fonts: getOgFonts() },
+    { ...size, fonts: fontConfig.fonts },
   )
 }

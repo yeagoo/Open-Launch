@@ -12,7 +12,13 @@ import { and, count, desc, eq, gte, inArray, lt, ne } from "drizzle-orm"
 
 import { generateLaunchRecap, type LaunchRecapInput } from "@/lib/ai-content"
 import { verifyCronAuth } from "@/lib/cron-auth"
+import {
+  parseCronScheduledFor,
+  previousUtcCalendarMonth,
+  sanitizeCronJobError,
+} from "@/lib/cron-ledger-core"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { logger } from "@/lib/observability/structured-logger"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 120
@@ -25,22 +31,21 @@ export const maxDuration = 120
  * Registered to run on the 1st of each month.
  */
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
+  const requestId = request.headers.get("x-aat-request-id")
   const authError = verifyCronAuth(request)
   if (authError) return authError
 
   try {
     // Previous calendar month, in UTC.
+    // Ledger recovery passes the original scheduled minute. Legacy calls do
+    // not include the header and retain the current-time behavior.
     const now = new Date()
-    const windowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-    const windowStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))
-    const monthLabel = windowStart.toLocaleString("en-US", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    })
-    const slug = `launch-recap-${windowStart.getUTCFullYear()}-${String(
-      windowStart.getUTCMonth() + 1,
-    ).padStart(2, "0")}`
+    const scheduledFor =
+      parseCronScheduledFor(request.headers.get("x-aat-cron-scheduled-for"), now, 43_200) ?? now
+    const { windowStart, windowEnd, monthLabel, slugSuffix } =
+      previousUtcCalendarMonth(scheduledFor)
+    const slug = `launch-recap-${slugSuffix}`
 
     // Never clobber a recap a human already reviewed + published.
     const [existing] = await db
@@ -143,18 +148,28 @@ export async function GET(request: NextRequest) {
         setWhere: ne(blogArticle.status, "published"),
       })
 
-    console.log(
-      `[blog-recap] draft saved: ${slug} (${totalLaunches} launches, ${winners.length} winners)`,
-    )
+    logger.info("blog_recap_draft_saved", {
+      requestId,
+      route: "/api/cron/generate-blog-recap",
+      status: 200,
+      durationMs: Date.now() - startedAt,
+      provider: "deepseek",
+      context: { slug, totalLaunches, winners: winners.length },
+    })
     return NextResponse.json(
       { ok: true, slug, monthLabel, totalLaunches, winners: winners.length },
       { status: cronStatusFromResult({ errorCount: 0, successCount: 1 }) },
     )
   } catch (err) {
-    console.error("[blog-recap] failed:", err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    )
+    logger.error("blog_recap_failed", {
+      requestId,
+      route: "/api/cron/generate-blog-recap",
+      status: 500,
+      durationMs: Date.now() - startedAt,
+      provider: "deepseek",
+      context: { message: sanitizeCronJobError(err) },
+      error: err,
+    })
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

@@ -1,6 +1,6 @@
 import type { Instrumentation } from "next"
 
-import { buildNextRequestErrorLog } from "@/lib/request-error-log"
+import { logger } from "@/lib/observability/structured-logger"
 
 const globalForInstrumentation = globalThis as typeof globalThis & {
   __aatRequestErrorMonitorRegistered?: boolean
@@ -29,8 +29,27 @@ export async function register() {
 }
 
 export const onRequestError: Instrumentation.onRequestError = (error, request, context) => {
-  console.error(
-    "[next-request-error]",
-    JSON.stringify(buildNextRequestErrorLog(error, request, context)),
-  )
+  logger.error("next_request_error", {
+    requestId: requestHeader(request.headers, "x-aat-request-id"),
+    route: context.routePath,
+    status: "failed",
+    provider: "next",
+    context: {
+      method: request.method,
+      routerKind: context.routerKind,
+      routeType: context.routeType,
+      renderSource: context.renderSource,
+      revalidateReason: context.revalidateReason,
+    },
+    error,
+  })
+}
+
+function requestHeader(
+  headers: Record<string, string | string[] | undefined>,
+  name: string,
+): string | undefined {
+  const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === name)
+  const value = entry?.[1]
+  return Array.isArray(value) ? value[0] : value
 }

@@ -4,7 +4,7 @@
  * so this module just hashes the user id into a slot — no SVG generation,
  * no React, runs anywhere (server components, client components, scripts).
  *
- * Collisions are by design: with POOL_SIZE = 5000, two users will only
+ * Collisions are by design: with POOL_SIZE = 20,000, two users will only
  * occasionally share an avatar, and that's OK because the alternative
  * (boring-avatars at request time) doesn't work in Next.js's RSC bundle.
  */

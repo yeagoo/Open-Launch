@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { RiCheckLine, RiLoader4Line } from "@remixicon/react"
-import { motion } from "framer-motion"
+import { motion } from "motion/react"
 
 import { Button } from "@/components/ui/button"
 
@@ -36,6 +36,9 @@ function PaymentSuccessContent() {
   }, [projectSlug, countdown])
 
   useEffect(() => {
+    const controller = new AbortController()
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined
+
     const checkPaymentStatus = async () => {
       try {
         // Get session ID from URL parameters
@@ -48,23 +51,36 @@ function PaymentSuccessContent() {
         }
 
         // Verify payment status using the session ID
-        const response = await fetch(`/api/payment/verify?session_id=${sessionId}`)
-        const data = await response.json()
+        const response = await fetch(
+          `/api/payment/verify?session_id=${encodeURIComponent(sessionId)}`,
+          { signal: controller.signal },
+        )
+        const data = (await response.json()) as {
+          error?: unknown
+          status?: unknown
+          projectSlug?: unknown
+        }
 
         if (!response.ok) {
-          setError(data.error || "Failed to verify payment")
+          setError(typeof data.error === "string" ? data.error : "Failed to verify payment")
           setIsLoading(false)
           return
         }
 
         if (data.status === "complete") {
+          if (typeof data.projectSlug !== "string" || data.projectSlug.length === 0) {
+            setError("Payment was verified, but the project could not be identified")
+            setIsLoading(false)
+            return
+          }
+          const verifiedProjectSlug = data.projectSlug
           // Payment successful, store the project slug for redirection
           setIsLoading(false)
-          setProjectSlug(data.projectSlug)
+          setProjectSlug(verifiedProjectSlug)
 
           // Redirect after a delay to show success message
-          setTimeout(() => {
-            router.push(`/projects/${data.projectSlug}`)
+          redirectTimer = setTimeout(() => {
+            router.push(`/projects/${encodeURIComponent(verifiedProjectSlug)}`)
           }, redirectDelay)
         } else if (data.status === "pending") {
           setError("Votre paiement est en cours de traitement. Veuillez patienter un moment...")
@@ -74,13 +90,18 @@ function PaymentSuccessContent() {
           setIsLoading(false)
         }
       } catch (error) {
+        if (controller.signal.aborted) return
         console.error("Error checking payment status:", error)
         setError("An error occurred while verifying the payment")
         setIsLoading(false)
       }
     }
 
-    checkPaymentStatus()
+    void checkPaymentStatus()
+    return () => {
+      controller.abort()
+      if (redirectTimer) clearTimeout(redirectTimer)
+    }
   }, [router, searchParams, redirectDelay])
 
   return (

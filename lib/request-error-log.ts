@@ -1,5 +1,7 @@
 import type { Instrumentation } from "next"
 
+import { redactLogText } from "@/lib/log-redaction"
+
 type ErrorRequest = Parameters<Instrumentation.onRequestError>[1]
 type ErrorContext = Parameters<Instrumentation.onRequestError>[2]
 type HeaderDict = ErrorRequest["headers"]
@@ -155,7 +157,9 @@ function stackLines(stack: string | undefined): string[] | null {
 
 function sanitizeField(value: string | undefined | null): string | null {
   if (!value) return null
-  const cleaned = value.replace(/[\r\n\t]+/g, " ").trim()
+  const cleaned = redactLogText(value)
+    .replace(/[\r\n\t]+/g, " ")
+    .trim()
   if (!cleaned) return null
   return cleaned.length > MAX_FIELD_LENGTH ? `${cleaned.slice(0, MAX_FIELD_LENGTH)}...` : cleaned
 }

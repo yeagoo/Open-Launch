@@ -24,7 +24,7 @@ import {
   RiStarLine,
 } from "@remixicon/react"
 import { addDays, format, parseISO } from "date-fns"
-import { Tag, TagInput } from "emblor"
+import type { Tag } from "emblor"
 import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
@@ -66,7 +66,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
-import { RichTextEditor } from "@/components/ui/rich-text-editor"
+import { RichTextEditorLazy } from "@/components/ui/rich-text-editor-lazy"
 import {
   Select,
   SelectContent,
@@ -77,6 +77,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DrBadge, OverflowDrBadge } from "@/components/dr/dr-badge"
+import { TechStackInputLazy } from "@/components/project/tech-stack-input-lazy"
 import { createDirectoryOrder, resumePendingDirectoryOrder } from "@/app/actions/directory-orders"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
 import {
@@ -1118,7 +1119,7 @@ export function SubmitProjectForm({
               <Label htmlFor="description">
                 {t("step1.description.label")} <span className="text-red-500">*</span>
               </Label>
-              <RichTextEditor
+              <RichTextEditorLazy
                 content={formData.description}
                 onChange={(content) => setFormData((prev) => ({ ...prev, description: content }))}
                 placeholder={t("step1.description.placeholder")}
@@ -1344,12 +1345,10 @@ export function SubmitProjectForm({
                   {t("step2.tags.counter", { count: formData.techStack.length })}
                 </span>
               </Label>
-              <TagInput
+              <TechStackInputLazy
                 id={tagInputId}
                 tags={techStackTags}
-                setTags={(newTags) => {
-                  const resolvedTags =
-                    typeof newTags === "function" ? newTags(techStackTags) : newTags
+                onChange={(resolvedTags) => {
                   if (resolvedTags.length > 10) {
                     setFieldErrors((prev) => ({
                       ...prev,
@@ -1365,18 +1364,7 @@ export function SubmitProjectForm({
                   }))
                 }}
                 placeholder={t("step2.tags.placeholder")}
-                enableAutocomplete={autocompleteTags.length > 0}
                 autocompleteOptions={autocompleteTags}
-                styleClasses={{
-                  inlineTagsContainer:
-                    "border-input rounded-md bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring outline-none focus-within:ring-[3px] focus-within:ring-ring/50 p-1 gap-1 mt-1",
-                  input: "w-full min-w-[80px] shadow-none px-2 h-7",
-                  tag: {
-                    body: "h-7 relative bg-background border border-input hover:bg-background rounded-md font-medium text-xs ps-2 pe-7",
-                    closeButton:
-                      "absolute -inset-y-px -end-px p-0 rounded-e-md flex size-7 transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] text-muted-foreground/80 hover:text-foreground",
-                  },
-                }}
                 activeTagIndex={activeTechTagIndex}
                 setActiveTagIndex={setActiveTechTagIndex}
               />

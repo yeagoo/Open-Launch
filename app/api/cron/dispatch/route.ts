@@ -4,14 +4,27 @@ import { db } from "@/drizzle/db"
 import { cronRunLog, cronSchedule } from "@/drizzle/db/schema"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
+import { cronTaskAuthority, resolveCronRuntimeAuthority } from "@/lib/cron-cutover"
 import {
   pingCronHeartbeat,
   type CronHeartbeatResult,
   type CronHeartbeatState,
 } from "@/lib/cron-heartbeat"
+import {
+  parseBooleanEnv,
+  resolveInternalCronBaseUrl,
+  sanitizeCronJobError,
+} from "@/lib/cron-ledger-core"
+import {
+  cronLedgerBacklogSummary,
+  materializeCronLedger,
+  runCronLedgerBatch,
+  type CronMaterializationResult,
+} from "@/lib/cron-ledger-db"
 import { cronMatches } from "@/lib/cron-match"
 import { cronDispatcherStatusFromResult } from "@/lib/cron-status"
 import { fetchWithTimeout, withTimeout } from "@/lib/fetch-timeout"
+import { logger } from "@/lib/observability/structured-logger"
 import { clearDedupe, dedupeOnce } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
@@ -74,6 +87,8 @@ async function runTask(baseUrl: string, authHeader: string, path: string): Promi
  *   - 500 if any due task failed, making the minute retryable
  */
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
+  const requestId = request.headers.get("x-aat-request-id")
   const authError = verifyCronAuth(request)
   if (authError) return authError
 
@@ -85,7 +100,10 @@ export async function GET(request: NextRequest) {
   // Self-fetch over loopback instead of making the host route its own public
   // origin through Cloudflare/reverse-proxy ingress. INTERNAL_BASE_URL lets
   // ops override if needed; otherwise hit 127.0.0.1 on the same port.
-  const baseUrl = process.env.INTERNAL_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3000"}`
+  const baseUrl = resolveInternalCronBaseUrl(
+    process.env.INTERNAL_BASE_URL,
+    process.env.PORT ?? "3000",
+  )
   const now = new Date()
 
   // Concurrency guard: cron-job.org can fire twice in a minute (retry,
@@ -111,6 +129,120 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const authority = resolveCronRuntimeAuthority(process.env)
+    const schedulerMode = authority.mode
+    let materialization: CronMaterializationResult | { mode: "shadow"; error: string } | undefined
+    let ledgerResults: Awaited<ReturnType<typeof runCronLedgerBatch>> = []
+    let workerMode: "embedded" | "external" | undefined
+
+    if (schedulerMode === "shadow") {
+      try {
+        materialization = await materializeCronLedger("shadow", now)
+      } catch (error) {
+        // Shadow must never interrupt the legacy authority. Surface the
+        // failure in both logs and the response so comparison cannot silently
+        // appear healthy.
+        const message = sanitizeCronJobError(error)
+        logger.warn("cron_shadow_materialization_failed", {
+          requestId,
+          route: "/api/cron/dispatch",
+          status: "failed",
+          durationMs: Date.now() - startedAt,
+          provider: "cron",
+          context: { message },
+          error,
+        })
+        materialization = { mode: "shadow", error: message }
+      }
+    } else if (schedulerMode === "canary") {
+      materialization = await materializeCronLedger("ledger", now, {
+        allowedTaskPaths: authority.ledgerTaskPaths,
+      })
+      const embeddedWorker = parseBooleanEnv(
+        process.env.CRON_LEDGER_EMBEDDED_WORKER,
+        true,
+        "CRON_LEDGER_EMBEDDED_WORKER",
+      )
+      workerMode = embeddedWorker ? "embedded" : "external"
+      ledgerResults = embeddedWorker
+        ? await runCronLedgerBatch({
+            apiKey,
+            baseUrl,
+            allowedTaskPaths: authority.ledgerTaskPaths,
+          })
+        : []
+    } else if (schedulerMode === "ledger") {
+      materialization = await materializeCronLedger("ledger", now)
+      const embeddedWorker = parseBooleanEnv(
+        process.env.CRON_LEDGER_EMBEDDED_WORKER,
+        true,
+        "CRON_LEDGER_EMBEDDED_WORKER",
+      )
+      const workerResults = embeddedWorker
+        ? await runCronLedgerBatch({
+            apiKey,
+            baseUrl,
+            allowedTaskPaths: authority.ledgerTaskPaths,
+          })
+        : []
+      const results: TaskResult[] = workerResults.map((result) => ({
+        path: result.path,
+        statusCode: result.statusCode,
+        durationMs: result.durationMs,
+        error: result.error,
+      }))
+      const successCount = results.filter(
+        (result) => result.statusCode >= 200 && result.statusCode < 300,
+      ).length
+      const failedCount = results.length - successCount
+      const status = cronDispatcherStatusFromResult({
+        errorCount: failedCount,
+        successCount,
+      })
+      if (status >= 500) await clearDedupe(dedupeKey)
+
+      const heartbeatUrl = process.env.CRON_HEARTBEAT_URL
+      let heartbeat: CronHeartbeatResult | { status: "disabled" } = { status: "disabled" }
+      if (heartbeatUrl && status < 500) {
+        heartbeat = await pingCronHeartbeat(heartbeatUrl, heartbeatState)
+      }
+      const backlog = await cronLedgerBacklogSummary(now)
+      const logFields = {
+        requestId,
+        route: "/api/cron/dispatch",
+        status,
+        durationMs: Date.now() - startedAt,
+        provider: "cron",
+        context: {
+          schedulerMode,
+          workerMode: embeddedWorker ? "embedded" : "external",
+          ranCount: results.length,
+          successCount,
+          failedCount,
+          materialization,
+          backlog,
+        },
+      }
+      if (status >= 500) logger.warn("cron_dispatch_completed", logFields)
+      else logger.info("cron_dispatch_completed", logFields)
+
+      return NextResponse.json(
+        {
+          schedulerMode,
+          workerMode: embeddedWorker ? "embedded" : "external",
+          dispatchedAt: now.toISOString(),
+          ranCount: results.length,
+          successCount,
+          failedCount,
+          materialization,
+          backlog,
+          heartbeat,
+          results: workerResults,
+        },
+        { status },
+      )
+    }
+
     const allTasks = await db
       .select({
         path: cronSchedule.path,
@@ -122,6 +254,7 @@ export async function GET(request: NextRequest) {
     const due: typeof allTasks = []
     const skippedDisabled: string[] = []
     for (const t of allTasks) {
+      if (cronTaskAuthority(t.path, authority) === "ledger") continue
       if (!t.enabled) {
         // We still note disabled tasks in the response, but don't fire them
         // and don't write a log row (no work happened, no signal to record).
@@ -147,12 +280,30 @@ export async function GET(request: NextRequest) {
           })),
         )
       } catch (err) {
-        console.error("cron_run_log insert failed:", err)
+        logger.error("cron_run_log_insert_failed", {
+          requestId,
+          route: "/api/cron/dispatch",
+          status: "failed",
+          durationMs: Date.now() - startedAt,
+          provider: "postgres",
+          error: err,
+        })
       }
     }
 
-    const successCount = results.filter((r) => r.statusCode >= 200 && r.statusCode < 300).length
-    const failedCount = results.length - successCount
+    const combinedResults: TaskResult[] = [
+      ...results,
+      ...ledgerResults.map((result) => ({
+        path: result.path,
+        statusCode: result.statusCode,
+        durationMs: result.durationMs,
+        error: result.error,
+      })),
+    ]
+    const successCount = combinedResults.filter(
+      (result) => result.statusCode >= 200 && result.statusCode < 300,
+    ).length
+    const failedCount = combinedResults.length - successCount
     const status = cronDispatcherStatusFromResult({
       errorCount: failedCount,
       successCount: successCount,
@@ -177,16 +328,45 @@ export async function GET(request: NextRequest) {
     if (heartbeatUrl && status < 500) {
       heartbeat = await pingCronHeartbeat(heartbeatUrl, heartbeatState)
     }
+    const logFields = {
+      requestId,
+      route: "/api/cron/dispatch",
+      status,
+      durationMs: Date.now() - startedAt,
+      provider: "cron",
+      context: {
+        schedulerMode,
+        workerMode,
+        canaryTaskPath: authority.canaryTaskPath,
+        ranCount: combinedResults.length,
+        legacyRanCount: results.length,
+        ledgerRanCount: ledgerResults.length,
+        successCount,
+        failedCount,
+        skippedDisabledCount: skippedDisabled.length,
+        materialization,
+      },
+    }
+    if (status >= 500) logger.warn("cron_dispatch_completed", logFields)
+    else logger.info("cron_dispatch_completed", logFields)
 
+    const backlog = schedulerMode === "canary" ? await cronLedgerBacklogSummary(now) : undefined
     return NextResponse.json(
       {
+        schedulerMode,
+        ...(workerMode ? { workerMode } : {}),
+        ...(authority.canaryTaskPath ? { canaryTaskPath: authority.canaryTaskPath } : {}),
         dispatchedAt: now.toISOString(),
-        ranCount: results.length,
+        ranCount: combinedResults.length,
+        legacyRanCount: results.length,
+        ledgerRanCount: ledgerResults.length,
         successCount,
         failedCount,
         skippedDisabled,
+        materialization,
+        ...(backlog ? { backlog } : {}),
         heartbeat,
-        results,
+        results: combinedResults,
       },
       { status },
     )
@@ -194,7 +374,14 @@ export async function GET(request: NextRequest) {
     // Unexpected failure (e.g. schedule DB read threw): release the lease
     // so the retry can run, then surface a 500 for cron-job.org to retry.
     await clearDedupe(dedupeKey)
-    console.error("cron dispatch failed:", err)
+    logger.error("cron_dispatch_failed", {
+      requestId,
+      route: "/api/cron/dispatch",
+      status: 500,
+      durationMs: Date.now() - startedAt,
+      provider: "cron",
+      error: err,
+    })
     return NextResponse.json({ error: "dispatch failed" }, { status: 500 })
   }
 }

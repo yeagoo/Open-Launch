@@ -1,0 +1,11 @@
+{
+  "mode": "observe",
+  "route": "/[locale]/page",
+  "path": "/",
+  "budgets": {
+    "routeJsGzipBytes": 160000,
+    "htmlBytes": 350000,
+    "lighthousePerformance": 0.7,
+    "lcpMs": 3000
+  }
+}

@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest"
 import { redactEmail, redactEmailsInText } from "./log-redaction"
 
 describe("redactEmail", () => {
-  it("keeps only two local-part characters and the provider domain", () => {
-    expect(redactEmail("bluehuman@inboxpad.com")).toBe("bl***@inboxpad.com")
+  it("does not preserve any email-local or provider information", () => {
+    expect(redactEmail("bluehuman@inboxpad.com")).toBe("[redacted-email]")
   })
 
   it("handles one-character local parts", () => {
-    expect(redactEmail("a@example.com")).toBe("a***@example.com")
+    expect(redactEmail("a@example.com")).toBe("[redacted-email]")
   })
 
   it("does not echo malformed input", () => {
@@ -18,7 +18,7 @@ describe("redactEmail", () => {
 
   it("redacts every email embedded in diagnostic text", () => {
     expect(redactEmailsInText("account alice@example.com conflicts with bob@test.dev")).toBe(
-      "account al***@example.com conflicts with bo***@test.dev",
+      "account [redacted-email] conflicts with [redacted-email]",
     )
   })
 })
