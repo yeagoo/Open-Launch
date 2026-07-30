@@ -113,6 +113,24 @@ if [[ -n "${OPEN_LAUNCH_BUILDX_BUILDER:-}" ]]; then
   builder_arguments=(--builder "$OPEN_LAUNCH_BUILDX_BUILDER")
 fi
 
+public_build_arguments=(--build-arg "NEXT_PUBLIC_URL=https://www.aat.ee")
+for public_variable in \
+  NEXT_PUBLIC_APP_URL \
+  NEXT_PUBLIC_CONTACT_EMAIL \
+  NEXT_PUBLIC_GA_MEASUREMENT_ID \
+  NEXT_PUBLIC_ONE_TAP_CLIENT_ID \
+  NEXT_PUBLIC_PREMIUM_PAYMENT_LINK \
+  NEXT_PUBLIC_PREMIUM_PLUS_PAYMENT_LINK; do
+  if [[ -n "${!public_variable:-}" ]]; then
+    public_build_arguments+=(--build-arg "$public_variable=${!public_variable}")
+  fi
+done
+if [[ -n "${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}" ]]; then
+  public_build_arguments+=(
+    --build-arg "NEXT_PUBLIC_TURNSTILE_SITE_IDENTIFIER=$NEXT_PUBLIC_TURNSTILE_SITE_KEY"
+  )
+fi
+
 "${docker_command[@]}" buildx build \
   "${builder_arguments[@]}" \
   --platform linux/amd64 \
@@ -120,7 +138,7 @@ fi
   --build-arg "GIT_COMMIT_SHA=$source_commit" \
   --build-arg "DEPLOYMENT_VERSION=$source_commit" \
   --build-arg "BUILD_INPUT_SHA256=$build_input_sha256" \
-  --build-arg "NEXT_PUBLIC_URL=https://www.aat.ee" \
+  "${public_build_arguments[@]}" \
   --attest "type=sbom,generator=docker/buildkit-syft-scanner:stable-1@sha256:79e7b013cbec16bbb436f312819a49a4a57752b2270c1a9332ae1a10fcc82a68" \
   --provenance=mode=max \
   --metadata-file "$output_dir/build-metadata.json" \

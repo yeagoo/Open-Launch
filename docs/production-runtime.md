@@ -127,6 +127,12 @@ application's `NEXT_PUBLIC_TURNSTILE_SITE_KEY` only for the build process. The
 renamed argument keeps Docker's secret detector active globally instead of
 suppressing `SecretsUsedInArgOrEnv`.
 
+`scripts/build-immutable-runner.sh` forwards only the Dockerfile's explicit
+`NEXT_PUBLIC_*` inputs when they are present in the protected build
+environment. In particular, it maps `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the
+public `NEXT_PUBLIC_TURNSTILE_SITE_IDENTIFIER` build argument. Runtime
+credentials are never promoted to build arguments.
+
 The manual `Immutable runner validation` workflow packages one exact commit
 from `main` as linux/amd64 using a one-time validation key. It performs one
 BuildKit build with Docker/OCI/local exporters, produces a validation-only OCI
