@@ -165,7 +165,7 @@ assert_status 200 "/api/health"
 assert_status 200 "/"
 assert_status 200 "/es"
 assert_status 200 "/sitemap.xml"
-if ! rg -q '<(urlset|sitemapindex)([ >])' "$response_dir/body"; then
+if ! grep -Eq '<(urlset|sitemapindex)([ >])' "$response_dir/body"; then
   echo "sitemap smoke response is not XML" >&2
   exit 1
 fi
