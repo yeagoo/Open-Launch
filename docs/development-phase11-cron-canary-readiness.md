@@ -93,3 +93,9 @@ preflight。只有以下条件全部成立才可创建 Canary 部署：
 5. 新 backup、snapshot、dry-run、人工批准和 opsctl journal 全部通过。
 
 到达日期或完成代码批准都不是自动切换信号。
+
+2026-07-30 15:29 UTC，业务方批准复用 mf8 已存在的 WallPreview live listing。
+双站备份和精确条件核对后，mf8 backlink check 已关闭，aat.ee syndication 行已
+对账为 `sent`，Pro 订单已标记为 `fulfilled`，交付通知已由邮件提供商接受。
+处置后的同版本 preflight 显示 operational metrics 全部为 0；Canary 现在只剩
+48 小时 Shadow 观察期和开启前 legacy 窗口自然淘汰两项时间门禁。

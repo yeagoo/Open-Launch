@@ -111,6 +111,59 @@ fulfilled，并向买家发送/补发交付通知。这个流程会修改两个�
 extra 已自然下降到 5,098。aat.ee 容器仍为 healthy、restart 0，最近 60 分钟
 没有 error signature。
 
+## mf8 终态记录处置
+
+业务方随后明确批准复用上述 live listing 作为该 Pro 订单的 mf8 交付结果，并
+授权关闭 backlink check、对账 aat.ee 队列、履约订单和补发通知。
+
+写入前完成并验证：
+
+- mf8 controlled dump：
+  `/home/ivmm/.mf8-backups/mf8-pre-wallpreview-reconcile-20260730T152454Z.sql.zst`
+  （7,998,683 bytes、mode 600、zstd test 通过、SHA-256
+  `58fd9dc336a4b19f6f37855d136156cf2e3127758c07c6ba8bfb677b7685e549`）；
+- aat.ee Restic/database backup：
+  `backup-aat-ee-restic-20260730152538`，状态 `success/ready`；
+- 两个数据库再次确认目标 ID、URL、旧状态、订单 tier、付款验证状态和其他三站
+  状态完全匹配。没有输出买家身份或密钥。
+
+2026-07-30 15:29 UTC 执行：
+
+1. mf8 只更新唯一 WallPreview 目标行：
+   `enable_backlink_check=true → false`。页面保持 `live`、dofollow、原 slug、
+   URL 和 hicyou source 不变。
+2. aat.ee 在一个 serializable transaction 中锁定订单和四条分发行；只有目标仍
+   为 mf8/failed/8 attempts/`Internal error`，其他三站均为 `sent` 时才继续。
+3. mf8 行对账为 `sent`，保留历史 attempts=8，清空错误并记录已验证的 mf8
+   product ID、公开 URL 和 sent time。
+4. 确认四行全部为 `sent` 后，将已验证的 Pro 订单从 `paid` 改为
+   `fulfilled`，同时追加人工对账审计备注。
+5. 使用稳定 idempotency key 补发 listing-live 通知；邮件提供商接受，provider
+   ID 为 `3b890deb-7675-473c-b780-77f19b5fba7d`，邮件包含去重后的 12 个交付
+   URL。运维输出只显示脱敏收件人。
+
+写入后验证：
+
+- mf8 数据库为 `live`、`link_rel IS NULL`、backlink check 关闭；公开页面返回
+  200，HTML 中的 WallPreview 出站链接存在且没有 nofollow rel。
+- aat.ee 四条分发行全部为 `sent`、`last_error IS NULL`；订单为
+  `fulfilled`，付款验证和审计备注保持正确。
+- 同版本 Canary preflight 的 unresolved terminal、stale claim、missing durable
+  item、configuration issue 和 active Ledger job 全部为 0。
+- Shadow 为 317/317 匹配、missing 0；历史 extra 已降至 5,044。preflight
+  现在只因观察不足 48 小时和历史窗口尚未自然淘汰而返回 `ready=false`。
+- aat.ee 保持 healthy/restart 0；最新 dispatcher 为 shadow、legacy success 5、
+  ledger run 0、failed 0、lag 0，最近日志没有 error signature。
+
+写入后再次完成并验证：
+
+- mf8 controlled dump：
+  `/home/ivmm/.mf8-backups/mf8-post-wallpreview-reconcile-20260730T153324Z.sql.zst`
+  （7,999,438 bytes、mode 600、zstd test 通过、SHA-256
+  `43c00bc1127bdf14757792456cb6fa2c69143b575bb0971d938098f98a12c676`）；
+- aat.ee Restic/database backup：
+  `backup-aat-ee-restic-20260730153410`，状态 `success/ready`，无 stale target。
+
 ## 回滚
 
 本版本没有开启新的执行权威。如应用健康或 Shadow materialization 异常：
