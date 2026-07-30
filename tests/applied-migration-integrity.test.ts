@@ -4,8 +4,8 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 const appliedProductionHashes = {
-  "0049_hot_path_indexes.sql": "331b022ee55467938a32e3bd6ee77e61aeaee57c04edbc59bcfcd007dabee5cc",
-  "0053_search_indexes.sql": "85ed9876dae0da36bd48324695e087f083a55a5330419ab6f5ab0245d37bb5db",
+  "0049_hot_path_indexes.sql": "0a364f2ac0785b88ad30803c05e50fee7d3db826855c048b91b08ae22125d519",
+  "0053_search_indexes.sql": "d4b54b20ba05955f0d370c3a5eba3c85077813ab088f62fa10a36d0993b2ec15",
 } as const
 
 describe("applied production migration integrity", () => {

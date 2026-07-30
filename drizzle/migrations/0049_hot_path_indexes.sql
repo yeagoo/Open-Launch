@@ -1,4 +1,9 @@
 -- migrate: no-transaction
+-- OPS NOTE: if a CONCURRENTLY build is interrupted (lock kill, dropped
+-- connection), PostgreSQL leaves an INVALID index behind and IF NOT EXISTS
+-- then SKIPS it on re-run. Before re-running after any failure:
+--   SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;
+-- and DROP INDEX CONCURRENTLY any invalid index from this file first.
 -- Index coverage for hot query paths (audit 2026-07). CREATE INDEX
 -- CONCURRENTLY so this is safe to run against the live production table
 -- without taking a write-blocking lock; must run outside a transaction,
