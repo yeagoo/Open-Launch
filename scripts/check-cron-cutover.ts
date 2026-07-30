@@ -7,6 +7,13 @@ import {
   type CronCutoverTarget,
   type CronScheduleSnapshot,
 } from "@/lib/cron-cutover-readiness"
+import { APPROVED_CRON_CANARY_TASK_PATH } from "@/lib/cron-policy"
+import {
+  findSyndicationConfigurationIssues,
+  SYNDICATED_TIERS,
+  SYNDICATION_MAX_ATTEMPTS,
+  SYNDICATION_STALE_CLAIM_MINUTES,
+} from "@/lib/launch-syndication-policy"
 
 const args = parseArguments(process.argv.slice(2))
 const databaseUrl = process.env.DATABASE_URL?.trim()
@@ -71,6 +78,7 @@ async function readSnapshot(
     GROUP BY task_path, status
     ORDER BY task_path, status
   `)
+  const canaryOperational = await readCanaryOperationalSnapshot(database, checkedAt, canaryTaskPath)
   const comparisonStart = new Date(checkedAt.getTime() - 48 * 60 * 60 * 1_000)
   const shadow = await database.query<{
     shadowWindows: number
@@ -178,6 +186,7 @@ async function readSnapshot(
     schedules: schedules.rows,
     cursor: cursor.rows[0] ?? null,
     activeLedgerJobs: activeLedgerJobs.rows.map((row) => ({ ...row, count: Number(row.count) })),
+    canaryOperational,
     shadow: shadow.rows[0] ?? {
       shadowWindows: 0,
       matchedWindows: 0,
@@ -186,6 +195,80 @@ async function readSnapshot(
     },
     canary,
   }
+}
+
+async function readCanaryOperationalSnapshot(
+  database: Client,
+  checkedAt: Date,
+  canaryTaskPath: string | undefined,
+): Promise<CronCutoverSnapshot["canaryOperational"]> {
+  if (!canaryTaskPath) return null
+  if (canaryTaskPath !== APPROVED_CRON_CANARY_TASK_PATH) return null
+  const metrics = await readSyndicationCanaryMetrics(database, checkedAt)
+  return {
+    taskPath: canaryTaskPath,
+    unresolvedTerminalItems: Number(metrics.unresolvedTerminalItems),
+    staleClaims: Number(metrics.staleClaims),
+    missingDurableItems: Number(metrics.missingDurableItems),
+    configurationIssues: findSyndicationConfigurationIssues(),
+  }
+}
+
+async function readSyndicationCanaryMetrics(
+  database: Client,
+  checkedAt: Date,
+): Promise<{
+  unresolvedTerminalItems: number
+  staleClaims: number
+  missingDurableItems: number
+}> {
+  const result = await database.query<{
+    unresolvedTerminalItems: number
+    staleClaims: number
+    missingDurableItems: number
+  }>(
+    `
+      SELECT
+        (
+          SELECT count(*)::int
+          FROM launch_syndication AS item
+          INNER JOIN directory_order AS orders ON orders.id = item.order_id
+          WHERE orders.status IN ('paid', 'fulfilled')
+            AND orders.amount_verified = true
+            AND (
+              (item.status = 'failed' AND item.attempts >= $1)
+              OR item.status = 'orphaned'
+            )
+        ) AS "unresolvedTerminalItems",
+        (
+          SELECT count(*)::int
+          FROM launch_syndication
+          WHERE status = 'sending'
+            AND updated_at < $2
+        ) AS "staleClaims",
+        (
+          SELECT count(*)::int
+          FROM directory_order AS orders
+          WHERE orders.status = 'paid'
+            AND orders.amount_verified = true
+            AND orders.project_id IS NOT NULL
+            AND orders.tier = ANY($3::text[])
+            AND NOT EXISTS (
+              SELECT 1
+              FROM launch_syndication AS item
+              WHERE item.order_id = orders.id
+            )
+        ) AS "missingDurableItems"
+    `,
+    [
+      SYNDICATION_MAX_ATTEMPTS,
+      new Date(checkedAt.getTime() - SYNDICATION_STALE_CLAIM_MINUTES * 60_000),
+      [...SYNDICATED_TIERS],
+    ],
+  )
+  const metrics = result.rows[0]
+  if (!metrics) throw new Error("syndication canary operational query returned no row")
+  return metrics
 }
 
 function parseArguments(argv: string[]): {

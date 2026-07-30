@@ -23,6 +23,13 @@ export interface CronCutoverSnapshot {
   schedules: CronScheduleSnapshot[]
   cursor: { scannedThrough: Date; createdAt: Date } | null
   activeLedgerJobs: Array<{ taskPath: string; status: string; count: number }>
+  canaryOperational: {
+    taskPath: string
+    unresolvedTerminalItems: number
+    staleClaims: number
+    missingDurableItems: number
+    configurationIssues: string[]
+  } | null
   shadow: {
     shadowWindows: number
     matchedWindows: number
@@ -127,6 +134,7 @@ export function evaluateCronCutoverReadiness(input: {
     if (activeJobs > 0) {
       blockers.push(`ledger has ${activeJobs} active/attention job(s) before canary cutover`)
     }
+    appendCanaryOperationalBlockers(blockers, canaryTaskPath, input.snapshot.canaryOperational)
   } else if (input.target === "ledger") {
     try {
       resolveCronRuntimeAuthority({ CRON_SCHEDULER_MODE: "ledger" }, policies)
@@ -212,6 +220,34 @@ export function evaluateCronCutoverReadiness(input: {
     blockers: [...new Set(blockers)],
     warnings,
     nextFullMinute: nextFullUtcMinute(input.snapshot.checkedAt).toISOString(),
+  }
+}
+
+function appendCanaryOperationalBlockers(
+  blockers: string[],
+  canaryTaskPath: string | null,
+  operational: CronCutoverSnapshot["canaryOperational"],
+): void {
+  if (!canaryTaskPath) return
+  if (!operational || operational.taskPath !== canaryTaskPath) {
+    blockers.push(`canary operational readiness is missing for ${canaryTaskPath}`)
+    return
+  }
+  if (operational.unresolvedTerminalItems > 0) {
+    blockers.push(
+      `canary task has ${operational.unresolvedTerminalItems} unresolved terminal business item(s)`,
+    )
+  }
+  if (operational.staleClaims > 0) {
+    blockers.push(`canary task has ${operational.staleClaims} stale business claim(s)`)
+  }
+  if (operational.missingDurableItems > 0) {
+    blockers.push(
+      `canary task has ${operational.missingDurableItems} business item(s) missing durable queue state`,
+    )
+  }
+  for (const issue of operational.configurationIssues) {
+    blockers.push(`canary task configuration: ${issue}`)
   }
 }
 

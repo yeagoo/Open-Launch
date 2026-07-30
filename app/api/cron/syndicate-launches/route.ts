@@ -12,6 +12,8 @@ import {
   enqueueLaunchSyndication,
   postLaunchToSite,
   SYNDICATED_TIERS,
+  SYNDICATION_MAX_ATTEMPTS,
+  SYNDICATION_STALE_CLAIM_MINUTES,
   type LaunchPayload,
   type PostResult,
   type SyndicationSite,
@@ -24,7 +26,6 @@ export const maxDuration = 60
 // Give up auto-retrying after this many failures; the row stays `failed`
 // for an admin to inspect / manually retry. 8 attempts with exponential
 // backoff spans ~4h, enough to ride out a partner-site deploy/outage.
-const MAX_ATTEMPTS = 8
 // How many rows to drain per tick. The dispatcher fires this every 2 min.
 const BATCH = 25
 // Reconcile window: re-enqueue verified, still-live syndicated orders created
@@ -34,7 +35,6 @@ const BATCH = 25
 const RECONCILE_WINDOW_HOURS = 6
 // A row claimed ('sending') for longer than this is considered abandoned by
 // a crashed worker and is reset to 'pending' for another tick to retry.
-const STALE_CLAIM_MINUTES = 10
 // Promotion sweep window: how far back to look for `paid` orders that are
 // fully `sent` but weren't promoted (e.g. the worker crashed after the last
 // send, before flipping the order to fulfilled).
@@ -111,7 +111,10 @@ export async function GET(request: NextRequest) {
     .where(
       and(
         eq(launchSyndication.status, "sending"),
-        lt(launchSyndication.updatedAt, new Date(now.getTime() - STALE_CLAIM_MINUTES * 60_000)),
+        lt(
+          launchSyndication.updatedAt,
+          new Date(now.getTime() - SYNDICATION_STALE_CLAIM_MINUTES * 60_000),
+        ),
       ),
     )
 
@@ -136,7 +139,7 @@ export async function GET(request: NextRequest) {
           eq(launchSyndication.status, "pending"),
           and(
             eq(launchSyndication.status, "failed"),
-            lt(launchSyndication.attempts, MAX_ATTEMPTS),
+            lt(launchSyndication.attempts, SYNDICATION_MAX_ATTEMPTS),
             or(isNull(launchSyndication.nextAttemptAt), lte(launchSyndication.nextAttemptAt, now)),
           ),
         ),

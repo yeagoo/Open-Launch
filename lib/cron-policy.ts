@@ -31,6 +31,8 @@ export interface CronTaskPolicy {
   rationale: string
 }
 
+export const APPROVED_CRON_CANARY_TASK_PATH = "/api/cron/syndicate-launches" as const
+
 /**
  * Phase 0 proposal only. The dispatcher must not enforce these values until every
  * entry has been reviewed and its decision changed to "approved".
@@ -286,7 +288,7 @@ export const cronTaskPolicies = [
       "Receiver idempotency helps, but due rows are not claimed before the external request.",
   },
   {
-    path: "/api/cron/syndicate-launches",
+    path: APPROVED_CRON_CANARY_TASK_PATH,
     expectedCronExpression: "*/2 * * * *",
     idempotency: "strict",
     misfirePolicy: "latest",
@@ -296,9 +298,9 @@ export const cronTaskPolicies = [
     concurrencyGroup: "syndication",
     sideEffects: ["database", "external-http"],
     requiresScheduledFor: false,
-    decision: "proposed",
+    decision: "approved",
     rationale:
-      "The durable queue uses a sending claim, stale reaper, unique key, and receiver de-duplication.",
+      "Approved for the first production canary: the durable queue uses a sending claim, stale reaper, unique key, and receiver de-duplication.",
   },
   {
     path: "/api/cron/translate-blog",

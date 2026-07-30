@@ -50,6 +50,13 @@ function snapshot(overrides: Partial<CronCutoverSnapshot> = {}): CronCutoverSnap
       createdAt: new Date("2026-07-28T11:59:00.000Z"),
     },
     activeLedgerJobs: [],
+    canaryOperational: {
+      taskPath: strictPolicy.path,
+      unresolvedTerminalItems: 0,
+      staleClaims: 0,
+      missingDurableItems: 0,
+      configurationIssues: [],
+    },
     shadow: {
       shadowWindows: 100,
       matchedWindows: 100,
@@ -74,13 +81,29 @@ describe("Cron cutover readiness", () => {
     expect(result.nextFullMinute).toBe("2026-07-30T12:01:00.000Z")
   })
 
-  it("fails closed on proposed policy, drift, stale shadow, and active jobs", () => {
-    const schedules = approvedPolicies.map(scheduleSnapshot)
-    schedules[0] = { ...schedules[0], retryPolicy: "none" }
+  it("requires task-specific operational evidence", () => {
     const result = evaluateCronCutoverReadiness({
       target: "canary",
       canaryTaskPath: strictPolicy.path,
-      policies: cronTaskPolicies,
+      policies: approvedPolicies,
+      snapshot: snapshot({ canaryOperational: null }),
+    })
+    expect(result.ready).toBe(false)
+    expect(result.blockers).toContain(
+      `canary operational readiness is missing for ${strictPolicy.path}`,
+    )
+  })
+
+  it("fails closed on proposed policy, drift, stale shadow, and active jobs", () => {
+    const schedules = approvedPolicies.map(scheduleSnapshot)
+    schedules[0] = { ...schedules[0], retryPolicy: "none" }
+    const policiesWithProposedCanary = cronTaskPolicies.map((policy) =>
+      policy.path === strictPolicy.path ? { ...policy, decision: "proposed" as const } : policy,
+    )
+    const result = evaluateCronCutoverReadiness({
+      target: "canary",
+      canaryTaskPath: strictPolicy.path,
+      policies: policiesWithProposedCanary,
       snapshot: snapshot({
         schedules,
         cursor: {
@@ -88,6 +111,13 @@ describe("Cron cutover readiness", () => {
           createdAt: new Date("2026-07-30T11:00:00.000Z"),
         },
         activeLedgerJobs: [{ taskPath: strictPolicy.path, status: "pending", count: 1 }],
+        canaryOperational: {
+          taskPath: strictPolicy.path,
+          unresolvedTerminalItems: 1,
+          staleClaims: 1,
+          missingDurableItems: 1,
+          configurationIssues: ["mf8: endpoint is not configured"],
+        },
         shadow: {
           shadowWindows: 10,
           matchedWindows: 8,
@@ -106,6 +136,10 @@ describe("Cron cutover readiness", () => {
         expect.stringContaining("missing 1 legacy"),
         expect.stringContaining("unexplained legacy"),
         expect.stringContaining("active/attention"),
+        expect.stringContaining("unresolved terminal business"),
+        expect.stringContaining("stale business claim"),
+        expect.stringContaining("missing durable queue state"),
+        expect.stringContaining("mf8: endpoint is not configured"),
       ]),
     )
   })

@@ -6,17 +6,23 @@ import {
 } from "../scripts/lib/cron-policy-inventory"
 import {
   allCronPoliciesApproved,
+  APPROVED_CRON_CANARY_TASK_PATH,
   cronTaskPolicies,
   validateCronTaskPolicies,
   type CronTaskPolicy,
 } from "./cron-policy"
 
 describe("cron task policy", () => {
-  it("contains one structurally valid proposal for each of the 22 scheduled tasks", () => {
+  it("contains 22 valid tasks and only the reviewed syndication canary is approved", () => {
     expect(cronTaskPolicies).toHaveLength(22)
     expect(validateCronTaskPolicies()).toEqual([])
     expect(new Set(cronTaskPolicies.map((policy) => policy.path)).size).toBe(22)
-    expect(cronTaskPolicies.every((policy) => policy.decision === "proposed")).toBe(true)
+    expect(
+      cronTaskPolicies
+        .filter((policy) => policy.decision === "approved")
+        .map((policy) => policy.path),
+    ).toEqual([APPROVED_CRON_CANARY_TASK_PATH])
+    expect(cronTaskPolicies.filter((policy) => policy.decision === "proposed")).toHaveLength(21)
     expect(allCronPoliciesApproved()).toBe(false)
     expect(allCronPoliciesApproved([])).toBe(false)
   })

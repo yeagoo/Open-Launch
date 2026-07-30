@@ -11,6 +11,28 @@ import { NodeHtmlMarkdown } from "node-html-markdown"
 import { request } from "undici"
 
 import { FetchTimeoutError, withTimeout } from "./fetch-timeout"
+import {
+  siteApiKey,
+  siteApiKeyEnvironmentName,
+  siteEndpoint,
+  siteEndpointEnvironmentName,
+  SYNDICATED_TIERS,
+  SYNDICATION_SITES,
+  type SyndicationSite,
+} from "./launch-syndication-policy"
+
+export {
+  findSyndicationConfigurationIssues,
+  siteApiKey,
+  siteApiKeyEnvironmentName,
+  siteEndpoint,
+  siteEndpointEnvironmentName,
+  SYNDICATED_TIERS,
+  SYNDICATION_MAX_ATTEMPTS,
+  SYNDICATION_SITES,
+  SYNDICATION_STALE_CLAIM_MINUTES,
+  type SyndicationSite,
+} from "./launch-syndication-policy"
 
 // aat.ee stores project descriptions as sanitized HTML (Tiptap), but every
 // partner site renders the body as Markdown/MDX (bigkr/mf8 via MDXRemote,
@@ -69,49 +91,13 @@ function mapPlatforms(platforms: string[] | null): string[] | null {
  * webhook (Stripe would retry the whole event).
  */
 
-// Partner syndication targets. bigkr / mf8 / hicyou are standalone partner
-// sites (one endpoint each). `toolso` is a single GATEWAY in front of the
-// toolso-ai-open network (mifar / qoo / fastd / xlayers / upperstory / xemvip
-// / skachat / nexablocks / blackhawkgames / …): aat.ee posts once and the
-// gateway fans out to its own sites and returns each result, so adding toolso
-// domains needs no change here. `site` keys are stored on launch_syndication.site.
-export const SYNDICATION_SITES = ["bigkr", "mf8", "hicyou", "toolso"] as const
-export type SyndicationSite = (typeof SYNDICATION_SITES)[number]
-
 // Only these tiers cross-post. Basic stays on aat.ee only. Plus posts to the
 // toolso gateway only (it publishes to PLUS_MAX_SITES of its own sites);
 // Pro / Ultra / Ultra Plus post to every target (the standalone sites + the
 // full toolso network).
-export const SYNDICATED_TIERS: ReadonlySet<string> = new Set(["plus", "pro", "ultra", "ultraPlus"])
-
 // How many sites the toolso gateway publishes a Plus order to. Sent as
 // `maxSites`; the gateway randomly selects that many of its own sites.
 const PLUS_MAX_SITES = 5
-
-// Full /api/external/launch endpoint URL per target.
-const SITE_URL_ENV: Record<SyndicationSite, string> = {
-  bigkr: "SYNDICATION_BIGKR_URL",
-  mf8: "SYNDICATION_MF8_URL",
-  hicyou: "SYNDICATION_HICYOU_URL",
-  toolso: "SYNDICATION_TOOLSO_URL",
-}
-
-// Per-target bearer key. Falls back to the shared EXTERNAL_LAUNCH_API_KEY so
-// ops can run a single shared secret across all sites, or rotate per-target.
-const SITE_KEY_ENV: Record<SyndicationSite, string> = {
-  bigkr: "SYNDICATION_BIGKR_API_KEY",
-  mf8: "SYNDICATION_MF8_API_KEY",
-  hicyou: "SYNDICATION_HICYOU_API_KEY",
-  toolso: "SYNDICATION_TOOLSO_API_KEY",
-}
-
-export function siteEndpoint(site: SyndicationSite): string | null {
-  return process.env[SITE_URL_ENV[site]] ?? null
-}
-
-export function siteApiKey(site: SyndicationSite): string | null {
-  return process.env[SITE_KEY_ENV[site]] ?? process.env.EXTERNAL_LAUNCH_API_KEY ?? null
-}
 
 export interface LaunchPayload {
   source: "aat.ee"
@@ -246,13 +232,19 @@ export async function postLaunchToSite(
   payload: LaunchPayload,
 ): Promise<PostResult> {
   const url = siteEndpoint(site)
-  if (!url) return { ok: false, configError: true, error: `${SITE_URL_ENV[site]} not configured` }
+  if (!url) {
+    return {
+      ok: false,
+      configError: true,
+      error: `${siteEndpointEnvironmentName(site)} not configured`,
+    }
+  }
   const key = siteApiKey(site)
   if (!key) {
     return {
       ok: false,
       configError: true,
-      error: `No API key for ${site} (set ${SITE_KEY_ENV[site]} or EXTERNAL_LAUNCH_API_KEY)`,
+      error: `No API key for ${site} (set ${siteApiKeyEnvironmentName(site)} or EXTERNAL_LAUNCH_API_KEY)`,
     }
   }
 
@@ -315,7 +307,7 @@ export async function postLaunchToSite(
         statusCode,
         error: `HTTP ${statusCode} redirect${
           typeof location === "string" ? ` to ${location}` : ""
-        } — set ${SITE_URL_ENV[site]} to the final URL (POST bodies aren't preserved across redirects)`,
+        } — set ${siteEndpointEnvironmentName(site)} to the final URL (POST bodies aren't preserved across redirects)`,
       }
     }
 

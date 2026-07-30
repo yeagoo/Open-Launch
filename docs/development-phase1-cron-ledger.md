@@ -179,7 +179,8 @@ CRON_LEDGER_TEST_DATABASE_URL=postgresql://.../open_launch_cron_test \
 
 原始开发完成时的门禁已经逐项复核。当前状态为：
 
-1. 22 项 policy 仍为 `proposed`；`--require-approved` 按设计失败。
+1. `/api/cron/syndicate-launches` 已获首个 Canary 批准，其余 21 项 policy
+   仍为 `proposed`；`--require-approved` 按设计失败。
 2. 生产 SSH、canonical registry、opsctl、backup、snapshot 和数据库 schedule
    rows 已核对。
 3. 0058 已部署，生产 `cron_schedule` 的 22 项 backfill/enabled rows 已核对。
@@ -195,9 +196,8 @@ CRON_LEDGER_TEST_DATABASE_URL=postgresql://.../open_launch_cron_test \
 
 1. 连续观察 shadow 至少 48 小时；
 2. 重新运行只读 canary preflight；
-3. 由业务、运维和代码 review 单独批准一项 strict、低风险任务；
-4. 以独立代码变更记录 policy approval；
-5. 再规划 ledger canary，不能直接进入 full ledger。
+3. 处置并复核候选任务的终态业务失败；
+4. 再规划 ledger canary，不能直接进入 full ledger。
 
 ## 5. 回滚
 

@@ -79,6 +79,11 @@ or `ledger` without the read-only preflight, documented observation window,
 immutable worker artifact, canonical opsctl readiness and explicit production
 approval. The complete order and rollback procedure are in
 [development-phase7-cron-cutover.md](./development-phase7-cron-cutover.md).
+The first approved candidate is `/api/cron/syndicate-launches`. Its preflight
+also fails closed on exhausted/orphaned live delivery rows, stale sending
+claims, paid orders missing durable queue rows, missing credentials, and
+non-HTTPS or malformed partner endpoints. A successful Cron HTTP history does
+not override these business-level blockers.
 `INTERNAL_BASE_URL` for every scheduler mode must be a credential-free HTTP
 loopback or single-label Compose service origin; a public URL is rejected
 before the dispatcher constructs an authenticated task request.

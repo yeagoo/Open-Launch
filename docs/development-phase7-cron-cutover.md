@@ -8,7 +8,9 @@
 本文记录单任务 canary、只读 preflight、对账和回滚契约。0058 已部署，生产
 `shadow` 已于 2026-07-30 13:05 UTC 开启，详见
 [Phase 10 部署记录](./deployments/2026-07-30-phase10-cron-shadow.md)。
-本文不批准任何 Cron policy，也不授权 Canary、Worker 启停或 ledger 切换。
+`/api/cron/syndicate-launches` 已在
+[Phase 11A](./development-phase11-cron-canary-readiness.md) 获得首个 Canary
+代码批准；本文仍不授权实际 Canary、Worker 启停或 ledger 切换。
 
 ## 1. 权威模式
 
@@ -27,10 +29,10 @@
 - 具备 strict end-to-end idempotency；
 - 独占自己的 concurrency group，避免 ledger 与仍由 legacy 执行的同组任务并发。
 
-环境变量只能选择已批准策略，不能替代批准。当前 22 项 policy 仍全部为
-`proposed`，因此 canary 和 full ledger 均按设计 fail closed。当前 inventory 中
-只有 `/api/cron/syndicate-launches` 同时满足 strict 和独占并发组的结构条件，
-但它仍未获批准；本文不替业务方作出选择。
+环境变量只能选择已批准策略，不能替代批准。当前只有
+`/api/cron/syndicate-launches` 获批且同时满足 strict 和独占并发组；其余 21 项
+仍为 `proposed`，因此 full ledger 按设计 fail closed。实际 Canary 还必须通过
+48 小时 Shadow、业务队列和生产变更门禁。
 
 ## 2. 实现边界
 
@@ -74,7 +76,9 @@ bun run cron:cutover:check \
 - `shadow`：0058 schema 可查询，22 项数据库 schedule 与 code policy 无漂移，
   且没有遗留 active/attention ledger job。
 - `canary`：候选 policy 已批准并满足 strict + 独占组；cursor 新鲜；至少连续
-  48 小时 shadow；理论窗口与 legacy minute/path 完全对齐；没有活动 ledger job。
+  48 小时 shadow；理论窗口与 legacy minute/path 完全对齐；没有活动 ledger
+  job；候选任务没有终态业务失败、陈旧 claim、缺失 durable queue 或接收端配置
+  问题。
 - `ledger`：全部 policy 已批准；cursor 新鲜；候选 canary 已连续观察至少
   48 小时；最近 48 小时每个理论窗口恰有一个成功 ledger job；不存在失败、
   retry、uncertain、dead letter 或其他 active job。
