@@ -1,7 +1,7 @@
 # Phase 8 支付 Webhook 持久化通知与重放修复
 
 日期：2026-07-30
-状态：本地开发与 review 完成；两步生产启用和现场验证仍为外部门禁。
+状态：Consumer 已部署；Producer 仍关闭，真实付款验证尚未执行。
 
 ## 1. 范围
 
@@ -15,8 +15,10 @@
 - 支付邮件复用现有 `email_outbox.event_key UNIQUE`、Resend
   `Idempotency-Key` 和 `drain-email-outbox` 重试机制。
 
-本阶段不改变价格、套餐、配额、退款、孤儿付款或 Stripe 签名规则，不新增支付
-接口，也不授权生产部署或真实 Stripe 事件。
+本阶段不改变价格、套餐、配额、退款、孤儿付款或 Stripe 签名规则，也不新增支付
+接口。包含 consumer 的不可变镜像已部署，但
+`PAYMENT_EMAIL_OUTBOX_ENABLED=false` 仍保持不变；本次 Cron shadow 发布没有
+合并支付 producer 启用或真实 Stripe 事件。
 
 ## 2. 可靠性契约
 
@@ -94,8 +96,8 @@ ORDER BY kind, status;
 
 - 不新增数据库迁移；依赖生产已存在迁移 0052 和 0057。
 - 新环境变量为可选且默认关闭，不加入生产启动 fail-fast。
-- Cron scheduler 切换不属于本阶段；首次部署仍保持
-  `CRON_SCHEDULER_MODE=legacy`。
+- Cron scheduler 切换不属于本阶段；生产现已单独进入 shadow，但 legacy 仍是
+  唯一执行方，支付 producer 仍保持关闭。
 - 部署后必须检查 payment webhook 5xx、`drain-email-outbox`、payment kind
   dead letter 和管理员/买家实际收件。
 

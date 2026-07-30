@@ -1,12 +1,14 @@
 # Phase 1 Cron 持久化调度开发记录
 
 日期：2026-07-29
-状态：Development complete / production shadow and cutover blocked
+状态：Development complete / production shadow active / canary and cutover blocked
 前置基线：[development-phase0-baseline.md](./development-phase0-baseline.md)
 
-本文记录 Phase 1 的代码、迁移、审查和验证结果。迁移 0058 尚未应用到生产，
-`CRON_SCHEDULER_MODE` 仍必须保持 `legacy`。本文不授权部署、数据库写入、
-shadow 开启或 ledger cutover。
+本文记录 Phase 1 的代码、迁移、审查和验证结果。迁移 0058 已于 2026-07-30
+部署，生产随后在 13:05 UTC 单独开启 `shadow`；legacy 仍是唯一执行方，
+shadow job 全部为不可领取的终态 `cancelled`。Canary 和 ledger cutover
+仍未获批准，详见
+[Phase 10 部署记录](./deployments/2026-07-30-phase10-cron-shadow.md)。
 
 ## 1. 已实现内容
 
@@ -173,30 +175,29 @@ CRON_LEDGER_TEST_DATABASE_URL=postgresql://.../open_launch_cron_test \
 
 本轮没有连接或修改 `.env.local` 指向的远程数据库。
 
-## 4. 生产启用前的阻塞项
+## 4. 生产推进状态
 
-以下不是代码失败，而是必须保留的生产门禁：
+原始开发完成时的门禁已经逐项复核。当前状态为：
 
 1. 22 项 policy 仍为 `proposed`；`--require-approved` 按设计失败。
-2. 生产 SSH 在 KEX 前被远端关闭，未能实时核对 canonical registry、opsctl、
-   backup、snapshot 或数据库 schedule rows。
-3. 0058 未部署，生产 `cron_schedule` 未核对 backfill/enabled rows。
-4. 未执行至少 48 小时 shadow 对比。
-5. 独立 Node 24 worker artifact、连接池预算、CPU/memory limit、只读文件系统
-   和独立 worker dead-man 依赖 Phase 2 packaging。
+2. 生产 SSH、canonical registry、opsctl、backup、snapshot 和数据库 schedule
+   rows 已核对。
+3. 0058 已部署，生产 `cron_schedule` 的 22 项 backfill/enabled rows 已核对。
+4. Shadow 已于 2026-07-30 13:05 UTC 开启；至少 48 小时连续观察尚未完成。
+5. Node 24 不可变 worker artifact 已随同一镜像部署，但生产没有启动独立
+   worker，embedded worker 也保持关闭。
 6. 每日通知、发布、Product Hunt、engagement 和 AI 任务尚未获 canary 分组
    批准。
 7. `uncertain` 的人工 reconcile UI/审批流程未定义；canary 前至少要有
    operator runbook，不能直接改行重试。
 
-因此当前允许的代码/部署顺序仍是：
+因此当前允许的后续顺序是：
 
-1. review 并部署 0058，模式保持 `legacy`；
-2. 核对 migration、policy rows 和 canonical opsctl；
-3. 单独批准并开启 `shadow`；
-4. 观察至少 48 小时；
-5. 先完成 Phase 2 immutable worker artifact；
-6. 再批准一项 strict、低风险任务的 ledger canary。
+1. 连续观察 shadow 至少 48 小时；
+2. 重新运行只读 canary preflight；
+3. 由业务、运维和代码 review 单独批准一项 strict、低风险任务；
+4. 以独立代码变更记录 policy approval；
+5. 再规划 ledger canary，不能直接进入 full ledger。
 
 ## 5. 回滚
 

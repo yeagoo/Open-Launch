@@ -61,4 +61,6 @@ r21 已成功应用 0058 并启动新应用，但 opsctl 把正常 `Exited (0)` 
 - `X-RapidAPI-Key` 仍需在提供方后台轮换。本地 dotenv 中该变量使用非标准键名，
   直接由 shell 读取时会进入错误输出；后续发布必须使用 dotenv parser，不得
   `source .env.local`。
-- ledger/shadow/canary 切换仍需单独计划和批准；本次没有改变生产调度模式。
+- Shadow 已在后续独立变更中开启，见
+  [Phase 10 部署记录](./2026-07-30-phase10-cron-shadow.md)；Canary 和 ledger
+  切换仍需至少 48 小时观察、policy 批准和新的生产变更。

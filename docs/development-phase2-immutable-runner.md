@@ -1,11 +1,14 @@
 # Phase 2 不可变制品与安全部署开发记录
 
 日期：2026-07-30
-状态：Development complete / registry push and production deployment blocked
+状态：Development complete / immutable production deployment verified
 前置阶段：[development-phase1-cron-ledger.md](./development-phase1-cron-ledger.md)
 
-本文记录 Phase 2 的代码、供应链审查和本地验证结果。它不授权推送镜像、
-修改生产配置、部署迁移或切换 Cron 权威模式。
+本文记录 Phase 2 的代码、供应链审查和本地验证结果。生产已发布并验证精确
+commit 的不可变 `linux/amd64` runner；发布过程见
+[Phase 9](./deployments/2026-07-30-phase9-cron-ledger.md) 和
+[Phase 10](./deployments/2026-07-30-phase10-cron-shadow.md)。本文本身不授权
+后续 Cron canary、独立 Worker 启动或 full ledger 切换。
 
 ## 1. 已实现内容
 
@@ -158,21 +161,23 @@ development complete 解释为 deploy ready。
 
 CI workflow 只完成本地静态检查，尚未在 GitHub Actions 远端运行。
 
-## 4. 生产启用前的阻塞项
+## 4. 首次生产启用前的门禁（历史记录）
+
+以下是开发完成时保留的门禁；Phase 9/10 部署记录是当前生产状态的权威来源：
 
 1. 生产 private registry、认证方式、Compose image reference 和前一个可回滚
    digest 尚未从生产核实。
 2. 本轮没有生产 SSH 写入，也没有 push/deploy；此前连接在 KEX 前被关闭。
 3. CI validation key 不是生产稳定 key，验证 OCI archive不能晋升为生产制品。
 4. 22 项 Cron policy 仍为 proposed；ledger Worker 会 fail-closed。
-5. migration 0058 尚未生产部署，也没有完成至少 48 小时 shadow。
+5. migration 0058 当时尚未生产部署，也没有完成至少 48 小时 shadow。
 6. 实际 PostgreSQL `max_connections`、当前 replicas 和保留运维连接未知，
    连接池总预算尚不能批准。
 7. canonical `opsctl` 的生产 registry/status/gates、backup、snapshot 和 journal
    仍需只读核对。
 8. 尚未用前一个生产 digest 完成非生产回滚演练。
 
-## 5. 后续批准顺序
+## 5. 原始批准顺序（历史记录）
 
 1. 恢复生产 SSH 后只读核对 registry、opsctl status/gates、Compose 和数据库
    连接预算。
@@ -180,8 +185,8 @@ CI workflow 只完成本地静态检查，尚未在 GitHub Actions 远端运行�
    只进入直接 push 的受保护 build，不上传 OCI archive。
 3. 对前一个和候选 digest 执行非生产 deploy/rollback 演练。
 4. 按 runbook 完成 backup、snapshot、dry-run、人工批准和 journal。
-5. Phase 1 仍先部署 migration 并保持 legacy，再单独批准 shadow；不可直接
-   ledger cutover。
+5. Phase 1 先部署 migration 并保持 legacy，再单独批准 shadow；不可直接
+   ledger cutover。前两步现已完成，Canary 仍需等待至少 48 小时观察和独立批准。
 
 ## 6. 回滚
 

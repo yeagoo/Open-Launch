@@ -1,12 +1,14 @@
 # Phase 7 Cron canary 与切换门禁
 
 日期：2026-07-30
-状态：Development complete / production canary and cutover blocked
+状态：Development complete / production shadow active / canary and cutover blocked
 前置阶段：[development-phase1-cron-ledger.md](./development-phase1-cron-ledger.md)、
 [development-phase2-immutable-runner.md](./development-phase2-immutable-runner.md)
 
-本文记录单任务 canary、只读 preflight、对账和回滚契约。它不批准任何 Cron
-policy，不授权生产迁移、环境变量切换、Worker 启停、真实任务触发或部署。
+本文记录单任务 canary、只读 preflight、对账和回滚契约。0058 已部署，生产
+`shadow` 已于 2026-07-30 13:05 UTC 开启，详见
+[Phase 10 部署记录](./deployments/2026-07-30-phase10-cron-shadow.md)。
+本文不批准任何 Cron policy，也不授权 Canary、Worker 启停或 ledger 切换。
 
 ## 1. 权威模式
 
@@ -82,7 +84,7 @@ bun run cron:cutover:check \
 
 ## 4. 生产执行顺序
 
-以下步骤仅是后续获得独立生产授权后的 runbook：
+当前第 1、2 步已完成；其余步骤仍需满足各自门禁和独立生产授权：
 
 1. 部署 migration 0058，保持 `CRON_SCHEDULER_MODE=legacy`。
 2. 执行 `--target shadow`，在报告的下一个完整 UTC 分钟切为 `shadow`。
