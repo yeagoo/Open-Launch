@@ -1,8 +1,9 @@
 # Phase 11A Cron Canary 准备版本
 
 日期：2026-07-30
-状态：开发与 Review 完成；准备版本待部署，实际 Canary 仍被门禁阻止。
+状态：准备版本已部署；实际 Canary 仍被门禁阻止。
 前置阶段：[Phase 10 Cron shadow](./deployments/2026-07-30-phase10-cron-shadow.md)
+部署记录：[Phase 11A Canary readiness](./deployments/2026-07-30-phase11a-cron-canary-readiness.md)
 
 ## 1. 批准边界
 
@@ -71,7 +72,8 @@ Review 后没有遗留 Critical/Important 代码问题。
 
 - 定向 Vitest：6 files、34 tests 通过；
 - 全仓 Vitest：81 files passed、2 skipped；365 tests passed、8 skipped；
-- TypeScript、全仓 ESLint、Prettier、review style checker：通过；
+- TypeScript、全仓 ESLint、Prettier：通过；Python-oriented review heuristic
+  已运行，其 TS camelCase 和 Prettier 字符串误报经人工复核后没有形成可执行问题；
 - Cron policy inventory：22 项结构有效，只有批准候选为 `approved`；
 - Bun dependency audit：0 vulnerabilities；
 - 四条 route JavaScript budget：通过；
