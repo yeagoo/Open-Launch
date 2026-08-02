@@ -49,15 +49,17 @@ try {
     )
   }
 
-  const migration = await readFile(
-    resolve(import.meta.dirname, "../drizzle/migrations/0058_cron_job_ledger.sql"),
-    "utf8",
-  )
-  for (const statement of migration
-    .split(/-->\s*statement-breakpoint/)
-    .map((value) => value.trim())
-    .filter(Boolean)) {
-    await client.query(statement)
+  for (const migrationName of ["0058_cron_job_ledger.sql", "0059_cron_materialization_audit.sql"]) {
+    const migration = await readFile(
+      resolve(import.meta.dirname, `../drizzle/migrations/${migrationName}`),
+      "utf8",
+    )
+    for (const statement of migration
+      .split(/-->\s*statement-breakpoint/)
+      .map((value) => value.trim())
+      .filter(Boolean)) {
+      await client.query(statement)
+    }
   }
 
   const policyCount = await scalar(
@@ -121,8 +123,37 @@ try {
     ),
     "non-minute cursor was accepted",
   )
+  const auditInsert = `
+    INSERT INTO "cron_materialization_run" (
+      execution_mode, scope_kind, task_path, scanned_from, scanned_through,
+      planned_count, inserted_count, policy_fingerprint
+    ) VALUES (
+      'shadow', 'task', '/api/cron/test-audit',
+      '2026-07-29T00:00:00Z', '2026-07-29T00:01:00Z', 1, 1, $1
+    )
+  `
+  await client.query(auditInsert, ["a".repeat(64)])
+  await expectConstraintFailure(
+    client.query(auditInsert, ["a".repeat(64)]),
+    "duplicate audit cursor window was accepted",
+  )
+  await expectConstraintFailure(
+    client.query(
+      `INSERT INTO "cron_materialization_run" (
+        execution_mode, scope_kind, task_path, scanned_from, scanned_through,
+        planned_count, inserted_count, policy_fingerprint
+      ) VALUES (
+        'shadow', 'task', '/api/cron/test/nested',
+        '2026-07-29T00:02:00Z', '2026-07-29T00:02:00Z', 0, 0, $1
+      )`,
+      ["b".repeat(64)],
+    ),
+    "unsafe audit task path was accepted",
+  )
 
-  console.log("Cron ledger migration test passed: policy backfill, uniqueness, and constraints.")
+  console.log(
+    "Cron ledger migration test passed: policy backfill, job/audit uniqueness, and constraints.",
+  )
 } finally {
   await client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`)
   await client.end()

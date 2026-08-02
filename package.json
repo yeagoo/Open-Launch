@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "analyze:bundle": "next experimental-analyze --output",
-    "build": "bun scripts/generate-avatar-pool.ts && next build && bun scripts/build-cron-ledger-worker.ts && bun scripts/prepare-standalone.ts",
+    "build": "bun scripts/generate-avatar-pool.ts && bun run build:next && bun scripts/build-cron-ledger-worker.ts && bun scripts/prepare-standalone.ts",
     "build:cron-worker": "bun scripts/build-cron-ledger-worker.ts",
+    "build:next": "bun scripts/build-next-with-font-cache.ts",
     "build:runner": "bash scripts/build-immutable-runner.sh",
     "cron:cutover:check": "bun scripts/check-cron-cutover.ts",
     "cron:policy:check": "bun scripts/check-cron-policy.ts",

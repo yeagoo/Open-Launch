@@ -1,14 +1,21 @@
 import { resolveCronRuntimeAuthority } from "@/lib/cron-cutover"
 import { isSafeCronTaskPath, type CronSchedulerMode } from "@/lib/cron-ledger-core"
-import { scheduledFireTimesBetween } from "@/lib/cron-match"
-import { cronTaskPolicies, validateCronTaskPolicies, type CronTaskPolicy } from "@/lib/cron-policy"
+import type { CronMaterializationEvidence } from "@/lib/cron-materialization-audit"
+import {
+  APPROVED_CRON_CANARY_TASK_PATH,
+  cronTaskPolicies,
+  validateCronTaskPolicies,
+  type CronTaskPolicy,
+} from "@/lib/cron-policy"
 
 export type CronCutoverTarget = Exclude<CronSchedulerMode, "legacy">
 
 export interface CronScheduleSnapshot {
+  id: number
   path: string
   enabled: boolean
   cronExpression: string
+  updatedAt: Date
   misfirePolicy: string | null
   maxCatchUpMinutes: number | null
   retryPolicy: string | null
@@ -23,6 +30,7 @@ export interface CronCutoverSnapshot {
   schedules: CronScheduleSnapshot[]
   cursor: { scannedThrough: Date; createdAt: Date } | null
   activeLedgerJobs: Array<{ taskPath: string; status: string; count: number }>
+  materializationEvidence: CronMaterializationEvidence | null
   canaryOperational: {
     taskPath: string
     unresolvedTerminalItems: number
@@ -55,8 +63,6 @@ export interface CronCutoverReadiness {
   warnings: string[]
   nextFullMinute: string
 }
-
-const REQUIRED_OBSERVATION_MS = 48 * 60 * 60 * 1_000
 
 export function evaluateCronCutoverReadiness(input: {
   target: CronCutoverTarget
@@ -112,25 +118,12 @@ export function evaluateCronCutoverReadiness(input: {
       blockers.push("materialization cursor is missing; shadow has not run")
     } else {
       appendCursorFreshnessBlocker(blockers, input.snapshot)
-      const observationMs =
-        input.snapshot.checkedAt.getTime() - input.snapshot.cursor.createdAt.getTime()
-      if (observationMs < REQUIRED_OBSERVATION_MS) {
-        blockers.push("shadow observation is shorter than 48 hours")
-      }
     }
-    if (input.snapshot.shadow.shadowWindows === 0) {
-      blockers.push("shadow comparison contains no theoretical task windows")
-    }
-    if (input.snapshot.shadow.missingLegacyWindows > 0) {
-      blockers.push(
-        `shadow comparison is missing ${input.snapshot.shadow.missingLegacyWindows} legacy windows`,
-      )
-    }
-    if (input.snapshot.shadow.extraLegacyWindows > 0) {
-      blockers.push(
-        `shadow comparison has ${input.snapshot.shadow.extraLegacyWindows} unexplained legacy windows`,
-      )
-    }
+    appendMaterializationEvidence(blockers, warnings, input.snapshot.materializationEvidence, {
+      target: "canary",
+      canaryTaskPath,
+      policies,
+    })
     if (activeJobs > 0) {
       blockers.push(`ledger has ${activeJobs} active/attention job(s) before canary cutover`)
     }
@@ -146,47 +139,22 @@ export function evaluateCronCutoverReadiness(input: {
     } else {
       appendCursorFreshnessBlocker(blockers, input.snapshot)
     }
+    appendMaterializationEvidence(blockers, warnings, input.snapshot.materializationEvidence, {
+      target: "ledger",
+      canaryTaskPath,
+      policies,
+    })
     if (!canaryTaskPath || !isSafeCronTaskPath(canaryTaskPath)) {
       blockers.push("full ledger preflight requires the reviewed canary task path")
     } else if (!input.snapshot.canary || input.snapshot.canary.taskPath !== canaryTaskPath) {
       blockers.push("canary observation is missing for the reviewed task")
     } else {
       const canary = input.snapshot.canary
-      const observationMs = canary.firstCreatedAt
-        ? input.snapshot.checkedAt.getTime() - canary.firstCreatedAt.getTime()
-        : 0
-      if (observationMs < REQUIRED_OBSERVATION_MS) {
-        blockers.push("canary observation is shorter than 48 hours")
-      }
-      const canaryPolicy = policies.find((policy) => policy.path === canaryTaskPath)
-      if (canaryPolicy) {
-        const comparisonStart = new Date(
-          input.snapshot.checkedAt.getTime() - REQUIRED_OBSERVATION_MS,
-        )
-        const expectedWindows = scheduledFireTimesBetween(
-          canaryPolicy.expectedCronExpression,
-          comparisonStart,
-          input.snapshot.checkedAt,
-        ).filter((scheduledFor) => scheduledFor.getTime() >= comparisonStart.getTime())
-        const actualWindows = new Set(
-          canary.scheduledFor.map((scheduledFor) => scheduledFor.toISOString()),
-        )
-        const missingWindows = expectedWindows.filter(
-          (scheduledFor) => !actualWindows.has(scheduledFor.toISOString()),
-        )
-        if (missingWindows.length > 0) {
-          blockers.push(
-            `canary ledger is missing ${missingWindows.length} scheduled window(s) in the last 48 hours`,
-          )
-        }
-        if (actualWindows.size !== canary.scheduledFor.length) {
-          blockers.push("canary observation contains duplicate scheduled windows")
-        }
-        if (canary.succeeded !== actualWindows.size) {
-          blockers.push(
-            `canary has ${canary.succeeded} successful execution(s) for ${actualWindows.size} ledger window(s)`,
-          )
-        }
+      const actualWindows = new Set(
+        canary.scheduledFor.map((scheduledFor) => scheduledFor.toISOString()),
+      )
+      if (actualWindows.size !== canary.scheduledFor.length) {
+        blockers.push("canary observation contains duplicate scheduled windows")
       }
       if (canary.succeeded === 0) blockers.push("canary has no successful ledger execution")
       if (canary.failed > 0 || canary.uncertain > 0 || canary.deadLettered > 0) {
@@ -220,6 +188,130 @@ export function evaluateCronCutoverReadiness(input: {
     blockers: [...new Set(blockers)],
     warnings,
     nextFullMinute: nextFullUtcMinute(input.snapshot.checkedAt).toISOString(),
+  }
+}
+
+function appendMaterializationEvidence(
+  blockers: string[],
+  warnings: string[],
+  evidence: CronMaterializationEvidence | null,
+  input: {
+    target: "canary" | "ledger"
+    canaryTaskPath: string | null
+    policies: readonly CronTaskPolicy[]
+  },
+): void {
+  if (!evidence) {
+    blockers.push("48-hour materialization audit evidence is missing")
+    return
+  }
+  if (evidence.auditRuns === 0) blockers.push("materialization audit contains no scan runs")
+  if (evidence.continuityGapMinutes > 0) {
+    blockers.push(
+      `materialization audit has ${evidence.continuityGapMinutes} uncovered minute(s) in 48 hours`,
+    )
+  }
+  if (evidence.overlappingAuditRuns > 0) {
+    blockers.push(`materialization audit has ${evidence.overlappingAuditRuns} overlapping run(s)`)
+  }
+  if (evidence.clampedRuns > 0) {
+    blockers.push(`materialization audit has ${evidence.clampedRuns} clamped scan run(s)`)
+  }
+  if (evidence.overCatchUpRuns > 0) {
+    blockers.push(
+      `materialization audit has ${evidence.overCatchUpRuns} scan run(s) beyond the candidate catch-up bound`,
+    )
+  }
+  if (evidence.candidateCountMismatchRuns > 0) {
+    blockers.push(
+      `candidate planner count differs in ${evidence.candidateCountMismatchRuns} audit run(s)`,
+    )
+  }
+  if (input.target === "ledger" && evidence.countMismatchRuns > 0) {
+    blockers.push(
+      `materialization audit has ${evidence.countMismatchRuns} planner count mismatch(es)`,
+    )
+  } else if (evidence.countMismatchRuns > 0) {
+    warnings.push(
+      `non-candidate planner count differs in ${evidence.countMismatchRuns} audit run(s)`,
+    )
+  }
+  if (evidence.canaryPolicyDriftRuns > 0) {
+    blockers.push(
+      `canary policy fingerprint changed in ${evidence.canaryPolicyDriftRuns} audit run(s)`,
+    )
+  }
+  if (input.target === "ledger" && evidence.scopePolicyDriftRuns > 0) {
+    blockers.push(`materialization scope policy changed in ${evidence.scopePolicyDriftRuns} run(s)`)
+  } else if (evidence.scopePolicyDriftRuns > 0) {
+    warnings.push(
+      `non-candidate scope policy changed in ${evidence.scopePolicyDriftRuns} audit run(s)`,
+    )
+  }
+  if (input.target === "ledger" && (evidence.missingJobs > 0 || evidence.extraJobs > 0)) {
+    blockers.push(
+      `materialization jobs differ from planner: missing=${evidence.missingJobs}, extra=${evidence.extraJobs}`,
+    )
+  } else if (evidence.missingJobs > 0 || evidence.extraJobs > 0) {
+    warnings.push(
+      `non-candidate materialization diagnostics: missing=${evidence.missingJobs}, extra=${evidence.extraJobs}`,
+    )
+  }
+
+  const candidate = evidence.candidate
+  if (!candidate || candidate.taskPath !== input.canaryTaskPath) {
+    blockers.push("candidate materialization evidence is missing for the reviewed task")
+    return
+  }
+  if (candidate.expectedWindows === 0) {
+    blockers.push("candidate materialization evidence contains no expected window")
+  }
+  if (candidate.missingJobs > 0 || candidate.extraJobs > 0) {
+    blockers.push(
+      `candidate jobs differ from planner: missing=${candidate.missingJobs}, extra=${candidate.extraJobs}`,
+    )
+  }
+  if (
+    input.target === "canary" &&
+    (candidate.failedAttempt > 0 || candidate.unexplainedMissing > 0)
+  ) {
+    blockers.push(
+      `candidate legacy evidence has failed=${candidate.failedAttempt}, unexplainedMissing=${candidate.unexplainedMissing}`,
+    )
+  }
+  if (input.target === "canary" && candidate.unexpectedExtra > 0) {
+    blockers.push(
+      `candidate legacy evidence has ${candidate.unexpectedExtra} unexpected extra window(s)`,
+    )
+  }
+  if (candidate.boundedDeferredSuccess > 0) {
+    const policy = input.policies.find((entry) => entry.path === input.canaryTaskPath)
+    const deferredIsApproved =
+      input.target === "canary" &&
+      input.canaryTaskPath === APPROVED_CRON_CANARY_TASK_PATH &&
+      policy?.misfirePolicy === "latest" &&
+      policy.idempotency === "strict"
+    if (!deferredIsApproved) {
+      blockers.push(
+        `candidate has ${candidate.boundedDeferredSuccess} deferred success(es) without the approved exception`,
+      )
+    } else {
+      warnings.push(
+        `candidate recovered ${candidate.boundedDeferredSuccess} legacy window(s) within its catch-up bound`,
+      )
+    }
+  }
+  if (input.target === "ledger" && candidate.unsuccessfulLedgerJobs > 0) {
+    blockers.push(
+      `candidate ledger evidence has ${candidate.unsuccessfulLedgerJobs} unsuccessful job(s)`,
+    )
+  }
+  if (input.target === "canary") {
+    for (const diagnostic of evidence.nonCandidateMissingByTask) {
+      warnings.push(
+        `non-candidate legacy diagnostic: ${diagnostic.taskPath} missing ${diagnostic.count} same-minute success(es)`,
+      )
+    }
   }
 }
 

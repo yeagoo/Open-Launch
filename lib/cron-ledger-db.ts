@@ -3,7 +3,13 @@ import "server-only"
 import { hostname } from "node:os"
 
 import { db } from "@/drizzle/db"
-import { cronJob, cronMaterializationCursor, cronRunLog, cronSchedule } from "@/drizzle/db/schema"
+import {
+  cronJob,
+  cronMaterializationCursor,
+  cronMaterializationRun,
+  cronRunLog,
+  cronSchedule,
+} from "@/drizzle/db/schema"
 import { and, asc, eq, inArray, lte, or, sql } from "drizzle-orm"
 
 import {
@@ -25,8 +31,10 @@ import {
   type CronJobExecutionMode,
   type LedgerSchedule,
 } from "@/lib/cron-ledger-core"
+import { cronSchedulePolicyFingerprint } from "@/lib/cron-materialization-audit"
 import {
   allCronPoliciesApproved,
+  APPROVED_CRON_CANARY_TASK_PATH,
   type CronIdempotencyClass,
   type CronRetryPolicy,
 } from "@/lib/cron-policy"
@@ -44,6 +52,7 @@ type CronJobRow = typeof cronJob.$inferSelect
 
 export interface CronMaterializationResult {
   mode: CronJobExecutionMode
+  cursorAdvanced: boolean
   scannedFrom: string
   scannedThrough: string
   cursorWasClamped: boolean
@@ -78,6 +87,9 @@ export async function materializeCronLedger(
     options.allowedTaskPaths,
     "cron materializer allowlist",
   )
+  if (allowedTaskPaths && allowedTaskPaths.length !== 1) {
+    throw new Error("cron materializer audit supports exactly one task-scoped path")
+  }
   let canaryAuthority: Extract<CronRuntimeAuthority, { mode: "canary" }> | undefined
   if (mode === "ledger") {
     if (allowedTaskPaths === undefined) {
@@ -123,6 +135,18 @@ export async function materializeCronLedger(
       .where(eq(cronMaterializationCursor.id, CURSOR_ID))
       .for("update")
     if (!cursor) throw new Error("cron materialization cursor is missing after initialization")
+    if (cursor.scannedThrough.getTime() === target.getTime()) {
+      return {
+        mode,
+        cursorAdvanced: false,
+        scannedFrom: target.toISOString(),
+        scannedThrough: target.toISOString(),
+        cursorWasClamped: false,
+        plannedCount: 0,
+        insertedCount: 0,
+        materializationLagSeconds: 0,
+      }
+    }
 
     const rows = await tx
       .select({
@@ -164,8 +188,16 @@ export async function materializeCronLedger(
       schedules: selectedRows as LedgerSchedule[],
       globalCatchUpMinutes,
     })
+    const policyFingerprint = cronSchedulePolicyFingerprint(selectedRows as LedgerSchedule[])
+    const approvedCanarySchedule = selectedRows.find(
+      (row) => row.path === APPROVED_CRON_CANARY_TASK_PATH,
+    )
+    const canaryPolicyFingerprint = approvedCanarySchedule
+      ? cronSchedulePolicyFingerprint([approvedCanarySchedule as LedgerSchedule])
+      : null
 
     let insertedCount = 0
+    let insertedTaskPaths: string[] = []
     if (plan.jobs.length > 0) {
       const inserted = await tx
         .insert(cronJob)
@@ -190,8 +222,9 @@ export async function materializeCronLedger(
           })),
         )
         .onConflictDoNothing({ target: [cronJob.taskPath, cronJob.scheduledFor] })
-        .returning({ id: cronJob.id })
+        .returning({ id: cronJob.id, taskPath: cronJob.taskPath })
       insertedCount = inserted.length
+      insertedTaskPaths = inserted.map((row) => row.taskPath)
     }
 
     await tx
@@ -199,8 +232,29 @@ export async function materializeCronLedger(
       .set({ scannedThrough: plan.scannedThrough, updatedAt: target })
       .where(eq(cronMaterializationCursor.id, CURSOR_ID))
 
+    await tx.insert(cronMaterializationRun).values({
+      executionMode: mode,
+      scopeKind: allowedTaskPaths ? "task" : "all",
+      taskPath: allowedTaskPaths?.[0] ?? null,
+      scannedFrom: plan.scannedFrom,
+      scannedThrough: plan.scannedThrough,
+      cursorWasClamped: plan.cursorWasClamped,
+      plannedCount: plan.jobs.length,
+      insertedCount,
+      canaryPlannedCount: approvedCanarySchedule
+        ? plan.jobs.filter((job) => job.taskPath === APPROVED_CRON_CANARY_TASK_PATH).length
+        : null,
+      canaryInsertedCount: approvedCanarySchedule
+        ? insertedTaskPaths.filter((path) => path === APPROVED_CRON_CANARY_TASK_PATH).length
+        : null,
+      policyFingerprint,
+      canaryPolicyFingerprint,
+      createdAt: now,
+    })
+
     return {
       mode,
+      cursorAdvanced: true,
       scannedFrom: plan.scannedFrom.toISOString(),
       scannedThrough: plan.scannedThrough.toISOString(),
       cursorWasClamped: plan.cursorWasClamped,

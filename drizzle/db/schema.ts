@@ -874,6 +874,39 @@ export const cronMaterializationCursor = pgTable("cron_materialization_cursor", 
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })
 
+// Immutable evidence for the exact minute range and policy snapshot used by
+// each successful cursor advance. The writer shares the materializer
+// transaction, so a committed audit can never describe rolled-back jobs.
+export const cronMaterializationRun = pgTable(
+  "cron_materialization_run",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    executionMode: text("execution_mode").notNull(),
+    scopeKind: text("scope_kind").notNull(),
+    taskPath: text("task_path"),
+    scannedFrom: timestamp("scanned_from", { withTimezone: true }).notNull(),
+    scannedThrough: timestamp("scanned_through", { withTimezone: true }).notNull(),
+    cursorWasClamped: boolean("cursor_was_clamped").notNull().default(false),
+    plannedCount: integer("planned_count").notNull(),
+    insertedCount: integer("inserted_count").notNull(),
+    canaryPlannedCount: integer("canary_planned_count"),
+    canaryInsertedCount: integer("canary_inserted_count"),
+    policyFingerprint: text("policy_fingerprint").notNull(),
+    canaryPolicyFingerprint: text("canary_policy_fingerprint"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("cron_materialization_run_scanned_through_unique").on(table.scannedThrough),
+    index("cron_materialization_run_scope_time_idx").on(
+      table.executionMode,
+      table.scopeKind,
+      table.taskPath,
+      table.scannedThrough,
+    ),
+    index("cron_materialization_run_created_at_idx").on(table.createdAt),
+  ],
+)
+
 // Durable notification-email queue (0052). Senders enqueue one row per
 // (event, recipient) with a stable event_key, then drain; the drain cron
 // retries failures every 10 minutes. event_key doubles as the Resend

@@ -7,6 +7,14 @@ import {
   type CronCutoverTarget,
   type CronScheduleSnapshot,
 } from "@/lib/cron-cutover-readiness"
+import type { LedgerSchedule } from "@/lib/cron-ledger-core"
+import {
+  CRON_EVIDENCE_RECONCILIATION_LAG_MINUTES,
+  evaluateCronMaterializationEvidence,
+  type CronLegacyAttemptObservation,
+  type CronMaterializationAuditRecord,
+  type CronMaterializedJobObservation,
+} from "@/lib/cron-materialization-audit"
 import { APPROVED_CRON_CANARY_TASK_PATH } from "@/lib/cron-policy"
 import {
   findSyndicationConfigurationIssues,
@@ -25,7 +33,7 @@ try {
   await client.query("BEGIN TRANSACTION READ ONLY")
   await client.query("SET LOCAL statement_timeout = '10s'")
   await client.query("SET LOCAL TIME ZONE 'UTC'")
-  const snapshot = await readSnapshot(client, args.checkedAt, args.canaryTaskPath)
+  const snapshot = await readSnapshot(client, args.checkedAt, args.canaryTaskPath, args.target)
   const result = evaluateCronCutoverReadiness({
     target: args.target,
     canaryTaskPath: args.canaryTaskPath,
@@ -45,12 +53,15 @@ async function readSnapshot(
   database: Client,
   checkedAt: Date,
   canaryTaskPath: string | undefined,
+  target: CronCutoverTarget,
 ): Promise<CronCutoverSnapshot> {
   const schedules = await database.query<CronScheduleSnapshot>(`
     SELECT
+      id,
       path,
       enabled,
       cron_expression AS "cronExpression",
+      updated_at AS "updatedAt",
       misfire_policy AS "misfirePolicy",
       max_catch_up_minutes AS "maxCatchUpMinutes",
       retry_policy AS "retryPolicy",
@@ -80,6 +91,17 @@ async function readSnapshot(
   `)
   const canaryOperational = await readCanaryOperationalSnapshot(database, checkedAt, canaryTaskPath)
   const comparisonStart = new Date(checkedAt.getTime() - 48 * 60 * 60 * 1_000)
+  const evidenceStart = new Date(
+    comparisonStart.getTime() - CRON_EVIDENCE_RECONCILIATION_LAG_MINUTES * 60_000,
+  )
+  const materializationEvidence = await readMaterializationEvidence(
+    database,
+    checkedAt,
+    evidenceStart,
+    target,
+    canaryTaskPath,
+    schedules.rows,
+  )
   const shadow = await database.query<{
     shadowWindows: number
     matchedWindows: number
@@ -186,6 +208,7 @@ async function readSnapshot(
     schedules: schedules.rows,
     cursor: cursor.rows[0] ?? null,
     activeLedgerJobs: activeLedgerJobs.rows.map((row) => ({ ...row, count: Number(row.count) })),
+    materializationEvidence,
     canaryOperational,
     shadow: shadow.rows[0] ?? {
       shadowWindows: 0,
@@ -195,6 +218,90 @@ async function readSnapshot(
     },
     canary,
   }
+}
+
+async function readMaterializationEvidence(
+  database: Client,
+  checkedAt: Date,
+  comparisonStart: Date,
+  target: CronCutoverTarget,
+  canaryTaskPath: string | undefined,
+  schedules: CronScheduleSnapshot[],
+): Promise<CronCutoverSnapshot["materializationEvidence"]> {
+  if (target === "shadow" || !canaryTaskPath) return null
+  const executionMode = target === "canary" ? "shadow" : "ledger"
+  const scopeKind = target === "canary" ? "all" : "task"
+  const scopeTaskPath = target === "canary" ? null : canaryTaskPath
+  const audits = await database.query<CronMaterializationAuditRecord>(
+    `
+      SELECT
+        execution_mode AS "executionMode",
+        scope_kind AS "scopeKind",
+        task_path AS "taskPath",
+        scanned_from AS "scannedFrom",
+        scanned_through AS "scannedThrough",
+        cursor_was_clamped AS "cursorWasClamped",
+        planned_count AS "plannedCount",
+        inserted_count AS "insertedCount",
+        canary_planned_count AS "canaryPlannedCount",
+        canary_inserted_count AS "canaryInsertedCount",
+        policy_fingerprint AS "policyFingerprint",
+        canary_policy_fingerprint AS "canaryPolicyFingerprint",
+        created_at AS "createdAt"
+      FROM cron_materialization_run
+      WHERE scanned_through >= date_trunc('minute', $1::timestamptz)
+        AND scanned_from <= date_trunc('minute', $2::timestamptz)
+        AND execution_mode = $3
+        AND scope_kind = $4
+        AND task_path IS NOT DISTINCT FROM $5::text
+      ORDER BY scanned_from, scanned_through
+    `,
+    [comparisonStart, checkedAt, executionMode, scopeKind, scopeTaskPath],
+  )
+  const jobs = await database.query<CronMaterializedJobObservation>(
+    `
+      SELECT
+        task_path AS "taskPath",
+        scheduled_for AS "scheduledFor",
+        execution_mode AS "executionMode",
+        status,
+        status_code AS "statusCode"
+      FROM cron_job
+      WHERE execution_mode = $1
+        AND scheduled_for >= date_trunc('minute', $2::timestamptz)
+        AND scheduled_for <= date_trunc('minute', $3::timestamptz)
+        AND ($4::text IS NULL OR task_path = $4)
+      ORDER BY scheduled_for, task_path
+    `,
+    [executionMode, comparisonStart, checkedAt, scopeTaskPath],
+  )
+  const legacyAttempts = await database.query<CronLegacyAttemptObservation>(
+    `
+      SELECT
+        task_path AS "taskPath",
+        dispatched_at AS "dispatchedAt",
+        status_code AS "statusCode"
+      FROM cron_run_log
+      WHERE dispatched_at >= date_trunc('minute', $1::timestamptz)
+        AND dispatched_at < date_trunc('minute', $2::timestamptz) + interval '1 minute'
+      ORDER BY dispatched_at, task_path
+    `,
+    [comparisonStart, checkedAt],
+  )
+
+  return evaluateCronMaterializationEvidence({
+    checkedAt,
+    observationMinutes: 48 * 60,
+    reconciliationLagMinutes: CRON_EVIDENCE_RECONCILIATION_LAG_MINUTES,
+    executionMode,
+    scopeKind,
+    scopeTaskPath,
+    canaryTaskPath,
+    schedules: schedules as LedgerSchedule[],
+    audits: audits.rows,
+    jobs: jobs.rows,
+    legacyAttempts: legacyAttempts.rows,
+  })
 }
 
 async function readCanaryOperationalSnapshot(

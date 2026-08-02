@@ -12,6 +12,8 @@ describeDatabase("cron ledger observability query", () => {
   const originalDatabaseUrl = process.env.DATABASE_URL
   let client: Client
   let closeDatabasePool: (() => Promise<void>) | undefined
+  let cleanupCronLogs:
+    ((request: import("next/server").NextRequest) => Promise<Response>) | undefined
   let cronLedgerBacklogSummary:
     | ((now?: Date) => Promise<{
         pending: number
@@ -79,16 +81,31 @@ describeDatabase("cron ledger observability query", () => {
         "updated_at" timestamp NOT NULL DEFAULT now()
       )
     `)
+    await client.query(`
+      CREATE TABLE "cron_run_log" (
+        "id" serial PRIMARY KEY,
+        "dispatched_at" timestamp NOT NULL DEFAULT now(),
+        "task_path" text NOT NULL,
+        "status_code" integer NOT NULL,
+        "duration_ms" integer NOT NULL,
+        "error" text
+      )
+    `)
 
-    const migration = await readFile(
-      resolve(process.cwd(), "drizzle/migrations/0058_cron_job_ledger.sql"),
-      "utf8",
-    )
-    for (const statement of migration
-      .split(/-->\s*statement-breakpoint/)
-      .map((value) => value.trim())
-      .filter(Boolean)) {
-      await client.query(statement)
+    for (const migrationName of [
+      "0058_cron_job_ledger.sql",
+      "0059_cron_materialization_audit.sql",
+    ]) {
+      const migration = await readFile(
+        resolve(process.cwd(), `drizzle/migrations/${migrationName}`),
+        "utf8",
+      )
+      for (const statement of migration
+        .split(/-->\s*statement-breakpoint/)
+        .map((value) => value.trim())
+        .filter(Boolean)) {
+        await client.query(statement)
+      }
     }
 
     await client.query(`
@@ -125,6 +142,7 @@ describeDatabase("cron ledger observability query", () => {
     materializeCronLedger = ledger.materializeCronLedger
     claimCronJob = ledger.claimCronJob
     recoverExpiredCronLeases = ledger.recoverExpiredCronLeases
+    cleanupCronLogs = (await import("@/app/api/cron/cron-log-cleanup/route")).GET
     closeDatabasePool = (await import("@/drizzle/db")).closeDatabasePool
   })
 
@@ -180,9 +198,66 @@ describeDatabase("cron ledger observability query", () => {
         [canaryPath, legacyPath],
       )
 
-      await materializeCronLedger("shadow", new Date("2026-07-30T00:10:30Z"), {
-        allowedTaskPaths: [canaryPath],
-      })
+      const firstMaterialization = await materializeCronLedger(
+        "shadow",
+        new Date("2026-07-30T00:10:30Z"),
+        {
+          allowedTaskPaths: [canaryPath],
+        },
+      )
+      expect(firstMaterialization).toMatchObject({ cursorAdvanced: true })
+      const repeatedMaterialization = await materializeCronLedger(
+        "shadow",
+        new Date("2026-07-30T00:10:59Z"),
+        {
+          allowedTaskPaths: [canaryPath],
+        },
+      )
+      expect(repeatedMaterialization).toMatchObject({ cursorAdvanced: false, plannedCount: 0 })
+      const auditRows = await client.query<{
+        task_path: string
+        scanned_from: Date
+        scanned_through: Date
+      }>(
+        `SELECT task_path, scanned_from, scanned_through
+         FROM cron_materialization_run
+         WHERE task_path = $1`,
+        [canaryPath],
+      )
+      expect(auditRows.rowCount).toBe(1)
+      expect(auditRows.rows[0]).toMatchObject({ task_path: canaryPath })
+
+      await client.query(
+        `INSERT INTO cron_materialization_run (
+          execution_mode, scope_kind, task_path, scanned_from, scanned_through,
+          planned_count, inserted_count, policy_fingerprint
+        ) VALUES ('shadow', 'task', $1, '2026-07-30T00:11:00Z',
+          '2026-07-30T00:11:00Z', 0, 0, $2)`,
+        [canaryPath, "a".repeat(64)],
+      )
+      await expect(
+        materializeCronLedger("shadow", new Date("2026-07-30T00:11:30Z"), {
+          allowedTaskPaths: [canaryPath],
+        }),
+      ).rejects.toThrow()
+      const rolledBack = await client.query<{ count: number }>(
+        `SELECT count(*)::int AS count
+         FROM cron_job
+         WHERE task_path = $1 AND scheduled_for = '2026-07-30T00:11:00Z'`,
+        [canaryPath],
+      )
+      expect(rolledBack.rows[0]?.count).toBe(0)
+      const cursorAfterRollback = await client.query<{ scanned_through: Date }>(
+        `SELECT scanned_through FROM cron_materialization_cursor WHERE id = 'main'`,
+      )
+      expect(cursorAfterRollback.rows[0]?.scanned_through.toISOString()).toBe(
+        "2026-07-30T00:10:00.000Z",
+      )
+      await client.query(
+        `DELETE FROM cron_materialization_run
+         WHERE task_path = $1 AND scanned_through = '2026-07-30T00:11:00Z'`,
+        [canaryPath],
+      )
       const materialized = await client.query<{ task_path: string }>(
         `SELECT task_path FROM cron_job WHERE task_path IN ($1, $2) ORDER BY task_path`,
         [canaryPath, legacyPath],
@@ -241,6 +316,55 @@ describeDatabase("cron ledger observability query", () => {
         canaryPath,
         legacyPath,
       ])
+    }
+  })
+
+  it("retains 90 days of materialization audit history", async () => {
+    if (!cleanupCronLogs) throw new Error("cron cleanup route was not initialized")
+    const originalCronApiKey = process.env.CRON_API_KEY
+    const originalSchedulerMode = process.env.CRON_SCHEDULER_MODE
+    const oldScan = new Date("2026-04-01T00:00:00.000Z")
+    const recentScan = new Date("2026-07-31T00:00:00.000Z")
+    try {
+      await client.query(
+        `INSERT INTO cron_materialization_run (
+          execution_mode, scope_kind, task_path, scanned_from, scanned_through,
+          planned_count, inserted_count, policy_fingerprint, created_at
+        ) VALUES
+          ('shadow', 'all', NULL, $1, $1, 0, 0, $3, $1),
+          ('shadow', 'all', NULL, $2, $2, 0, 0, $3, $2)`,
+        [oldScan, recentScan, "c".repeat(64)],
+      )
+      process.env.CRON_API_KEY = "phase11b-cleanup-test"
+      process.env.CRON_SCHEDULER_MODE = "legacy"
+      const { NextRequest } = await import("next/server")
+      const response = await cleanupCronLogs(
+        new NextRequest("http://localhost/api/cron/cron-log-cleanup", {
+          headers: { authorization: "Bearer phase11b-cleanup-test" },
+        }),
+      )
+      expect(response.status).toBe(200)
+      const payload = (await response.json()) as { deletedMaterializationRuns: number }
+      expect(payload.deletedMaterializationRuns).toBeGreaterThanOrEqual(1)
+      const retained = await client.query<{ scanned_through: Date }>(
+        `SELECT scanned_through
+         FROM cron_materialization_run
+         WHERE scanned_through IN ($1, $2)
+         ORDER BY scanned_through`,
+        [oldScan, recentScan],
+      )
+      expect(retained.rows.map((row) => row.scanned_through.toISOString())).toEqual([
+        recentScan.toISOString(),
+      ])
+    } finally {
+      await client.query(`DELETE FROM cron_materialization_run WHERE scanned_through IN ($1, $2)`, [
+        oldScan,
+        recentScan,
+      ])
+      if (originalCronApiKey === undefined) delete process.env.CRON_API_KEY
+      else process.env.CRON_API_KEY = originalCronApiKey
+      if (originalSchedulerMode === undefined) delete process.env.CRON_SCHEDULER_MODE
+      else process.env.CRON_SCHEDULER_MODE = originalSchedulerMode
     }
   })
 })

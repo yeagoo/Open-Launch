@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
-import { cronJob, cronRunLog } from "@/drizzle/db/schema"
+import { cronJob, cronMaterializationRun, cronRunLog } from "@/drizzle/db/schema"
 import { and, inArray, lt } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
   const result = await db.delete(cronRunLog).where(lt(cronRunLog.dispatchedAt, cutoff))
 
   const deleted = (result as unknown as { rowCount?: number }).rowCount ?? 0
+  const deletedMaterializationRuns = await db
+    .delete(cronMaterializationRun)
+    .where(lt(cronMaterializationRun.createdAt, cutoff))
+    .returning({ id: cronMaterializationRun.id })
   const schedulerMode = parseCronSchedulerMode(process.env.CRON_SCHEDULER_MODE)
   let deletedLedgerJobs = 0
   if (schedulerMode !== "legacy") {
@@ -43,6 +47,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     cutoff: cutoff.toISOString(),
     deleted,
+    deletedMaterializationRuns: deletedMaterializationRuns.length,
     deletedLedgerJobs,
   })
 }

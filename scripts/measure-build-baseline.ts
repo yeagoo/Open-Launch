@@ -4,6 +4,13 @@ import { resolve } from "node:path"
 import { promisify } from "node:util"
 import { brotliCompressSync, gzipSync } from "node:zlib"
 
+import {
+  collectReferencedClientChunks,
+  parseClientReferenceManifest,
+  resolveNextChunkPath,
+  selectInitialClientChunks,
+} from "./lib/client-reference-manifest"
+
 const execFileAsync = promisify(execFile)
 const repositoryRoot = resolve(import.meta.dirname, "..")
 const nextRoot = resolve(repositoryRoot, ".next")
@@ -31,23 +38,10 @@ const [source, buildId, manifestStats, commit] = await Promise.all([
   ),
 ])
 const manifest = parseClientReferenceManifest(source)
-const referencedChunks = Array.from(
-  new Set(
-    Object.values(manifest.clientModules).flatMap((module) =>
-      module.chunks.filter((chunk) => chunk.endsWith(".js")),
-    ),
-  ),
-).sort()
+const referencedChunks = collectReferencedClientChunks(manifest)
 const entryName = `[project]/app${route}`
-const entryChunks = manifest.entryJSFiles[entryName]
-if (!entryChunks) throw new Error(`entryJSFiles is missing route entry: ${entryName}`)
-const initialChunks = Array.from(
-  new Set(
-    entryChunks
-      .filter((chunk) => chunk.endsWith(".js"))
-      .map((chunk) => (chunk.startsWith("/_next/") ? chunk : `/_next/${chunk}`)),
-  ),
-).sort()
+const initialSelection = selectInitialClientChunks(manifest, entryName)
+const initialChunks = initialSelection.chunks
 
 const referencedSizes = await measureChunks(referencedChunks)
 const initialSizes = await measureChunks(initialChunks)
@@ -70,8 +64,7 @@ function summarize(sizes: Awaited<ReturnType<typeof measureChunks>>) {
 async function measureChunks(chunks: string[]) {
   return Promise.all(
     chunks.map(async (publicPath) => {
-      const relativePath = publicPath.replace(/^\/_next\//, "")
-      const content = await readFile(resolve(nextRoot, relativePath))
+      const content = await readFile(resolveNextChunkPath(nextRoot, publicPath))
       return {
         path: publicPath,
         rawBytes: content.byteLength,
@@ -95,7 +88,8 @@ console.log(
       artifactBinding: "unverified",
       artifactManifestModifiedAt: manifestStats.mtime.toISOString(),
       measurement:
-        "Referenced is an upper bound from all client modules; initial uses entryJSFiles. Browser resource timing remains the transfer source of truth.",
+        "Referenced is an upper bound from all client modules. Initial uses entryJSFiles when available, otherwise the Webpack client-module union. Browser resource timing remains the transfer source of truth.",
+      initialChunkSource: initialSelection.source,
       chunkCount: referencedSummary.chunkCount,
       totals: referencedSummary.totals,
       largestChunks: referencedSummary.largestChunks,
@@ -115,38 +109,4 @@ function parseArguments(argv: string[]): { route: string } {
     route = value
   }
   return { route }
-}
-
-function parseClientReferenceManifest(source: string): {
-  clientModules: Record<string, { chunks: string[] }>
-  entryJSFiles: Record<string, string[]>
-} {
-  const assignment = source.indexOf("] = ")
-  const end = source.lastIndexOf(";")
-  if (assignment === -1 || end === -1 || end <= assignment) {
-    throw new Error("Unsupported client-reference manifest format")
-  }
-  const parsed = JSON.parse(source.slice(assignment + 4, end)) as {
-    clientModules?: Record<string, { chunks?: unknown }>
-    entryJSFiles?: Record<string, unknown>
-  }
-  if (!parsed.clientModules) throw new Error("clientModules is missing from the manifest")
-  if (!parsed.entryJSFiles) throw new Error("entryJSFiles is missing from the manifest")
-  for (const [moduleName, module] of Object.entries(parsed.clientModules)) {
-    if (
-      !Array.isArray(module.chunks) ||
-      !module.chunks.every((chunk) => typeof chunk === "string")
-    ) {
-      throw new Error(`Invalid chunk list for client module: ${moduleName}`)
-    }
-  }
-  for (const [entryName, chunks] of Object.entries(parsed.entryJSFiles)) {
-    if (!Array.isArray(chunks) || !chunks.every((chunk) => typeof chunk === "string")) {
-      throw new Error(`Invalid entry chunk list: ${entryName}`)
-    }
-  }
-  return parsed as {
-    clientModules: Record<string, { chunks: string[] }>
-    entryJSFiles: Record<string, string[]>
-  }
 }

@@ -67,7 +67,7 @@ jobs:
         run: bun run test
 
       - name: Build
-        run: bunx next build
+        run: bun run build:next
 
       - name: Package Cron worker entrypoint
         run: bun run build:cron-worker
