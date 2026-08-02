@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-07-29 (Asia/Shanghai)
+Last verified: 2026-08-03 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -145,10 +145,9 @@ At the last verification, `status --json` reported:
 - deployment gates `ready`
 - snapshot coverage `ready`
 
-The r19 post-deploy backup is
-`backup-aat-ee-restic-20260729061509` (Restic snapshot `ee8bd41e`); the
-independent repository check is
-`check-restic-idrive-e2-20260729061631`. Both completed successfully without
+The current post-deploy backup is
+`backup-aat-ee-restic-20260802160845`; the independent repository check is
+`check-restic-idrive-e2-20260802161026`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -156,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-93f7349fa8efee4bd144a48f0b31ca6b548f7d90
+4a7746890e899e9b22145d51ff846d45496f1050
 ```
 
 Current runtime facts:
@@ -164,12 +163,24 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.health-alert-boundary-r19.yml`
+  `compose.phase11b-shadow-audit-r25.yml`
 - deployment marker:
-  `20260729-health-alert-boundary-r19`
+  `20260802-phase11b-shadow-audit-r25`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
+
+The current r25 release applies additive migration 0059 and keeps production in
+Shadow mode with an empty Canary path and all Ledger workers disabled. Its
+canonical plan, snapshot and journal completed 6/6 operations successfully;
+the post-deploy Shadow preflight is ready, while Canary remains blocked until
+the new atomic materialization audit covers a complete 48-hour window. See
+[Phase 11B Shadow audit deployment](./deployments/2026-08-02-phase11b-shadow-audit.md).
+
+Phase 9 first deployed the persistent Cron ledger and migration 0058 as r22;
+Phase 10 enabled Shadow materialization as r23; Phase 11A deployed Canary
+readiness without enabling Canary as r24. Their exact evidence remains in the
+deployment records under `docs/deployments/`.
 
 The audit-remediation release first deployed commit
 `1fc846d79882420b7b78cabfb66f378397969ee2` through the `r10` plan, including
