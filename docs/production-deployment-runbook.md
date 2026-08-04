@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260802160845`; the independent repository check is
-`check-restic-idrive-e2-20260802161026`. Both completed successfully without
+`backup-aat-ee-restic-20260804111743`; the independent repository check is
+`check-restic-idrive-e2-20260804111921`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-4a7746890e899e9b22145d51ff846d45496f1050
+0cdf4b1c8265253e568748e96bea97ebb282f653
 ```
 
 Current runtime facts:
@@ -163,19 +163,21 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy
 - Compose contract:
-  `compose.phase11b-shadow-audit-r25.yml`
+  `compose.directory-dr-r27.yml`
 - deployment marker:
-  `20260802-phase11b-shadow-audit-r25`
+  `20260804-directory-dr-r27`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 
-The current r25 release applies additive migration 0059 and keeps production in
-Shadow mode with an empty Canary path and all Ledger workers disabled. Its
-canonical plan, snapshot and journal completed 6/6 operations successfully;
-the post-deploy Shadow preflight is ready, while Canary remains blocked until
-the new atomic materialization audit covers a complete 48-hour window. See
-[Phase 11B Shadow audit deployment](./deployments/2026-08-02-phase11b-shadow-audit.md).
+The current r27 app-only release refreshes the canonical directory snapshot,
+including the verified `aat.ee` DR value of 47, and adds the required visible
+Ahrefs attribution. It also hardens the snapshot-sync contract and resolves the
+reviewed dependency audit findings. No migration ran. Production remains in
+Shadow mode with an empty Canary path, all Ledger workers disabled, and the
+payment email outbox disabled. Its canonical plan, snapshot and journal
+completed 6/6 operations successfully. See
+[Directory DR refresh deployment](./deployments/2026-08-04-directory-dr-refresh.md).
 
 Phase 9 first deployed the persistent Cron ledger and migration 0058 as r22;
 Phase 10 enabled Shadow materialization as r23; Phase 11A deployed Canary
@@ -400,6 +402,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-08-04 directory DR refresh](./deployments/2026-08-04-directory-dr-refresh.md)
 - [2026-07-26 cron, SEO, upload, and production hardening](./deployments/2026-07-26-cron-seo-hardening.md)
 - [Production runtime checklist](./production-runtime.md)
 - [Database backup design](../BACKUP.md)
