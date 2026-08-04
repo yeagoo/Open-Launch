@@ -58,4 +58,11 @@ describe("Phase 4 homepage query contract", () => {
     expect(navSource).not.toContain("auth.api.getSession")
     expect(homePageSource).not.toContain("auth.api.getSession")
   })
+
+  it("attributes homepage Domain Rating data to Ahrefs", async () => {
+    const homePageSource = await readFile(resolve(repositoryRoot, "app/[locale]/page.tsx"), "utf8")
+
+    expect(homePageSource).toContain('href="https://ahrefs.com/"')
+    expect(homePageSource).toContain("Domain Rating by Ahrefs")
+  })
 })

@@ -11,7 +11,7 @@ import { existsSync } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { basename, join } from "node:path"
 
-const UPSTREAM_COMMIT = "2d3b9f893b7650eae92699038bddf9fcb80b18b7"
+const UPSTREAM_COMMIT = "9abf28985a0db991a0c5f425e6a7e2ff733af6f2"
 const RAW_BASE = `https://raw.githubusercontent.com/yeagoo/directories-links/${UPSTREAM_COMMIT}`
 const SNAPSHOT = "lib/directories-links.json"
 const LOGO_DIR = "public/partner-logos"
@@ -28,7 +28,7 @@ function validateHttpUrl(value: unknown): boolean {
   }
 }
 
-function validateSiteArray(value: unknown): value is { logo_svg?: string }[] {
+function validateSiteArray(value: unknown): value is { logo_svg?: string | null }[] {
   if (!Array.isArray(value) || value.length > 5000) return false
   return value.every((site) => {
     if (!site || typeof site !== "object") return false
@@ -36,6 +36,7 @@ function validateSiteArray(value: unknown): value is { logo_svg?: string }[] {
     if (!validateHttpUrl(entry.url)) return false
     return (
       entry.logo_svg === undefined ||
+      entry.logo_svg === null ||
       (typeof entry.logo_svg === "string" &&
         /^\/assets\/logos\/[a-zA-Z0-9._-]+\.svg$/.test(entry.logo_svg))
     )
@@ -78,8 +79,8 @@ async function main() {
   // Mirror the referenced SVG logos into public/ (best-effort per file).
   await mkdir(LOGO_DIR, { recursive: true })
   const sites = [
-    ...(json.footer_navigation_sites as { logo_svg?: string }[]),
-    ...(json.authority_documentation_sites as { logo_svg?: string }[]),
+    ...(json.footer_navigation_sites as { logo_svg?: string | null }[]),
+    ...(json.authority_documentation_sites as { logo_svg?: string | null }[]),
   ]
   const seen = new Set<string>()
   let ok = 0

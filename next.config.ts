@@ -19,6 +19,19 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  // Next defaults to host CPU count minus one, which is 15 workers on the
+  // shared ARM build host and can exhaust RAM/swap during type collection.
+  // Two workers keep release builds bounded; this setting is build-time only.
+  experimental: {
+    cpus: 2,
+  },
+  // The canonical build wrapper runs project-local `tsc --noEmit` in a
+  // separate process before webpack so their peak memory does not overlap.
+  // Direct `next build` calls do not receive this marker and remain checked by
+  // Next.js itself.
+  typescript: {
+    ignoreBuildErrors: process.env.OPEN_LAUNCH_NEXT_TYPECHECK_COMPLETE === "1",
+  },
   // The deployment tool supplies a stable source identifier. Next.js attaches
   // it to client navigations and hard-refreshes an old tab when Server Action
   // IDs change across deployments.

@@ -15,6 +15,7 @@ describe("bounded Google Fonts build contract", () => {
       resolve(repositoryRoot, "scripts/build-next-with-font-cache.ts"),
       "utf8",
     )
+    const nextConfig = await readFile(resolve(repositoryRoot, "next.config.ts"), "utf8")
 
     expect(packageJson.scripts["build:next"]).toBe("bun scripts/build-next-with-font-cache.ts")
     expect(packageJson.scripts.build).toContain("bun run build:next")
@@ -24,5 +25,13 @@ describe("bounded Google Fonts build contract", () => {
     expect(wrapper).toContain('"node",')
     expect(wrapper).toContain('[nextBinary, "build", "--webpack"')
     expect(wrapper).not.toContain("process.execPath")
+    expect(wrapper).toContain('[typeScriptBinary, "--noEmit"]')
+    expect(wrapper.indexOf('[typeScriptBinary, "--noEmit"]')).toBeLessThan(
+      wrapper.indexOf('[nextBinary, "build", "--webpack"'),
+    )
+    expect(wrapper).toContain('OPEN_LAUNCH_NEXT_TYPECHECK_COMPLETE: "1"')
+    expect(nextConfig).toContain(
+      'ignoreBuildErrors: process.env.OPEN_LAUNCH_NEXT_TYPECHECK_COMPLETE === "1"',
+    )
   })
 })

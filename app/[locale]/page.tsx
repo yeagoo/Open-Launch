@@ -185,6 +185,14 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                   </div>
                 </div>
               </Link>
+              <a
+                href="https://ahrefs.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground absolute right-2 bottom-1 text-[9px] leading-none underline-offset-2 hover:underline"
+              >
+                Domain Rating by Ahrefs
+              </a>
             </div>
 
             {/* Today's reads — hero (top 3) + dense list for the rest. */}
