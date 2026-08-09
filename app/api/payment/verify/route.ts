@@ -5,7 +5,6 @@ import { NextResponse } from "next/server"
 import { db } from "@/drizzle/db"
 import { launchStatus, project } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
-import type Stripe from "stripe"
 
 import { auth } from "@/lib/auth"
 import { LAUNCH_SETTINGS } from "@/lib/constants"
@@ -13,20 +12,9 @@ import { confirmPaidPremiumLaunch } from "@/lib/premium-launch-confirmation"
 import { notifyDiscordForScheduledProject } from "@/lib/project-launch-notification"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { createStripeClient } from "@/lib/stripe"
+import { chargedAmountMatches } from "@/lib/stripe-webhook-core"
 
 const PREMIUM_PRICE_CENTS = Math.round(LAUNCH_SETTINGS.PREMIUM_PRICE * 100)
-const EXPECTED_CURRENCY = "usd"
-
-// Mirrors the webhook guard: charged amount must match the expected price
-// AND be in the expected currency (399 JPY must not satisfy a 399-USD-cent
-// check), adding the promo-code discount back. A wrong currency or a
-// non-numeric total is treated as a mismatch rather than silently trusted.
-function chargedAmountMatches(session: Stripe.Checkout.Session, expectedCents: number): boolean {
-  if (session.currency !== EXPECTED_CURRENCY) return false
-  if (typeof session.amount_total !== "number") return false
-  const discountCents = session.total_details?.amount_discount ?? 0
-  return session.amount_total + discountCents === expectedCents
-}
 
 export async function GET(request: Request) {
   try {

@@ -7,6 +7,20 @@ import {
 } from "@/lib/stripe-webhook-core"
 
 describe("Stripe webhook core decisions", () => {
+  it("accepts a tax-exclusive catalogue price with buyer VAT added", () => {
+    expect(
+      chargedAmountMatches(
+        {
+          currency: "usd",
+          amount_subtotal: 2_599,
+          amount_total: 3_119,
+          total_details: { amount_discount: 0, amount_tax: 520, amount_shipping: 0 },
+        } as never,
+        2_599,
+      ),
+    ).toBe(true)
+  })
+
   it("accepts the captured USD amount with an applied discount", () => {
     expect(
       chargedAmountMatches(
@@ -18,6 +32,33 @@ describe("Stripe webhook core decisions", () => {
         4_900,
       ),
     ).toBe(true)
+  })
+
+  it("uses the tax-aware fallback when Stripe omits amount_subtotal", () => {
+    expect(
+      chargedAmountMatches(
+        {
+          currency: "usd",
+          amount_total: 3_119,
+          total_details: { amount_discount: 0, amount_tax: 520, amount_shipping: 0 },
+        } as never,
+        2_599,
+      ),
+    ).toBe(true)
+  })
+
+  it("still rejects a genuinely wrong catalogue price when tax is present", () => {
+    expect(
+      chargedAmountMatches(
+        {
+          currency: "usd",
+          amount_subtotal: 2_999,
+          amount_total: 3_599,
+          total_details: { amount_discount: 0, amount_tax: 600, amount_shipping: 0 },
+        } as never,
+        2_599,
+      ),
+    ).toBe(false)
   })
 
   it("holds wrong currencies and malformed amounts", () => {

@@ -1092,6 +1092,12 @@
   "dashboardPage": {
     "paymentReceivedTitle": "Makse laekus — täname!",
     "paymentReceivedBody": "Basic kirjed avaldatakse aat.ee-s automaatselt. Plus / Pro / Ultra paigutatakse käsitsi kõikidesse saitidesse 1–3 tööpäeva jooksul. Saadame kinnituse e-postiga, kui iga paigutus avaldatakse.",
+    "paymentProcessingTitle": "Makse laekus — töötlemisel",
+    "paymentProcessingBody": "Stripe kinnitas makse ja süsteem lõpetab tellimuse töötlemist. Ära maksa uuesti. Kui projekt on endiselt ootel, värskenda peagi töölauda.",
+    "paymentReviewTitle": "Makse laekus — kontrollimisel",
+    "paymentReviewBody": "Makse on laekunud, kuid tarne on turvakontrolliks peatatud. Ära maksa uuesti; vabastame tellimuse või võtame sinuga ühendust.",
+    "paymentRefundedTitle": "Makse tagastatud",
+    "paymentRefundedBody": "See makse tagastati algsele makseviisile. Enne sama projekti uut makset võta meiega ühendust.",
     "title": "Töölaud",
     "exploreLaunches": "Avasta väljalaseid",
     "submitProject": "Esita projekt",

@@ -1092,6 +1092,12 @@
   "dashboardPage": {
     "paymentReceivedTitle": "お支払いありがとうございます！",
     "paymentReceivedBody": "Basic リスティングは aat.ee に自動で公開されます。Plus / Pro / Ultra は 1〜3 営業日以内に全サイトへ手動で掲載されます。掲載が完了次第、メールでお知らせします。",
+    "paymentProcessingTitle": "お支払いを受け付けました — 処理中",
+    "paymentProcessingBody": "Stripe でお支払いを確認し、システムが注文を処理しています。再度支払わないでください。保留表示が続く場合は、しばらくしてからダッシュボードを更新してください。",
+    "paymentReviewTitle": "お支払いを受け付けました — 確認中",
+    "paymentReviewBody": "お支払いは完了していますが、安全確認のため提供を一時停止しています。再度支払わないでください。確認後に注文を解除するか、ご連絡します。",
+    "paymentRefundedTitle": "返金済み",
+    "paymentRefundedBody": "このお支払いは元のお支払い方法へ返金されました。同じプロジェクトで再度決済する前にお問い合わせください。",
     "title": "ダッシュボード",
     "exploreLaunches": "ローンチを探す",
     "submitProject": "プロジェクトを投稿",

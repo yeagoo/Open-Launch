@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 
 import {
   RiAddLine,
+  RiAlertLine,
   RiCalendarLine,
   RiCheckLine,
   RiFireLine,
@@ -72,13 +73,24 @@ export default async function Dashboard({
     getMessages(),
   ])
 
-  // Set when the Stripe Payment Link redirected here via
-  // /payment/verify after a successful directory-order checkout.
-  // The webhook has already marked the order paid; this banner is
-  // just the buyer-facing confirmation so they don't wonder whether
-  // anything happened.
+  // Set by /payment/verify after reading both Stripe and the durable order.
+  // Never call a held/pending/refunded payment successful: that wording caused
+  // buyers to retry while the first charge was already being reviewed.
   const sp = await searchParams
-  const showOrderSuccess = sp.dir_order === "success"
+  const orderNotice =
+    sp.dir_order === "success"
+      ? { title: t("paymentReceivedTitle"), body: t("paymentReceivedBody"), success: true }
+      : sp.dir_order === "review"
+        ? { title: t("paymentReviewTitle"), body: t("paymentReviewBody"), success: false }
+        : sp.dir_order === "refunded"
+          ? { title: t("paymentRefundedTitle"), body: t("paymentRefundedBody"), success: false }
+          : sp.dir_order === "processing"
+            ? {
+                title: t("paymentProcessingTitle"),
+                body: t("paymentProcessingBody"),
+                success: false,
+              }
+            : null
 
   // Get data from actions
   const upvotedProjectsData = await getUserUpvotedProjects()
@@ -119,15 +131,29 @@ export default async function Dashboard({
     <NextIntlClientProvider messages={pickClientMessages(messages, ["dashboardBoost"])}>
       <div className="min-h-[calc(100vh-64px)] py-6 sm:py-8">
         <div className="mx-auto max-w-6xl px-4">
-          {showOrderSuccess && (
-            <div className="mb-6 flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-                <RiCheckLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          {orderNotice && (
+            <div
+              className={`mb-6 flex items-start gap-3 rounded-lg border p-4 ${
+                orderNotice.success
+                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  : "border-amber-500/30 bg-amber-500/5"
+              }`}
+            >
+              <div
+                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
+                  orderNotice.success ? "bg-emerald-500/15" : "bg-amber-500/15"
+                }`}
+              >
+                {orderNotice.success ? (
+                  <RiCheckLine className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <RiAlertLine className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-foreground text-sm font-semibold">{t("paymentReceivedTitle")}</p>
+                <p className="text-foreground text-sm font-semibold">{orderNotice.title}</p>
                 <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-                  {t("paymentReceivedBody")}
+                  {orderNotice.body}
                 </p>
               </div>
             </div>

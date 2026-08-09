@@ -113,7 +113,7 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
       window.location.href = redirectUrl
     } catch (err) {
       console.error(err)
-      toast.error("Failed to resume payment")
+      toast.error(err instanceof Error ? err.message : "Failed to resume payment")
       setIsDeleting(false)
     }
   }

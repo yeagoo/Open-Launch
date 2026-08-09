@@ -1096,6 +1096,12 @@
   "dashboardPage": {
     "paymentReceivedTitle": "Pago recibido — ¡gracias!",
     "paymentReceivedBody": "Los listados Basic se publican automáticamente en aat.ee. Plus / Pro / Ultra se colocan manualmente en todos los sitios en 1–3 días laborables. Te enviaremos una confirmación por correo cuando cada colocación esté en línea.",
+    "paymentProcessingTitle": "Pago recibido — procesando",
+    "paymentProcessingBody": "Stripe confirmó el pago y nuestro sistema está terminando el pedido. No vuelvas a pagar. Actualiza el panel en unos instantes si el proyecto sigue pendiente.",
+    "paymentReviewTitle": "Pago recibido — en revisión",
+    "paymentReviewBody": "Recibimos el pago, pero pausamos la entrega para una revisión de seguridad. No vuelvas a pagar; liberaremos el pedido o nos pondremos en contacto contigo.",
+    "paymentRefundedTitle": "Pago reembolsado",
+    "paymentRefundedBody": "Este pago se devolvió al método de pago original. Contáctanos antes de iniciar otro pago para el mismo proyecto.",
     "title": "Panel",
     "exploreLaunches": "Explorar lanzamientos",
     "submitProject": "Enviar un proyecto",

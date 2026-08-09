@@ -11,17 +11,27 @@ const DEAD_SUBSCRIPTION_STATUSES: ReadonlySet<Stripe.Subscription.Status> = new 
 ])
 
 /**
- * Promotion codes legitimately lower amount_total, so add the Stripe-reported
- * discount back before comparing with the price captured by the application.
+ * Validate the configured catalogue price, not the tax-inclusive amount that
+ * happened to be charged to this buyer.
+ *
+ * Stripe defines `amount_subtotal` as the line-item total before discounts and
+ * taxes, which is exactly the value our tier configuration captures. Prefer it
+ * when present. The fallback preserves compatibility with older/synthetic
+ * Checkout payloads by removing tax and shipping and adding discounts back.
  */
 export function chargedAmountMatches(
   session: Stripe.Checkout.Session,
   expectedCents: number,
 ): boolean {
   if (session.currency !== EXPECTED_CURRENCY) return false
+  if (typeof session.amount_subtotal === "number") {
+    return session.amount_subtotal === expectedCents
+  }
   if (typeof session.amount_total !== "number") return false
   const discountCents = session.total_details?.amount_discount ?? 0
-  return session.amount_total + discountCents === expectedCents
+  const taxCents = session.total_details?.amount_tax ?? 0
+  const shippingCents = session.total_details?.amount_shipping ?? 0
+  return session.amount_total + discountCents - taxCents - shippingCents === expectedCents
 }
 
 export function directoryOrderIdFromReference(reference: string | null): string | null {

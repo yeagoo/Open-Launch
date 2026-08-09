@@ -546,6 +546,45 @@ async function handleStripeWebhook(request: Request) {
         stripeDiagnostic("info", "Marked directory order as failed (async)", failedOrderId)
       }
       return NextResponse.json({ success: true }, { status: 200 })
+    } else if (event.type === "charge.refunded") {
+      const charge = event.data.object as Stripe.Charge
+      if (!charge.refunded) {
+        // Stripe also emits charge.refunded for partial refunds. Keep the order
+        // live until the entire charge has been returned.
+        return NextResponse.json({ success: true, noop: true }, { status: 200 })
+      }
+
+      const paymentIntentId =
+        typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : (charge.payment_intent?.id ?? null)
+      if (!paymentIntentId) {
+        stripeDiagnostic("warn", "Fully refunded charge has no payment intent", charge.id)
+        return NextResponse.json({ success: true, noop: true }, { status: 200 })
+      }
+
+      // directory_order stores the Checkout Session id. Resolve the bounded
+      // session list from the refunded PaymentIntent, then require both the
+      // signed client reference and stored session id before changing state.
+      const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId })
+      let refundedOrders = 0
+      for (const session of sessions.data.slice(0, 10)) {
+        const orderId = directoryOrderIdFromReference(session.client_reference_id)
+        if (!orderId) continue
+        const result = await db
+          .update(directoryOrder)
+          .set({ status: "refunded", amountVerified: false, updatedAt: new Date() })
+          .where(
+            and(
+              eq(directoryOrder.id, orderId),
+              eq(directoryOrder.stripeSessionId, session.id),
+              inArray(directoryOrder.status, ["paid", "fulfilled"]),
+            ),
+          )
+        refundedOrders += result.rowCount ?? 0
+      }
+      stripeDiagnostic("info", "Synchronized fully refunded directory orders", refundedOrders)
+      return NextResponse.json({ success: true, refundedOrders }, { status: 200 })
     } else if (event.type === "customer.subscription.deleted") {
       // Legacy: Ultra used to be a subscription. For any pre-redesign Ultra
       // subscription still active in Stripe, when it's canceled (by user or
@@ -897,6 +936,43 @@ async function handleDirectoryOrderCompleted(
         ref,
       )
     } else if (!currentOrder.amountVerified) {
+      // A prior application version compared the tax-inclusive amount_total
+      // with the tax-exclusive catalogue price. Once the corrected validator
+      // proves the same stored session is valid, a Stripe replay may safely
+      // release that false-positive hold and repair all idempotent post-payment
+      // work. Genuine amount mismatches remain held.
+      if (
+        !amountMismatch &&
+        currentOrder.status === "paid" &&
+        currentOrder.stripeSessionId === session.id
+      ) {
+        const release = await db
+          .update(directoryOrder)
+          .set({ amountVerified: true, updatedAt: new Date() })
+          .where(
+            and(
+              eq(directoryOrder.id, orderId),
+              eq(directoryOrder.status, "paid"),
+              eq(directoryOrder.amountVerified, false),
+              eq(directoryOrder.stripeSessionId, session.id),
+            ),
+          )
+        if ((release.rowCount ?? 0) > 0) {
+          stripeDiagnostic("info", "Released tax-valid directory order hold", orderId)
+          const terminalResponse = await finishDirectoryOrderPayment({
+            stripe,
+            session,
+            orderId,
+            order,
+            projectId: order.projectId,
+            tier,
+            held: false,
+          })
+          if (terminalResponse) return terminalResponse
+          return NextResponse.json({ success: true, repairedHold: true }, { status: 200 })
+        }
+      }
+
       // Amount-mismatch orders are deliberately held for admin review. A
       // webhook retry must not bypass that hold and schedule the project.
       stripeDiagnostic("info", "Directory order remains held; scheduling skipped", orderId)

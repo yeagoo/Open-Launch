@@ -58,11 +58,13 @@ const refundsCreateMock = vi.hoisted(() =>
     id: "re_123",
   })),
 )
+const checkoutSessionsListMock = vi.hoisted(() => vi.fn())
 
 vi.mock("@/lib/stripe", () => ({
   createStripeClient: () => ({
     webhooks: { constructEvent: constructEventMock },
     refunds: { create: refundsCreateMock },
+    checkout: { sessions: { list: checkoutSessionsListMock } },
     subscriptions: { cancel: vi.fn() },
   }),
 }))
@@ -192,6 +194,7 @@ beforeEach(() => {
   dbResults.length = 0
   constructEventMock.mockReset()
   refundsCreateMock.mockClear()
+  checkoutSessionsListMock.mockReset()
   adminNotifyMock.mockClear()
   buyerNotifyMock.mockClear()
   enqueueEmailMock.mockReset()
@@ -257,6 +260,51 @@ describe("stripe webhook event routing", () => {
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ success: true, noop: true })
     expect(refundsCreateMock).not.toHaveBeenCalled()
+  })
+
+  it("synchronizes a fully refunded directory payment", async () => {
+    checkoutSessionsListMock.mockResolvedValueOnce({
+      data: [{ id: "cs_refunded", client_reference_id: `dir_${ORDER_ID}` }],
+    })
+    dbResults.push({ rowCount: 1 })
+    constructEventMock.mockReturnValue({
+      id: "evt_refunded",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_refunded",
+          refunded: true,
+          payment_intent: "pi_refunded",
+        },
+      },
+    })
+
+    const res = await POST(webhookRequest())
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ success: true, refundedOrders: 1 })
+    expect(checkoutSessionsListMock).toHaveBeenCalledWith({
+      payment_intent: "pi_refunded",
+    })
+  })
+
+  it("does not close an order for a partial refund", async () => {
+    constructEventMock.mockReturnValue({
+      id: "evt_partial_refund",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_partial",
+          refunded: false,
+          payment_intent: "pi_partial",
+        },
+      },
+    })
+
+    const res = await POST(webhookRequest())
+
+    expect(await res.json()).toEqual({ success: true, noop: true })
+    expect(checkoutSessionsListMock).not.toHaveBeenCalled()
   })
 
   it("refunds a paid session whose referenced project no longer exists exactly once", async () => {
@@ -463,6 +511,46 @@ describe("premium payment durable completion", () => {
 })
 
 describe("directory payment durable completion", () => {
+  it("releases a legacy VAT false-positive hold on same-session replay", async () => {
+    const session = {
+      ...paidSession("cs_directory_vat_repair"),
+      amount_subtotal: 699,
+      amount_total: 839,
+      total_details: { amount_discount: 0, amount_tax: 140, amount_shipping: 0 },
+    }
+    dbResults.push(
+      [
+        orderRow({
+          projectId: "project-1",
+          tier: "plus",
+          status: "paid",
+          stripeSessionId: "cs_directory_vat_repair",
+          amountCents: 839,
+          amountVerified: false,
+        }),
+      ],
+      { rowCount: 0 },
+      [
+        {
+          status: "paid",
+          stripeSessionId: "cs_directory_vat_repair",
+          amountVerified: false,
+        },
+      ],
+      { rowCount: 1 },
+      [{ name: "Example", websiteUrl: "https://example.com" }],
+    )
+
+    const res = await fireCompleted(session)
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ success: true, repairedHold: true })
+    expect(confirmPaidPremiumLaunchMock).toHaveBeenCalledWith("project-1", {
+      allowNonPremiumProcessed: true,
+    })
+    expect(enqueueLaunchSyndicationMock).toHaveBeenCalledWith(ORDER_ID, "project-1", "plus")
+  })
+
   it("persists admin and buyer emails after the guarded paid transition", async () => {
     const session = {
       ...paidSession("cs_directory_paid"),

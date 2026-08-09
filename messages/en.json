@@ -1092,6 +1092,12 @@
   "dashboardPage": {
     "paymentReceivedTitle": "Payment received — thank you!",
     "paymentReceivedBody": "Basic listings go live on aat.ee automatically. Plus / Pro / Ultra are placed manually across all sites within 1–3 business days. We'll email a confirmation when each placement is live.",
+    "paymentProcessingTitle": "Payment received — processing",
+    "paymentProcessingBody": "Stripe confirmed your payment and our webhook is finishing the order. Do not pay again. Refresh your dashboard in a moment if the project still shows payment pending.",
+    "paymentReviewTitle": "Payment received — under review",
+    "paymentReviewBody": "We received your payment but paused fulfilment for a safety review. Do not pay again. Our team will clear the order or contact you.",
+    "paymentRefundedTitle": "Payment refunded",
+    "paymentRefundedBody": "This payment was refunded to its original payment method. Please contact us before starting another checkout for the same project.",
     "title": "Dashboard",
     "exploreLaunches": "Explore Launches",
     "submitProject": "Submit a Project",

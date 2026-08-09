@@ -1092,6 +1092,12 @@
   "dashboardPage": {
     "paymentReceivedTitle": "Pagamento recebido — obrigado!",
     "paymentReceivedBody": "Listagens Basic entram no ar automaticamente na aat.ee. Plus / Pro / Ultra são colocadas manualmente em todos os sites em 1–3 dias úteis. Enviaremos um e-mail de confirmação quando cada publicação estiver no ar.",
+    "paymentProcessingTitle": "Pagamento recebido — processando",
+    "paymentProcessingBody": "A Stripe confirmou o pagamento e o sistema está concluindo o pedido. Não pague novamente. Atualize o painel em instantes se o projeto continuar pendente.",
+    "paymentReviewTitle": "Pagamento recebido — em análise",
+    "paymentReviewBody": "Recebemos o pagamento, mas pausamos a entrega para uma análise de segurança. Não pague novamente; liberaremos o pedido ou entraremos em contato.",
+    "paymentRefundedTitle": "Pagamento reembolsado",
+    "paymentRefundedBody": "Este pagamento foi devolvido ao método de pagamento original. Fale conosco antes de iniciar outro checkout para o mesmo projeto.",
     "title": "Painel",
     "exploreLaunches": "Explorar lançamentos",
     "submitProject": "Enviar um projeto",

@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation"
 
+import { db } from "@/drizzle/db"
+import { directoryOrder } from "@/drizzle/db/schema"
+import { eq } from "drizzle-orm"
+
 import { DIRECTORY_ORDER_REF_PREFIX } from "@/lib/directory-tiers"
 import { createStripeClient } from "@/lib/stripe"
+import { directoryOrderIdFromReference } from "@/lib/stripe-webhook-core"
 
 export const dynamic = "force-dynamic"
 
@@ -49,9 +54,11 @@ export default async function PaymentVerifyPage({
   }
 
   let ref: string | null = null
+  let paymentStatus: string | null = null
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId)
     ref = session.client_reference_id ?? null
+    paymentStatus = session.payment_status
   } catch (err) {
     // Stripe was unreachable or the session id was bogus. The
     // webhook is the source of truth, so the safest fallback is to
@@ -62,7 +69,35 @@ export default async function PaymentVerifyPage({
   }
 
   if (ref?.startsWith(DIRECTORY_ORDER_REF_PREFIX)) {
-    redirect(`/${locale}/dashboard?dir_order=success`)
+    const orderId = directoryOrderIdFromReference(ref)
+    if (!orderId || paymentStatus !== "paid") {
+      redirect(`/${locale}/dashboard?dir_order=processing`)
+    }
+
+    const [order] = await db
+      .select({
+        status: directoryOrder.status,
+        amountVerified: directoryOrder.amountVerified,
+        stripeSessionId: directoryOrder.stripeSessionId,
+      })
+      .from(directoryOrder)
+      .where(eq(directoryOrder.id, orderId))
+      .limit(1)
+
+    if (order?.status === "refunded") {
+      redirect(`/${locale}/dashboard?dir_order=refunded`)
+    }
+    if (
+      (order?.status === "paid" || order?.status === "fulfilled") &&
+      order.amountVerified &&
+      order.stripeSessionId === sessionId
+    ) {
+      redirect(`/${locale}/dashboard?dir_order=success`)
+    }
+    if (order?.status === "paid" && !order.amountVerified) {
+      redirect(`/${locale}/dashboard?dir_order=review`)
+    }
+    redirect(`/${locale}/dashboard?dir_order=processing`)
   }
 
   // Premium-launch (bare project id) or unknown — forward to the

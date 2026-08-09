@@ -5,7 +5,7 @@ import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { directoryOrder, launchSyndication, project, user } from "@/drizzle/db/schema"
-import { and, desc, eq, gt, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { getLocale } from "next-intl/server"
 
 import { logAdminAction } from "@/lib/admin-audit"
@@ -29,10 +29,19 @@ interface CreateResult {
   redirectUrl: string
 }
 
-// If the same (projectId, tier, url) has a pending row younger than
-// this, reuse it instead of inserting a fresh duplicate. Prevents
-// table bloat from repeated Boost-button clicks without payment.
-const PENDING_REUSE_WINDOW_MS = 30 * 60 * 1000 // 30 min
+const ACTIVE_CHECKOUT_STATUSES = ["pending", "paid", "fulfilled"] as const
+
+function activeCheckoutError(status: string, amountVerified: boolean): Error {
+  if (status === "paid" && !amountVerified) {
+    return new Error(
+      "Payment was already received and is under review. Do not pay again; we will email you when it is cleared.",
+    )
+  }
+  if (status === "paid") {
+    return new Error("This tier has already been paid for and is being fulfilled.")
+  }
+  return new Error("This tier has already been purchased for this project.")
+}
 
 /**
  * Creates (or reuses) a `pending` directory_order row for the
@@ -61,28 +70,7 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
     throw new Error(`Invalid tier: ${input.tier}`)
   }
 
-  // Confirm the user actually owns the project they're paying for.
-  // Without this check anyone could buy a directory listing for any
-  // project id they guessed.
-  const [proj] = await db
-    .select({
-      id: project.id,
-      websiteUrl: project.websiteUrl,
-      createdBy: project.createdBy,
-    })
-    .from(project)
-    .where(and(eq(project.id, input.projectId), eq(project.createdBy, session.user.id)))
-    .limit(1)
-
-  if (!proj) {
-    throw new Error("Project not found or not owned by current user")
-  }
-
   const tier = input.tier
-  const url = (proj.websiteUrl ?? "").trim()
-  if (!url) {
-    throw new Error("Project has no website URL")
-  }
 
   // Resolve the payment link first so we don't write a pending row
   // when the env var is missing — keeps the orders table clean.
@@ -93,38 +81,65 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
   // runs out of next-intl context, so we have to remember it here.
   const buyerLocale = await getLocale()
 
-  // Dedup: if there's a recent pending row for the same triple,
-  // reuse it. Avoids accumulating one row per Boost-button click
-  // when users abandon checkout and try again.
-  //
-  // Best-effort, not atomic: two parallel calls from the same user
-  // can both miss the SELECT and both INSERT. Worst case is one
-  // duplicate pending row that the next dedup pass will collapse —
-  // not worth the complexity of a unique partial index here.
-  const cutoff = new Date(Date.now() - PENDING_REUSE_WINDOW_MS)
-  const [existing] = await db
-    .select({ id: directoryOrder.id })
-    .from(directoryOrder)
-    .where(
-      and(
-        eq(directoryOrder.projectId, proj.id),
-        eq(directoryOrder.tier, tier),
-        eq(directoryOrder.url, url),
-        eq(directoryOrder.status, "pending"),
-        gt(directoryOrder.createdAt, cutoff),
-      ),
-    )
-    .orderBy(desc(directoryOrder.createdAt))
-    .limit(1)
+  const orderId = await db.transaction(async (tx) => {
+    // Lock the owned project before looking for an active order. Concurrent
+    // clicks for the same project now serialize and reuse one order instead of
+    // racing through SELECT + INSERT into two payable references.
+    const [proj] = await tx
+      .select({
+        id: project.id,
+        websiteUrl: project.websiteUrl,
+      })
+      .from(project)
+      .where(and(eq(project.id, input.projectId), eq(project.createdBy, session.user.id)))
+      .for("update")
+      .limit(1)
 
-  let orderId: string
-  if (existing) {
-    orderId = existing.id
-  } else {
+    if (!proj) {
+      throw new Error("Project not found or not owned by current user")
+    }
+
+    const url = (proj.websiteUrl ?? "").trim()
+    if (!url) {
+      throw new Error("Project has no website URL")
+    }
+
+    // Dedup: reuse any still-pending row for the same purchase. A Payment Link
+    // creates Checkout Sessions lazily and Stripe expires opened sessions, so
+    // the durable order row is the correct identity even after 30 minutes.
+    //
+    // Paid/fulfilled rows are a hard stop. In particular, a held payment keeps
+    // the project in payment_pending; allowing a fresh order there would invite
+    // the buyer to pay twice while an operator reviews the first charge.
+    const [existing] = await tx
+      .select({
+        id: directoryOrder.id,
+        status: directoryOrder.status,
+        amountVerified: directoryOrder.amountVerified,
+      })
+      .from(directoryOrder)
+      .where(
+        and(
+          eq(directoryOrder.projectId, proj.id),
+          eq(directoryOrder.tier, tier),
+          eq(directoryOrder.url, url),
+          inArray(directoryOrder.status, [...ACTIVE_CHECKOUT_STATUSES]),
+        ),
+      )
+      .orderBy(desc(directoryOrder.createdAt))
+      .limit(1)
+
+    if (existing) {
+      if (existing.status !== "pending") {
+        throw activeCheckoutError(existing.status, existing.amountVerified)
+      }
+      return existing.id
+    }
+
     // amountCents is intentionally NULL until the webhook stamps the
     // real Stripe-charged amount — pending rows shouldn't show a
     // claimed price that has no authority.
-    const [row] = await db
+    const [row] = await tx
       .insert(directoryOrder)
       .values({
         projectId: proj.id,
@@ -136,8 +151,8 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
         currency: "usd",
       })
       .returning({ id: directoryOrder.id })
-    orderId = row.id
-  }
+    return row.id
+  })
 
   const ref = `${DIRECTORY_ORDER_REF_PREFIX}${orderId}`
   const sep = paymentLink.includes("?") ? "&" : "?"
@@ -173,11 +188,25 @@ export async function resumePendingDirectoryOrder(
   if (!proj) throw new Error("Project not found or not owned")
 
   const [existing] = await db
-    .select({ id: directoryOrder.id, tier: directoryOrder.tier })
+    .select({
+      id: directoryOrder.id,
+      tier: directoryOrder.tier,
+      status: directoryOrder.status,
+      amountVerified: directoryOrder.amountVerified,
+    })
     .from(directoryOrder)
-    .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
+    .where(
+      and(
+        eq(directoryOrder.projectId, projectId),
+        inArray(directoryOrder.status, [...ACTIVE_CHECKOUT_STATUSES]),
+      ),
+    )
     .orderBy(desc(directoryOrder.createdAt))
     .limit(1)
+
+  if (existing && existing.status !== "pending") {
+    throw activeCheckoutError(existing.status, existing.amountVerified)
+  }
 
   if (existing && isDirectoryTier(existing.tier)) {
     const paymentLink = getPaymentLinkUrl(existing.tier)
