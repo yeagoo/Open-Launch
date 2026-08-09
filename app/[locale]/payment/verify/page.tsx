@@ -74,15 +74,27 @@ export default async function PaymentVerifyPage({
       redirect(`/${locale}/dashboard?dir_order=processing`)
     }
 
-    const [order] = await db
-      .select({
-        status: directoryOrder.status,
-        amountVerified: directoryOrder.amountVerified,
-        stripeSessionId: directoryOrder.stripeSessionId,
-      })
-      .from(directoryOrder)
-      .where(eq(directoryOrder.id, orderId))
-      .limit(1)
+    let order: {
+      status: string
+      amountVerified: boolean
+      stripeSessionId: string | null
+    } | null = null
+    try {
+      const [foundOrder] = await db
+        .select({
+          status: directoryOrder.status,
+          amountVerified: directoryOrder.amountVerified,
+          stripeSessionId: directoryOrder.stripeSessionId,
+        })
+        .from(directoryOrder)
+        .where(eq(directoryOrder.id, orderId))
+        .limit(1)
+      order = foundOrder ?? null
+    } catch {
+      // Stripe says paid but our durable state is temporarily unavailable.
+      // Never replace uncertainty with a success banner.
+      redirect(`/${locale}/dashboard?dir_order=processing`)
+    }
 
     if (order?.status === "refunded") {
       redirect(`/${locale}/dashboard?dir_order=refunded`)

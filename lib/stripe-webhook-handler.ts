@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 import { db } from "@/drizzle/db"
 import { directoryOrder, launchStatus, launchSyndication, project } from "@/drizzle/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, inArray, isNull, or } from "drizzle-orm"
 import type Stripe from "stripe"
 
 import { LAUNCH_SETTINGS } from "@/lib/constants"
@@ -573,12 +573,25 @@ async function handleStripeWebhook(request: Request) {
         if (!orderId) continue
         const result = await db
           .update(directoryOrder)
-          .set({ status: "refunded", amountVerified: false, updatedAt: new Date() })
+          .set({
+            status: "refunded",
+            amountCents: charge.amount,
+            currency: charge.currency,
+            stripeSessionId: session.id,
+            paidAt: new Date(charge.created * 1000),
+            amountVerified: false,
+            updatedAt: new Date(),
+          })
           .where(
             and(
               eq(directoryOrder.id, orderId),
-              eq(directoryOrder.stripeSessionId, session.id),
-              inArray(directoryOrder.status, ["paid", "fulfilled"]),
+              or(
+                and(
+                  eq(directoryOrder.stripeSessionId, session.id),
+                  inArray(directoryOrder.status, ["paid", "fulfilled"]),
+                ),
+                and(isNull(directoryOrder.stripeSessionId), eq(directoryOrder.status, "pending")),
+              ),
             ),
           )
         refundedOrders += result.rowCount ?? 0
@@ -745,6 +758,10 @@ async function handleDirectoryOrderCompleted(
   // but the still-open Payment Link completed) is money with nowhere to
   // go → orphan refund + alert.
   if (!order.projectId) {
+    if (order.status === "refunded" && order.stripeSessionId === session.id) {
+      stripeDiagnostic("info", "Refunded directory order replay ignored after deletion", orderId)
+      return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
+    }
     if (order.status === "paid" || order.status === "fulfilled") {
       // Same-session Stripe retry after deletion → genuine no-op. A
       // DIFFERENT session id means the buyer paid the same order twice
@@ -899,8 +916,13 @@ async function handleDirectoryOrderCompleted(
     // stale (someone canceled/refunded the order between createCheckout
     // and pay). The former is normal; the latter means money came in
     // for an order the user explicitly killed — admin needs to refund.
+    const refundAlreadySynchronized =
+      currentOrder.status === "refunded" && currentOrder.stripeSessionId === session.id
     const STALE_STATUSES: ReadonlyArray<string> = ["canceled", "refunded", "failed"]
-    if (STALE_STATUSES.includes(currentOrder.status)) {
+    if (refundAlreadySynchronized) {
+      stripeDiagnostic("info", "Refunded directory order replay ignored", orderId)
+      return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
+    } else if (STALE_STATUSES.includes(currentOrder.status)) {
       stripeDiagnostic(
         "warn",
         "⚠️ Paid webhook hit non-pending order:",

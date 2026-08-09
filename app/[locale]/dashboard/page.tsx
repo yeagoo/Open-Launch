@@ -33,6 +33,7 @@ import { DashboardProjectCard } from "@/components/dashboard/dashboard-project-c
 import { DraftProjectRow } from "@/components/dashboard/draft-project-row"
 import { SkillApiKeysCard } from "@/components/dashboard/skill-api-keys-card"
 import { getUserBookmarkedProjects } from "@/app/actions/bookmarks"
+import { listMyActiveDirectoryOrderStates } from "@/app/actions/directory-orders"
 import { getUserCreatedProjects, getUserUpvotedProjects } from "@/app/actions/projects"
 import { listSkillApiKeys } from "@/app/actions/skill-api-keys"
 
@@ -93,10 +94,22 @@ export default async function Dashboard({
             : null
 
   // Get data from actions
-  const upvotedProjectsData = await getUserUpvotedProjects()
-  const createdProjectsData = await getUserCreatedProjects()
-  const bookmarkedProjectsData = await getUserBookmarkedProjects()
-  const skillApiKeys = await listSkillApiKeys()
+  const [
+    upvotedProjectsData,
+    createdProjectsData,
+    bookmarkedProjectsData,
+    skillApiKeys,
+    activeDirectoryOrderStates,
+  ] = await Promise.all([
+    getUserUpvotedProjects(),
+    getUserCreatedProjects(),
+    getUserBookmarkedProjects(),
+    listSkillApiKeys(),
+    listMyActiveDirectoryOrderStates(),
+  ])
+  const activeOrderByProject = new Map(
+    activeDirectoryOrderStates.map((order) => [order.projectId, order]),
+  )
 
   // Process the data to match our expected formats
   const upvotedProjects = upvotedProjectsData.map((item) => item.project) as BaseProject[]
@@ -202,19 +215,24 @@ export default async function Dashboard({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {draftProjects.map((project) => (
-                        <DraftProjectRow
-                          key={project.id}
-                          id={project.id}
-                          name={project.name}
-                          slug={project.slug}
-                          logoUrl={project.logoUrl}
-                          description={project.description}
-                          launchStatus={project.launchStatus}
-                          scheduledLaunchDate={project.scheduledLaunchDate}
-                          websiteUrl={project.websiteUrl}
-                        />
-                      ))}
+                      {draftProjects.map((project) => {
+                        const activeOrder = activeOrderByProject.get(project.id)
+                        return (
+                          <DraftProjectRow
+                            key={project.id}
+                            id={project.id}
+                            name={project.name}
+                            slug={project.slug}
+                            logoUrl={project.logoUrl}
+                            description={project.description}
+                            launchStatus={project.launchStatus}
+                            directoryOrderStatus={activeOrder?.status}
+                            directoryOrderAmountVerified={activeOrder?.amountVerified}
+                            scheduledLaunchDate={project.scheduledLaunchDate}
+                            websiteUrl={project.websiteUrl}
+                          />
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>

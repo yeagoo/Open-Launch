@@ -275,6 +275,9 @@ describe("stripe webhook event routing", () => {
           id: "ch_refunded",
           refunded: true,
           payment_intent: "pi_refunded",
+          amount: 699,
+          currency: "usd",
+          created: 1_786_000_000,
         },
       },
     })
@@ -305,6 +308,56 @@ describe("stripe webhook event routing", () => {
 
     expect(await res.json()).toEqual({ success: true, noop: true })
     expect(checkoutSessionsListMock).not.toHaveBeenCalled()
+  })
+
+  it("keeps a refund authoritative when it arrives before checkout completion", async () => {
+    checkoutSessionsListMock.mockResolvedValueOnce({
+      data: [{ id: "cs_refund_first", client_reference_id: `dir_${ORDER_ID}` }],
+    })
+    dbResults.push({ rowCount: 1 })
+    constructEventMock.mockReturnValue({
+      id: "evt_refund_first",
+      type: "charge.refunded",
+      data: {
+        object: {
+          id: "ch_refund_first",
+          refunded: true,
+          payment_intent: "pi_refund_first",
+          amount: 699,
+          currency: "usd",
+          created: 1_786_000_000,
+        },
+      },
+    })
+
+    const refundResponse = await POST(webhookRequest())
+    expect(await refundResponse.json()).toEqual({ success: true, refundedOrders: 1 })
+
+    dbResults.length = 0
+    dbResults.push(
+      [
+        orderRow({
+          projectId: "project-1",
+          status: "refunded",
+          stripeSessionId: "cs_refund_first",
+          amountVerified: false,
+        }),
+      ],
+      { rowCount: 0 },
+      [
+        {
+          status: "refunded",
+          stripeSessionId: "cs_refund_first",
+          amountVerified: false,
+        },
+      ],
+    )
+
+    const completionResponse = await fireCompleted(paidSession("cs_refund_first"))
+
+    expect(await completionResponse.json()).toEqual({ success: true, idempotent: true })
+    expect(refundsCreateMock).not.toHaveBeenCalled()
+    expect(enqueueLaunchSyndicationMock).not.toHaveBeenCalled()
   })
 
   it("refunds a paid session whose referenced project no longer exists exactly once", async () => {
@@ -641,6 +694,14 @@ describe("directory payment durable completion", () => {
 })
 
 describe("directory order with deleted project (null projectId)", () => {
+  it("does not refund again when the synchronized refund is replayed after deletion", async () => {
+    dbResults.push([orderRow({ status: "refunded", stripeSessionId: "cs_refunded" })])
+    const res = await fireCompleted(paidSession("cs_refunded"))
+    expect(await res.json()).toEqual({ success: true, idempotent: true })
+    expect(refundsCreateMock).not.toHaveBeenCalled()
+    expect(adminNotifyMock).not.toHaveBeenCalled()
+  })
+
   it("refunds a pending order — money has nowhere to go", async () => {
     dbResults.push([orderRow({ status: "pending" })])
     const res = await fireCompleted(paidSession("cs_second"))

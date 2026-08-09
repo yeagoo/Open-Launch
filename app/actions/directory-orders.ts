@@ -111,7 +111,7 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
     // Paid/fulfilled rows are a hard stop. In particular, a held payment keeps
     // the project in payment_pending; allowing a fresh order there would invite
     // the buyer to pay twice while an operator reviews the first charge.
-    const [existing] = await tx
+    const existingOrders = await tx
       .select({
         id: directoryOrder.id,
         status: directoryOrder.status,
@@ -127,13 +127,14 @@ export async function createDirectoryOrder(input: CreateInput): Promise<CreateRe
         ),
       )
       .orderBy(desc(directoryOrder.createdAt))
-      .limit(1)
 
-    if (existing) {
-      if (existing.status !== "pending") {
-        throw activeCheckoutError(existing.status, existing.amountVerified)
-      }
-      return existing.id
+    const receivedPayment = existingOrders.find((order) => order.status !== "pending")
+    if (receivedPayment) {
+      throw activeCheckoutError(receivedPayment.status, receivedPayment.amountVerified)
+    }
+    const pendingOrder = existingOrders[0]
+    if (pendingOrder) {
+      return pendingOrder.id
     }
 
     // amountCents is intentionally NULL until the webhook stamps the
@@ -187,7 +188,7 @@ export async function resumePendingDirectoryOrder(
     .limit(1)
   if (!proj) throw new Error("Project not found or not owned")
 
-  const [existing] = await db
+  const existingOrders = await db
     .select({
       id: directoryOrder.id,
       tier: directoryOrder.tier,
@@ -202,15 +203,16 @@ export async function resumePendingDirectoryOrder(
       ),
     )
     .orderBy(desc(directoryOrder.createdAt))
-    .limit(1)
 
-  if (existing && existing.status !== "pending") {
-    throw activeCheckoutError(existing.status, existing.amountVerified)
+  const receivedPayment = existingOrders.find((order) => order.status !== "pending")
+  if (receivedPayment) {
+    throw activeCheckoutError(receivedPayment.status, receivedPayment.amountVerified)
   }
 
-  if (existing && isDirectoryTier(existing.tier)) {
-    const paymentLink = getPaymentLinkUrl(existing.tier)
-    const ref = `${DIRECTORY_ORDER_REF_PREFIX}${existing.id}`
+  const pendingOrder = existingOrders[0]
+  if (pendingOrder && isDirectoryTier(pendingOrder.tier)) {
+    const paymentLink = getPaymentLinkUrl(pendingOrder.tier)
+    const ref = `${DIRECTORY_ORDER_REF_PREFIX}${pendingOrder.id}`
     const sep = paymentLink.includes("?") ? "&" : "?"
     return { redirectUrl: `${paymentLink}${sep}client_reference_id=${encodeURIComponent(ref)}` }
   }
@@ -246,25 +248,6 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
     throw new Error("Unauthenticated")
   }
 
-  // Ownership + state guard. Only payment_pending projects (which
-  // genuinely have a Stripe session in flight) need this dance. For
-  // payment_failed / SCHEDULED / launched the caller should use
-  // the normal delete path.
-  const [proj] = await db
-    .select({ id: project.id, launchStatus: project.launchStatus })
-    .from(project)
-    .where(and(eq(project.id, projectId), eq(project.createdBy, sess.user.id)))
-    .limit(1)
-  if (!proj) throw new Error("Project not found or not owned")
-  if (proj.launchStatus !== "payment_pending") {
-    throw new Error("Project is not in payment_pending state")
-  }
-
-  const pendingOrders = await db
-    .select({ id: directoryOrder.id })
-    .from(directoryOrder)
-    .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
-
   // We can't proactively expire the open Stripe Checkout Session here:
   // Payment Links create the session only when the buyer opens the link, so
   // we never learn its id, and Stripe has no API to look a session up by
@@ -278,12 +261,44 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
   // two would otherwise leave pending orders whose Stripe session can
   // still be paid against a project the user believes is canceled.
   await db.transaction(async (tx) => {
-    for (const order of pendingOrders) {
-      await tx
-        .update(directoryOrder)
-        .set({ status: "canceled", updatedAt: new Date() })
-        .where(and(eq(directoryOrder.id, order.id), eq(directoryOrder.status, "pending")))
+    // Serialize cancellation with order creation, then lock the active order
+    // rows themselves so a concurrent Stripe webhook cannot flip one to paid
+    // between our safety check and the project deletion.
+    const [proj] = await tx
+      .select({ id: project.id, launchStatus: project.launchStatus })
+      .from(project)
+      .where(and(eq(project.id, projectId), eq(project.createdBy, sess.user.id)))
+      .for("update")
+      .limit(1)
+    if (!proj) throw new Error("Project not found or not owned")
+    if (proj.launchStatus !== "payment_pending") {
+      throw new Error("Project is not in payment_pending state")
     }
+
+    const activeOrders = await tx
+      .select({
+        id: directoryOrder.id,
+        status: directoryOrder.status,
+        amountVerified: directoryOrder.amountVerified,
+      })
+      .from(directoryOrder)
+      .where(
+        and(
+          eq(directoryOrder.projectId, projectId),
+          inArray(directoryOrder.status, [...ACTIVE_CHECKOUT_STATUSES]),
+        ),
+      )
+      .for("update")
+
+    const receivedPayment = activeOrders.find((order) => order.status !== "pending")
+    if (receivedPayment) {
+      throw activeCheckoutError(receivedPayment.status, receivedPayment.amountVerified)
+    }
+
+    await tx
+      .update(directoryOrder)
+      .set({ status: "canceled", updatedAt: new Date() })
+      .where(and(eq(directoryOrder.projectId, projectId), eq(directoryOrder.status, "pending")))
 
     // Since 0048 the delete SET NULLs (not cascades) the order rows, so the
     // canceled orders survive as the audit trail for any late-arriving
@@ -292,6 +307,56 @@ export async function cancelPendingDirectoryOrder(projectId: string): Promise<Ca
   })
 
   return { canceled: true }
+}
+
+export interface ActiveDirectoryOrderState {
+  projectId: string
+  status: string
+  amountVerified: boolean
+}
+
+/**
+ * Returns one authoritative active order per project for the signed-in user's
+ * dashboard. A received payment outranks a newer pending retry row, keeping
+ * held payments from being rendered as resumable or cancelable checkouts while
+ * webhook/admin reconciliation is pending.
+ */
+export async function listMyActiveDirectoryOrderStates(): Promise<ActiveDirectoryOrderState[]> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user?.id) return []
+
+  const rows = await db
+    .select({
+      projectId: directoryOrder.projectId,
+      status: directoryOrder.status,
+      amountVerified: directoryOrder.amountVerified,
+    })
+    .from(directoryOrder)
+    .innerJoin(project, eq(project.id, directoryOrder.projectId))
+    .where(
+      and(
+        eq(project.createdBy, session.user.id),
+        inArray(directoryOrder.status, [...ACTIVE_CHECKOUT_STATUSES]),
+      ),
+    )
+    .orderBy(desc(directoryOrder.createdAt))
+
+  const latestByProject = new Map<string, ActiveDirectoryOrderState>()
+  for (const row of rows) {
+    if (!row.projectId) continue
+    const current = latestByProject.get(row.projectId)
+    // A received payment always outranks a newer pending retry row. This also
+    // makes legacy duplicate-order data safe before the fixed checkout path has
+    // had a chance to converge it.
+    if (!current || (current.status === "pending" && row.status !== "pending")) {
+      latestByProject.set(row.projectId, {
+        projectId: row.projectId,
+        status: row.status,
+        amountVerified: row.amountVerified,
+      })
+    }
+  }
+  return [...latestByProject.values()]
 }
 
 // ─── Admin actions ───

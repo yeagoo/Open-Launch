@@ -30,6 +30,8 @@ interface DraftProjectRowProps {
   logoUrl: string
   description: string
   launchStatus: string
+  directoryOrderStatus?: string | null
+  directoryOrderAmountVerified?: boolean | null
   scheduledLaunchDate?: string | Date | null
   websiteUrl?: string | null
   // For payment_failed projects we surface a "Retry payment" link, but
@@ -58,8 +60,17 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
   const [loadingEdit, setLoadingEdit] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const status = STATUS_LABELS[props.launchStatus] ?? null
   const isPendingPayment = props.launchStatus === "payment_pending"
+  const isPaymentUnderReview =
+    isPendingPayment &&
+    props.directoryOrderStatus === "paid" &&
+    props.directoryOrderAmountVerified === false
+  const status = isPaymentUnderReview
+    ? {
+        label: "Payment under review",
+        cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800",
+      }
+    : (STATUS_LABELS[props.launchStatus] ?? null)
 
   async function openEdit() {
     setIsEditOpen(true)
@@ -78,8 +89,12 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
   }
 
   async function handleDelete() {
+    if (isPaymentUnderReview) {
+      toast.error("Payment was received and cannot be canceled while it is under review.")
+      return
+    }
     const message = isPendingPayment
-      ? `Cancel pending payment for "${props.name}"? Any in-flight Stripe checkout will be voided.`
+      ? `Cancel pending payment for "${props.name}"? Any late Stripe payment will be refunded.`
       : `Delete "${props.name}"? This can't be undone.`
     if (!confirm(message)) return
     setIsDeleting(true)
@@ -148,7 +163,7 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
           )}
         </div>
         <div className="flex flex-shrink-0 gap-2">
-          {isPendingPayment && (
+          {isPendingPayment && !isPaymentUnderReview && (
             <Button size="sm" onClick={handleResume} disabled={isDeleting}>
               Resume payment
               <RiArrowRightLine className="ml-1 h-4 w-4" />
@@ -158,15 +173,17 @@ export function DraftProjectRow(props: DraftProjectRowProps) {
             <RiPencilLine className="mr-1 h-4 w-4" />
             Edit
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            aria-label={isPendingPayment ? "Cancel pending payment" : "Delete project"}
-          >
-            <RiDeleteBinLine className="h-4 w-4 text-red-500" />
-          </Button>
+          {!isPaymentUnderReview && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              aria-label={isPendingPayment ? "Cancel pending payment" : "Delete project"}
+            >
+              <RiDeleteBinLine className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
         </div>
       </div>
 
