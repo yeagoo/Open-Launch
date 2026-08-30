@@ -13,12 +13,12 @@ import { request, type Dispatcher } from "undici"
 
 import { CrawlError, type CrawlOptions, type CrawlResult } from "./crawler-types"
 import { FetchTimeoutError, withTimeout } from "./fetch-timeout"
-import { RateLimiter } from "./rate-limiter"
+import { SlidingWindowQueueLimiter } from "./sliding-window-queue-limiter"
 
 // Tinyfish Fetch caps free tier at 25 URLs/min. The limiter queues bursts
 // in FIFO order so callers wait for a slot instead of hitting 429.
 // Module-level singleton; shared across all callers in this process.
-const fetchLimiter = new RateLimiter(25, 60_000)
+const fetchLimiter = new SlidingWindowQueueLimiter(25, 60_000)
 
 export const tinyfishFetchLimiter = fetchLimiter // exported for /admin observability
 

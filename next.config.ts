@@ -2,7 +2,11 @@ import type { NextConfig } from "next"
 
 import createNextIntlPlugin from "next-intl/plugin"
 
+import { buildReportOnlyContentSecurityPolicy } from "./lib/content-security-policy"
+
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
+
+const reportOnlyContentSecurityPolicy = buildReportOnlyContentSecurityPolicy()
 
 const securityHeaders = [
   {
@@ -16,6 +20,14 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  ...(process.env.NODE_ENV === "production"
+    ? [
+        {
+          key: "Content-Security-Policy-Report-Only",
+          value: reportOnlyContentSecurityPolicy,
+        },
+      ]
+    : []),
 ]
 
 const nextConfig: NextConfig = {

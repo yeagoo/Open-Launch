@@ -3,6 +3,8 @@ import { headers } from "next/headers"
 
 import { auth } from "@/lib/auth"
 
+export type ServerSession = Awaited<ReturnType<typeof auth.api.getSession>>
+
 /**
  * Per-request memoized session lookup. Wrapped in React `cache()`
  * so that within a single server request, multiple call sites
@@ -24,3 +26,28 @@ export const getCurrentUserId = cache(async (): Promise<string | null> => {
   const session = await getServerSession()
   return session?.user?.id ?? null
 })
+
+export function assertAuthenticatedSession(
+  session: ServerSession,
+  message = "Unauthorized",
+): NonNullable<ServerSession>["user"] {
+  if (!session?.user?.id) throw new Error(message)
+  return session.user
+}
+
+export function assertAdminSession(
+  session: ServerSession,
+  message = "Unauthorized: Admin access required",
+): NonNullable<ServerSession>["user"] {
+  const user = assertAuthenticatedSession(session, message)
+  if (user.role !== "admin") throw new Error(message)
+  return user
+}
+
+export async function requireUser(message = "Unauthorized") {
+  return assertAuthenticatedSession(await getServerSession(), message)
+}
+
+export async function requireAdmin(message = "Unauthorized: Admin access required") {
+  return assertAdminSession(await getServerSession(), message)
+}

@@ -66,6 +66,31 @@ test("sitemap index and project shard expose the public fixture", async ({ reque
   expect(await shard.text()).toContain(`/projects/${releaseFixture.projectSlug}`)
 })
 
+test("production responses expose a report-only CSP and accept sanitized reports", async ({
+  request,
+}) => {
+  const pageResponse = await request.get("/")
+  const policy = pageResponse.headers()["content-security-policy-report-only"]
+  expect(policy).toContain("default-src 'self'")
+  expect(policy).toContain("report-uri /api/csp-report")
+  expect(pageResponse.headers()["content-security-policy"]).toBeUndefined()
+
+  const reportResponse = await request.post("/api/csp-report", {
+    headers: { "content-type": "application/csp-report" },
+    data: JSON.stringify({
+      "csp-report": {
+        "document-uri": "http://localhost/private?token=e2e-secret",
+        "blocked-uri": "https://blocked.example/collect?email=e2e@example.invalid",
+        "effective-directive": "script-src-elem",
+        "violated-directive": "script-src-elem",
+        disposition: "report",
+        "status-code": 200,
+      },
+    }),
+  })
+  expect(reportResponse.status()).toBe(204)
+})
+
 test("payment success renders only from an intercepted test fixture", async ({ page }) => {
   let verificationRequests = 0
   await page.route("**/api/payment/verify?*", async (route) => {

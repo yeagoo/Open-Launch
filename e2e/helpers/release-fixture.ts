@@ -117,6 +117,15 @@ export async function seedReleaseFixture(connectionString: string): Promise<void
        ON CONFLICT DO NOTHING`,
       [releaseFixture.projectId, releaseFixture.categoryId],
     )
+    // Setup is intentionally repeatable: retries start from a deterministic
+    // vote count and cannot reuse a checkout row from an earlier attempt.
+    await client.query(`DELETE FROM upvote WHERE user_id = $1 AND project_id = $2`, [
+      releaseFixture.userId,
+      releaseFixture.projectId,
+    ])
+    await client.query(`DELETE FROM directory_order WHERE project_id = $1`, [
+      releaseFixture.projectId,
+    ])
     await client.query("COMMIT")
   } catch (error) {
     await client.query("ROLLBACK")

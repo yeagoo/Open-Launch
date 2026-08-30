@@ -2,7 +2,18 @@ import { randomUUID } from "node:crypto"
 
 import Redis from "ioredis"
 
+import { logger } from "@/lib/observability/structured-logger"
+
 let redis: Redis | null = null
+
+function logRedisFailure(operation: string, error: unknown): void {
+  logger.warn("redis_operation_failed", {
+    provider: "redis",
+    status: "fallback",
+    context: { operation },
+    error,
+  })
+}
 
 function getRedisClient(): Redis {
   if (!redis) {
@@ -16,7 +27,7 @@ function getRedisClient(): Redis {
     })
 
     redis.on("error", (error) => {
-      console.error("Redis connection error:", error.message)
+      logRedisFailure("connection", error)
     })
   }
   return redis
@@ -301,7 +312,7 @@ export async function decideStatefulAlert(
     if (code === 0) return { shouldSend: false, reason: "suppressed" }
     throw new Error(`unexpected stateful alert decision code: ${code}`)
   } catch (error) {
-    console.error("Redis error (decideStatefulAlert):", error)
+    logRedisFailure("decide_stateful_alert", error)
     return decideInMemoryStatefulAlert(
       fullKey,
       fingerprint,
@@ -327,7 +338,7 @@ export async function clearStatefulAlert(key: string): Promise<boolean> {
     await client.del(fullKey)
     return true
   } catch (error) {
-    console.error("Redis error (clearStatefulAlert):", error)
+    logRedisFailure("clear_stateful_alert", error)
     return false
   }
 }
@@ -362,7 +373,7 @@ export async function releaseStatefulAlert(
       ) === 1
     )
   } catch (error) {
-    console.error("Redis error (releaseStatefulAlert):", error)
+    logRedisFailure("release_stateful_alert", error)
     return false
   }
 }
@@ -398,7 +409,7 @@ export async function checkByteBudget(
     }
     return { success: true, remaining: budgetBytes - total, reset: windowSeconds }
   } catch (error) {
-    console.error("Redis error (checkByteBudget):", error)
+    logRedisFailure("check_byte_budget", error)
     return { success: false, remaining: 0, reset: windowSeconds }
   }
 }
@@ -424,7 +435,7 @@ export async function dedupeOnce(key: string, ttlSeconds: number): Promise<boole
     const result = await client.set(fullKey, "1", "EX", ttlSeconds, "NX")
     return result === "OK"
   } catch (error) {
-    console.error("Redis error (dedupeOnce):", error)
+    logRedisFailure("dedupe_once", error)
     const now = Date.now()
     const seen = inMemorySeen.get(fullKey)
     if (seen !== undefined && now - seen < ttlSeconds * 1000) {
@@ -456,7 +467,7 @@ export async function clearDedupe(key: string): Promise<void> {
     }
     await client.del(fullKey)
   } catch (error) {
-    console.error("Redis error (clearDedupe):", error)
+    logRedisFailure("clear_dedupe", error)
   }
 }
 
@@ -508,7 +519,7 @@ export async function reserveRateLimitSlot(
       token: reservedToken,
     }
   } catch (error) {
-    console.error("Redis error (reserveRateLimitSlot):", error)
+    logRedisFailure("reserve_rate_limit_slot", error)
     return {
       success: false,
       remaining: 0,
@@ -528,7 +539,7 @@ export async function releaseRateLimitSlot(identifier: string, token: string): P
 
     await client.zrem(key, token)
   } catch (error) {
-    console.error("Redis error (releaseRateLimitSlot):", error)
+    logRedisFailure("release_rate_limit_slot", error)
   }
 }
 
@@ -569,7 +580,7 @@ export async function checkRateLimit(
       reset: Number(result[2]),
     }
   } catch (error) {
-    console.error("Redis error:", error)
+    logRedisFailure("check_rate_limit", error)
     const mode = options.onRedisError ?? "memory-fallback"
     if (mode === "fail-closed") {
       return {

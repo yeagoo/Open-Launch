@@ -1,23 +1,23 @@
 # Open-Launch
 
 [![License: Open Launch](https://img.shields.io/badge/License-Open_Launch-yellow.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15.3.1-black?logo=next.js)](https://nextjs.org)
-[![React](https://img.shields.io/badge/React-19.1.0-blue?logo=react)](https://reactjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue?logo=typescript)](https://www.typescriptlang.org)
-[![Contributors](https://img.shields.io/github/contributors/drdruide/open-launch)](https://github.com/drdruide/open-launch/graphs/contributors)
-[![GitHub Issues](https://img.shields.io/github/issues/drdruide/open-launch)](https://github.com/drdruide/open-launch/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/drdruide/open-launch)](https://github.com/drdruide/open-launch/pulls)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.12-black?logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.2.7-blue?logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue?logo=typescript)](https://www.typescriptlang.org)
+[![Contributors](https://img.shields.io/github/contributors/yeagoo/Open-Launch)](https://github.com/yeagoo/Open-Launch/graphs/contributors)
+[![GitHub Issues](https://img.shields.io/github/issues/yeagoo/Open-Launch)](https://github.com/yeagoo/Open-Launch/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/yeagoo/Open-Launch)](https://github.com/yeagoo/Open-Launch/pulls)
 
 **The first complete open source alternative to Product Hunt. Built with modern web technologies.**
 
 <div align="center">
-  <a href="https://open-launch.com" target="_blank">
+  <a href="https://www.aat.ee" target="_blank">
     <img src="https://img.shields.io/badge/Launch_Your_Project_NOW-2563EB?style=for-the-badge&logo=&logoColor=white" alt="Launch Your Project NOW" />
   </a>
 </div>
 
 <div align="center">
-  <img src="https://open-launch.com/og.png" alt="Open Launch Screenshot" width="800px" />
+  <img src="https://www.aat.ee/og.png" alt="Open Launch Screenshot" width="800px" />
 </div>
 
 ## 📋 Table of Contents
@@ -89,8 +89,8 @@ Huge thanks to our sponsors:
 
 ```bash
 # Clone the repository
-git clone https://github.com/drdruide/open-launch.git
-cd open-launch
+git clone https://github.com/yeagoo/Open-Launch.git
+cd Open-Launch
 
 # Install dependencies
 bun install
@@ -98,10 +98,8 @@ bun install
 # Set up environment variables
 cp .env.example .env
 
-# Initialize the database
-bun run db:generate
+# Apply the reviewed migration history
 bun run db:migrate
-bun run db:push
 
 # Seed the categories
 bun scripts/categories.ts
@@ -178,9 +176,13 @@ bun run start
 
 ## Project Stats
 
-[![Star History Chart](https://api.star-history.com/svg?repos=drdruide/open-launch&type=Date)](https://star-history.com/#drdruide/open-launch&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=yeagoo/Open-Launch&type=Date)](https://star-history.com/#yeagoo/Open-Launch&Date)
 
 ## Contributing
+
+Dependency overrides are reviewed controls, not unexplained permanent pins. See
+[the override register](docs/dependency-overrides.md) before changing an
+override or regenerating `bun.lock`.
 
 We welcome contributions to Open Launch! Here's how you can help:
 
@@ -204,7 +206,7 @@ This project is licensed under the Open-Launch License - see the [LICENSE](LICEN
 ## Support
 
 - [X/Twitter](https://x.com/ericbn09)
-- [GitHub Issues](https://github.com/drdruide/open-launch/issues)
+- [GitHub Issues](https://github.com/yeagoo/Open-Launch/issues)
 
 ## Sponsoring
 
@@ -213,7 +215,7 @@ Open Launch is an open source project that relies on community support to contin
 - [Buy Me a Coffee](https://buymeacoffee.com/drdruide)
 
 <div align="center">
-  <a href="https://open-launch.com" target="_blank">
+  <a href="https://www.aat.ee" target="_blank">
     <img src="https://img.shields.io/badge/Launch_Your_Project_NOW-2563EB?style=for-the-badge&logo=&logoColor=white" alt="Launch Your Project NOW" />
   </a>
 </div>

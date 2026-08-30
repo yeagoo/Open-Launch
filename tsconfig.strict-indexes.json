@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "lib/project-submission-core.ts",
+    "lib/sliding-window-queue-limiter.ts",
+    "lib/stripe-webhook-core.ts",
+    "lib/submit-launch-plan.ts",
+    "lib/submit-project-validation.ts",
+    "lib/submit-step-progress.ts"
+  ],
+  "include": []
+}

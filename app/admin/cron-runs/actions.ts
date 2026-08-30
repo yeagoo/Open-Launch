@@ -1,22 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { cronSchedule } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import { isValidCronExpression } from "@/lib/cron-match"
-
-async function requireAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user || session.user.role !== "admin") {
-    throw new Error("Forbidden")
-  }
-  return session.user
-}
+import { requireAdmin } from "@/lib/server-auth"
 
 /**
  * Toggle the enabled flag on a single cron task. Disabled tasks stay in
@@ -24,7 +15,7 @@ async function requireAdmin() {
  * fire them.
  */
 export async function toggleCronEnabled(id: number, enabled: boolean) {
-  await requireAdmin()
+  await requireAdmin("Forbidden")
   await db
     .update(cronSchedule)
     .set({ enabled, updatedAt: new Date() })
@@ -38,7 +29,7 @@ export async function toggleCronEnabled(id: number, enabled: boolean) {
  * task on every tick if the expression were invalid.
  */
 export async function updateCronExpression(id: number, expression: string) {
-  await requireAdmin()
+  await requireAdmin("Forbidden")
   const trimmed = expression.trim()
   if (!isValidCronExpression(trimmed)) {
     // Throw so the inline form's failed save surfaces — silent return would

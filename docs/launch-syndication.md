@@ -27,9 +27,13 @@ Stripe webhook  (order tier ∈ {plus,pro,ultra} → paid, amount OK)
         ├──► POST https://bigkr.com/api/external/launch   (Bearer key)
         ├──► POST https://mf8.biz/api/external/launch     (Bearer key)
         └──► POST https://hicyou.com/api/external/launch  (Bearer key)
-        │  records sent / failed (attempts++, exponential backoff)
-        ▼
-   once every row for the order is `sent` → directory_order: paid → fulfilled
+	        │  records sent / failed (attempts++, exponential backoff)
+	        ▼
+	   once every row for the order is `sent` → directory_order: paid → fulfilled
+
+	        └──► reconciles `hicyou_campaign_sync` and posts a full Campaign
+	             snapshot to Hicyou's /api/external/campaigns/sync endpoint
+	             (independent retry/backoff; never gates fulfilment)
 ```
 
 The HTTP push is **never** done inline in the webhook: a partner-site outage
@@ -71,6 +75,43 @@ Errors: `401` bad/missing key, `400` invalid payload, `500` server/config.
 `deduped: true`; a same-URL post with a different key returns `409` so takedown
 can stay key-based instead of accidentally claiming an unrelated listing.
 
+### Hicyou Campaign association
+
+Only the Hicyou launch request also includes a backward-compatible `campaign`
+object. It carries existing aat.ee identities rather than inventing a second
+set of IDs:
+
+```json
+{
+  "campaign": {
+    "id": "<directory_order.id>",
+    "placementId": "<launch_syndication.id>",
+    "targetSiteId": "hicyou",
+    "sourceUpdatedAt": "2026-08-26T12:00:00.000Z"
+  }
+}
+```
+
+The request's `idempotencyKey` remains the same `directory_order.id`.
+
+## Hicyou Campaign status snapshots
+
+The same cron drains a durable `hicyou_campaign_sync` outbox after the main
+delivery/promotion work. It derives the callback endpoint from the validated
+`SYNDICATION_HICYOU_URL` by replacing `/api/external/launch` with
+`/api/external/campaigns/sync`; it uses the same Hicyou target key. No extra
+environment variable is needed.
+
+Each callback sends the order ID, tier, order status, public project metadata,
+and every current `launch_syndication` row (`id`, site, status, attempts,
+external IDs/URLs, error, and source `updated_at`). The outbox persists a
+source version and retry state. If an order or placement changes while a
+callback is in flight, the older sender cannot acknowledge the newer state.
+
+Campaign-status sync is observability only: a Hicyou outage records retry
+state in this outbox but never changes paid delivery, Stripe webhook handling,
+or order fulfilment.
+
 ## Setup
 
 1. **Generate one shared secret** and put the same value in
@@ -98,8 +139,9 @@ can stay key-based instead of accidentally claiming an unrelated listing.
    ```
 
 3. **bigkr / mf8 / hicyou** — set `EXTERNAL_LAUNCH_API_KEY` (= shared secret),
-   deploy. No DB migration needed on the partner sites; the endpoint reuses
-   existing tables. Optional knobs: `EXTERNAL_LAUNCH_DEFAULT_CATEGORY_SLUG`,
+   deploy. Hicyou also runs its normal migration to create the Campaign mirror
+   tables; bigkr/mf8 reuse existing tables. Optional knobs:
+   `EXTERNAL_LAUNCH_DEFAULT_CATEGORY_SLUG`,
    and on bigkr/mf8 `EXTERNAL_LAUNCH_USER_EMAIL` (listing owner, auto-created)
    and `EXTERNAL_LAUNCH_SUBMIT_TYPE` (default `one_time`).
 

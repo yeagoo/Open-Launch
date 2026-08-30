@@ -17,6 +17,7 @@ import {
   type DirectoryTier,
 } from "@/lib/directory-tiers"
 import { collectPublishedUrls } from "@/lib/launch-syndication"
+import { requireAdmin } from "@/lib/server-auth"
 import { sendListingLiveEmail } from "@/lib/transactional-emails"
 
 interface CreateInput {
@@ -361,14 +362,6 @@ export async function listMyActiveDirectoryOrderStates(): Promise<ActiveDirector
 
 // ─── Admin actions ───
 
-async function checkAdminAccess(): Promise<{ adminId: string }> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user?.role || session.user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required")
-  }
-  return { adminId: session.user.id }
-}
-
 export interface AdminDirectoryOrderRow {
   id: string
   // Null when the project was deleted after purchase (SET NULL since 0048);
@@ -399,7 +392,7 @@ export interface AdminDirectoryOrderRow {
  * fulfilling), then everything else by created_at desc.
  */
 export async function listDirectoryOrders(): Promise<AdminDirectoryOrderRow[]> {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const rows = await db
     .select({
@@ -439,7 +432,7 @@ export async function listDirectoryOrders(): Promise<AdminDirectoryOrderRow[]> {
  * tabs won't double-stamp `fulfilledBy`.
  */
 export async function markDirectoryOrderFulfilled(orderId: string): Promise<{ ok: boolean }> {
-  const { adminId } = await checkAdminAccess()
+  const { id: adminId } = await requireAdmin()
 
   const result = await db
     .update(directoryOrder)

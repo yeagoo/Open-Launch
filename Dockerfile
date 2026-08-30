@@ -8,7 +8,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS dependencies
 ENV SKIP_INSTALL_SIMPLE_GIT_HOOKS=1
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY patches ./patches
 # The deployed runner is linux/x64. Declare that target explicitly so Bun
 # selects sharp's x64 optional packages even when the image is built through a

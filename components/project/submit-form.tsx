@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useCallback, useEffect, useId, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -13,11 +12,9 @@ import {
   RiCheckboxCircleFill,
   RiCheckLine,
   RiCloseCircleLine,
-  RiFileCheckLine,
   RiImageAddLine,
   RiInformation2Line,
   RiInformationLine,
-  RiListCheck,
   RiLoader4Line,
   RiMagicLine,
   RiRocketLine,
@@ -49,11 +46,20 @@ import {
 // but the value imports pull the whole module graph.
 import type { DRRecord } from "@/lib/dr-domains"
 import { useFormDraft } from "@/lib/hooks/use-form-draft"
-import { platformType, pricingType } from "@/lib/project-enums"
+import { useLaunchDateLimit } from "@/lib/hooks/use-launch-date-limit"
 import { UploadButton } from "@/lib/r2-upload"
+import {
+  checkoutTierForSubmitLaunch,
+  getSubmitLaunchDateWindow,
+  isFreeSubmitLaunch,
+  transitionSubmitLaunchType,
+} from "@/lib/submit-launch-plan"
+import {
+  validateSubmitProjectStep,
+  type SubmitProjectValidationMessages,
+} from "@/lib/submit-project-validation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -64,7 +70,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
 import { RichTextEditorLazy } from "@/components/ui/rich-text-editor-lazy"
 import {
@@ -77,14 +82,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DrBadge, OverflowDrBadge } from "@/components/dr/dr-badge"
-import { TechStackInputLazy } from "@/components/project/tech-stack-input-lazy"
+import { SubmitFormStepper } from "@/components/project/submit-form-stepper"
+import { SubmitProjectDetailsStep } from "@/components/project/submit-project-details-step"
 import { createDirectoryOrder, resumePendingDirectoryOrder } from "@/app/actions/directory-orders"
 import { notifyDiscordLaunch } from "@/app/actions/discord"
-import {
-  checkUserLaunchLimit,
-  getLaunchAvailabilityRange,
-  scheduleLaunch,
-} from "@/app/actions/launch"
+import { getLaunchAvailabilityRange, scheduleLaunch } from "@/app/actions/launch"
 import type { LaunchAvailability } from "@/app/actions/launch"
 import { deleteMyDraftProject, getAllCategories, submitProject } from "@/app/actions/projects"
 
@@ -165,15 +167,6 @@ export function SubmitProjectForm({
 }: SubmitProjectFormProps) {
   const t = useTranslations("submitProject")
 
-  // Stabilize the autocomplete options across re-renders. Without this,
-  // every keystroke on any field would build a fresh array of 200 new
-  // tag objects and pass it to emblor, which compares by reference and
-  // could reset its dropdown state.
-  const autocompleteTags = useMemo(
-    () => popularTags.map((name) => ({ id: `popular-${name}`, text: name })),
-    [popularTags],
-  )
-
   // Pre-slice DR records per tier. Memoised so we don't filter the
   // directory-network array on every render of the Step-3 picker.
   //  - Basic: aat.ee (1)
@@ -249,11 +242,21 @@ export function SubmitProjectForm({
   // Dashboard CTAs instead of a dead-end toast.
   const [pendingPaymentProjectId, setPendingPaymentProjectId] = useState<string | null>(null)
   const [isResumingPayment, setIsResumingPayment] = useState(false)
+  const {
+    isOverLimit: isLaunchDateOverLimit,
+    error: launchDateLimitError,
+    isLoading: isLoadingDateCheck,
+    clearError: clearLaunchDateLimitError,
+  } = useLaunchDateLimit({
+    date: formData.scheduledDate,
+    enabled: currentStep === 3,
+    userId,
+  })
 
   function clearAllErrors() {
     setFieldErrors({})
     setFormError(null)
-    setLaunchDateLimitError(null)
+    clearLaunchDateLimitError()
   }
 
   // Inline error renderer. Returned as a JSX fragment from a plain helper
@@ -288,10 +291,6 @@ export function SubmitProjectForm({
     }, 0)
   }
 
-  const [isLaunchDateOverLimit, setIsLaunchDateOverLimit] = useState(false)
-  const [launchDateLimitError, setLaunchDateLimitError] = useState<string | null>(null)
-  const [isLoadingDateCheck, setIsLoadingDateCheck] = useState(false)
-
   const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [isVerifyingBadge, setIsVerifyingBadge] = useState(false)
   const [badgeVerificationMessage, setBadgeVerificationMessage] = useState<string | null>(null)
@@ -302,10 +301,7 @@ export function SubmitProjectForm({
   const [urlDuplicateWarning, setUrlDuplicateWarning] = useState(false)
   const [isCheckingUrl, setIsCheckingUrl] = useState(false)
 
-  const tagInputId = useId()
-
   const [techStackTags, setTechStackTags] = useState<Tag[]>([])
-  const [activeTechTagIndex, setActiveTechTagIndex] = useState<number | null>(null)
 
   // Persist form-in-progress to localStorage so a refresh / accidental
   // tab close doesn't lose typed content. Logo + product image URLs are
@@ -421,21 +417,10 @@ export function SubmitProjectForm({
   const loadAvailableDates = useCallback(async () => {
     setIsLoadingDates(true)
     try {
-      let startDate, endDate
       const today = new Date()
-
-      if (formData.launchType === LAUNCH_TYPES.PREMIUM) {
-        startDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MIN_DAYS_AHEAD), DATE_FORMAT.API)
-        endDate = format(addDays(today, LAUNCH_SETTINGS.PREMIUM_MAX_DAYS_AHEAD), DATE_FORMAT.API)
-      } else if (formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE) {
-        // Badge Fast Track users skip the regular queue.
-        startDate = format(addDays(today, LAUNCH_SETTINGS.BADGE_MIN_DAYS_AHEAD), DATE_FORMAT.API)
-        endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
-      } else {
-        // Regular free launch
-        startDate = format(addDays(today, LAUNCH_SETTINGS.MIN_DAYS_AHEAD), DATE_FORMAT.API)
-        endDate = format(addDays(today, LAUNCH_SETTINGS.MAX_DAYS_AHEAD), DATE_FORMAT.API)
-      }
+      const window = getSubmitLaunchDateWindow(formData.launchType, today)
+      const startDate = format(window.start, DATE_FORMAT.API)
+      const endDate = format(window.end, DATE_FORMAT.API)
 
       const availability = await getLaunchAvailabilityRange(startDate, endDate, formData.launchType)
       setAvailableDates(availability)
@@ -445,7 +430,7 @@ export function SubmitProjectForm({
     } finally {
       setIsLoadingDates(false)
     }
-  }, [formData.launchType, formData.hasBadgeVerified])
+  }, [formData.launchType, t])
 
   const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true)
@@ -468,7 +453,7 @@ export function SubmitProjectForm({
     if (currentStep === 3) {
       queueMicrotask(() => void loadAvailableDates())
     }
-  }, [currentStep, loadAvailableDates])
+  }, [currentStep, formData.hasBadgeVerified, loadAvailableDates])
 
   const handleAutoFill = async () => {
     if (!formData.websiteUrl || isAutoFilling) return
@@ -546,14 +531,7 @@ export function SubmitProjectForm({
   }
 
   const handleLaunchTypeChange = (type: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES]) => {
-    setFormData((prev) => ({
-      ...prev,
-      launchType: type,
-      // Switching back to a free path discards any prior tier
-      // selection so the submit redirect doesn't try to charge.
-      directoryTier: type === LAUNCH_TYPES.PREMIUM ? prev.directoryTier : null,
-      scheduledDate: null,
-    }))
+    setFormData((previous) => transitionSubmitLaunchType(previous, type))
   }
 
   function groupDatesByMonth(dates: LaunchAvailability[]): DateGroup[] {
@@ -588,46 +566,6 @@ export function SubmitProjectForm({
       return aDate.getTime() - bDate.getTime()
     })
   }
-
-  const validateLaunchDateLimit = useCallback(
-    async (date: string | null) => {
-      if (!date || !userId) {
-        setIsLaunchDateOverLimit(false)
-        setLaunchDateLimitError(null)
-        setIsLoadingDateCheck(false)
-        return
-      }
-      setIsLoadingDateCheck(true)
-      setLaunchDateLimitError(null)
-      try {
-        const result = await checkUserLaunchLimit(date)
-        if (!result.allowed) {
-          setIsLaunchDateOverLimit(true)
-          setLaunchDateLimitError(
-            t("errors.fields.scheduledDateOverLimitDetail", {
-              count: result.count,
-              limit: result.limit,
-            }),
-          )
-        } else {
-          setIsLaunchDateOverLimit(false)
-        }
-      } catch (err) {
-        console.error("Error checking launch date limit:", err)
-        setIsLaunchDateOverLimit(false)
-        setLaunchDateLimitError(t("errors.fields.scheduledDateCheckFailed"))
-      } finally {
-        setIsLoadingDateCheck(false)
-      }
-    },
-    [userId],
-  )
-
-  useEffect(() => {
-    if (formData.scheduledDate && currentStep === 3) {
-      queueMicrotask(() => void validateLaunchDateLimit(formData.scheduledDate))
-    }
-  }, [formData.scheduledDate, currentStep, validateLaunchDateLimit])
 
   // Debounced inline duplicate-URL check — runs as the user types so they
   // get the heads-up at Step 1 instead of after filling out the entire
@@ -670,46 +608,33 @@ export function SubmitProjectForm({
   // order matches visual top-to-bottom) so the user can see every problem
   // and the scroll target lands on the topmost one.
   const validateStep = (step: number): Record<string, string> => {
-    const errs: Record<string, string> = {}
-    if (step === 1) {
-      if (!formData.name) errs.name = t("errors.fields.nameRequired")
-      if (!formData.websiteUrl) {
-        errs.websiteUrl = t("errors.fields.websiteUrlRequired")
-      } else {
-        try {
-          new URL(formData.websiteUrl)
-        } catch {
-          errs.websiteUrl = t("errors.fields.websiteUrlInvalid")
-        }
-      }
-      if (formData.tagline.length > 60) errs.tagline = t("errors.fields.taglineTooLong")
-      if (!formData.description) errs.description = t("errors.fields.descriptionRequired")
-      if (process.env.NODE_ENV !== "development" && !uploadedLogoUrl) {
-        errs.logoUrl = t("errors.fields.logoRequired")
-      }
-    } else if (step === 2) {
-      if (formData.categories.length === 0) {
-        errs.categories = t("errors.fields.categoriesMin")
-      } else if (formData.categories.length > 3) {
-        errs.categories = t("errors.fields.categoriesMax")
-      }
-      if (formData.techStack.length === 0) {
-        errs.techStack = t("errors.fields.techStackMin")
-      } else if (formData.techStack.length > 10) {
-        errs.techStack = t("errors.fields.techStackMax")
-      }
-      if (formData.platforms.length === 0) {
-        errs.platforms = t("errors.fields.platformsMin")
-      }
-      if (!formData.pricing) errs.pricing = t("errors.fields.pricingRequired")
-    } else if (step === 3) {
-      if (!formData.scheduledDate) {
-        errs.scheduledDate = t("errors.fields.scheduledDateRequired")
-      } else if (isLaunchDateOverLimit) {
-        errs.scheduledDate = launchDateLimitError || t("errors.fields.scheduledDateOverLimit")
-      }
+    const messages: SubmitProjectValidationMessages = {
+      nameRequired: t("errors.fields.nameRequired"),
+      websiteUrlRequired: t("errors.fields.websiteUrlRequired"),
+      websiteUrlInvalid: t("errors.fields.websiteUrlInvalid"),
+      taglineTooLong: t("errors.fields.taglineTooLong"),
+      descriptionRequired: t("errors.fields.descriptionRequired"),
+      logoRequired: t("errors.fields.logoRequired"),
+      categoriesMin: t("errors.fields.categoriesMin"),
+      categoriesMax: t("errors.fields.categoriesMax"),
+      techStackMin: t("errors.fields.techStackMin"),
+      techStackMax: t("errors.fields.techStackMax"),
+      platformsMin: t("errors.fields.platformsMin"),
+      pricingRequired: t("errors.fields.pricingRequired"),
+      scheduledDateRequired: t("errors.fields.scheduledDateRequired"),
+      scheduledDateOverLimit: t("errors.fields.scheduledDateOverLimit"),
     }
-    return errs
+    return validateSubmitProjectStep(
+      step,
+      formData,
+      {
+        uploadedLogoUrl,
+        requireLogo: process.env.NODE_ENV !== "development",
+        isLaunchDateOverLimit,
+        launchDateLimitError,
+      },
+      messages,
+    )
   }
 
   const nextStep = () => {
@@ -847,10 +772,7 @@ export function SubmitProjectForm({
       // were instead of re-typing.
       draft.clear()
 
-      if (
-        formData.launchType === LAUNCH_TYPES.FREE ||
-        formData.launchType === LAUNCH_TYPES.FREE_WITH_BADGE
-      ) {
+      if (isFreeSubmitLaunch(formData.launchType)) {
         router.push(`/projects/${projectSlug}`)
       } else {
         // Paid path: create a `pending` directory_order row tied to
@@ -859,7 +781,8 @@ export function SubmitProjectForm({
         // the project from `payment_pending → SCHEDULED` once the
         // funds settle (see `scheduleProjectIfPendingPayment` in
         // `app/api/auth/stripe/webhook/route.ts`).
-        const tier: DirectoryTier = formData.directoryTier ?? "basic"
+        const tier = checkoutTierForSubmitLaunch(formData.launchType, formData.directoryTier)
+        if (!tier) throw new Error("Paid launch is missing a checkout tier")
         try {
           const { redirectUrl } = await createDirectoryOrder({ projectId, tier })
           window.location.href = redirectUrl
@@ -893,112 +816,6 @@ export function SubmitProjectForm({
     clearAllErrors()
     setCurrentStep(step)
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0)
-  }
-
-  const renderStepper = () => (
-    <div className="mb-8 sm:mb-10">
-      <div className="container mx-auto max-w-3xl">
-        <div className="flex items-center justify-between pt-2 sm:px-4 sm:pt-0">
-          {[
-            { step: 1, label: t("stepper.step1"), icon: RiListCheck },
-            {
-              step: 2,
-              label: t("stepper.step2"),
-              shortLabel: t("stepper.step2"),
-              icon: RiInformation2Line,
-            },
-            { step: 3, label: t("stepper.step3"), icon: RiCalendarLine },
-            { step: 4, label: t("stepper.step4"), icon: RiFileCheckLine },
-          ].map(({ step, label, shortLabel, icon: Icon }) => {
-            const canJump = step < currentStep
-            return (
-              <div
-                key={`step-${step}`}
-                className="relative flex w-[120px] flex-col items-center sm:w-[140px]"
-              >
-                {step < 3 && (
-                  <div className="absolute top-5 left-[calc(50%+1.5rem)] -z-10 hidden h-[2px] w-[calc(100%-1rem)] sm:block">
-                    <div
-                      className={`h-full ${
-                        currentStep > step ? "bg-primary" : "bg-muted"
-                      } transition-all duration-300`}
-                    />
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => goToStep(step)}
-                  disabled={!canJump}
-                  aria-label={
-                    canJump ? t("stepper.ariaJump", { label }) : t("stepper.ariaCurrent", { label })
-                  }
-                  className={`focus-visible:ring-primary/40 relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 focus-visible:ring-4 focus-visible:outline-none sm:h-12 sm:w-12 ${
-                    currentStep > step
-                      ? "bg-primary ring-primary/10 hover:ring-primary/30 cursor-pointer text-white ring-4"
-                      : currentStep === step
-                        ? "bg-primary ring-primary/20 cursor-default text-white ring-4"
-                        : "bg-muted/50 text-muted-foreground cursor-not-allowed"
-                  }`}
-                >
-                  {currentStep > step ? (
-                    <RiCheckLine className="h-5 w-5 sm:h-6 sm:w-6" />
-                  ) : (
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-                  )}
-
-                  {currentStep === step && (
-                    <span className="border-primary absolute inset-0 animate-pulse rounded-full border-2" />
-                  )}
-                </button>
-
-                <div className="mt-3 w-full text-center sm:mt-4">
-                  <span
-                    className={`mb-0.5 block text-xs font-medium sm:text-sm ${
-                      currentStep >= step ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    <span className="hidden sm:inline">{label}</span>
-                    <span className="inline sm:hidden">{shortLabel || label}</span>
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="mt-3 px-2 sm:mt-6 sm:px-4">
-        <div className="bg-muted/50 h-1.5 w-full overflow-hidden rounded-full">
-          <div
-            className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  )
-
-  const handleCheckboxChange = (
-    field: "categories" | "platforms",
-    value: string,
-    checked: boolean,
-  ) => {
-    setFormData((prev) => {
-      const currentValues = prev[field] || []
-      if (checked) {
-        return { ...prev, [field]: [...currentValues, value] }
-      } else {
-        return {
-          ...prev,
-          [field]: currentValues.filter((item) => item !== value),
-        }
-      }
-    })
-  }
-
-  const handleRadioChange = (field: "pricing", value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const getCategoryName = (id: string) => categories.find((cat) => cat.id === id)?.name || id
@@ -1294,162 +1111,25 @@ export function SubmitProjectForm({
         )
       case 2:
         return (
-          <div className="space-y-8">
-            <div id="categories">
-              <Label className="mb-2 block">
-                {t("step2.categories.label")} <span className="text-red-500">*</span>
-                <span className="text-muted-foreground ml-2 text-xs">
-                  {t("step2.categories.counter", { count: formData.categories.length })}
-                </span>
-              </Label>
-              {isLoadingCategories ? (
-                <div className="text-muted-foreground flex items-center gap-2">
-                  <RiLoader4Line className="h-4 w-4 animate-spin" /> {t("step2.categories.loading")}
-                </div>
-              ) : categories.length > 0 ? (
-                <div className="max-h-60 space-y-3 overflow-y-auto rounded-md border p-4">
-                  {categories.map((cat) => (
-                    <div key={cat.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`cat-${cat.id}`}
-                        checked={formData.categories.includes(cat.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked && formData.categories.length >= 3) {
-                            setFieldErrors((prev) => ({
-                              ...prev,
-                              categories: t("errors.fields.categoriesMax"),
-                            }))
-                            return
-                          }
-                          setFieldErrors((prev) => ({ ...prev, categories: "" }))
-                          handleCheckboxChange("categories", cat.id, !!checked)
-                        }}
-                      />
-                      <Label htmlFor={`cat-${cat.id}`} className="cursor-pointer font-normal">
-                        {cat.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">{t("step2.categories.empty")}</p>
-              )}
-              <p className="text-muted-foreground mt-1 text-xs">{t("step2.categories.help")}</p>
-              {renderFieldError("categories")}
-            </div>
-
-            <div id="techStack">
-              <Label htmlFor={tagInputId}>
-                {t("step2.tags.label")} <span className="text-red-500">*</span>
-                <span className="text-muted-foreground ml-2 text-xs">
-                  {t("step2.tags.counter", { count: formData.techStack.length })}
-                </span>
-              </Label>
-              <TechStackInputLazy
-                id={tagInputId}
-                tags={techStackTags}
-                onChange={(resolvedTags) => {
-                  if (resolvedTags.length > 10) {
-                    setFieldErrors((prev) => ({
-                      ...prev,
-                      techStack: t("errors.fields.techStackMax"),
-                    }))
-                    return
-                  }
-                  setFieldErrors((prev) => ({ ...prev, techStack: "" }))
-                  setTechStackTags(resolvedTags)
-                  setFormData((prev) => ({
-                    ...prev,
-                    techStack: resolvedTags.map((tag) => tag.text),
-                  }))
-                }}
-                placeholder={t("step2.tags.placeholder")}
-                autocompleteOptions={autocompleteTags}
-                activeTagIndex={activeTechTagIndex}
-                setActiveTagIndex={setActiveTechTagIndex}
-              />
-              <p className="text-muted-foreground mt-1 text-xs">{t("step2.tags.help")}</p>
-              {renderFieldError("techStack")}
-            </div>
-
-            <div id="platforms">
-              <Label className="mb-2 block">
-                {t("step2.platforms.label")} <span className="text-red-500">*</span>
-              </Label>
-              <div className="space-y-3 rounded-md border p-4">
-                {Object.entries(platformType).map(([key, value]) => (
-                  <div key={value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`platform-${value}`}
-                      checked={formData.platforms.includes(value)}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange("platforms", value, !!checked)
-                      }
-                    />
-                    <Label
-                      htmlFor={`platform-${value}`}
-                      className="cursor-pointer font-normal capitalize"
-                    >
-                      {t(`step2.platforms.options.${key.toLowerCase() as "web"}`)}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              <p className="text-muted-foreground mt-1 text-xs">{t("step2.platforms.help")}</p>
-              {renderFieldError("platforms")}
-            </div>
-
-            <div id="pricing">
-              <Label className="mb-2 block">
-                {t("step2.pricing.label")} <span className="text-red-500">*</span>
-              </Label>
-              <RadioGroup
-                value={formData.pricing}
-                onValueChange={(value) => handleRadioChange("pricing", value)}
-                className="flex flex-col gap-4 sm:flex-row"
-              >
-                {Object.entries(pricingType).map(([key, value]) => (
-                  <div key={value} className="flex-1">
-                    <Label
-                      htmlFor={`pricing-${value}`}
-                      className="hover:bg-muted/50 flex h-full cursor-pointer items-center space-x-2 rounded-md border p-3 transition-colors"
-                    >
-                      <RadioGroupItem value={value} id={`pricing-${value}`} />
-                      <span className="font-normal capitalize">
-                        {t(`step2.pricing.options.${key.toLowerCase() as "free"}`)}
-                      </span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-              {renderFieldError("pricing")}
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <Label htmlFor="githubUrl">{t("step2.githubUrl.label")}</Label>
-                <Input
-                  id="githubUrl"
-                  name="githubUrl"
-                  type="url"
-                  value={formData.githubUrl}
-                  onChange={handleInputChange}
-                  placeholder={t("step2.githubUrl.placeholder")}
-                />
-              </div>
-              <div>
-                <Label htmlFor="twitterUrl">{t("step2.twitterUrl.label")}</Label>
-                <Input
-                  id="twitterUrl"
-                  name="twitterUrl"
-                  type="url"
-                  value={formData.twitterUrl}
-                  onChange={handleInputChange}
-                  placeholder={t("step2.twitterUrl.placeholder")}
-                />
-              </div>
-            </div>
-          </div>
+          <SubmitProjectDetailsStep
+            value={formData}
+            categories={categories}
+            isLoadingCategories={isLoadingCategories}
+            popularTags={popularTags}
+            tags={techStackTags}
+            fieldErrors={fieldErrors}
+            onChange={(patch) => setFormData((previous) => ({ ...previous, ...patch }))}
+            onTagsChange={(resolvedTags) => {
+              setTechStackTags(resolvedTags)
+              setFormData((previous) => ({
+                ...previous,
+                techStack: resolvedTags.map((tag) => tag.text),
+              }))
+            }}
+            onFieldError={(field, message) =>
+              setFieldErrors((previous) => ({ ...previous, [field]: message }))
+            }
+          />
         )
       case 3:
         return (
@@ -2367,7 +2047,7 @@ export function SubmitProjectForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {renderStepper()}
+      <SubmitFormStepper currentStep={currentStep} onBackToStep={goToStep} />
 
       {renderStepContent()}
 

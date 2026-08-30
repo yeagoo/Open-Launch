@@ -118,6 +118,11 @@ export function UpvoteButton({
       disabled={isPending}
       type="button"
       aria-pressed={optimisticState.upvoted}
+      aria-label={
+        optimisticState.upvoted
+          ? `Remove upvote (${optimisticState.count} upvotes)`
+          : `Upvote (${optimisticState.count} upvotes)`
+      }
       className={cn(
         "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 transition-colors",
         optimisticState.upvoted

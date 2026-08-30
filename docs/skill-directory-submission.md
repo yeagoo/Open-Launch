@@ -301,7 +301,7 @@ _All resolved (2026-07) — recorded below and folded into the sections above._
 
 This system's risk is **not UI/code quality** — it's _distribution correctness,
 security correctness, and idempotency/concurrency correctness_. The guardrails
-are scoped accordingly. Package manager is **bun** (`bun.lockb`); push-based CI
+are scoped accordingly. Package manager is **bun** (`bun.lock`); push-based CI
 lives in `.github/workflows/ci.yml`.
 
 ### CI (GitHub Actions, triggered on push to main)

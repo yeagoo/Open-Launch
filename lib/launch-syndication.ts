@@ -116,6 +116,48 @@ export interface LaunchPayload {
   tier: string
 }
 
+export interface HicyouCampaignLaunchContext {
+  // The aat.ee launch_syndication row is the placement's durable identity.
+  placementId: string
+  // Receiver-side state updates use this source timestamp as their CAS guard.
+  sourceUpdatedAt: Date
+}
+
+/**
+ * Keeps the launch request contract pure and testable. Only Hicyou receives
+ * the Campaign association; the other partner receivers retain their current
+ * payload shape and do not need to understand this observability extension.
+ */
+export function buildSyndicationLaunchRequestBody(
+  site: SyndicationSite,
+  orderId: string,
+  payload: LaunchPayload,
+  campaignContext?: HicyouCampaignLaunchContext,
+): Record<string, unknown> {
+  if (site === "toolso") {
+    return {
+      ...payload,
+      idempotencyKey: orderId,
+      maxSites: payload.tier === "plus" ? PLUS_MAX_SITES : undefined,
+    }
+  }
+
+  if (site === "hicyou" && campaignContext) {
+    return {
+      ...payload,
+      idempotencyKey: orderId,
+      campaign: {
+        id: orderId,
+        placementId: campaignContext.placementId,
+        targetSiteId: "hicyou",
+        sourceUpdatedAt: campaignContext.sourceUpdatedAt.toISOString(),
+      },
+    }
+  }
+
+  return { ...payload, idempotencyKey: orderId }
+}
+
 /**
  * Enqueue one syndication row per partner site for a paid order. Idempotent:
  * the (order_id, site) unique index means repeat calls (Stripe retries,
@@ -230,6 +272,7 @@ export async function postLaunchToSite(
   site: SyndicationSite,
   orderId: string,
   payload: LaunchPayload,
+  campaignContext?: HicyouCampaignLaunchContext,
 ): Promise<PostResult> {
   const url = siteEndpoint(site)
   if (!url) {
@@ -249,15 +292,8 @@ export async function postLaunchToSite(
   }
 
   // The toolso gateway fans out to its own network and derives the site count
-  // from the tier; we pass maxSites for Plus to pin it to PLUS_MAX_SITES.
-  const body =
-    site === "toolso"
-      ? {
-          ...payload,
-          idempotencyKey: orderId,
-          maxSites: payload.tier === "plus" ? PLUS_MAX_SITES : undefined,
-        }
-      : { ...payload, idempotencyKey: orderId }
+  // from the tier; Hicyou additionally receives the source Campaign identity.
+  const body = buildSyndicationLaunchRequestBody(site, orderId, payload, campaignContext)
 
   try {
     // Use undici.request, NOT global fetch + AbortSignal.timeout. fetch's

@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath, unstable_cache } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
@@ -17,15 +16,23 @@ import {
 import { and, asc, count, desc, count as drizzleCount, eq, isNull, or, sql } from "drizzle-orm"
 import { getTranslations } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
 import { verifyAatBadgeServerSide } from "@/lib/badge-verify"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { notifyUpvoteMilestone } from "@/lib/notifications"
+import { logger } from "@/lib/observability/structured-logger"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import {
+  classifyProjectInsertError,
+  decideProjectUrlCollision,
+  normalizeProjectTags,
+  normalizeProjectWebsiteUrl,
+  resolveProjectLocale,
+} from "@/lib/project-submission-core"
 import { clampInteger, clampPage } from "@/lib/query-limits"
 import { sanitizeRichText } from "@/lib/sanitize"
-import { getCurrentUserId } from "@/lib/server-auth"
+import { getCurrentUserId, getServerSession } from "@/lib/server-auth"
+import { toggleUpvoteAtomically } from "@/lib/upvote-toggle"
 import { projectSubmissionSchema, type ProjectSubmissionInput } from "@/lib/validations/project"
 
 // Fonction pour générer un slug unique
@@ -54,13 +61,6 @@ async function generateUniqueSlug(name: string): Promise<string> {
 
   // Effectively-guaranteed-unique fallback.
   return `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`
-}
-
-// Get session helper
-async function getSession() {
-  return auth.api.getSession({
-    headers: await headers(),
-  })
 }
 
 // Get all categories
@@ -104,7 +104,7 @@ export async function getTopCategories(limit = 5) {
 
 // Get user's upvoted projects
 export async function getUserUpvotedProjects() {
-  const session = await getSession()
+  const session = await getServerSession()
 
   if (!session?.user?.id) {
     return []
@@ -131,7 +131,7 @@ export async function getUserComments() {
 
 // Get projects created by user
 export async function getUserCreatedProjects() {
-  const session = await getSession()
+  const session = await getServerSession()
 
   if (!session?.user?.id) {
     return []
@@ -148,7 +148,7 @@ export async function getUserCreatedProjects() {
 
 // Toggle upvote on a project
 export async function toggleUpvote(projectId: string) {
-  const session = await getSession()
+  const session = await getServerSession()
   // Server actions inherit locale from the originating request, so
   // getTranslations gives the same locale the user is browsing in.
   const t = await getTranslations("upvote")
@@ -229,41 +229,7 @@ export async function toggleUpvote(projectId: string) {
     }
   }
 
-  // Toggle atomically. The previous SELECT-then-act flow had a TOCTOU
-  // race: two concurrent requests could both read "no vote" and invert
-  // the user's intended end state. Serialize per (user, project) with a
-  // transaction-scoped advisory lock so the check and the write are one
-  // linearizable unit. The (user_id, project_id) unique index remains as
-  // the last-resort integrity net.
-  let voteAdded = false
-  await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtext(${session.user.id} || ':' || ${projectId}))`,
-    )
-
-    const existingUpvote = await tx
-      .select({ id: upvote.id })
-      .from(upvote)
-      .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
-      .limit(1)
-
-    if (existingUpvote.length > 0) {
-      await tx
-        .delete(upvote)
-        .where(and(eq(upvote.userId, session.user.id), eq(upvote.projectId, projectId)))
-    } else {
-      await tx
-        .insert(upvote)
-        .values({
-          id: crypto.randomUUID(),
-          userId: session.user.id,
-          projectId,
-          createdAt: new Date(),
-        })
-        .onConflictDoNothing()
-      voteAdded = true
-    }
-  })
+  const voteAdded = await toggleUpvoteAtomically(db, session.user.id, projectId)
 
   // Upvote milestones (10/50/100/500) notify the project owner. Only REAL
   // (non-bot) votes count toward a milestone: simulated engagement must
@@ -287,7 +253,7 @@ export async function toggleUpvote(projectId: string) {
       if (total?.value) {
         await notifyUpvoteMilestone(projectId, total.value)
       }
-    })().catch((err) => console.error("[upvote] milestone notify failed:", err))
+    })().catch((error) => logger.error("upvote_milestone_notification_failed", { error }))
   }
 
   revalidatePath("/dashboard")
@@ -298,13 +264,8 @@ export async function toggleUpvote(projectId: string) {
   return { success: true }
 }
 
-// Définir l'interface ici
-type ProjectLocale = "en" | "zh" | "es" | "pt" | "fr" | "ja" | "ko" | "et"
-const SUPPORTED_LOCALES: readonly ProjectLocale[] = ["en", "zh", "es", "pt", "fr", "ja", "ko", "et"]
-
-// Version correcte de submitProject
 export async function submitProject(projectData: ProjectSubmissionInput) {
-  const session = await getSession()
+  const session = await getServerSession()
 
   if (!session?.user) {
     return { success: false, error: "Authentication required" }
@@ -336,7 +297,6 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
       }
     }
 
-    // Utiliser les données de projectData
     const {
       name,
       tagline,
@@ -355,13 +315,8 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
       tags,
     } = parsedProject.data
 
-    // Validate sourceLocale (default to "en" for clients that don't supply it)
-    const sourceLocale: ProjectLocale = SUPPORTED_LOCALES.includes(rawSourceLocale as ProjectLocale)
-      ? (rawSourceLocale as ProjectLocale)
-      : "en"
-
-    // Normalize URL: lowercase + strip trailing slash (consistent with check-url endpoint)
-    const websiteUrl = rawWebsiteUrl.trim().toLowerCase().replace(/\/$/, "")
+    const sourceLocale = resolveProjectLocale(rawSourceLocale)
+    const websiteUrl = normalizeProjectWebsiteUrl(rawWebsiteUrl)
 
     // Sanitize untrusted HTML before persistence (XSS prevention)
     const sanitizedDescription = sanitizeRichText(description)
@@ -399,49 +354,26 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
       .where(eq(project.websiteUrl, websiteUrl))
       .limit(1)
 
-    if (existingByUrl) {
-      const isOwn = existingByUrl.createdBy === session.user.id
-      if (isOwn && existingByUrl.launchStatus === "payment_failed") {
-        await db.delete(project).where(eq(project.id, existingByUrl.id))
-      } else if (isOwn && existingByUrl.launchStatus === "payment_pending") {
-        return {
-          success: false,
-          error:
-            "You have a pending payment for this URL. Resume or cancel it on your dashboard before submitting again.",
-          code: "pending_payment_exists",
-          pendingProjectId: existingByUrl.id,
-        }
-      } else {
-        return { success: false, error: "This website URL has already been submitted" }
+    const collision = decideProjectUrlCollision(existingByUrl, session.user.id)
+    if (collision.kind === "delete_failed_draft") {
+      await db.delete(project).where(eq(project.id, collision.projectId))
+    } else if (collision.kind === "reject_pending_payment") {
+      return {
+        success: false,
+        error:
+          "You have a pending payment for this URL. Resume or cancel it on your dashboard before submitting again.",
+        code: "pending_payment_exists",
+        pendingProjectId: collision.projectId,
       }
+    } else if (collision.kind === "reject_duplicate") {
+      return { success: false, error: "This website URL has already been submitted" }
     }
 
-    // Générer le slug à partir du nom dans projectData
     const slug = await generateUniqueSlug(name)
 
     const { projectToTag, tag: tagTable, tagModerationStatus } = await import("@/drizzle/db/schema")
 
-    const normalizeTag = (raw: string) => {
-      const trimmed = raw.trim()
-      const tagSlug = trimmed
-        .toLowerCase()
-        .replace(/[^a-z0-9\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-      return { id: tagSlug, name: trimmed, slug: tagSlug }
-    }
-
-    const normalizedTags =
-      tags && tags.length > 0
-        ? [
-            ...new Map(
-              tags
-                .slice(0, 10)
-                .map(normalizeTag)
-                .filter((tag) => tag.slug.length >= 2 && tag.slug.length <= 30)
-                .map((tag) => [tag.id, tag]),
-            ).values(),
-          ]
-        : []
+    const normalizedTags = normalizeProjectTags(tags)
 
     const newProject = await db.transaction(async (tx) => {
       // Insert project
@@ -539,19 +471,15 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
 
     return { success: true, projectId: newProject.id, slug: newProject.slug }
   } catch (error) {
-    console.error("Error submitting project:", error)
-    // Postgres surfaces the SQLSTATE on error.cause.code (not error.code)
-    // via the driver; constraint name is on error.cause.constraint.
-    const cause = (error as { cause?: { code?: string; constraint?: string } })?.cause
-    const constraint = cause?.constraint ?? (error instanceof Error ? error.message : "")
-    // Unique constraint on websiteUrl
-    if (constraint.includes("project_website_url_unique")) {
+    logger.error("project_submission_failed", { error })
+    const insertError = classifyProjectInsertError(error)
+    if (insertError === "website_url_duplicate") {
       return { success: false, error: "This website URL has already been submitted" }
     }
     // Residual slug race: two concurrent submissions of the same name both
     // resolved a free slug, one lost the insert. Ask the user to retry —
     // generateUniqueSlug will pick a fresh suffix next time.
-    if (constraint.includes("project_slug_unique")) {
+    if (insertError === "slug_conflict") {
       return { success: false, error: "Please try submitting again (name conflict)" }
     }
     return { success: false, error: "Failed to submit project" }
@@ -564,7 +492,7 @@ export async function submitProject(projectData: ProjectSubmissionInput) {
  * Used for cleanup when post-submission steps (e.g. scheduleLaunch) fail.
  */
 export async function deleteMyDraftProject(projectId: string): Promise<void> {
-  const session = await getSession()
+  const session = await getServerSession()
   if (!session?.user?.id) return
 
   await db.delete(project).where(

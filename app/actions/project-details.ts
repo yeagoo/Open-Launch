@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
@@ -16,16 +15,9 @@ import {
 } from "@/drizzle/db/schema"
 import { and, eq, ne, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import { sanitizeRichText } from "@/lib/sanitize"
+import { getServerSession } from "@/lib/server-auth"
 import { projectUpdateSchema, type ProjectUpdateInput } from "@/lib/validations/project"
-
-// Get session helper
-async function getSession() {
-  return auth.api.getSession({
-    headers: await headers(),
-  })
-}
 
 /**
  * Server action used by the Edit dialog to load a full editable
@@ -35,7 +27,7 @@ async function getSession() {
  * status flips out of EDITABLE_STATUSES between page load and submit.
  */
 export async function getProjectForEdit(projectId: string) {
-  const session = await getSession()
+  const session = await getServerSession()
   if (!session?.user?.id) return null
 
   const [projectData] = await db.select().from(project).where(eq(project.id, projectId)).limit(1)
@@ -101,7 +93,7 @@ export type UpdateProjectData = ProjectUpdateInput
  * keep working.
  */
 export async function updateProject(projectId: string, data: UpdateProjectData) {
-  const session = await getSession()
+  const session = await getServerSession()
 
   if (!session?.user?.id) {
     return { success: false, error: "Authentication required" }

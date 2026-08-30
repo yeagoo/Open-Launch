@@ -30,6 +30,7 @@ import { readRequestTextBounded, RequestBodyTooLargeError } from "@/lib/read-req
 import { createStripeClient } from "@/lib/stripe"
 import {
   chargedAmountMatches,
+  classifyDirectoryOrderReplay,
   directoryOrderIdFromReference,
   isDeadSubscriptionStatus,
 } from "@/lib/stripe-webhook-core"
@@ -916,13 +917,17 @@ async function handleDirectoryOrderCompleted(
     // stale (someone canceled/refunded the order between createCheckout
     // and pay). The former is normal; the latter means money came in
     // for an order the user explicitly killed — admin needs to refund.
-    const refundAlreadySynchronized =
-      currentOrder.status === "refunded" && currentOrder.stripeSessionId === session.id
-    const STALE_STATUSES: ReadonlyArray<string> = ["canceled", "refunded", "failed"]
-    if (refundAlreadySynchronized) {
+    const replayDecision = classifyDirectoryOrderReplay({
+      status: currentOrder.status,
+      storedSessionId: currentOrder.stripeSessionId,
+      incomingSessionId: session.id,
+      amountVerified: currentOrder.amountVerified,
+      amountMismatch,
+    })
+    if (replayDecision === "refunded_replay") {
       stripeDiagnostic("info", "Refunded directory order replay ignored", orderId)
       return NextResponse.json({ success: true, idempotent: true }, { status: 200 })
-    } else if (STALE_STATUSES.includes(currentOrder.status)) {
+    } else if (replayDecision === "stale_order") {
       stripeDiagnostic(
         "warn",
         "⚠️ Paid webhook hit non-pending order:",
@@ -936,7 +941,7 @@ async function handleDirectoryOrderCompleted(
         `directory_order ${orderId} was '${currentOrder.status}' when paid webhook arrived`,
         ref,
       )
-    } else if (currentOrder.stripeSessionId && currentOrder.stripeSessionId !== session.id) {
+    } else if (replayDecision === "duplicate_payment") {
       // Already paid/fulfilled, but by a DIFFERENT checkout session — the buyer
       // paid the same order twice (two sessions off one reusable Payment Link).
       // Refund the duplicate + alert; never silently keep a second charge. (A
@@ -957,17 +962,13 @@ async function handleDirectoryOrderCompleted(
         `directory_order ${orderId} paid twice — duplicate session ${session.id} (first ${currentOrder.stripeSessionId})`,
         ref,
       )
-    } else if (!currentOrder.amountVerified) {
+    } else if (replayDecision === "repair_hold" || replayDecision === "held") {
       // A prior application version compared the tax-inclusive amount_total
       // with the tax-exclusive catalogue price. Once the corrected validator
       // proves the same stored session is valid, a Stripe replay may safely
       // release that false-positive hold and repair all idempotent post-payment
       // work. Genuine amount mismatches remain held.
-      if (
-        !amountMismatch &&
-        currentOrder.status === "paid" &&
-        currentOrder.stripeSessionId === session.id
-      ) {
+      if (replayDecision === "repair_hold") {
         const release = await db
           .update(directoryOrder)
           .set({ amountVerified: true, updatedAt: new Date() })

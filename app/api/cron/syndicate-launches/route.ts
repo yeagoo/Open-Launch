@@ -7,6 +7,10 @@ import { and, eq, inArray, isNull, lt, lte, or, sql } from "drizzle-orm"
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { type DirectoryTier } from "@/lib/directory-tiers"
 import {
+  drainHicyouCampaignSyncs,
+  enqueueChangedHicyouCampaignSyncs,
+} from "@/lib/hicyou-campaign-sync"
+import {
   buildLaunchPayload,
   collectPublishedUrls,
   enqueueLaunchSyndication,
@@ -226,7 +230,10 @@ export async function GET(request: NextRequest) {
         const head = rows[0]
         const payload = payloads.get(`${head.projectId}::${head.tier}`) ?? null
         const result: PostResult = payload
-          ? await postLaunchToSite(head.site as SyndicationSite, head.orderId, payload)
+          ? await postLaunchToSite(head.site as SyndicationSite, head.orderId, payload, {
+              placementId: head.id,
+              sourceUpdatedAt: now,
+            })
           : { ok: false, error: "project not found" }
 
         for (const row of rows) {
@@ -380,6 +387,22 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Reconcile the independent Campaign-status outbox only after the primary
+  // paid-launch workflow has written every delivery/order transition. Keep a
+  // rolling deploy (where this new table may not exist yet) or an outbox-only
+  // database fault from turning a successful customer delivery into a failed
+  // cron invocation. The next tick reconciles the durable source state again.
+  let campaignSyncEnqueued = 0
+  let campaignSync = { sent: 0, failed: 0, deferred: 0 }
+  let campaignSyncUnavailable = false
+  try {
+    campaignSyncEnqueued = await enqueueChangedHicyouCampaignSyncs()
+    campaignSync = await drainHicyouCampaignSyncs()
+  } catch (error) {
+    campaignSyncUnavailable = true
+    console.error("[syndicate] Campaign status sync unavailable:", error)
+  }
+
   return NextResponse.json({
     ranAt: now.toISOString(),
     reconciled,
@@ -389,5 +412,10 @@ export async function GET(request: NextRequest) {
     deferred,
     orphaned,
     ordersFulfilled,
+    campaignSync: {
+      enqueued: campaignSyncEnqueued,
+      ...campaignSync,
+      ...(campaignSyncUnavailable ? { unavailable: true } : {}),
+    },
   })
 }

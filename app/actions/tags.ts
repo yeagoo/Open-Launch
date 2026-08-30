@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath, revalidateTag } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
@@ -14,27 +13,12 @@ import {
 } from "@/drizzle/db/schema"
 import { and, asc, count, desc, eq, inArray, or, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
 import { clampInteger } from "@/lib/query-limits"
-import { getCurrentUserId } from "@/lib/server-auth"
+import { getCurrentUserId, getServerSession, requireAdmin } from "@/lib/server-auth"
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-async function getSession() {
-  return auth.api.getSession({
-    headers: await headers(),
-  })
-}
-
-async function checkAdminAccess() {
-  const session = await getSession()
-  if (!session?.user || session.user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required")
-  }
-  return session
-}
 
 function normalizeTag(raw: string): { id: string; name: string; slug: string } {
   const trimmed = raw.trim()
@@ -159,7 +143,7 @@ export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, so
 // ─── Authenticated actions ───────────────────────────────────────────────────
 
 export async function upsertTagsForProject(projectId: string, tagNames: string[]) {
-  const session = await getSession()
+  const session = await getServerSession()
   if (!session?.user?.id) {
     return { success: false, tagIds: [] }
   }
@@ -260,7 +244,7 @@ export async function upsertTagsForProject(projectId: string, tagNames: string[]
 // ─── Admin actions ───────────────────────────────────────────────────────────
 
 export async function getFlaggedTags() {
-  await checkAdminAccess()
+  await requireAdmin()
 
   return db
     .select()
@@ -270,7 +254,7 @@ export async function getFlaggedTags() {
 }
 
 export async function approveTag(tagId: string) {
-  await checkAdminAccess()
+  await requireAdmin()
 
   await db
     .update(tagTable)
@@ -288,7 +272,7 @@ export async function approveTag(tagId: string) {
 }
 
 export async function deleteTag(tagId: string) {
-  await checkAdminAccess()
+  await requireAdmin()
 
   // Delete cascades through projectToTag via FK
   await db.delete(tagTable).where(eq(tagTable.id, tagId))

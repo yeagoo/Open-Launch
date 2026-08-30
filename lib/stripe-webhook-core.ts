@@ -10,6 +10,23 @@ const DEAD_SUBSCRIPTION_STATUSES: ReadonlySet<Stripe.Subscription.Status> = new 
   "canceled",
 ])
 
+const STALE_DIRECTORY_ORDER_STATUSES: ReadonlySet<string> = new Set([
+  "canceled",
+  "refunded",
+  "failed",
+])
+
+export type DirectoryOrderReplayDecision =
+  "refunded_replay" | "stale_order" | "duplicate_payment" | "repair_hold" | "held" | "replay"
+
+interface DirectoryOrderReplayInput {
+  status: string
+  storedSessionId: string | null
+  incomingSessionId: string
+  amountVerified: boolean
+  amountMismatch: boolean
+}
+
 /**
  * Validate the configured catalogue price, not the tax-inclusive amount that
  * happened to be charged to this buyer.
@@ -42,4 +59,30 @@ export function directoryOrderIdFromReference(reference: string | null): string 
 
 export function isDeadSubscriptionStatus(status: Stripe.Subscription.Status): boolean {
   return DEAD_SUBSCRIPTION_STATUSES.has(status)
+}
+
+/**
+ * Classify a failed `pending -> paid` conditional update using the row that
+ * won the race. The caller remains responsible for effects; keeping this
+ * function pure makes the money-sensitive precedence explicit and testable.
+ */
+export function classifyDirectoryOrderReplay({
+  status,
+  storedSessionId,
+  incomingSessionId,
+  amountVerified,
+  amountMismatch,
+}: DirectoryOrderReplayInput): DirectoryOrderReplayDecision {
+  if (status === "refunded" && storedSessionId === incomingSessionId) {
+    return "refunded_replay"
+  }
+  if (STALE_DIRECTORY_ORDER_STATUSES.has(status)) return "stale_order"
+  if (storedSessionId && storedSessionId !== incomingSessionId) return "duplicate_payment"
+  if (!amountVerified) {
+    if (!amountMismatch && status === "paid" && storedSessionId === incomingSessionId) {
+      return "repair_hold"
+    }
+    return "held"
+  }
+  return "replay"
 }

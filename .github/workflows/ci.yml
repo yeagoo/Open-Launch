@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -51,6 +58,9 @@ jobs:
 
       - name: TypeScript
         run: bunx tsc --noEmit
+
+      - name: Strict indexed-access slice
+        run: bun run typecheck:strict-indexes
 
       - name: Cron policy inventory
         run: bun run cron:policy:check
@@ -174,6 +184,16 @@ jobs:
           RELEASE_TEST_DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/open_launch_release_test_ci
         run: bun run test:release-db
 
+      - name: Verify bounded admin user pagination
+        env:
+          DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/open_launch_release_test_ci
+        run: bun run test:admin-users-db
+
+      - name: Verify atomic upvote toggles
+        env:
+          DATABASE_URL: postgresql://postgres:release_test_password@127.0.0.1:5432/open_launch_release_test_ci
+        run: bun run test:upvote-db
+
       - name: Migrate browser fixture database
         env:
           DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
@@ -244,6 +264,7 @@ jobs:
 
   runner-smoke:
     name: Final immutable runner HTTP smoke
+    if: github.event_name == 'push'
     needs:
       - checks
       - release-gates

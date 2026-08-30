@@ -8,11 +8,11 @@
 
 import { describe, expect, it } from "vitest"
 
-import { RateLimiter } from "./rate-limiter"
+import { SlidingWindowQueueLimiter } from "./sliding-window-queue-limiter"
 
-describe("RateLimiter", () => {
+describe("SlidingWindowQueueLimiter", () => {
   it("admits up to maxPerWindow without blocking", async () => {
-    const limiter = new RateLimiter(5, 1000)
+    const limiter = new SlidingWindowQueueLimiter(5, 1000)
     const start = Date.now()
     await Promise.all([
       limiter.acquire(),
@@ -26,7 +26,7 @@ describe("RateLimiter", () => {
   })
 
   it("queues the (max+1)th call until the oldest slot ages out", async () => {
-    const limiter = new RateLimiter(3, 200)
+    const limiter = new SlidingWindowQueueLimiter(3, 200)
     const start = Date.now()
     await limiter.acquire()
     await limiter.acquire()
@@ -39,7 +39,7 @@ describe("RateLimiter", () => {
   })
 
   it("preserves FIFO order under burst", async () => {
-    const limiter = new RateLimiter(2, 200)
+    const limiter = new SlidingWindowQueueLimiter(2, 200)
     const order: number[] = []
     const promises = [0, 1, 2, 3, 4].map((i) => limiter.acquire().then(() => order.push(i)))
     await Promise.all(promises)
@@ -47,13 +47,13 @@ describe("RateLimiter", () => {
   })
 
   it("rejects when queue wait exceeds timeoutMs", async () => {
-    const limiter = new RateLimiter(1, 1000)
+    const limiter = new SlidingWindowQueueLimiter(1, 1000)
     await limiter.acquire() // fills the only slot for 1s
     await expect(limiter.acquire(50)).rejects.toThrow(/timed out/)
   })
 
   it("drains the queue when the window slides", async () => {
-    const limiter = new RateLimiter(2, 150)
+    const limiter = new SlidingWindowQueueLimiter(2, 150)
     const start = Date.now()
     await Promise.all([
       limiter.acquire(),
@@ -68,7 +68,7 @@ describe("RateLimiter", () => {
   })
 
   it("queueDepth reflects pending callers", async () => {
-    const limiter = new RateLimiter(1, 500)
+    const limiter = new SlidingWindowQueueLimiter(1, 500)
     await limiter.acquire()
     const p1 = limiter.acquire()
     const p2 = limiter.acquire()
@@ -80,12 +80,12 @@ describe("RateLimiter", () => {
   })
 
   it("rejects invalid construction", () => {
-    expect(() => new RateLimiter(0, 1000)).toThrow()
-    expect(() => new RateLimiter(5, 0)).toThrow()
+    expect(() => new SlidingWindowQueueLimiter(0, 1000)).toThrow()
+    expect(() => new SlidingWindowQueueLimiter(5, 0)).toThrow()
   })
 
   it("large bursts beyond capacity still all resolve in order", async () => {
-    const limiter = new RateLimiter(5, 100)
+    const limiter = new SlidingWindowQueueLimiter(5, 100)
     const order: number[] = []
     const promises = Array.from({ length: 12 }, (_, i) =>
       limiter.acquire().then(() => order.push(i)),

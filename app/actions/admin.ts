@@ -1,114 +1,72 @@
 "use server"
 
 import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { category, project, user } from "@/drizzle/db/schema"
 import { addDays, format } from "date-fns"
 import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
+import { queryAdminUsersPage } from "@/lib/admin-user-pagination"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
 import { countInt } from "@/lib/db-utils"
+import { requireAdmin } from "@/lib/server-auth"
 
 import { getLaunchAvailabilityRange } from "./launch"
 
-// Vérification des droits admin
-async function checkAdminAccess() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
-  if (!session?.user?.role || session.user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required")
-  }
+export async function getAdminUsersPage(input: unknown) {
+  await requireAdmin()
+  return queryAdminUsersPage(db, input)
 }
 
-// Get all users and launch stats
-export async function getAdminStatsAndUsers() {
-  await checkAdminAccess()
-
-  // Get all users, sorted by registration date descending
-  const usersData = await db.select().from(user).orderBy(desc(user.createdAt))
-
-  // Get project counts for each user
-  const projectCounts = await db
-    .select({
-      userId: project.createdBy,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(project)
-    .where(sql`${project.createdBy} IS NOT NULL`)
-    .groupBy(project.createdBy)
-
-  // Create a map for quick lookup
-  const projectCountMap = new Map(projectCounts.map((pc) => [pc.userId, pc.count]))
-
-  // Combine user data with project counts
-  const users = usersData.map((u) => ({
-    ...u,
-    hasLaunched: (projectCountMap.get(u.id) || 0) > 0,
-    projectCount: projectCountMap.get(u.id) || 0,
-  }))
-
-  // Get today's date at midnight UTC
+export async function getAdminOverview() {
+  await requireAdmin()
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
 
-  // Get new users today
-  const newUsersToday = await db
-    .select({ count: countInt() })
-    .from(user)
-    .where(gte(user.createdAt, today))
-
-  // Get launch stats
-  const totalLaunches = await db.select({ count: countInt() }).from(project)
-  const premiumLaunches = await db
-    .select({ count: countInt() })
-    .from(project)
-    .where(eq(project.launchType, "premium"))
-  const premiumPlusLaunches = await db
-    .select({ count: countInt() })
-    .from(project)
-    .where(eq(project.launchType, "premium_plus"))
-
-  // Get new launches today
-  const newLaunchesToday = await db
-    .select({ count: countInt() })
-    .from(project)
-    .where(gte(project.createdAt, today))
-
-  // Get new premium launches today
-  const newPremiumLaunchesToday = await db
-    .select({ count: countInt() })
-    .from(project)
-    .where(and(gte(project.createdAt, today), eq(project.launchType, "premium")))
-
-  // Get new premium plus launches today
-  const newPremiumPlusLaunchesToday = await db
-    .select({ count: countInt() })
-    .from(project)
-    .where(and(gte(project.createdAt, today), eq(project.launchType, "premium_plus")))
+  const [[userStats], [projectStats], roleRows] = await Promise.all([
+    db
+      .select({
+        totalUsers: countInt(),
+        newUsersToday: countInt(gte(user.createdAt, today)),
+      })
+      .from(user),
+    db
+      .select({
+        totalLaunches: countInt(),
+        premiumLaunches: countInt(eq(project.launchType, "premium")),
+        premiumPlusLaunches: countInt(eq(project.launchType, "premium_plus")),
+        newLaunchesToday: countInt(gte(project.createdAt, today)),
+        newPremiumLaunchesToday: countInt(
+          and(gte(project.createdAt, today), eq(project.launchType, "premium")),
+        ),
+        newPremiumPlusLaunchesToday: countInt(
+          and(gte(project.createdAt, today), eq(project.launchType, "premium_plus")),
+        ),
+      })
+      .from(project),
+    db.selectDistinct({ role: user.role }).from(user).orderBy(asc(user.role)),
+  ])
 
   return {
-    users,
     stats: {
-      totalLaunches: Number(totalLaunches[0]?.count || 0),
-      premiumLaunches: Number(premiumLaunches[0]?.count || 0),
-      premiumPlusLaunches: Number(premiumPlusLaunches[0]?.count || 0),
-      totalUsers: users.length,
-      newUsersToday: Number(newUsersToday[0]?.count || 0),
-      newLaunchesToday: Number(newLaunchesToday[0]?.count || 0),
-      newPremiumLaunchesToday: Number(newPremiumLaunchesToday[0]?.count || 0),
-      newPremiumPlusLaunchesToday: Number(newPremiumPlusLaunchesToday[0]?.count || 0),
+      totalLaunches: projectStats?.totalLaunches ?? 0,
+      premiumLaunches: projectStats?.premiumLaunches ?? 0,
+      premiumPlusLaunches: projectStats?.premiumPlusLaunches ?? 0,
+      totalUsers: userStats?.totalUsers ?? 0,
+      newUsersToday: userStats?.newUsersToday ?? 0,
+      newLaunchesToday: projectStats?.newLaunchesToday ?? 0,
+      newPremiumLaunchesToday: projectStats?.newPremiumLaunchesToday ?? 0,
+      newPremiumPlusLaunchesToday: projectStats?.newPremiumPlusLaunchesToday ?? 0,
     },
+    roles: [...new Set(roleRows.map(({ role }) => role || "user"))].sort(),
   }
 }
 
 // Get free launch availability
 export async function getFreeLaunchAvailability() {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const today = new Date()
   const startDate = format(addDays(today, LAUNCH_SETTINGS.MIN_DAYS_AHEAD), DATE_FORMAT.API)
@@ -132,7 +90,7 @@ export async function getFreeLaunchAvailability() {
 
 // Get all categories
 export async function getCategories() {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const categories = await db
     .select({
@@ -151,7 +109,7 @@ export async function getCategories() {
 
 // Add a new category
 export async function addCategory(name: string) {
-  await checkAdminAccess()
+  await requireAdmin()
 
   // Name validation
   const trimmedName = name.trim()
@@ -200,7 +158,7 @@ export async function addCategory(name: string) {
 
 // Get scheduled projects grouped by launch date
 export async function getScheduledProjects(daysAhead: number = 7) {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
@@ -256,7 +214,7 @@ export async function getScheduledProjects(daysAhead: number = 7) {
 
 // Delete a project
 export async function deleteProject(projectId: string) {
-  await checkAdminAccess()
+  await requireAdmin()
 
   try {
     await db.delete(project).where(eq(project.id, projectId))
@@ -269,7 +227,7 @@ export async function deleteProject(projectId: string) {
 
 // Get all paid projects (premium and premium_plus)
 export async function getPaidProjects() {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const paidProjects = await db
     .select({
@@ -316,7 +274,7 @@ export async function getPaidProjects() {
  *   - usage volume vs paid Directory tiers
  */
 export async function getBadgeProjects() {
-  await checkAdminAccess()
+  await requireAdmin()
 
   const rows = await db
     .select({

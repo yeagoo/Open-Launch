@@ -1,22 +1,13 @@
 "use server"
 
 import { revalidatePath, revalidateTag } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import { project } from "@/drizzle/db/schema"
 import { eq } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import { PROJECT_RELATED_TAG } from "@/lib/cache-tags"
-
-async function requireAdmin() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user || session.user.role !== "admin") {
-    throw new Error("Forbidden")
-  }
-  return session.user
-}
+import { requireAdmin } from "@/lib/server-auth"
 
 /**
  * Manual override toggle for the AI quality verdict. Admin can flip a
@@ -25,7 +16,7 @@ async function requireAdmin() {
  * decision.
  */
 export async function setProjectLowQuality(projectId: string, isLowQuality: boolean) {
-  await requireAdmin()
+  await requireAdmin("Forbidden")
   await db
     .update(project)
     .set({

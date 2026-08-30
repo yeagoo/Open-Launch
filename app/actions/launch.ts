@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 
 import { db } from "@/drizzle/db"
 import {
@@ -15,7 +14,6 @@ import {
 import { addDays, format, isBefore, parse } from "date-fns"
 import { and, count as drizzleCount, eq, gte, lt, ne, sql } from "drizzle-orm"
 
-import { auth } from "@/lib/auth"
 import {
   DATE_FORMAT,
   LAUNCH_LIMITS,
@@ -24,10 +22,7 @@ import {
   USER_DAILY_LAUNCH_LIMIT,
 } from "@/lib/constants"
 import { countInt } from "@/lib/db-utils"
-
-async function getSession() {
-  return auth.api.getSession({ headers: await headers() })
-}
+import { getServerSession } from "@/lib/server-auth"
 
 export interface LaunchAvailability {
   date: string
@@ -169,7 +164,7 @@ export async function getLaunchAvailabilityRange(
 export async function checkUserLaunchLimit(
   launchDate: string,
 ): Promise<{ allowed: boolean; count: number; limit: number }> {
-  const session = await getSession()
+  const session = await getServerSession()
   if (!session?.user?.id) {
     throw new Error("Authentication required.")
   }
@@ -209,7 +204,7 @@ export async function scheduleLaunch(
   date: string,
   launchTypeValue: (typeof LAUNCH_TYPES)[keyof typeof LAUNCH_TYPES],
 ): Promise<boolean> {
-  const session = await getSession()
+  const session = await getServerSession()
   if (!session?.user?.id) {
     throw new Error("Authentication required.")
   }

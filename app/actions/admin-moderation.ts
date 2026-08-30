@@ -1,21 +1,11 @@
 "use server"
 
-import { headers } from "next/headers"
-
 import { db } from "@/drizzle/db"
 import { commentReport, fumaComments, notification } from "@/drizzle/db/schema"
 import { and, eq, inArray, isNull } from "drizzle-orm"
 
 import { logAdminAction } from "@/lib/admin-audit"
-import { auth } from "@/lib/auth"
-
-async function checkAdminAccess(): Promise<{ adminId: string }> {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user?.role || session.user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required")
-  }
-  return { adminId: session.user.id }
-}
+import { requireAdmin } from "@/lib/server-auth"
 
 export interface CommentReportRow {
   id: string
@@ -31,7 +21,7 @@ export interface CommentReportRow {
 
 /** Pending reports, oldest first, with a per-comment report count. */
 export async function listPendingCommentReports(): Promise<CommentReportRow[]> {
-  await checkAdminAccess()
+  await requireAdmin()
   const rows = await db
     .select({
       id: commentReport.id,
@@ -85,7 +75,7 @@ const TOMBSTONE_CONTENT = {
  * hidden comment can never be re-tombstoned with a different body.
  */
 export async function hideReportedComment(reportId: string): Promise<void> {
-  const { adminId } = await checkAdminAccess()
+  const { id: adminId } = await requireAdmin()
 
   const [report] = await db
     .select({ id: commentReport.id, commentId: commentReport.commentId })
@@ -124,7 +114,7 @@ export async function hideReportedComment(reportId: string): Promise<void> {
  * comment has replies (deleting detaches them); delete is for clear spam.
  */
 export async function deleteReportedComment(reportId: string): Promise<void> {
-  const { adminId } = await checkAdminAccess()
+  const { id: adminId } = await requireAdmin()
 
   const [report] = await db
     .select({ id: commentReport.id, commentId: commentReport.commentId })
@@ -150,7 +140,7 @@ export async function deleteReportedComment(reportId: string): Promise<void> {
 
 /** Dismiss a report (comment stays). */
 export async function dismissCommentReport(reportId: string): Promise<void> {
-  const { adminId } = await checkAdminAccess()
+  const { id: adminId } = await requireAdmin()
 
   const updated = await db
     .update(commentReport)

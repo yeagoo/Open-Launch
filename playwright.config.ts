@@ -34,6 +34,7 @@ const runtimeEnv = {
   TURNSTILE_SECRET_KEY: "open-launch-e2e",
   STRIPE_SECRET_KEY: "sk_test_open_launch_e2e",
   STRIPE_WEBHOOK_SECRET: "whsec_open_launch_e2e",
+  NEXT_PUBLIC_DIRECTORY_PAYMENT_LINK_BASIC: "https://checkout.stripe.test/basic",
   RESEND_API_KEY: "re_open_launch_e2e",
   R2_ACCOUNT_ID: "open-launch-e2e",
   R2_ACCESS_KEY_ID: "open-launch-e2e",

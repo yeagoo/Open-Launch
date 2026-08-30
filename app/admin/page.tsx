@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { format, parseISO } from "date-fns"
@@ -29,6 +29,7 @@ import { toast } from "sonner"
 
 import { admin } from "@/lib/auth-client"
 import { LAUNCH_SETTINGS } from "@/lib/constants"
+import { useDebounce } from "@/lib/hooks/use-debounce"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -42,7 +43,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import {
   addCategory,
   deleteProject,
-  getAdminStatsAndUsers,
+  getAdminOverview,
+  getAdminUsersPage,
   getCategories,
   getFreeLaunchAvailability,
   getScheduledProjects,
@@ -54,7 +56,6 @@ type User = {
   name: string
   role?: string | undefined
   banned?: boolean | null
-  createdAt?: string
   hasLaunched?: boolean
   projectCount?: number
 }
@@ -66,6 +67,8 @@ export default function AdminDashboard() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [filteredUserCount, setFilteredUserCount] = useState(0)
+  const [roles, setRoles] = useState<string[]>(["user", "admin"])
   const [stats, setStats] = useState<{
     totalLaunches: number
     premiumLaunches: number
@@ -114,6 +117,8 @@ export default function AdminDashboard() {
   const [totalScheduled, setTotalScheduled] = useState(0)
   const router = useRouter()
   useIsMobile()
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const userRequestId = useRef(0)
 
   // Delete project handler
   const handleDeleteProject = async (projectId: string) => {
@@ -150,27 +155,47 @@ export default function AdminDashboard() {
     }
   }
 
-  // Fetch users, stats and free launch availability
-  const fetchData = async () => {
+  const fetchUserPage = useCallback(async () => {
+    const requestId = ++userRequestId.current
     setLoading(true)
     try {
-      const [{ users, stats }, freeLaunchData, scheduledData] = await Promise.all([
-        getAdminStatsAndUsers(),
+      const result = await getAdminUsersPage({
+        page: currentPage,
+        pageSize: itemsPerPage,
+        search: debouncedSearchQuery,
+        role: roleFilter,
+        status: statusFilter,
+      })
+      if (requestId !== userRequestId.current) return
+      setUsers(
+        result.users.map((user) => ({
+          ...user,
+          role: user.role ?? undefined,
+        })),
+      )
+      setFilteredUserCount(result.total)
+    } catch {
+      if (requestId !== userRequestId.current) return
+      setUsers([])
+      setFilteredUserCount(0)
+    } finally {
+      if (requestId === userRequestId.current) setLoading(false)
+    }
+  }, [currentPage, debouncedSearchQuery, itemsPerPage, roleFilter, statusFilter])
+
+  const fetchOverviewData = useCallback(async () => {
+    try {
+      const [{ stats, roles: availableRoles }, freeLaunchData, scheduledData] = await Promise.all([
+        getAdminOverview(),
         getFreeLaunchAvailability(),
         getScheduledProjects(7),
       ])
-      const mappedUsers = users.map((u) => ({
-        ...u,
-        role: u.role ?? undefined,
-        createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
-      }))
-      setUsers(mappedUsers)
       setStats(stats)
+      setRoles(availableRoles)
       setFreeLaunchAvailability(freeLaunchData.firstAvailableDate)
       setScheduledProjects(scheduledData.groupedByDate)
       setTotalScheduled(scheduledData.total)
     } catch {
-      setUsers([])
       setStats({
         totalLaunches: 0,
         premiumLaunches: 0,
@@ -185,11 +210,10 @@ export default function AdminDashboard() {
       setScheduledProjects({})
       setTotalScheduled(0)
     }
-    setLoading(false)
-  }
+  }, [])
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const { categories: cats, totalCount } = await getCategories()
       setCategories(cats)
@@ -197,7 +221,11 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Failed to fetch categories:", error)
     }
-  }
+  }, [])
+
+  const fetchData = useCallback(async () => {
+    await Promise.all([fetchUserPage(), fetchOverviewData(), fetchCategories()])
+  }, [fetchCategories, fetchOverviewData, fetchUserPage])
 
   // Handle category addition
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -210,7 +238,7 @@ export default function AdminDashboard() {
     const result = await addCategory(newCategory)
     if (result.success) {
       setNewCategory("")
-      fetchCategories()
+      void fetchCategories()
       toast.success("Category added successfully")
     } else {
       setCategoryError(result.error || "Failed to add category")
@@ -220,43 +248,24 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     queueMicrotask(() => {
-      void fetchData()
+      void fetchOverviewData()
       void fetchCategories()
     })
-  }, [])
-
-  const filteredUsers = useMemo(() => {
-    let result = [...users]
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (user) =>
-          user.name?.toLowerCase().includes(query) || user.email?.toLowerCase().includes(query),
-      )
-    }
-    if (roleFilter !== "all") {
-      result = result.filter((user) => user.role === roleFilter)
-    }
-    if (statusFilter !== "all") {
-      if (statusFilter === "banned") {
-        result = result.filter((user) => user.banned === true)
-      } else if (statusFilter === "active") {
-        result = result.filter((user) => user.banned !== true)
-      }
-    }
-    return result
-  }, [searchQuery, roleFilter, statusFilter, users])
+  }, [fetchCategories, fetchOverviewData])
 
   useEffect(() => {
-    queueMicrotask(() => setCurrentPage(1))
-  }, [searchQuery, roleFilter, statusFilter])
+    queueMicrotask(() => void fetchUserPage())
+  }, [fetchUserPage])
 
-  const indexOfLastUser = currentPage * itemsPerPage
-  const indexOfFirstUser = indexOfLastUser - itemsPerPage
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredUserCount / itemsPerPage)
+  const indexOfFirstUser = filteredUserCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
+  const indexOfLastUser = Math.min(currentPage * itemsPerPage, filteredUserCount)
 
-  const uniqueRoles = Array.from(new Set(users.map((user) => user.role || "user")))
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      queueMicrotask(() => setCurrentPage(totalPages))
+    }
+  }, [currentPage, totalPages])
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-2 pt-6 pb-12 sm:px-4">
@@ -493,25 +502,40 @@ export default function AdminDashboard() {
                 type="text"
                 placeholder="Search"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value)
+                  setCurrentPage(1)
+                }}
                 className="h-8 w-24 max-w-[110px] rounded-md border pr-2 pl-8 text-xs sm:w-64 sm:max-w-full"
               />
               <Search className="text-muted-foreground absolute top-2 left-2 h-4 w-4" />
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select
+              value={roleFilter}
+              onValueChange={(value) => {
+                setRoleFilter(value)
+                setCurrentPage(1)
+              }}
+            >
               <SelectTrigger className="flex h-8 w-8 items-center justify-center rounded-md p-0 text-xs [&>svg:last-child]:hidden">
                 <Users className="text-muted-foreground h-4 w-4" />
               </SelectTrigger>
               <SelectContent className="rounded-md">
                 <SelectItem value="all">All roles</SelectItem>
-                {uniqueRoles.map((role) => (
+                {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     {role}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value)
+                setCurrentPage(1)
+              }}
+            >
               <SelectTrigger className="flex h-8 w-8 items-center justify-center rounded-md p-0 text-xs [&>svg:last-child]:hidden">
                 <Shield className="text-muted-foreground h-4 w-4" />
               </SelectTrigger>
@@ -592,7 +616,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentUsers.map((user) => (
+                    {users.map((user) => (
                       <tr key={user.id} className="hover:bg-muted/10 border-t">
                         <td className="max-w-[120px] truncate p-2 font-medium">
                           {user.name || "—"}
@@ -653,7 +677,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="divide-y sm:hidden">
-              {currentUsers.map((user) => (
+              {users.map((user) => (
                 <div key={user.id} className="flex items-center p-3">
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{user.name || "—"}</div>
@@ -706,8 +730,7 @@ export default function AdminDashboard() {
 
         <div className="flex items-center justify-between border-t p-3">
           <span className="text-muted-foreground text-xs">
-            Showing {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
-            {filteredUsers.length}
+            Showing {indexOfFirstUser}-{indexOfLastUser} of {filteredUserCount}
           </span>
           <div className="flex items-center gap-2">
             <Button

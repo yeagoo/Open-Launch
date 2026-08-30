@@ -280,6 +280,7 @@ export const projectToCategory = pgTable(
   (table) => {
     return {
       pk: primaryKey(table.projectId, table.categoryId),
+      categoryIdIdx: index("project_to_category_category_id_idx").on(table.categoryId),
     }
   },
 )
@@ -1141,6 +1142,33 @@ export const launchSyndication = pgTable(
       statusIdx: index("launch_syndication_status_idx").on(table.status, table.nextAttemptAt),
     }
   },
+)
+
+// Durable Hicyou Campaign-status outbox. It tracks source freshness rather
+// than merely delivery attempts: if a syndication row changes while a sync is
+// in flight, `version` advances and the older worker cannot acknowledge away
+// the newer snapshot.
+export const hicyouCampaignSync = pgTable(
+  "hicyou_campaign_sync",
+  {
+    orderId: uuid("order_id")
+      .primaryKey()
+      .references(() => directoryOrder.id, { onDelete: "cascade" }),
+    sourceUpdatedAt: timestamp("source_updated_at").notNull(),
+    version: integer("version").notNull().default(1),
+    // 'sending' is crash-recoverable; 'sent' remains as a sync ledger so the
+    // reconciler can compare later source changes against lastSyncedAt.
+    status: text("status").notNull().default("pending"), // pending | sending | failed | sent
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    nextAttemptAt: timestamp("next_attempt_at"),
+    lastSyncedAt: timestamp("last_synced_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    dueIdx: index("hicyou_campaign_sync_due_idx").on(table.status, table.nextAttemptAt),
+  }),
 )
 
 // ─── Skill-driven free directory submission ─────────────────────────────────

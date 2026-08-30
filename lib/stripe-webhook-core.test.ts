@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   chargedAmountMatches,
+  classifyDirectoryOrderReplay,
   directoryOrderIdFromReference,
   isDeadSubscriptionStatus,
 } from "@/lib/stripe-webhook-core"
@@ -86,5 +87,48 @@ describe("Stripe webhook core decisions", () => {
     expect(isDeadSubscriptionStatus("active")).toBe(false)
     expect(isDeadSubscriptionStatus("past_due")).toBe(false)
     expect(isDeadSubscriptionStatus("paused")).toBe(false)
+  })
+
+  it("classifies directory payment replays in money-safe precedence", () => {
+    const base = {
+      status: "paid",
+      storedSessionId: "cs_original",
+      incomingSessionId: "cs_original",
+      amountVerified: true,
+      amountMismatch: false,
+    }
+
+    expect(classifyDirectoryOrderReplay(base)).toBe("replay")
+    expect(classifyDirectoryOrderReplay({ ...base, amountVerified: false })).toBe("repair_hold")
+    expect(
+      classifyDirectoryOrderReplay({
+        ...base,
+        amountVerified: false,
+        amountMismatch: true,
+      }),
+    ).toBe("held")
+    expect(classifyDirectoryOrderReplay({ ...base, incomingSessionId: "cs_duplicate" })).toBe(
+      "duplicate_payment",
+    )
+    expect(classifyDirectoryOrderReplay({ ...base, status: "failed" })).toBe("stale_order")
+    expect(
+      classifyDirectoryOrderReplay({
+        ...base,
+        status: "refunded",
+        amountVerified: false,
+      }),
+    ).toBe("refunded_replay")
+  })
+
+  it("does not repair a legacy hold without the same stored Stripe session", () => {
+    expect(
+      classifyDirectoryOrderReplay({
+        status: "paid",
+        storedSessionId: null,
+        incomingSessionId: "cs_incoming",
+        amountVerified: false,
+        amountMismatch: false,
+      }),
+    ).toBe("held")
   })
 })
