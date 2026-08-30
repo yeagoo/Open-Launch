@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-08-03 (Asia/Shanghai)
+Last verified: 2026-08-30 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260804111743`; the independent repository check is
-`check-restic-idrive-e2-20260804111921`. Both completed successfully without
+`backup-aat-ee-restic-20260830155212`; the independent repository check is
+`check-restic-idrive-e2-20260830155402`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,28 +155,38 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-0cdf4b1c8265253e568748e96bea97ebb282f653
+5469a0b99f6a64ffca5ce38b0c57537f1994723b
 ```
 
 Current runtime facts:
 
 - application container: `aat-ee-app`
-- container status after deployment: running and healthy
+- container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.directory-dr-r27.yml`
+  `compose.review-remediation-r30.yml`
 - deployment marker:
-  `20260804-directory-dr-r27`
-- runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`, libvips `8.18.3`
+  `20260830-review-remediation-r30`
+- runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 
-The current r27 app-only release refreshes the canonical directory snapshot,
-including the verified `aat.ee` DR value of 47, and adds the required visible
-Ahrefs attribution. It also hardens the snapshot-sync contract and resolves the
-reviewed dependency audit findings. No migration ran. Production remains in
-Shadow mode with an empty Canary path, all Ledger workers disabled, and the
-payment email outbox disabled. Its canonical plan, snapshot and journal
-completed 6/6 operations successfully. See
+The current r30 release deploys the completed review remediation and P2
+hardening work. Its exact non-root migrator applied migrations `0060` and
+`0061`; production has 62 tracked migrations, the campaign-sync table exists,
+and the category lookup index is valid and ready. CSP is in an intentional
+Report-Only observation phase with reports sent to `/api/csp-report`.
+Production remains in Shadow mode with an empty Canary path, embedded Ledger
+workers disabled, and the payment email outbox disabled. Its canonical plan,
+snapshot, and journal completed 6/6 operations successfully. See
+[Review remediation r30 deployment](./deployments/2026-08-30-review-remediation-r30.md).
+
+The preceding r28 release deployed the payment-reconciliation hardening, and
+r29 performed the separately approved UseWok order reconciliation. See
+[Payment reconciliation r28/r29](./deployments/2026-08-09-payment-reconciliation-r28-r29.md).
+
+The earlier r27 app-only release refreshed the canonical directory snapshot,
+added the required visible Ahrefs attribution, hardened the snapshot-sync
+contract, and resolved its reviewed dependency audit findings. See
 [Directory DR refresh deployment](./deployments/2026-08-04-directory-dr-refresh.md).
 
 Phase 9 first deployed the persistent Cron ledger and migration 0058 as r22;
@@ -402,6 +412,8 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-08-30 review remediation r30](./deployments/2026-08-30-review-remediation-r30.md)
+- [2026-08-09 payment reconciliation r28/r29](./deployments/2026-08-09-payment-reconciliation-r28-r29.md)
 - [2026-08-04 directory DR refresh](./deployments/2026-08-04-directory-dr-refresh.md)
 - [2026-07-26 cron, SEO, upload, and production hardening](./deployments/2026-07-26-cron-seo-hardening.md)
 - [Production runtime checklist](./production-runtime.md)
