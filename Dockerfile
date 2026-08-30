@@ -42,6 +42,35 @@ USER nextjs
 ENTRYPOINT ["bun", "scripts/apply-pending-sql.ts"]
 CMD ["--apply", "0058_cron_job_ledger.sql"]
 
+# Generic, provenance-bound runner for the repository's ordered handwritten
+# migrations. Release Compose files use this target when more than one pending
+# migration must be applied; the legacy 0058-only target above remains intact
+# for reproducibility of the earlier Cron-ledger release.
+FROM dependencies AS migrator
+
+ARG GIT_COMMIT_SHA
+ARG DEPLOYMENT_VERSION
+ARG BUILD_INPUT_SHA256
+
+ENV NODE_ENV=production \
+    GIT_COMMIT_SHA=${GIT_COMMIT_SHA} \
+    DEPLOYMENT_VERSION=${DEPLOYMENT_VERSION} \
+    BUILD_INPUT_SHA256=${BUILD_INPUT_SHA256}
+
+LABEL org.opencontainers.image.source="https://github.com/yeagoo/Open-Launch" \
+      org.opencontainers.image.revision="${GIT_COMMIT_SHA}" \
+      org.opencontainers.image.version="${DEPLOYMENT_VERSION}" \
+      ee.aat.open-launch.build-input-sha256="${BUILD_INPUT_SHA256}" \
+      ee.aat.open-launch.migration="pending-hand-written"
+
+COPY . .
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+USER nextjs
+ENTRYPOINT ["bun", "run", "db:migrate"]
+
 FROM base AS builder
 
 # Only public/build identifiers and the dedicated Server Action key are needed
