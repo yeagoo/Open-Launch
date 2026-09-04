@@ -171,6 +171,24 @@ export default function FooterSection({ navSites }: { navSites: NavSite[] }) {
             </div>
           </div>
         )}
+
+        {isHomePage && (
+          <div className="mt-6 flex justify-center">
+            <a
+              href="https://aieo.ee"
+              rel="noopener noreferrer"
+              data-aieo-badge="144bd413-d511-4341-9ba9-1ded93ec9a6b"
+              className="inline-flex"
+            >
+              <img
+                src="https://aieo.ee/aieo-badge.svg"
+                alt="Verified by AIEO"
+                width="144"
+                height="36"
+              />
+            </a>
+          </div>
+        )}
       </div>
     </footer>
   )
