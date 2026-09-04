@@ -6,7 +6,10 @@ import { and, eq, sql } from "drizzle-orm"
 
 import { verifyCronAuth } from "@/lib/cron-auth"
 import { cronStatusFromResult } from "@/lib/cron-status"
+import { canStartCronOperation, CRON_SUBTASK_TIMEOUT_MS } from "@/lib/cron-task-budget"
+import { DEEPSEEK_REQUEST_TIMEOUT_MS } from "@/lib/deepseek-request"
 import { translateLongDescription } from "@/lib/enrich-project"
+import { logger } from "@/lib/observability/structured-logger"
 import {
   translateProjectDescription,
   translateTagline,
@@ -15,9 +18,10 @@ import {
 
 const ALL_LOCALES: ProjectLocale[] = ["en", "zh", "es", "pt", "fr", "ja", "ko", "et"]
 const MAX_PROJECTS_PER_RUN = 5
+const COMPLETION_RESERVE_MS = 20_000
 
 export const dynamic = "force-dynamic"
-export const maxDuration = 90
+export const maxDuration = 240
 
 /**
  * Find up to MAX_PROJECTS_PER_RUN projects that are missing one or more
@@ -27,8 +31,18 @@ export const maxDuration = 90
  * starve other projects. Failed locales are simply retried on the next run.
  */
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
   const authError = verifyCronAuth(request)
   if (authError) return authError
+
+  const canStartAiOperation = () =>
+    canStartCronOperation({
+      startedAtMs: startedAt,
+      nowMs: Date.now(),
+      taskTimeoutMs: CRON_SUBTASK_TIMEOUT_MS,
+      operationTimeoutMs: DEEPSEEK_REQUEST_TIMEOUT_MS,
+      completionReserveMs: COMPLETION_RESERVE_MS,
+    })
 
   // Find projects that need either:
   //   (a) any missing locale row (count < 8), OR
@@ -76,9 +90,10 @@ export async function GET(request: NextRequest) {
   let translated = 0
   let longTranslated = 0
   let failed = 0
+  let budgetExhausted = false
   const errors: string[] = []
 
-  for (const cand of candidates) {
+  candidateLoop: for (const cand of candidates) {
     const projectId = cand.projectId
     const sourceLocale = (cand.sourceLocale || "en") as ProjectLocale
 
@@ -149,6 +164,10 @@ export async function GET(request: NextRequest) {
     const sourceTagline = sourceRow.tagline
 
     for (const targetLocale of missing) {
+      if (!canStartAiOperation()) {
+        budgetExhausted = true
+        break candidateLoop
+      }
       try {
         const description = await translateProjectDescription({
           description: sourceDescription,
@@ -161,19 +180,23 @@ export async function GET(request: NextRequest) {
         let translatedTagline: string | null = null
         let taglineGeneratedAt: Date | null = null
         if (sourceTagline) {
-          try {
-            translatedTagline = await translateTagline({
-              tagline: sourceTagline,
-              sourceLocale,
-              targetLocale,
-            })
-            taglineGeneratedAt = new Date()
-          } catch (err) {
-            console.warn(
-              `tagline translate ${projectId} -> ${targetLocale} failed (will retry): ${
-                err instanceof Error ? err.message : err
-              }`,
-            )
+          if (canStartAiOperation()) {
+            try {
+              translatedTagline = await translateTagline({
+                tagline: sourceTagline,
+                sourceLocale,
+                targetLocale,
+              })
+              taglineGeneratedAt = new Date()
+            } catch (err) {
+              console.warn(
+                `tagline translate ${projectId} -> ${targetLocale} failed (will retry): ${
+                  err instanceof Error ? err.message : err
+                }`,
+              )
+            }
+          } else {
+            budgetExhausted = true
           }
         }
         // CAS-gated insert: only persist if the source description hasn't been
@@ -194,6 +217,7 @@ export async function GET(request: NextRequest) {
         `)
         const affected = (result as unknown as { rowCount?: number }).rowCount
         if (affected !== 0) translated++
+        if (budgetExhausted) break candidateLoop
       } catch (err) {
         failed++
         errors.push(`${projectId} -> ${targetLocale}: ${err instanceof Error ? err.message : err}`)
@@ -210,6 +234,10 @@ export async function GET(request: NextRequest) {
         .where(eq(projectTranslation.projectId, projectId))
       const needsTagline = taglineRows.filter((r) => r.locale !== sourceLocale && !r.tagline)
       for (const row of needsTagline) {
+        if (!canStartAiOperation()) {
+          budgetExhausted = true
+          break candidateLoop
+        }
         try {
           const translatedTagline = await translateTagline({
             tagline: sourceTagline,
@@ -272,6 +300,10 @@ export async function GET(request: NextRequest) {
       const needsLong = localeRows.filter((r) => r.locale !== "en" && !r.longDescription)
 
       for (const row of needsLong) {
+        if (!canStartAiOperation()) {
+          budgetExhausted = true
+          break candidateLoop
+        }
         try {
           const longTranslation = await translateLongDescription({
             englishMarkdown: enLongDescription,
@@ -320,12 +352,30 @@ export async function GET(request: NextRequest) {
     errorCount: errors.length,
     successCount: translated + longTranslated,
   })
+  const durationMs = Date.now() - startedAt
+  if (budgetExhausted) {
+    logger.warn("translate_projects_budget_exhausted", {
+      requestId: request.headers.get("x-aat-request-id"),
+      route: "/api/cron/translate-projects",
+      status,
+      durationMs,
+      provider: "deepseek",
+      context: {
+        candidates: candidates.length,
+        translated,
+        longTranslated,
+        failed,
+      },
+    })
+  }
   return NextResponse.json(
     {
       candidates: candidates.length,
       translated,
       longTranslated,
       failed,
+      budgetExhausted,
+      durationMs,
       errors: errors.slice(0, 10),
     },
     { status },

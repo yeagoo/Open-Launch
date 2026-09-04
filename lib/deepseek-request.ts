@@ -4,6 +4,8 @@ export type DeepSeekThinkingOptions = {
   }
 }
 
+export const DEEPSEEK_REQUEST_TIMEOUT_MS = 60_000
+
 /**
  * DeepSeek v4 enables thinking by default and counts reasoning tokens against
  * `max_tokens`. These application calls request bounded JSON, translations,

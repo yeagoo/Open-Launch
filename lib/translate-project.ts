@@ -1,6 +1,6 @@
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
-import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
+import { DEEPSEEK_REQUEST_TIMEOUT_MS, getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 import { sanitizeRichText } from "@/lib/sanitize"
 
@@ -105,7 +105,7 @@ Output ONLY the translated HTML content. No JSON wrapper, no markdown fences, no
         temperature: 0.2,
       }),
     },
-    60_000,
+    DEEPSEEK_REQUEST_TIMEOUT_MS,
     "DeepSeek project translation",
   )
 
@@ -188,7 +188,7 @@ Rules:
         temperature: 0.2,
       }),
     },
-    60_000,
+    DEEPSEEK_REQUEST_TIMEOUT_MS,
     "DeepSeek tagline translation",
   )
 

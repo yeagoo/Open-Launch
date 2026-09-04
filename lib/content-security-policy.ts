@@ -5,13 +5,13 @@ const REPORT_ONLY_DIRECTIVES = [
   // Next's bootstrap and the current analytics bootstrap are inline. A strict
   // nonce policy is a later rendering/caching change, not a safe header-only
   // rollout.
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://analytics.hicyou.de https://challenges.cloudflare.com https://accounts.google.com",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://analytics.hicyou.de https://static.cloudflareinsights.com https://challenges.cloudflare.com https://accounts.google.com",
   "style-src 'self' 'unsafe-inline' https://accounts.google.com",
   // Product and profile images can still point at validated third-party HTTPS
   // URLs. Narrow this after report-only telemetry confirms the real inventory.
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://analytics.hicyou.de https://challenges.cloudflare.com https://accounts.google.com",
+  "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://analytics.google.com https://analytics.hicyou.de https://cloudflareinsights.com https://challenges.cloudflare.com https://accounts.google.com",
   "frame-src https://challenges.cloudflare.com https://accounts.google.com",
   "worker-src 'self' blob:",
   "media-src 'self' https:",

@@ -13,6 +13,8 @@ describe("report-only content security policy", () => {
     expect(policy).toContain("object-src 'none'")
     expect(policy).toContain("frame-ancestors 'self'")
     expect(policy).toContain("https://challenges.cloudflare.com")
+    expect(policy).toContain("https://static.cloudflareinsights.com")
+    expect(policy).toContain("https://cloudflareinsights.com")
     expect(policy).toContain("https://accounts.google.com")
     expect(policy).toContain("report-uri /api/csp-report")
     expect(policy).not.toContain("unsafe-eval")

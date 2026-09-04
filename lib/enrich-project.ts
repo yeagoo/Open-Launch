@@ -7,7 +7,7 @@
 
 import { assertAiAvailable, noteAiResponse } from "@/lib/ai-circuit"
 import { logAiUsage } from "@/lib/ai-usage"
-import { getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
+import { DEEPSEEK_REQUEST_TIMEOUT_MS, getDeepSeekThinkingOptions } from "@/lib/deepseek-request"
 import { fetchWithTimeout } from "@/lib/fetch-timeout"
 import { sanitizeMarkdown } from "@/lib/sanitize-markdown"
 import { type ProjectLocale } from "@/lib/translate-project"
@@ -66,7 +66,7 @@ async function callDeepSeek(
         max_tokens: options.maxTokens ?? 1500,
       }),
     },
-    60_000,
+    DEEPSEEK_REQUEST_TIMEOUT_MS,
     "DeepSeek enrich project",
   )
 
