@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   attachUserUpvotesToGroups,
   getUtcMonthWindow,
+  getUtcWeekWindow,
   uniqueProjectIdsFromGroups,
 } from "./home-project-groups"
 
@@ -17,6 +18,21 @@ describe("home project group user augmentation", () => {
       end: new Date("2026-02-01T00:00:00.000Z"),
     })
     expect(() => getUtcMonthWindow(new Date("invalid"))).toThrow()
+  })
+
+  it("uses a trailing 7-day window that is half-open at the current instant", () => {
+    const now = new Date("2026-07-31T23:30:00.000Z")
+    expect(getUtcWeekWindow(now)).toEqual({
+      start: new Date("2026-07-24T23:30:00.000Z"),
+      end: now,
+    })
+    // A month boundary must not shorten the window — this is the bug a
+    // calendar-week implementation would have.
+    expect(getUtcWeekWindow(new Date("2026-08-01T00:10:00.000Z"))).toEqual({
+      start: new Date("2026-07-25T00:10:00.000Z"),
+      end: new Date("2026-08-01T00:10:00.000Z"),
+    })
+    expect(() => getUtcWeekWindow(new Date("invalid"))).toThrow()
   })
 
   it("preserves empty groups without producing lookup IDs", () => {
