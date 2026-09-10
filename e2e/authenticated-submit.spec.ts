@@ -19,7 +19,9 @@ test("authenticated user can toggle a real database-backed upvote", async ({ pag
   const button = page.getByRole("button", { name: "Upvote (0 upvotes)" })
   await expect(button).toHaveAttribute("aria-pressed", "false")
   await button.click()
-  await expect(page.getByRole("button", { name: "Remove upvote (1 upvotes)" })).toHaveAttribute(
+  // Grammar corrected with the ICU plural in `upvote.removeLabel`: this used to
+  // assert "1 upvotes".
+  await expect(page.getByRole("button", { name: "Remove upvote (1 upvote)" })).toHaveAttribute(
     "aria-pressed",
     "true",
   )
