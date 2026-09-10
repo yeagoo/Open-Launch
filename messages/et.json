@@ -62,7 +62,8 @@
       "friendsPage": "Sõbrad",
       "termsOfService": "Kasutustingimused",
       "privacyPolicy": "Privaatsuspoliitika"
-    }
+    },
+    "bestTags": "Populaarsed sildid"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "Päeva võitjad",
       "bestOfMonth": "Kuu parim",
       "dashboard": "Töölaud",
-      "projectsCount": "{count} projekti"
+      "projectsCount": "{count} projekti",
+      "weekTitle": "Nädala parimad tooted"
+    },
+    "v2": {
+      "hero": {
+        "title": "Koht, kus uued tooted saavad oma esimese tõuke",
+        "subtitle": "Lisa oma toode, saa kinnitatud märgis ja do-follow tagasilink ning avasta, mida teised tegijad täna välja lasid.",
+        "primaryCta": "Esita oma projekt",
+        "secondaryCta": "Vaata tänaseid lanseerimisi",
+        "joinMakers": "Liitu {count} tegijaga",
+        "launchedToday": "{count} lanseeritud täna",
+        "queuedNext": "{count} järjekorras"
+      },
+      "tabs": {
+        "daily": "Päevane",
+        "weekly": "Nädalane",
+        "monthly": "Kuine"
+      },
+      "countdownLabel": "Uued lanseerimised",
+      "feedNote": "Nädala ja kuu parimad saavad märgised ning jõuavad meie uudiskirja.",
+      "moreDetails": "Rohkem detaile",
+      "dailyArchives": "Päevane arhiiv",
+      "empty": "Selles ajavahemikus pole veel lanseerimisi.",
+      "showAllProducts": "Vaata kõiki tooteid",
+      "premiumTitle": "See premium-koht on saadaval",
+      "premiumCta": "Soovi esiletõstmist",
+      "blogTitle": "Viimased blogipostitused",
+      "latestPosts": "Viimased postitused",
+      "launchesThisMonth": "lanseerimist sel kuul",
+      "makers": "tegijat",
+      "partners": "Meie partnerid",
+      "reviewsCount": "{count} arvustust",
+      "rankLabel": "{rank}. koht",
+      "tabsLabel": "Edetabeli periood"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "Teade saadetud. Aitäh!",
       "reportError": "Teate saatmine ebaõnnestus"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "Vaata {name} kommentaare",
+    "votingClosed": "Hääletamine on lõppenud"
   },
   "pricing": {
     "metadata": {
@@ -549,7 +587,10 @@
     "rateLimited": "Spämmitõrje siin: {count} häält {minutes} minuti jooksul on maksimum! Proovi uuesti {seconds} sekundi pärast.",
     "minWaitSeconds": "Spämmitõrje siin: hääle muutmiseks tuleb oodata {seconds} sekundit",
     "projectNotFound": "Projekti ei leitud",
-    "notOngoing": "Hääletamine on avatud ainult siis, kui projekt täna käivitatakse"
+    "notOngoing": "Hääletamine on avatud ainult siis, kui projekt täna käivitatakse",
+    "count": "{count, plural, =1 {# hääl} other {# häält}}",
+    "label": "{count, plural, =1 {Hääleta (# hääl)} other {Hääleta (# häält)}}",
+    "removeLabel": "{count, plural, =1 {Eemalda hääl (# hääl)} other {Eemalda hääl (# häält)}}"
   },
   "submitProject": {
     "page": {
@@ -1159,5 +1200,22 @@
     "memberSince": "Liitunud {date}",
     "launches": "Väljalased",
     "profileTitle": "{name} - aat.ee"
+  },
+  "trending": {
+    "todayTitle": "Tänased lanseerimised",
+    "liveNow": "Reaalajas",
+    "activeLaunches": "aktiivset lanseerimist",
+    "timeRange": "Ajavahemik",
+    "empty": "Selles ajavahemikus pole projekte."
+  },
+  "categories": {
+    "emptyTitle": "Selles kategoorias pole veel projekte.",
+    "emptyHint": "Vaata teisi kategooriaid või tule hiljem tagasi.",
+    "sortLabel": "Järjesta kategooriad",
+    "selectCategory": "Vali kategooria"
+  },
+  "tags": {
+    "emptyTitle": "Selle sildiga projekte veel pole.",
+    "emptyHint": "Vaata teisi silte või tule hiljem tagasi."
   }
 }

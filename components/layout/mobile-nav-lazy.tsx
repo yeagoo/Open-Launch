@@ -11,13 +11,20 @@ interface MobileNavSheetProps {
   isAuthenticated: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
+  useHomeAccent?: boolean
 }
 
 /**
  * The closed mobile drawer should cost one button, not the HTML and JavaScript
  * for every hidden navigation row. Load the real Sheet only on first use.
  */
-export function MobileNavLazy({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function MobileNavLazy({
+  isAuthenticated,
+  useHomeAccent = false,
+}: {
+  isAuthenticated: boolean
+  useHomeAccent?: boolean
+}) {
   const t = useTranslations("common")
   const [SheetComponent, setSheetComponent] = useState<ComponentType<MobileNavSheetProps> | null>(
     null,
@@ -26,7 +33,14 @@ export function MobileNavLazy({ isAuthenticated }: { isAuthenticated: boolean })
   const [loading, setLoading] = useState(false)
 
   if (SheetComponent) {
-    return <SheetComponent isAuthenticated={isAuthenticated} open={open} onOpenChange={setOpen} />
+    return (
+      <SheetComponent
+        isAuthenticated={isAuthenticated}
+        useHomeAccent={useHomeAccent}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    )
   }
 
   const loadSheet = async () => {

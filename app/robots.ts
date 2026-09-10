@@ -27,7 +27,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/_next/", "/admin/", ...privatePaths()],
+        // /design-preview is the internal home-redesign harness: it already
+        // 404s in production, and disallowing it keeps crawlers from probing.
+        disallow: ["/api/", "/_next/", "/admin/", "/design-preview", ...privatePaths()],
       },
       {
         userAgent: [
@@ -40,7 +42,7 @@ export default function robots(): MetadataRoute.Robots {
           "cohere-ai", // Cohere
         ],
         allow: "/",
-        disallow: ["/api/", "/admin/", ...privatePaths()],
+        disallow: ["/api/", "/admin/", "/design-preview", ...privatePaths()],
         crawlDelay: 10,
       },
     ],

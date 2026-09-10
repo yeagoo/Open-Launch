@@ -62,7 +62,8 @@
       "friendsPage": "Friends",
       "termsOfService": "Terms of Service",
       "privacyPolicy": "Privacy Policy"
-    }
+    },
+    "bestTags": "Best tags"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "Daily Winners",
       "bestOfMonth": "Best of Month",
       "dashboard": "Dashboard",
-      "projectsCount": "{count} projects"
+      "projectsCount": "{count} projects",
+      "weekTitle": "Best products this week"
+    },
+    "v2": {
+      "hero": {
+        "title": "Where new products get their first push",
+        "subtitle": "Launch your product, earn a verified badge and a do-follow backlink, and discover what other makers shipped today.",
+        "primaryCta": "Submit your project",
+        "secondaryCta": "Explore today's launches",
+        "joinMakers": "Join {count} makers",
+        "launchedToday": "{count} launched today",
+        "queuedNext": "{count} queued"
+      },
+      "tabs": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "countdownLabel": "New launches in",
+      "feedNote": "Weekly and monthly winners earn badges and are featured in our newsletter.",
+      "moreDetails": "More details",
+      "dailyArchives": "Daily archives",
+      "empty": "No launches in this window yet.",
+      "showAllProducts": "Show all products",
+      "premiumTitle": "This premium spot is available",
+      "premiumCta": "Get featured",
+      "blogTitle": "Latest from the blog",
+      "latestPosts": "Latest posts",
+      "launchesThisMonth": "launches this month",
+      "makers": "makers",
+      "partners": "Our partners",
+      "reviewsCount": "{count} reviews",
+      "rankLabel": "Rank {rank}",
+      "tabsLabel": "Ranking period"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "Report submitted. Thank you!",
       "reportError": "Failed to submit report"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "View comments for {name}",
+    "votingClosed": "Upvoting closed"
   },
   "pricing": {
     "metadata": {
@@ -549,7 +587,10 @@
     "rateLimited": "Anti-Spam Squad here: {count} upvotes in {minutes} minutes maxed out! Retry in {seconds} seconds.",
     "minWaitSeconds": "Anti-Spam Squad here: {seconds}-second wait required for vote changes",
     "projectNotFound": "Project not found",
-    "notOngoing": "Voting is only open while the project is launching today"
+    "notOngoing": "Voting is only open while the project is launching today",
+    "count": "{count, plural, =1 {# upvote} other {# upvotes}}",
+    "label": "{count, plural, =1 {Upvote (# upvote)} other {Upvote (# upvotes)}}",
+    "removeLabel": "{count, plural, =1 {Remove upvote (# upvote)} other {Remove upvote (# upvotes)}}"
   },
   "submitProject": {
     "page": {
@@ -1159,5 +1200,22 @@
     "memberSince": "Member since {date}",
     "launches": "Launches",
     "profileTitle": "{name} on aat.ee"
+  },
+  "trending": {
+    "todayTitle": "Today's Launches",
+    "liveNow": "Live Now",
+    "activeLaunches": "Active Launches",
+    "timeRange": "Time Range",
+    "empty": "No projects found for this period."
+  },
+  "categories": {
+    "emptyTitle": "No projects in this category yet.",
+    "emptyHint": "Check other categories or come back later.",
+    "sortLabel": "Sort categories",
+    "selectCategory": "Select a category"
+  },
+  "tags": {
+    "emptyTitle": "No projects with this tag yet.",
+    "emptyHint": "Check other tags or come back later."
   }
 }

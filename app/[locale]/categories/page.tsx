@@ -15,7 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MobileCategorySelector } from "@/components/categories/mobile-category-selector"
-import { ProjectCard } from "@/components/home/project-card"
+import { SerifHeading } from "@/components/ds/serif-heading"
+import { ProjectCardButtons } from "@/components/home/project-card-buttons"
+import { RankedRow } from "@/components/home/v2/ranked-row"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import {
   getAllCategories,
@@ -113,8 +115,15 @@ async function CategoryData({
     sort,
   )
 
-  const locale = await getLocale()
+  const [locale, tCategories, tV2] = await Promise.all([
+    getLocale(),
+    getTranslations("categories"),
+    // Row labels shared with the home feed rather than duplicated.
+    getTranslations("home.v2"),
+  ])
   const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
+  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
+  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
   const isAuthenticated =
     paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false
@@ -145,10 +154,19 @@ async function CategoryData({
   return (
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold sm:text-2xl">{categoryData.name}</h2>
+        <SerifHeading as="h2" size="section">
+          {categoryData.name}
+        </SerifHeading>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+            {/* Below md the label span is hidden, leaving an icon-only button
+                with no accessible name. */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              aria-label={tCategories("sortLabel")}
+            >
               <RiFilterLine className="h-3.5 w-3.5" />
               <span className="hidden md:block">{getSortLabel()}</span>
               <RiArrowDownSLine className="text-muted-foreground ml-1 h-3.5 w-3.5" />
@@ -185,32 +203,36 @@ async function CategoryData({
 
       {totalCount === 0 ? (
         <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-8 text-center text-sm">
-          No projects in this category yet.
-          <p className="mt-2">Check other categories or come back later.</p>
+          {tCategories("emptyTitle")}
+          <p className="mt-2">{tCategories("emptyHint")}</p>
         </div>
       ) : (
-        <div className="-mx-3 flex flex-col sm:-mx-4">
+        // Same row as the home feed and /trending (see the note there): a real
+        // <Link> instead of a clickable div, with the interactive controls in
+        // the row's `actions` slot.
+        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
           {paginatedProjects.map((project, index) => (
-            <ProjectCard
+            <RankedRow
               key={project.id}
-              id={project.id}
-              slug={project.slug}
-              name={project.name}
-              description={project.description || ""}
-              logoUrl={project.logoUrl || ""}
-              websiteUrl={project.websiteUrl ?? undefined}
-              upvoteCount={project.upvoteCount ?? 0}
-              commentCount={project.commentCount ?? 0}
-              launchStatus={project.launchStatus}
-              launchType={project.launchType}
-              dailyRanking={project.dailyRanking}
-              index={index}
-              isAuthenticated={isAuthenticated}
-              userHasUpvoted={project.userHasUpvoted ?? false}
-              categories={project.categories ?? []}
+              project={project}
+              rank={index + 1}
+              renderCommentLabel={renderCommentLabel}
+              renderRankLabel={renderRankLabel}
+              actions={
+                <ProjectCardButtons
+                  projectPageUrl={`/projects/${project.slug}`}
+                  commentCount={project.commentCount ?? 0}
+                  projectId={project.id}
+                  upvoteCount={project.upvoteCount ?? 0}
+                  isAuthenticated={isAuthenticated}
+                  hasUpvoted={project.userHasUpvoted ?? false}
+                  launchStatus={project.launchStatus}
+                  projectName={project.name}
+                />
+              }
             />
           ))}
-        </div>
+        </ol>
       )}
 
       {totalPages > 1 && (
@@ -255,8 +277,11 @@ export default async function CategoriesPage({
 }: {
   searchParams: Promise<{ category?: string; sort?: string; page?: string }>
 }) {
-  const categories = await getAllCategories()
-  const categoriesWithCount = await getTopCategories(100)
+  const [categories, categoriesWithCount, tBreadcrumb] = await Promise.all([
+    getAllCategories(),
+    getTopCategories(100),
+    getTranslations("breadcrumb"),
+  ])
 
   const params = await searchParams
   const selectedCategoryId = params.category || (categories.length > 0 ? categories[0].id : "")
@@ -272,7 +297,12 @@ export default async function CategoriesPage({
     <main className="bg-secondary/20">
       <div className="container mx-auto min-h-screen max-w-6xl px-4 pt-8 pb-12">
         <div className="mb-6 flex flex-col">
-          <h1 className="text-2xl font-bold">Categories</h1>
+          {/* Was hardcoded English in Inter bold; reuses the breadcrumb label
+              that every locale already has, and the editorial serif the rest of
+              the redesign uses for page titles. */}
+          <SerifHeading as="h1" size="section">
+            {tBreadcrumb("categories")}
+          </SerifHeading>
 
           <MobileCategorySelector
             categories={categories}

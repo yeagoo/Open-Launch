@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { RiGlobalLine, RiHashtag, RiVipCrownLine } from "@remixicon/react"
+import { RiGlobalLine, RiVipCrownLine } from "@remixicon/react"
 import { format } from "date-fns"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server"
@@ -25,6 +25,8 @@ import { getCurrentUserId } from "@/lib/server-auth"
 import { hasPublicProfile } from "@/lib/user-profile-query"
 import { Button } from "@/components/ui/button"
 import { RichTextDisplay } from "@/components/ui/rich-text-display"
+import { SerifHeading } from "@/components/ds/serif-heading"
+import { TagPill } from "@/components/ds/tag-pill"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { BookmarkButton } from "@/components/project/bookmark-button"
 import { CommentsLazy } from "@/components/project/comments-lazy"
@@ -352,7 +354,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <NextIntlClientProvider messages={pickClientMessages(messages, ["bookmark", "project"])}>
+    <NextIntlClientProvider
+      messages={pickClientMessages(messages, ["bookmark", "project", "upvote"])}
+    >
       <div className="bg-background min-h-screen">
         {/* Structured Data - Product Schema */}
         <ProjectSchema
@@ -393,7 +397,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               <div className="py-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-2 md:flex-row md:items-center md:gap-4">
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-transparent">
+                    <div className="border-border h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border">
                       <Image
                         src={projectData.logoUrl}
                         alt={`${projectData.name} Logo`}
@@ -405,9 +409,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                     </div>
 
                     <div className="min-w-0 flex-1 space-y-1">
-                      <h1 className="text-foreground truncate text-xl font-bold">
+                      {/* Editorial serif, matching the home page's voice: this is
+                          a page title, and Inter-bold at 20px read as a UI label
+                          rather than the name of the thing you are looking at. */}
+                      <SerifHeading as="h1" size="section" className="truncate">
                         {projectData.name}
-                      </h1>
+                      </SerifHeading>
                       {tagline && (
                         <p className="font-editorial text-muted-foreground truncate text-sm italic">
                           {tagline}
@@ -415,14 +422,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                       )}
                       <div className="flex flex-wrap gap-1">
                         {projectData.categories.map((category) => (
-                          <Link
-                            key={category.id}
-                            href={`/categories?category=${category.id}`}
-                            className="bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors"
-                          >
-                            <RiHashtag className="h-3 w-3" />
-                            {category.name}
-                          </Link>
+                          <TagPill key={category.id} asChild interactive>
+                            <Link href={`/categories?category=${category.id}`}>
+                              {category.name}
+                            </Link>
+                          </TagPill>
                         ))}
                       </div>
                     </div>

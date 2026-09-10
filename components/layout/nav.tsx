@@ -19,6 +19,12 @@ export default async function Nav() {
   const [session, t] = await Promise.all([getServerSession(), getTranslations("nav")])
   const user = session?.user
 
+  // During the staged rollout both home pages are live, so the nav's Submit CTA
+  // has to match whichever one is being served. Without this the new home's
+  // orange CTA sits next to a green nav button (two competing action colours on
+  // one screen) — or the reverse on the legacy home.
+  const useHomeAccent = process.env.HOME_V2 === "1"
+
   return (
     <nav className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm">
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -32,7 +38,7 @@ export default async function Nav() {
           </Link>
 
           {/* Navigation principale */}
-          <NavMenu showDashboard={!!session} />
+          <NavMenu showDashboard={!!session} useHomeAccent={useHomeAccent} />
         </div>
 
         {/* Version Desktop - Recherche et actions */}
@@ -67,7 +73,7 @@ export default async function Nav() {
               </Link>
             </Button>
           )}
-          <MobileNavLazy isAuthenticated={Boolean(session)} />
+          <MobileNavLazy isAuthenticated={Boolean(session)} useHomeAccent={useHomeAccent} />
         </div>
       </div>
     </nav>

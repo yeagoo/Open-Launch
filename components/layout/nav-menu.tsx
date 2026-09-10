@@ -16,9 +16,16 @@ import {
 
 interface NavMenuProps {
   showDashboard?: boolean
+  /**
+   * Use the redesigned home's CTA *shape* (pill, semibold, roomier). Colour is
+   * not part of this: `--primary` is remapped app-wide when HOME_V2 is on (see
+   * the [data-app-palette] block in globals.css), so a colour override here
+   * would be a second source of truth for the same decision.
+   */
+  useHomeAccent?: boolean
 }
 
-export function NavMenu({ showDashboard = true }: NavMenuProps) {
+export function NavMenu({ showDashboard = true, useHomeAccent = false }: NavMenuProps) {
   const t = useTranslations("nav")
   const tDesc = useTranslations("nav.exploreDesc")
   return (
@@ -127,7 +134,11 @@ export function NavMenu({ showDashboard = true }: NavMenuProps) {
         <NavigationMenuItem>
           <Link
             href="/projects/submit"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
+            className={`bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 transition-colors ${
+              useHomeAccent
+                ? "rounded-home-pill px-4 text-sm font-semibold"
+                : "rounded-md px-3 text-sm font-medium"
+            }`}
           >
             <RiRocketLine className="h-4 w-4" aria-hidden="true" />
             {t("submitProject")}

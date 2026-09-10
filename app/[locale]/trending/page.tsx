@@ -10,8 +10,10 @@ import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
+import { SerifHeading } from "@/components/ds/serif-heading"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
-import { ProjectCard } from "@/components/home/project-card"
+import { ProjectCardButtons } from "@/components/home/project-card-buttons"
+import { RankedRow } from "@/components/home/v2/ranked-row"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import { getMonthBestProjects, getTodayProjects, getYesterdayProjects } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
@@ -102,20 +104,33 @@ async function TrendingData({
   let projects: ProjectSummary[] = [] // Utiliser le type défini
   let title
 
+  // These were hardcoded English on an eight-locale site. The titles reuse the
+  // home page's existing translations where the wording already matches, and
+  // only the genuinely new strings live in the `trending` namespace.
+  const [t, tSections, tV2, locale] = await Promise.all([
+    getTranslations("trending"),
+    getTranslations("home.sections"),
+    // The row's "{count} reviews" / "Rank {rank}" labels already exist for the
+    // home feed; reusing them avoids a second identical translation set.
+    getTranslations("home.v2"),
+    getLocale(),
+  ])
+  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
+  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
+
   if (filter === "today") {
     projects = await getTodayProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT)
-    title = "Today's Launches"
+    title = t("todayTitle")
   } else if (filter === "yesterday") {
     projects = await getYesterdayProjects(
       PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT,
     )
-    title = "Yesterday's Launches"
+    title = tSections("yesterdayTitle")
   } else {
     projects = await getMonthBestProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_MONTH_LIMIT)
-    title = "Best of the Month"
+    title = tSections("monthTitle")
   }
 
-  const locale = await getLocale()
   projects = await localizeProjectDescriptions(projects, locale)
 
   return (
@@ -129,29 +144,46 @@ async function TrendingData({
         />
       )}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold sm:text-2xl">{title}</h2>
+        {/* This is the page's only page-level heading; it was an h2, which left
+            /trending with no h1 at all. */}
+        <SerifHeading as="h1" size="section">
+          {title}
+        </SerifHeading>
       </div>
 
       {projects.length === 0 ? (
         <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-8 text-center text-sm">
-          No projects found for this period.
+          {t("empty")}
         </div>
       ) : (
-        <div className="-mx-3 flex flex-col sm:-mx-4">
+        // Same row as the home feed. It used to be a separate `ProjectCard`
+        // whose whole body was a clickable div calling router.push — which
+        // costs middle-click and open-in-new-tab, and gives assistive tech no
+        // link to announce. `RankedRow` is a real <Link>; the interactive
+        // controls ride along in its `actions` slot.
+        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
           {projects.map((project: ProjectSummary, index: number) => (
-            <ProjectCard
+            <RankedRow
               key={project.id}
-              {...project}
-              description={project.description || ""}
-              websiteUrl={project.websiteUrl ?? undefined}
-              commentCount={project.commentCount ?? 0}
-              index={index}
-              userHasUpvoted={project.userHasUpvoted ?? false}
-              categories={project.categories || []}
-              isAuthenticated={isAuthenticated}
+              project={project}
+              rank={index + 1}
+              renderCommentLabel={renderCommentLabel}
+              renderRankLabel={renderRankLabel}
+              actions={
+                <ProjectCardButtons
+                  projectPageUrl={`/projects/${project.slug}`}
+                  commentCount={project.commentCount ?? 0}
+                  projectId={project.id}
+                  upvoteCount={project.upvoteCount ?? 0}
+                  isAuthenticated={isAuthenticated}
+                  hasUpvoted={project.userHasUpvoted ?? false}
+                  launchStatus={project.launchStatus}
+                  projectName={project.name}
+                />
+              }
             />
           ))}
-        </div>
+        </ol>
       )}
     </div>
   )
@@ -164,11 +196,15 @@ export default async function TrendingPage({
 }) {
   const params = await searchParams
   const filter = params.filter || "today"
-  const topCategories = await getTopCategories(5)
 
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
+  // The sidebar lives in this component, not in `TrendingData`, so it needs its
+  // own translator handles.
+  const [t, tSections, topCategories, session] = await Promise.all([
+    getTranslations("trending"),
+    getTranslations("home.sections"),
+    getTopCategories(5),
+    auth.api.getSession({ headers: await headers() }),
+  ])
   const isAuthenticated = !!session?.user
 
   const todayProjects = await getTodayProjects()
@@ -191,21 +227,25 @@ export default async function TrendingPage({
           <div className="top-24">
             {/* Quick Stats */}
             <div className="space-y-3 py-5 pt-0">
-              <h3 className="flex items-center gap-2 font-semibold">Live Now</h3>
+              <SerifHeading as="h2" size="eyebrow">
+                {t("liveNow")}
+              </SerifHeading>
               <Link
                 href="/trending"
                 className="bg-secondary/30 hover:bg-secondary/50 border-primary block rounded-md border-l-4 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-primary text-2xl font-bold">{ongoingLaunches}</div>
-                  <div className="text-sm font-medium">Active Launches</div>
+                  <div className="text-sm font-medium">{t("activeLaunches")}</div>
                 </div>
               </Link>
             </div>
 
             {/* Time Filters */}
             <div className="space-y-3 py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Time Range</h3>
+              <SerifHeading as="h2" size="eyebrow">
+                {t("timeRange")}
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/trending?filter=today"
@@ -236,7 +276,9 @@ export default async function TrendingPage({
 
             {/* Quick Access */}
             <div className="space-y-3 py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <SerifHeading as="h2" size="eyebrow">
+                {tSections("quickAccess")}
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/winners"
@@ -256,7 +298,9 @@ export default async function TrendingPage({
             {/* Categories */}
             <div className="space-y-3 py-5">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-semibold">Top Categories</h3>
+                <SerifHeading as="h2" size="eyebrow">
+                  {tSections("topCategories")}
+                </SerifHeading>
                 <Button variant="ghost" size="sm" className="text-sm" asChild>
                   <Link href="/categories" className="flex items-center gap-1">
                     View all

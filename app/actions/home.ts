@@ -4,26 +4,31 @@ import { unstable_cache } from "next/cache"
 
 import { db } from "@/drizzle/db"
 import {
+  blogArticle,
   fumaComments,
   launchStatus,
   launchType,
   project as projectTable,
   upvote,
+  user as userTable,
 } from "@/drizzle/db/schema"
-import { and, desc, eq, gte, lt, sql } from "drizzle-orm"
+import { and, desc, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
+import { extractTextFromContent } from "@/lib/content-utils"
 import { localizeProjectDescriptionGroups } from "@/lib/get-project-translation"
 import {
   attachUserUpvotesToGroups,
   getUtcMonthWindow,
+  getUtcWeekWindow,
   uniqueProjectIdsFromGroups,
 } from "@/lib/home-project-groups"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { attachCategories, getUpvotedSet, withUserUpvoted } from "@/lib/project-enrich"
 import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId } from "@/lib/server-auth"
+import { oneLineSummary } from "@/lib/text-summary"
 
 const homeUpvoteCounts = db
   .select({
@@ -348,4 +353,324 @@ export async function getWinnersByDate(date: Date) {
     base.map((p) => p.id),
   )
   return withUserUpvoted(base, upvoted)
+}
+
+// ─── Home v2 (three-column home layout) ─────────────────────────────────────
+//
+// Everything below feeds the redesigned home page only. It is additive: the
+// legacy two-column home keeps using the fetchers above, so a rollback via the
+// HOME_V2 flag never depends on anything in this section.
+//
+// Cache discipline matches the rest of the file — every fetcher is
+// `unstable_cache`-wrapped and tagged with HOME_PROJECTS_TAG so the 8 AM
+// launch-transition cron busts the whole home surface at once.
+
+const fetchWeekBestProjectsBase = unstable_cache(
+  async (limit: number, weekStartIso: string, weekEndIso: string) => {
+    const base = await db
+      .select(projectSummarySelect)
+      .from(projectTable)
+      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
+      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
+      .where(
+        and(
+          // Same visibility rule as the month leaderboard: only *finished*
+          // launch days rank. `ONGOING` projects are today's live race and
+          // belong to the Daily tab.
+          eq(projectTable.launchStatus, launchStatus.LAUNCHED),
+          sql`${projectTable.scheduledLaunchDate} >= ${weekStartIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${weekEndIso}`,
+        ),
+      )
+      .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
+      .limit(limit)
+    return attachCategories(base)
+  },
+  ["home-week-projects-v1"],
+  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
+)
+
+/**
+ * Rolling-7-day leaderboard behind the home page's "Weekly" tab.
+ *
+ * Mirrors `getMonthBestProjects` exactly (same projection, same upvote
+ * augmentation, same locale merge) so the two tabs differ only by window.
+ * The default limit matches the Daily tab's list length — the three tabs sit
+ * behind one switcher, so a 20-row Daily next to a 5-row Weekly read as a bug.
+ */
+export async function getHomeWeekProjects(
+  limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT,
+  locale?: string,
+) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, 1, 100)
+  // `unstable_cache` derives its key from the arguments, so passing a
+  // millisecond-precision `now` would mint a brand-new cache entry on every
+  // request: the TTL and the HOME_PROJECTS_TAG bust would never apply, and the
+  // key space would grow without bound. Flooring to the revalidate window (1h)
+  // keeps the rolling-7-day semantics while making the key stable.
+  const now = new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000)
+  const { start, end } = getUtcWeekWindow(now)
+
+  const [base, userId] = await Promise.all([
+    fetchWeekBestProjectsBase(limit, start.toISOString(), end.toISOString()),
+    getCurrentUserId(),
+  ])
+  const upvoted = await getUpvotedSet(
+    userId,
+    base.map((p) => p.id),
+  )
+  const withUpvotes = withUserUpvoted(base, upvoted)
+  if (!locale) return withUpvotes
+  return (await localizeProjectDescriptionGroups([withUpvotes], locale))[0]
+}
+
+/**
+ * Month leaderboard for the home page's "Monthly" tab.
+ *
+ * Same cached fetcher the legacy home and `/trending` already use — the only
+ * difference is the limit and the locale merge, so a taller Monthly list costs
+ * one more cache entry rather than a new query.
+ */
+export async function getHomeMonthProjects(
+  limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT,
+  locale?: string,
+) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, 1, 100)
+  const { start, end } = getUtcMonthWindow(new Date())
+
+  const [base, userId] = await Promise.all([
+    fetchMonthBestProjectsBase(limit, start.toISOString(), end.toISOString()),
+    getCurrentUserId(),
+  ])
+  const upvoted = await getUpvotedSet(
+    userId,
+    base.map((p) => p.id),
+  )
+  const withUpvotes = withUserUpvoted(base, upvoted)
+  if (!locale) return withUpvotes
+  return (await localizeProjectDescriptionGroups([withUpvotes], locale))[0]
+}
+
+const fetchHomeStatsBase = unstable_cache(
+  async (
+    monthStartIso: string,
+    monthEndIso: string,
+    todayStartIso: string,
+    todayEndIso: string,
+    nextStartIso: string,
+    nextEndIso: string,
+  ) => {
+    const countProjects = (where: ReturnType<typeof and>) =>
+      db
+        .select({ value: sql<number>`cast(count(*) as int)`.mapWith(Number) })
+        .from(projectTable)
+        .where(where)
+
+    const [launchCount, makerCount, todayCount, queuedCount] = await Promise.all([
+      // Launched OR ongoing: "N launches this month" should include the race
+      // that is running right now, unlike the leaderboards.
+      countProjects(
+        and(
+          sql`${projectTable.launchStatus} in (${launchStatus.LAUNCHED}, ${launchStatus.ONGOING})`,
+          sql`${projectTable.scheduledLaunchDate} >= ${monthStartIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${monthEndIso}`,
+        ),
+      ),
+      db
+        .select({ value: sql<number>`cast(count(*) as int)`.mapWith(Number) })
+        .from(userTable)
+        // `is_bot` is nullable with a default of false, so `= false` alone
+        // would silently drop legacy NULL rows from the maker count.
+        .where(sql`coalesce(${userTable.isBot}, false) = false`),
+      // Today's live batch — exactly the window the home feed is showing.
+      countProjects(
+        and(
+          eq(projectTable.launchStatus, launchStatus.ONGOING),
+          sql`${projectTable.scheduledLaunchDate} >= ${todayStartIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${todayEndIso}`,
+        ),
+      ),
+      // The queue for the NEXT window, i.e. what a submitter is racing
+      // against. Scheduled-but-unpaid rows are excluded on purpose: they are
+      // not committed launches yet.
+      countProjects(
+        and(
+          eq(projectTable.launchStatus, launchStatus.SCHEDULED),
+          sql`${projectTable.scheduledLaunchDate} >= ${nextStartIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${nextEndIso}`,
+        ),
+      ),
+    ])
+
+    return {
+      launchesThisMonth: launchCount[0]?.value ?? 0,
+      makers: makerCount[0]?.value ?? 0,
+      launchesToday: todayCount[0]?.value ?? 0,
+      queuedNext: queuedCount[0]?.value ?? 0,
+    }
+  },
+  ["home-stats-v2"],
+  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
+)
+
+/**
+ * Headline numbers for the hero and the left rail.
+ *
+ * Replaces the reference layout's "visits this month" counter, which this app
+ * has no data source for (page views only ever went to Matomo/GA). These are
+ * real, DB-backed numbers instead of a decorative fake: this month's launches
+ * and registered makers (left rail), plus today's live batch and the queue for
+ * the next window (hero).
+ */
+export async function getHomeStats() {
+  const { start, end } = getUtcMonthWindow(new Date())
+  const today = getCurrentLaunchWindow()
+  // Next window = the day after the current one ends.
+  const nextStart = today.end
+  const nextEnd = new Date(nextStart)
+  nextEnd.setUTCDate(nextEnd.getUTCDate() + 1)
+
+  return fetchHomeStatsBase(
+    start.toISOString(),
+    end.toISOString(),
+    today.start.toISOString(),
+    today.end.toISOString(),
+    nextStart.toISOString(),
+    nextEnd.toISOString(),
+  )
+}
+
+const fetchLatestCommunityPostsBase = unstable_cache(
+  async (limit: number) => {
+    // ── Simulated engagement is INCLUDED here, on purpose ────────────────────
+    // Production measurement (2026-09-10): of the 20 most recent comments, 19
+    // are authored by `bot-user-*` accounts, and of 6289 total comments only 88
+    // are human — the newest human one is 10 months old. Excluding bots would
+    // therefore empty this rail entirely (the component renders nothing for an
+    // empty list), which is why bot comments are kept.
+    //
+    // This is a deliberate product decision, not an oversight: the site already
+    // presents simulated engagement in its upvote and comment counters
+    // (see VIRTUAL_ENGAGEMENT.md), and the bot-authored bodies read as ordinary
+    // discussion. If a future change *does* want to filter them, it must also
+    // decide what replaces the rail — filtering alone silently deletes the
+    // block. Do not "fix" this without that decision.
+    const rows = await db
+      .select({
+        id: fumaComments.id,
+        content: fumaComments.content,
+        createdAt: fumaComments.timestamp,
+        authorId: fumaComments.author,
+        authorName: userTable.name,
+        authorImage: userTable.image,
+        projectName: projectTable.name,
+        projectSlug: projectTable.slug,
+        projectLogo: projectTable.logoUrl,
+      })
+      .from(fumaComments)
+      // `page` holds the project id, not a URL path — same join contract the
+      // comment counters above rely on. The inner join also drops comments on
+      // projects that have since been deleted.
+      .innerJoin(projectTable, eq(projectTable.id, fumaComments.page))
+      .leftJoin(userTable, eq(userTable.id, fumaComments.author))
+      // Tombstoned comments keep their row but their body is replaced, so
+      // they must never surface in the community rail.
+      .where(isNull(fumaComments.hiddenAt))
+      .orderBy(desc(fumaComments.timestamp))
+      .limit(limit)
+
+    return rows.map((row) => ({
+      id: row.id,
+      authorName: row.authorName?.trim() || row.authorId,
+      authorImage: row.authorImage,
+      projectName: row.projectName,
+      projectSlug: row.projectSlug,
+      projectLogo: row.projectLogo,
+      // `unstable_cache` serializes its return value, so a Date read back from
+      // the cache is a STRING. Serialize it here, at the boundary, so the type
+      // the components receive is the type they actually get at runtime.
+      createdAt: row.createdAt.toISOString(),
+      // Comment bodies are Fuma rich-text JSON; the rail only needs one line.
+      excerpt: oneLineSummary(extractTextFromContent(row.content), 90),
+    }))
+  },
+  ["home-latest-posts-v1"],
+  // Short window: this is the "community is alive" signal, so it should move
+  // roughly as fast as the comment counts already shown on each row.
+  { revalidate: 600, tags: [HOME_PROJECTS_TAG] },
+)
+
+/** Latest non-hidden comments, shaped for the left rail's "Latest posts" feed. */
+export async function getLatestCommunityPosts(limit = 4) {
+  return fetchLatestCommunityPostsBase(clampInteger(limit, 4, 1, 20))
+}
+const fetchLatestBlogPostsBase = unstable_cache(
+  async (limit: number) =>
+    db
+      .select({
+        slug: blogArticle.slug,
+        title: blogArticle.title,
+        description: blogArticle.description,
+        image: blogArticle.image,
+        tags: blogArticle.tags,
+        publishedAt: blogArticle.publishedAt,
+      })
+      .from(blogArticle)
+      // Drafts are auto-generated recaps awaiting human review; they are
+      // unlisted everywhere else, so they stay unlisted here too.
+      .where(eq(blogArticle.status, "published"))
+      .orderBy(desc(blogArticle.publishedAt))
+      .limit(limit)
+      // ISO string, not Date: see the note on `createdAt` above — anything
+      // crossing `unstable_cache` comes back JSON-serialized, and handing a
+      // string to `Intl.DateTimeFormat.format()` throws `Invalid time value`.
+      .then((rows) => rows.map((row) => ({ ...row, publishedAt: row.publishedAt.toISOString() }))),
+  ["home-latest-blog-v1"],
+  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
+)
+
+/** Newest published blog posts for the home page's blog strip. */
+export async function getLatestBlogPosts(limit = 4) {
+  return fetchLatestBlogPostsBase(clampInteger(limit, 4, 1, 12))
+}
+
+const fetchHomeMakersBase = unstable_cache(
+  async (limit: number) => {
+    const rows = await db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        image: userTable.image,
+      })
+      .from(projectTable)
+      .innerJoin(userTable, eq(userTable.id, projectTable.createdBy))
+      .where(
+        and(
+          isNotNull(projectTable.createdBy),
+          // Same bot exclusion as the maker count right next to it in the hero.
+          // Without it the stack could be nothing but `bot-user-*` accounts:
+          // the Product Hunt import cron attributes imported projects to a bot
+          // creator, and this list is ordered by most recent launch.
+          sql`coalesce(${userTable.isBot}, false) = false`,
+        ),
+      )
+      // No `image IS NOT NULL` filter: plenty of real accounts never upload an
+      // avatar, and `HomeHero` renders an initial-disc fallback for exactly
+      // that case. Filtering here would silently shrink the stack to whoever
+      // happens to have a picture.
+      .groupBy(userTable.id, userTable.name, userTable.image)
+      // Most recent launchers first: the hero's avatar stack should read as
+      // "people shipping right now", not "people who signed up".
+      .orderBy(desc(sql`max(${projectTable.createdAt})`))
+      .limit(limit)
+
+    return rows
+  },
+  ["home-makers-v1"],
+  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
+)
+
+/** Recent launchers (with avatars) for the hero's social-proof stack. */
+export async function getHomeMakers(limit = 5) {
+  return fetchHomeMakersBase(clampInteger(limit, 5, 1, 12))
 }

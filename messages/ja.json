@@ -62,7 +62,8 @@
       "friendsPage": "フレンド",
       "termsOfService": "利用規約",
       "privacyPolicy": "プライバシーポリシー"
-    }
+    },
+    "bestTags": "人気タグ"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "デイリー受賞者",
       "bestOfMonth": "月間ベスト",
       "dashboard": "ダッシュボード",
-      "projectsCount": "{count} プロジェクト"
+      "projectsCount": "{count} プロジェクト",
+      "weekTitle": "今週のベスト製品"
+    },
+    "v2": {
+      "hero": {
+        "title": "新製品が最初の注目を集める場所",
+        "subtitle": "製品を投稿して認定バッジと do-follow バックリンクを獲得し、他のメーカーが今日何をリリースしたかを見つけよう。",
+        "primaryCta": "プロジェクトを投稿",
+        "secondaryCta": "今日のローンチを見る",
+        "joinMakers": "{count} 人のメーカーが参加",
+        "launchedToday": "本日 {count} 件がローンチ",
+        "queuedNext": "{count} 件が待機中"
+      },
+      "tabs": {
+        "daily": "日間",
+        "weekly": "週間",
+        "monthly": "月間"
+      },
+      "countdownLabel": "次のローンチまで",
+      "feedNote": "週間・月間の上位はバッジを獲得し、ニュースレターで紹介されます。",
+      "moreDetails": "詳細を見る",
+      "dailyArchives": "過去のデイリー",
+      "empty": "この期間のローンチはまだありません。",
+      "showAllProducts": "すべての製品を見る",
+      "premiumTitle": "このプレミアム枠は募集中",
+      "premiumCta": "掲載を申し込む",
+      "blogTitle": "最新ブログ",
+      "latestPosts": "最新の投稿",
+      "launchesThisMonth": "今月のローンチ",
+      "makers": "人のメーカー",
+      "partners": "パートナー",
+      "reviewsCount": "{count} 件のレビュー",
+      "rankLabel": "{rank} 位",
+      "tabsLabel": "ランキング期間"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "報告を送信しました。ありがとうございます！",
       "reportError": "報告の送信に失敗しました"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "{name} のコメントを見る",
+    "votingClosed": "投票は終了しました"
   },
   "pricing": {
     "metadata": {
@@ -549,7 +587,10 @@
     "rateLimited": "スパム対策チームより：{count}回の投票は{minutes}分間で上限に達しました。{seconds}秒後に再試行してください。",
     "minWaitSeconds": "スパム対策チームより：投票変更には{seconds}秒の待機が必要です",
     "projectNotFound": "プロジェクトが見つかりません",
-    "notOngoing": "投票はプロジェクトが本日公開されている間のみ有効です"
+    "notOngoing": "投票はプロジェクトが本日公開されている間のみ有効です",
+    "count": "{count} 票",
+    "label": "投票（{count} 票）",
+    "removeLabel": "投票を取り消す（{count} 票）"
   },
   "submitProject": {
     "page": {
@@ -1159,5 +1200,22 @@
     "memberSince": "{date} に登録",
     "launches": "ローンチ",
     "profileTitle": "{name} - aat.ee"
+  },
+  "trending": {
+    "todayTitle": "本日のローンチ",
+    "liveNow": "ライブ",
+    "activeLaunches": "件が進行中",
+    "timeRange": "期間",
+    "empty": "この期間のプロジェクトはありません。"
+  },
+  "categories": {
+    "emptyTitle": "このカテゴリにはまだプロジェクトがありません。",
+    "emptyHint": "他のカテゴリを見るか、後でもう一度どうぞ。",
+    "sortLabel": "カテゴリの並び替え",
+    "selectCategory": "カテゴリを選択"
+  },
+  "tags": {
+    "emptyTitle": "このタグのプロジェクトはまだありません。",
+    "emptyHint": "他のタグを見るか、後でもう一度どうぞ。"
   }
 }

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client"
 
+import type * as React from "react"
 import { usePathname } from "next/navigation"
 
 import { Link } from "@/i18n/navigation"
@@ -41,17 +42,56 @@ type NavSite = {
   deemphasized: boolean
 }
 
-export default function FooterSection({ navSites }: { navSites: NavSite[] }) {
+// Data-backed taxonomy columns. Serialized from the server layout, sourced from
+// the cached `getFooterTaxonomy()` action — the footer renders on every route,
+// so an uncached query here would tax the whole site.
+type FooterTaxonomy = {
+  categories: { id: string; name: string; count: number }[]
+  tags: { slug: string; name: string; count: number }[]
+}
+
+/**
+ * One footer column. Deliberately palette-neutral (`text-muted-foreground`,
+ * not `--home-*`): the footer ships on every route, including the legacy home
+ * while the HOME_V2 rollout is in progress, so it must not depend on either
+ * palette.
+ *
+ * Extracted because five near-identical `<div><h3><ul>` blocks were both noisy
+ * and — since the footer is a client component that ships on every route —
+ * measurably expensive in bundle bytes.
+ */
+function LinkColumn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="text-left">
+      <h3 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
+        {title}
+      </h3>
+      <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
+        {children}
+      </ul>
+    </div>
+  )
+}
+
+const linkClass = "text-muted-foreground hover:text-foreground text-sm transition-colors"
+
+export default function FooterSection({
+  navSites,
+  taxonomy,
+}: {
+  navSites: NavSite[]
+  taxonomy: FooterTaxonomy
+}) {
   const pathname = usePathname()
   const isHomePage = pathname === "/" || /^\/[a-z]{2}$/.test(pathname)
   const t = useTranslations("footer")
   const tLinks = useTranslations("footer.links")
   return (
-    <footer className="bg-background border-t pt-6 pb-10">
+    <footer className="bg-background border-t pt-8 pb-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-12 md:gap-x-8">
           {/* Left Section: Brand, Copyright */}
-          <div className="flex flex-col items-start text-left md:col-span-4 lg:col-span-4">
+          <div className="flex flex-col items-start text-left md:col-span-4 lg:col-span-3">
             <Link href="/" className="font-heading mb-3 flex items-center">
               <span className="font-heading flex items-center text-lg font-bold">
                 <img src="/logo.svg" alt="logo" className="mr-1 h-6 w-6" />
@@ -64,68 +104,70 @@ export default function FooterSection({ navSites }: { navSites: NavSite[] }) {
           </div>
 
           {/* Right Section: Columnar Navigation Links */}
-          <div className="grid grid-cols-2 gap-8 md:col-span-8 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-8 md:col-span-8 md:grid-cols-3 lg:col-span-9 lg:grid-cols-5">
             {/* Discover Column */}
-            <div className="text-left">
-              <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                {t("discover")}
-              </h3>
-              <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
-                {discoverLinks.map((link) =>
-                  link.localized ? (
-                    <li key={link.key}>
-                      <Link
-                        href={link.href}
-                        className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
-                      >
-                        {tLinks(link.key)}
-                      </Link>
-                    </li>
-                  ) : (
-                    <li key={link.key}>
-                      <a
-                        href={link.href}
-                        className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
-                      >
-                        {tLinks(link.key)}
-                      </a>
-                    </li>
-                  ),
-                )}
-              </ul>
-            </div>
-
-            {/* Resources Column */}
-            <div className="text-left">
-              <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
-                {t("resources")}
-              </h3>
-              <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
-                {resourcesLinks.map((link) => (
-                  <li key={link.key}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
-                    >
+            <LinkColumn title={t("discover")}>
+              {discoverLinks.map((link) => (
+                <li key={link.key}>
+                  {link.localized ? (
+                    <Link href={link.href} className={linkClass}>
                       {tLinks(link.key)}
+                    </Link>
+                  ) : (
+                    <a href={link.href} className={linkClass}>
+                      {tLinks(link.key)}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </LinkColumn>
+
+            {/* Categories Column — real counts, real landing pages. */}
+            {taxonomy.categories.length > 0 && (
+              <LinkColumn title={tLinks("categories")}>
+                {taxonomy.categories.map((category) => (
+                  <li key={category.id}>
+                    <Link href={`/categories?category=${category.id}`} className={linkClass}>
+                      {category.name}
                     </Link>
                   </li>
                 ))}
-              </ul>
-            </div>
+              </LinkColumn>
+            )}
 
-            {/* Legal Column */}
+            {/* Best Tags Column */}
+            {taxonomy.tags.length > 0 && (
+              <LinkColumn title={t("bestTags")}>
+                {taxonomy.tags.map((tag) => (
+                  <li key={tag.slug}>
+                    <Link href={`/tags/${tag.slug}`} className={linkClass}>
+                      {tag.name}
+                    </Link>
+                  </li>
+                ))}
+              </LinkColumn>
+            )}
+
+            {/* Resources Column */}
+            <LinkColumn title={t("resources")}>
+              {resourcesLinks.map((link) => (
+                <li key={link.key}>
+                  <Link href={link.href} className={linkClass}>
+                    {tLinks(link.key)}
+                  </Link>
+                </li>
+              ))}
+            </LinkColumn>
+
+            {/* Legal Column — the language switcher rides along underneath. */}
             <div className="text-left">
-              <h3 className="text-foreground text-sm font-semibold tracking-wider uppercase">
+              <h3 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
                 {t("legal")}
               </h3>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
                 {legalLinks.map((link) => (
                   <li key={link.key}>
-                    <Link
-                      href={link.href}
-                      className="text-muted-foreground hover:text-primary text-sm transition-colors duration-150"
-                    >
+                    <Link href={link.href} className={linkClass}>
                       {tLinks(link.key)}
                     </Link>
                   </li>

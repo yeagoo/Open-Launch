@@ -62,7 +62,8 @@
       "friendsPage": "친구",
       "termsOfService": "서비스 이용약관",
       "privacyPolicy": "개인정보 처리방침"
-    }
+    },
+    "bestTags": "인기 태그"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "일간 우승자",
       "bestOfMonth": "이달의 베스트",
       "dashboard": "대시보드",
-      "projectsCount": "{count}개 프로젝트"
+      "projectsCount": "{count}개 프로젝트",
+      "weekTitle": "이번 주 베스트 제품"
+    },
+    "v2": {
+      "hero": {
+        "title": "새 제품이 첫 주목을 받는 곳",
+        "subtitle": "제품을 등록하고 인증 배지와 do-follow 백링크를 받으세요. 다른 메이커들이 오늘 무엇을 출시했는지도 확인할 수 있습니다.",
+        "primaryCta": "프로젝트 등록",
+        "secondaryCta": "오늘의 런치 보기",
+        "joinMakers": "{count}명의 메이커 참여",
+        "launchedToday": "오늘 {count}개 런치",
+        "queuedNext": "{count}개 대기 중"
+      },
+      "tabs": {
+        "daily": "일간",
+        "weekly": "주간",
+        "monthly": "월간"
+      },
+      "countdownLabel": "다음 런치까지",
+      "feedNote": "주간·월간 상위 제품은 배지를 받고 뉴스레터에 소개됩니다.",
+      "moreDetails": "자세히 보기",
+      "dailyArchives": "지난 데일리",
+      "empty": "이 기간에는 아직 등록된 제품이 없습니다.",
+      "showAllProducts": "모든 제품 보기",
+      "premiumTitle": "이 프리미엄 자리를 모집 중입니다",
+      "premiumCta": "추천 신청",
+      "blogTitle": "최신 블로그",
+      "latestPosts": "최신 소식",
+      "launchesThisMonth": "이번 달 런치",
+      "makers": "명의 메이커",
+      "partners": "파트너",
+      "reviewsCount": "리뷰 {count}개",
+      "rankLabel": "{rank}위",
+      "tabsLabel": "랭킹 기간"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "신고가 접수되었습니다. 감사합니다!",
       "reportError": "신고 제출에 실패했습니다"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "{name} 댓글 보기",
+    "votingClosed": "투표 마감"
   },
   "pricing": {
     "metadata": {
@@ -545,7 +583,10 @@
     "rateLimited": "안티스팸팀입니다: {count}회 추천({minutes}분 내 최대) 초과! {seconds}초 후 다시 시도하세요.",
     "minWaitSeconds": "안티스팸팀입니다: 투표 변경을 위해 {seconds}초 대기가 필요합니다.",
     "projectNotFound": "프로젝트를 찾을 수 없습니다.",
-    "notOngoing": "투표는 프로젝트가 오늘 출시 중일 때만 가능합니다."
+    "notOngoing": "투표는 프로젝트가 오늘 출시 중일 때만 가능합니다.",
+    "count": "{count}표",
+    "label": "투표 ({count}표)",
+    "removeLabel": "투표 취소 ({count}표)"
   },
   "submitProject": {
     "page": {
@@ -1155,5 +1196,22 @@
     "memberSince": "{date} 가입",
     "launches": "런치",
     "profileTitle": "{name} - aat.ee"
+  },
+  "trending": {
+    "todayTitle": "오늘의 런치",
+    "liveNow": "라이브",
+    "activeLaunches": "개 진행 중",
+    "timeRange": "기간",
+    "empty": "이 기간에는 프로젝트가 없습니다."
+  },
+  "categories": {
+    "emptyTitle": "이 카테고리에는 아직 프로젝트가 없습니다.",
+    "emptyHint": "다른 카테고리를 보거나 나중에 다시 확인해 주세요.",
+    "sortLabel": "카테고리 정렬",
+    "selectCategory": "카테고리 선택"
+  },
+  "tags": {
+    "emptyTitle": "이 태그에는 아직 프로젝트가 없습니다.",
+    "emptyHint": "다른 태그를 보거나 나중에 다시 확인해 주세요."
   }
 }

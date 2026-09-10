@@ -21,6 +21,7 @@ import Footer from "@/components/layout/footer"
 import Nav from "@/components/layout/nav"
 import { OrganizationSchema } from "@/components/seo/structured-data"
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import { getFooterTaxonomy } from "@/app/actions/footer"
 
 import "./globals.css"
 
@@ -105,12 +106,30 @@ export default async function RootLayout({
 }>) {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-RR1YB886D7"
   const webVitalsSampleRate = parseWebVitalsSampleRate(process.env.WEB_VITALS_SAMPLE_RATE)
-  const [locale, messages] = await Promise.all([getLocale(), getMessages()])
+  // Same switch the home page reads (`app/[locale]/page.tsx`). Kept as a plain
+  // runtime read rather than a shared module so both call sites can be reverted
+  // by the same env change without a rebuild.
+  const homeV2Enabled = process.env.HOME_V2 === "1"
+  const [locale, messages, footerTaxonomy] = await Promise.all([
+    getLocale(),
+    getMessages(),
+    // Cached (1h, shared with the home sidebar's category tag) — the footer
+    // renders on every route, so this must never be an uncached query.
+    getFooterTaxonomy(),
+  ])
   const navMessages = pickClientMessages(messages, ["common", "nav", "notifications", "search"])
   const footerMessages = pickClientMessages(messages, ["footer"])
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      // Adopt the redesigned home's action colour app-wide, gated on the same
+      // flag that enables the layout (see the [data-app-palette] block in
+      // globals.css). Absent when the flag is off, so the legacy site is
+      // untouched.
+      data-app-palette={homeV2Enabled ? "orange-green" : undefined}
+      suppressHydrationWarning
+    >
       <head>
         {/* Google Analytics */}
         {process.env.NODE_ENV === "production" && (
@@ -182,11 +201,18 @@ export default async function RootLayout({
             {/* Every route still needs the locale context for next-intl's
                 navigation primitives. Route-level providers add only the
                 message namespaces their client components consume. */}
-            <NextIntlClientProvider locale={locale} messages={{}}>
+            {/* `upvote` is here rather than per-route because the upvote
+                control renders from the list pages too (trending, categories,
+                projects, tags), none of which declare their own provider —
+                without it those pages render the raw "upvote.label" key. */}
+            <NextIntlClientProvider
+              locale={locale}
+              messages={pickClientMessages(messages, ["upvote", "projectRow", "categories"])}
+            >
               <main className="flex-grow">{children}</main>
             </NextIntlClientProvider>
             <NextIntlClientProvider locale={locale} messages={footerMessages}>
-              <Footer navSites={footerNavSites} />
+              <Footer navSites={footerNavSites} taxonomy={footerTaxonomy} />
             </NextIntlClientProvider>
           </div>
         </ThemeProvider>

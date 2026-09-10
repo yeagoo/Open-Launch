@@ -64,7 +64,10 @@ export function VisitWebsiteCard({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{t("visitWebsite")}</p>
-          <p className="mt-0.5 truncate text-xs opacity-80">{displayHost}</p>
+          {/* No opacity: even 90% of the foreground blended to 4.27:1 against the
+              filled button, and the hierarchy is already carried by size
+              (text-xs) versus the semibold label above it. */}
+          <p className="mt-0.5 truncate text-xs">{displayHost}</p>
         </div>
         <RiExternalLinkLine className="h-5 w-5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
       </div>

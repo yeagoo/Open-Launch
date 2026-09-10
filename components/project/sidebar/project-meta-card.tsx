@@ -2,6 +2,9 @@ import { RiGithubFill, RiTwitterFill } from "@remixicon/react"
 import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 
+import { SoftCard } from "@/components/ds/soft-card"
+import { TagPill } from "@/components/ds/tag-pill"
+
 interface ProjectMetaCardProps {
   scheduledDate: Date | null
   platforms: string[]
@@ -30,8 +33,10 @@ export function ProjectMetaCard({
   const tags = (techStack ?? []).slice(0, 6)
 
   return (
-    <div className="bg-card rounded-lg border p-4">
-      <p className="text-muted-foreground mb-4 text-xs font-medium tracking-wider uppercase">
+    <SoftCard padding="md">
+      {/* Same eyebrow treatment as the home page's rails — one label style for
+          every "small caps heading over a card" in the app. */}
+      <p className="text-muted-foreground mb-4 font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
         {t("projectInfo")}
       </p>
 
@@ -95,16 +100,11 @@ export function ProjectMetaCard({
           <p className="text-muted-foreground mb-2 text-xs">{t("productKeywords")}</p>
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2 py-0.5 text-xs"
-              >
-                #{tag}
-              </span>
+              <TagPill key={tag}>{tag}</TagPill>
             ))}
           </div>
         </div>
       )}
-    </div>
+    </SoftCard>
   )
 }

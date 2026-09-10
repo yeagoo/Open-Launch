@@ -3,6 +3,7 @@
 import Link from "next/link"
 
 import { RiMessage2Line, RiThumbUpLine } from "@remixicon/react"
+import { useTranslations } from "next-intl"
 
 import { launchStatus as launchStatusEnum } from "@/lib/project-enums"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -29,17 +30,18 @@ export function ProjectCardButtons({
   launchStatus,
   projectName,
 }: ProjectCardButtonsProps) {
+  const t = useTranslations("projectRow")
   const isActiveLaunch = launchStatus === launchStatusEnum.ONGOING
 
   return (
     <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-start">
       <Link
         href={`${projectPageUrl}#comments`}
-        className="hover:border-primary dark:hover:border-primary group hidden h-12 w-12 flex-col items-center justify-center rounded-xl border-2 transition-all duration-300 sm:flex"
-        aria-label={`View comments for ${projectName}`}
+        className="hover:border-primary group hidden h-11 w-11 flex-col items-center justify-center rounded-lg border transition-all duration-200 sm:flex"
+        aria-label={t("viewCommentsFor", { name: projectName })}
       >
-        <RiMessage2Line className="h-3.5 w-3.5 text-gray-700 dark:text-gray-300" />
-        <span className="mt-1 text-sm leading-none font-semibold text-gray-700 dark:text-gray-300">
+        <RiMessage2Line className="text-muted-foreground h-3.5 w-3.5" />
+        <span className="text-muted-foreground mt-1 text-[13px] leading-none font-semibold">
           {commentCount}
         </span>
       </Link>
@@ -55,15 +57,15 @@ export function ProjectCardButtons({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border-2 border-dashed">
-                <RiThumbUpLine className="h-3.5 w-3.5 text-gray-700 dark:text-gray-300" />
-                <span className="mt-1 text-sm leading-none font-semibold text-gray-700 dark:text-gray-300">
+              <div className="flex h-11 w-11 flex-col items-center justify-center rounded-lg border border-dashed">
+                <RiThumbUpLine className="text-muted-foreground h-3.5 w-3.5" />
+                <span className="text-muted-foreground mt-1 text-[13px] leading-none font-semibold">
                   {upvoteCount}
                 </span>
               </div>
             </TooltipTrigger>
             <TooltipContent side="top" className="z-100 text-xs">
-              Upvoting closed
+              {t("votingClosed")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

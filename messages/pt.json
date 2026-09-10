@@ -62,7 +62,8 @@
       "friendsPage": "Amigos",
       "termsOfService": "Termos de Serviço",
       "privacyPolicy": "Política de Privacidade"
-    }
+    },
+    "bestTags": "Tags populares"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "Vencedores do Dia",
       "bestOfMonth": "Melhor do Mês",
       "dashboard": "Painel",
-      "projectsCount": "{count} projetos"
+      "projectsCount": "{count} projetos",
+      "weekTitle": "Melhores produtos da semana"
+    },
+    "v2": {
+      "hero": {
+        "title": "Onde os produtos novos ganham o primeiro impulso",
+        "subtitle": "Publique o seu produto, conquiste um selo verificado e um backlink do-follow, e descubra o que outros criadores lançaram hoje.",
+        "primaryCta": "Enviar o seu projeto",
+        "secondaryCta": "Ver os lançamentos de hoje",
+        "joinMakers": "Junte-se a {count} criadores",
+        "launchedToday": "{count} lançados hoje",
+        "queuedNext": "{count} na fila"
+      },
+      "tabs": {
+        "daily": "Diário",
+        "weekly": "Semanal",
+        "monthly": "Mensal"
+      },
+      "countdownLabel": "Novos lançamentos em",
+      "feedNote": "Os vencedores semanais e mensais recebem selos e aparecem na nossa newsletter.",
+      "moreDetails": "Mais detalhes",
+      "dailyArchives": "Arquivo diário",
+      "empty": "Ainda não há lançamentos neste período.",
+      "showAllProducts": "Ver todos os produtos",
+      "premiumTitle": "Este espaço premium está disponível",
+      "premiumCta": "Quero destaque",
+      "blogTitle": "Últimas do blog",
+      "latestPosts": "Últimas publicações",
+      "launchesThisMonth": "lançamentos este mês",
+      "makers": "criadores",
+      "partners": "Nossos parceiros",
+      "reviewsCount": "{count} avaliações",
+      "rankLabel": "Posição {rank}",
+      "tabsLabel": "Período de classificação"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "Denúncia enviada. Obrigado!",
       "reportError": "Falha ao enviar denúncia"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "Ver comentários de {name}",
+    "votingClosed": "Votação encerrada"
   },
   "pricing": {
     "metadata": {
@@ -549,7 +587,10 @@
     "rateLimited": "Esquadrão Anti-Spam aqui: {count} votos em {minutes} minutos é o máximo! Tente novamente em {seconds} segundos.",
     "minWaitSeconds": "Esquadrão Anti-Spam aqui: aguarde {seconds} segundos para alterar o voto",
     "projectNotFound": "Projeto não encontrado",
-    "notOngoing": "A votação só está aberta enquanto o projeto está sendo lançado hoje"
+    "notOngoing": "A votação só está aberta enquanto o projeto está sendo lançado hoje",
+    "count": "{count, plural, =1 {# voto} other {# votos}}",
+    "label": "{count, plural, =1 {Votar (# voto)} other {Votar (# votos)}}",
+    "removeLabel": "{count, plural, =1 {Remover voto (# voto)} other {Remover voto (# votos)}}"
   },
   "submitProject": {
     "page": {
@@ -1159,5 +1200,22 @@
     "memberSince": "Membro desde {date}",
     "launches": "Lançamentos",
     "profileTitle": "{name} na aat.ee"
+  },
+  "trending": {
+    "todayTitle": "Lançamentos de hoje",
+    "liveNow": "Ao vivo",
+    "activeLaunches": "lançamentos ativos",
+    "timeRange": "Período",
+    "empty": "Nenhum projeto neste período."
+  },
+  "categories": {
+    "emptyTitle": "Ainda não há projetos nesta categoria.",
+    "emptyHint": "Veja outras categorias ou volte mais tarde.",
+    "sortLabel": "Ordenar categorias",
+    "selectCategory": "Selecione uma categoria"
+  },
+  "tags": {
+    "emptyTitle": "Ainda não há projetos com esta tag.",
+    "emptyHint": "Veja outras tags ou volte mais tarde."
   }
 }

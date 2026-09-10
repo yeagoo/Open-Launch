@@ -32,9 +32,16 @@ interface MobileNavSheetProps {
   isAuthenticated: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Match the home v2 accent palette; see NavMenu for why this is a prop. */
+  useHomeAccent?: boolean
 }
 
-export function MobileNavSheet({ isAuthenticated, open, onOpenChange }: MobileNavSheetProps) {
+export function MobileNavSheet({
+  isAuthenticated,
+  open,
+  onOpenChange,
+  useHomeAccent = false,
+}: MobileNavSheetProps) {
   const t = useTranslations("nav")
   const tCommon = useTranslations("common")
 
@@ -59,7 +66,11 @@ export function MobileNavSheet({ isAuthenticated, open, onOpenChange }: MobileNa
               <SheetClose asChild>
                 <Link
                   href="/projects/submit"
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors"
+                  className={`bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 w-full items-center justify-center gap-2 px-4 transition-colors ${
+                    useHomeAccent
+                      ? "rounded-home-pill text-sm font-semibold"
+                      : "rounded-md text-sm font-medium"
+                  }`}
                 >
                   <RiRocketLine className="h-4 w-4" />
                   {t("submitProject")}

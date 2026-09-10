@@ -62,7 +62,8 @@
       "friendsPage": "友情链接",
       "termsOfService": "服务条款",
       "privacyPolicy": "隐私政策"
-    }
+    },
+    "bestTags": "热门标签"
   },
   "home": {
     "metadata": {
@@ -94,7 +95,40 @@
       "dailyWinners": "每日优胜者",
       "bestOfMonth": "本月最佳",
       "dashboard": "控制台",
-      "projectsCount": "{count} 个项目"
+      "projectsCount": "{count} 个项目",
+      "weekTitle": "本周最佳产品"
+    },
+    "v2": {
+      "hero": {
+        "title": "让新产品在这里拿到第一次曝光",
+        "subtitle": "提交你的产品，获得认证徽章与 do-follow 外链，同时看看其他开发者今天发布了什么。",
+        "primaryCta": "提交项目",
+        "secondaryCta": "看今日新上架",
+        "joinMakers": "已有 {count} 位创作者加入",
+        "launchedToday": "{count} 个今日上架",
+        "queuedNext": "{count} 个排队中"
+      },
+      "tabs": {
+        "daily": "日榜",
+        "weekly": "周榜",
+        "monthly": "月榜"
+      },
+      "countdownLabel": "距离下一批上架还有",
+      "feedNote": "周榜与月榜优胜者将获得徽章，并入选我们的邮件推送。",
+      "moreDetails": "了解详情",
+      "dailyArchives": "往期日榜",
+      "empty": "这个时间窗口还没有上架项目。",
+      "showAllProducts": "查看全部产品",
+      "premiumTitle": "这个推荐位正在招租",
+      "premiumCta": "申请推荐",
+      "blogTitle": "最新博客",
+      "latestPosts": "最新动态",
+      "launchesThisMonth": "本月上架",
+      "makers": "位创作者",
+      "partners": "合作伙伴",
+      "reviewsCount": "{count} 条评论",
+      "rankLabel": "第 {rank} 名",
+      "tabsLabel": "榜单周期"
     }
   },
   "auth": {
@@ -254,6 +288,10 @@
       "reportSuccess": "举报已提交，感谢！",
       "reportError": "举报提交失败"
     }
+  },
+  "projectRow": {
+    "viewCommentsFor": "查看 {name} 的评论",
+    "votingClosed": "投票已结束"
   },
   "pricing": {
     "metadata": {
@@ -537,7 +575,10 @@
     "rateLimited": "反垃圾小队在此：{minutes}分钟内最多点赞{count}次！请在{seconds}秒后重试。",
     "minWaitSeconds": "反垃圾小队在此：更改投票需等待{seconds}秒",
     "projectNotFound": "项目未找到",
-    "notOngoing": "仅当项目今日发布时才能投票"
+    "notOngoing": "仅当项目今日发布时才能投票",
+    "count": "{count} 票",
+    "label": "投票（{count} 票）",
+    "removeLabel": "取消投票（{count} 票）"
   },
   "submitProject": {
     "page": {
@@ -1147,5 +1188,22 @@
     "memberSince": "注册于 {date}",
     "launches": "发布的项目",
     "profileTitle": "{name} 的主页 - aat.ee"
+  },
+  "trending": {
+    "todayTitle": "今日上架",
+    "liveNow": "正在进行",
+    "activeLaunches": "个正在上架",
+    "timeRange": "时间范围",
+    "empty": "这个时间段还没有项目。"
+  },
+  "categories": {
+    "emptyTitle": "这个分类下还没有项目。",
+    "emptyHint": "看看其他分类，或者稍后再来。",
+    "sortLabel": "分类排序方式",
+    "selectCategory": "选择分类"
+  },
+  "tags": {
+    "emptyTitle": "这个标签下还没有项目。",
+    "emptyHint": "看看其他标签，或者稍后再来。"
   }
 }

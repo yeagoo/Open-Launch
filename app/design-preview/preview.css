@@ -1,0 +1,17 @@
+/*
+ * CSS entry for the OFFLINE design-preview export only
+ * (`bun run design:preview` → artifacts/design-preview/).
+ *
+ * It pulls in the real app/globals.css so the preview can never drift from the
+ * shipped tokens, then adds explicit `@source` roots. Explicit roots matter
+ * here because this entry lives outside the `app/` render graph: Tailwind's
+ * automatic source detection is anchored to the CSS file's directory, and we
+ * do not want the exported stylesheet to depend on where it happens to run.
+ *
+ * Nothing in the app imports this file.
+ */
+@import "../globals.css";
+
+@source "../../components/home/v2";
+@source "../../components/ds";
+@source "./specimen.tsx";

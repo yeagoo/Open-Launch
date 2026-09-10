@@ -16,6 +16,8 @@ import { ItemListSchema } from "@/components/seo/structured-data"
 import { getHomeProjectGroups } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
+import { HomeV2, parseHomeTab } from "./home-v2"
+
 export async function generateMetadata({
   params,
 }: {
@@ -25,9 +27,32 @@ export async function generateMetadata({
   return { alternates: buildLocaleAlternates("/", locale) }
 }
 
-export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+/**
+ * Runtime rollout switch for the redesigned three-column home page.
+ *
+ * Read per request (not inlined at build time like a NEXT_PUBLIC_* var) so the
+ * layout can be rolled back by setting HOME_V2=0 and restarting, without a
+ * rebuild. Default OFF: the legacy home below is what production serves until
+ * the new one has been verified against real data.
+ */
+function isHomeV2Enabled(): boolean {
+  return process.env.HOME_V2 === "1"
+}
+
+export default async function Home({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ tab?: string }>
+}) {
   const { locale } = await params
   setRequestLocale(locale)
+
+  if (isHomeV2Enabled()) {
+    const { tab } = await searchParams
+    return <HomeV2 locale={locale} tab={parseHomeTab(tab)} />
+  }
 
   const projectGroupsPromise = getHomeProjectGroups(locale)
 

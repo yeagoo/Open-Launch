@@ -15,7 +15,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ProjectCard } from "@/components/home/project-card"
+import { SerifHeading } from "@/components/ds/serif-heading"
+import { ProjectCardButtons } from "@/components/home/project-card-buttons"
+import { RankedRow } from "@/components/home/v2/ranked-row"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { BreadcrumbSchema, ItemListSchema } from "@/components/seo/structured-data"
 import { getProjectsByTag, getTagBySlug } from "@/app/actions/tags"
@@ -90,8 +92,15 @@ async function TagData({
     sort,
   )
 
-  const locale = await getLocale()
+  const [locale, tTags, tV2] = await Promise.all([
+    getLocale(),
+    getTranslations("tags"),
+    // Row labels shared with the home feed rather than duplicated.
+    getTranslations("home.v2"),
+  ])
   const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
+  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
+  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
   const isAuthenticated =
     paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false
@@ -125,7 +134,11 @@ async function TagData({
         />
       )}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold sm:text-2xl">#{tag.name}</h2>
+        {/* The tag name is this page's only page-level heading — as an h2 the
+            route shipped with no h1 at all (same defect /trending had). */}
+        <SerifHeading as="h1" size="section">
+          #{tag.name}
+        </SerifHeading>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 gap-1.5">
@@ -165,32 +178,34 @@ async function TagData({
 
       {totalCount === 0 ? (
         <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-8 text-center text-sm">
-          No projects with this tag yet.
-          <p className="mt-2">Check other tags or come back later.</p>
+          {tTags("emptyTitle")}
+          <p className="mt-2">{tTags("emptyHint")}</p>
         </div>
       ) : (
-        <div className="-mx-3 flex flex-col sm:-mx-4">
+        // Same row as the home feed, /trending, /categories and /projects.
+        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
           {paginatedProjects.map((project, index) => (
-            <ProjectCard
+            <RankedRow
               key={project.id}
-              id={project.id}
-              slug={project.slug}
-              name={project.name}
-              description={project.description || ""}
-              logoUrl={project.logoUrl || ""}
-              websiteUrl={project.websiteUrl ?? undefined}
-              upvoteCount={project.upvoteCount ?? 0}
-              commentCount={project.commentCount ?? 0}
-              launchStatus={project.launchStatus}
-              launchType={project.launchType}
-              dailyRanking={project.dailyRanking}
-              index={index}
-              isAuthenticated={isAuthenticated}
-              userHasUpvoted={project.userHasUpvoted ?? false}
-              categories={project.categories ?? []}
+              project={project}
+              rank={(page - 1) * 10 + index + 1}
+              renderCommentLabel={renderCommentLabel}
+              renderRankLabel={renderRankLabel}
+              actions={
+                <ProjectCardButtons
+                  projectPageUrl={`/projects/${project.slug}`}
+                  commentCount={project.commentCount ?? 0}
+                  projectId={project.id}
+                  upvoteCount={project.upvoteCount ?? 0}
+                  isAuthenticated={isAuthenticated}
+                  hasUpvoted={project.userHasUpvoted ?? false}
+                  launchStatus={project.launchStatus}
+                  projectName={project.name}
+                />
+              }
             />
           ))}
-        </div>
+        </ol>
       )}
 
       {totalPages > 1 && (

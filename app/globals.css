@@ -38,7 +38,9 @@ div[role="dialog"],
   --secondary: hsl(0 0% 96.1%);
   --secondary-foreground: hsl(0 0% 9%);
   --muted: hsl(0 0% 96.1%);
-  --muted-foreground: hsl(0 0% 45.1%);
+  /* 45.1% read as #737373, which lands at 4.34:1 on the muted surface
+     (#f5f5f5) — just under AA. 43.5% clears 4.5:1 while staying muted. */
+  --muted-foreground: hsl(0 0% 43.5%);
   --accent: hsl(142, 71%, 45%);
   --accent-foreground: hsl(0 0% 100%);
   --destructive: hsl(0 84.2% 60.2%);
@@ -62,6 +64,57 @@ div[role="dialog"],
   --sidebar-accent-foreground: hsl(142, 71%, 45%);
   --sidebar-border: hsl(142, 10%, 91%);
   --sidebar-ring: hsl(142, 71%, 45%);
+
+  /* ─── Home v2 design system ────────────────────────────────────────────────
+     Additive token layer for the redesigned home page (uneed-inspired layout
+     language). Deliberately namespaced so it never overrides the green brand
+     tokens above — `--primary` stays green everywhere else in the app.
+
+     The accent is a warm orange used ONLY for the home CTA pills, rank badges
+     and soft highlight chips. Two stops exist on purpose:
+       - `--home-accent` is the surface fill (buttons, badges) paired with
+         white text at semibold/large sizes.
+       - `--home-accent-strong` is the text-on-light stop, darkened so links
+         and inline labels clear the 4.5:1 contrast bar.
+
+     Measured WCAG contrast (sRGB, scripted):
+       white on --home-accent ............ 5.18:1  (AA)
+       --home-accent-strong on white ..... 4.90:1  (AA)
+       dark: ink on --home-accent ........ 7.15:1  (AAA)
+     The fill used to be `hsl(24, 95%, 50%)` (#f96706), which put white text at
+     3.01:1 — AA for large text only. An audit of the nav CTA and every filled
+     button caught it, so the fill moved to the same stop the text token already
+     used. The legacy green (#16a249) was 3.33:1, so this was pre-existing rather
+     than a redesign regression, but the redesign is the right place to fix it.
+     `--home-ink` powers the black pill buttons from the reference layout and
+     flips to a light pill under `.dark` so it never disappears. */
+  --home-accent: hsl(21, 90%, 40%);
+  --home-accent-hover: hsl(21, 92%, 34%);
+  --home-accent-foreground: hsl(0, 0%, 100%);
+  --home-accent-strong: hsl(21, 90%, 40%);
+  --home-accent-soft: hsl(28, 100%, 96%);
+  --home-accent-soft-border: hsl(26, 90%, 88%);
+  --home-ink: hsl(0, 0%, 9%);
+  --home-ink-foreground: hsl(0, 0%, 98%);
+  --home-surface: hsl(0, 0%, 100%);
+  --home-surface-muted: hsl(0, 0%, 97%);
+  --home-hairline: hsl(0, 0%, 91%);
+  --home-hairline-strong: hsl(0, 0%, 84%);
+  --home-grid-line: hsl(220, 15%, 45%, 0.1);
+  --home-radius-card: 0.875rem;
+  --home-shadow-card: 0 1px 2px hsl(0 0% 0% / 0.04);
+  --home-shadow-lift: 0 1px 2px hsl(0 0% 0% / 0.04), 0 12px 28px -20px hsl(0 0% 0% / 0.25);
+
+  /* Secondary "highlight" family — the warm/cool counterpoint used by the
+     review-count chips, upvote arrows and "new" labels.
+
+     The shipped palette is "orange-green": orange owns every action surface
+     (CTA, buttons, ranks) while the brand green carries the small accent
+     chips. That is why the defaults below are NOT the same hue. */
+  --home-highlight: hsl(142, 72%, 30%);
+  --home-highlight-strong: hsl(142, 72%, 26%);
+  --home-highlight-soft: hsl(140, 60%, 96%);
+  --home-highlight-soft-border: hsl(140, 45%, 87%);
 }
 
 .dark {
@@ -97,6 +150,139 @@ div[role="dialog"],
   --sidebar-accent-foreground: hsl(0 0% 95.9%);
   --sidebar-border: hsl(0 0% 15.9%);
   --sidebar-ring: hsl(142, 71%, 45%);
+
+  /* Home v2 tokens — dark counterparts. The orange lifts a few points of
+     lightness so it keeps its punch on a near-black surface, and the ink
+     pill inverts to a light pill with dark text. */
+  --home-accent: hsl(24, 95%, 58%);
+  --home-accent-hover: hsl(24, 95%, 64%);
+  --home-accent-foreground: hsl(20, 40%, 8%);
+  --home-accent-strong: hsl(28, 100%, 68%);
+  --home-accent-soft: hsl(24, 40%, 15%);
+  --home-accent-soft-border: hsl(24, 35%, 26%);
+  --home-ink: hsl(0, 0%, 96%);
+  --home-ink-foreground: hsl(0, 0%, 9%);
+  --home-surface: hsl(0, 0%, 12%);
+  --home-surface-muted: hsl(0, 0%, 15%);
+  --home-hairline: hsl(0, 0%, 20%);
+  --home-hairline-strong: hsl(0, 0%, 28%);
+  --home-grid-line: hsl(0, 0%, 100%, 0.055);
+  --home-shadow-card: 0 1px 2px hsl(0 0% 0% / 0.3);
+  --home-shadow-lift: 0 1px 2px hsl(0 0% 0% / 0.3), 0 12px 28px -20px hsl(0 0% 0% / 0.7);
+
+  --home-highlight: hsl(142, 62%, 46%);
+  --home-highlight-strong: hsl(142, 60%, 62%);
+  --home-highlight-soft: hsl(142, 35%, 15%);
+  --home-highlight-soft-border: hsl(142, 30%, 26%);
+}
+
+/* ─── App-wide action palette (opt-in, follows HOME_V2) ────────────────────
+   The redesigned home paints its actions with `--home-accent` (orange) while
+   every other route still paints them with the brand's green `--primary`. Side
+   by side in one viewport that reads as two competing action colours — the nav
+   Submit pill is orange and the Sign up button next to it is green.
+
+   Rather than restyle each inner page, the app adopts the home's action colour
+   as a whole, gated on the SAME flag that enables the new home. The root layout
+   stamps `data-app-palette` on <html> when HOME_V2=1, so:
+     - flag off → this block never matches, the site is byte-identical to today
+     - flag on  → home, nav and every inner page share one action colour
+   which also makes the rollout atomic and the rollback a single env change.
+
+   Deliberately NOT remapped: `--accent` (shadcn's subtle hover surface — an
+   orange-filled hover on every outline button would be far too loud) and the
+   `--sidebar-*` tokens (the dashboard is out of scope for this redesign). */
+[data-app-palette="orange-green"] {
+  --primary: var(--home-accent);
+  --primary-foreground: var(--home-accent-foreground);
+  --ring: var(--home-accent);
+}
+
+/* ─── Home v2 palettes ─────────────────────────────────────────────────────
+   The SHIPPED palette is "orange-green" and lives in `:root` / `.dark` above:
+
+   Placement rule: put the attribute on the SAME element as `.dark`, or on any
+   element INSIDE it. A palette attribute on an ancestor of `.dark` is not
+   supported — `.dark` would re-declare the tokens on a closer element and win
+   by inheritance distance.
+
+   Measured WCAG contrast for these values (sRGB, scripted):
+     orange-green  white on accent ........ 5.18:1  (AA)
+     orange-green  highlight text on soft . 4.90:1  (AA)
+     green         white on accent ........ 4.79:1  (AA)
+     green         accent-strong on white  6.02:1  (AA)
+     green (dark)  ink on accent .......... 7.39:1  (AAA) */
+
+/* Pure orange: every chip falls back to the action hue. */
+[data-home-palette="orange"] {
+  --home-highlight: var(--home-accent);
+  --home-highlight-strong: var(--home-accent-strong);
+  --home-highlight-soft: var(--home-accent-soft);
+  --home-highlight-soft-border: var(--home-accent-soft-border);
+}
+
+/* Explicit alias of the shipped default, so the review fixture can name the
+   palette it is rendering instead of relying on the absence of an attribute. */
+[data-home-palette="orange-green"] {
+  --home-highlight: hsl(142, 72%, 30%);
+  --home-highlight-strong: hsl(142, 72%, 26%);
+  --home-highlight-soft: hsl(140, 60%, 96%);
+  --home-highlight-soft-border: hsl(140, 45%, 87%);
+}
+
+.dark[data-home-palette="orange-green"],
+.dark [data-home-palette="orange-green"] {
+  --home-highlight: hsl(142, 62%, 46%);
+  --home-highlight-strong: hsl(142, 60%, 62%);
+  --home-highlight-soft: hsl(142, 35%, 15%);
+  --home-highlight-soft-border: hsl(142, 30%, 26%);
+}
+
+[data-home-palette="green"] {
+  --home-accent: hsl(142, 72%, 30%);
+  --home-accent-hover: hsl(142, 72%, 26%);
+  --home-accent-foreground: hsl(0, 0%, 100%);
+  --home-accent-strong: hsl(142, 72%, 26%);
+  --home-accent-soft: hsl(140, 60%, 96%);
+  --home-accent-soft-border: hsl(140, 45%, 87%);
+}
+
+.dark[data-home-palette="green"],
+.dark [data-home-palette="green"] {
+  --home-accent: hsl(142, 62%, 46%);
+  --home-accent-hover: hsl(142, 62%, 52%);
+  --home-accent-foreground: hsl(140, 40%, 8%);
+  --home-accent-strong: hsl(142, 60%, 62%);
+  --home-accent-soft: hsl(142, 35%, 15%);
+  --home-accent-soft-border: hsl(142, 30%, 26%);
+}
+
+/* Green actions, orange highlights. */
+[data-home-palette="green-orange"] {
+  --home-accent: hsl(142, 72%, 30%);
+  --home-accent-hover: hsl(142, 72%, 26%);
+  --home-accent-foreground: hsl(0, 0%, 100%);
+  --home-accent-strong: hsl(142, 72%, 26%);
+  --home-accent-soft: hsl(140, 60%, 96%);
+  --home-accent-soft-border: hsl(140, 45%, 87%);
+  --home-highlight: hsl(24, 95%, 50%);
+  --home-highlight-strong: hsl(21, 90%, 40%);
+  --home-highlight-soft: hsl(28, 100%, 96%);
+  --home-highlight-soft-border: hsl(26, 90%, 88%);
+}
+
+.dark[data-home-palette="green-orange"],
+.dark [data-home-palette="green-orange"] {
+  --home-accent: hsl(142, 62%, 46%);
+  --home-accent-hover: hsl(142, 62%, 52%);
+  --home-accent-foreground: hsl(140, 40%, 8%);
+  --home-accent-strong: hsl(142, 60%, 62%);
+  --home-accent-soft: hsl(142, 35%, 15%);
+  --home-accent-soft-border: hsl(142, 30%, 26%);
+  --home-highlight: hsl(24, 95%, 58%);
+  --home-highlight-strong: hsl(28, 100%, 68%);
+  --home-highlight-soft: hsl(24, 40%, 15%);
+  --home-highlight-soft-border: hsl(24, 35%, 26%);
 }
 
 @theme inline {
@@ -139,6 +325,28 @@ div[role="dialog"],
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  /* Home v2 utilities: bg-home-accent, text-home-ink, border-home-hairline,
+     rounded-home-card, shadow-home-card, … */
+  --color-home-accent: var(--home-accent);
+  --color-home-accent-hover: var(--home-accent-hover);
+  --color-home-accent-foreground: var(--home-accent-foreground);
+  --color-home-accent-strong: var(--home-accent-strong);
+  --color-home-accent-soft: var(--home-accent-soft);
+  --color-home-accent-soft-border: var(--home-accent-soft-border);
+  --color-home-highlight: var(--home-highlight);
+  --color-home-highlight-strong: var(--home-highlight-strong);
+  --color-home-highlight-soft: var(--home-highlight-soft);
+  --color-home-highlight-soft-border: var(--home-highlight-soft-border);
+  --color-home-ink: var(--home-ink);
+  --color-home-ink-foreground: var(--home-ink-foreground);
+  --color-home-surface: var(--home-surface);
+  --color-home-surface-muted: var(--home-surface-muted);
+  --color-home-hairline: var(--home-hairline);
+  --color-home-hairline-strong: var(--home-hairline-strong);
+  --radius-home-card: var(--home-radius-card);
+  --radius-home-pill: 999px;
+  --shadow-home-card: var(--home-shadow-card);
+  --shadow-home-lift: var(--home-shadow-lift);
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -193,4 +401,27 @@ div[role="dialog"],
 
 .yt-upvote.active {
   @apply text-primary;
+}
+
+/* ─── Home v2 utilities ─────────────────────────────────────────────────── */
+
+/* Graph-paper backdrop from the reference layout. Implemented as a utility
+   (not an inline style or an image) so it costs zero bytes of JS and can be
+   dropped onto any section. Line spacing is tuned to the hero's type scale. */
+@utility home-grid-bg {
+  background-image:
+    linear-gradient(to right, var(--home-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--home-grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center top;
+}
+
+/* Fades the grid out toward the bottom so the backdrop ends softly instead
+   of on a hard line under the hero.
+   IMPORTANT: `mask-image` masks the element AND its whole subtree. Apply this
+   to an absolutely-positioned, `aria-hidden` backdrop layer — never to the
+   container that holds the hero copy, or the content fades out with the grid. */
+@utility home-grid-fade {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
 }

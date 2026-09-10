@@ -29,8 +29,11 @@ const exploreLinks = [
  * section (compare/* and alternatives/*).
  */
 export function SidebarExplore() {
+  // `usePathname()` is typed as `string` but returns null when the component
+  // renders outside a Next router context (static export harnesses, isolation
+  // tests). Guarding costs nothing and keeps the block renderable there.
   const pathname = usePathname()
-  if (pathname.startsWith("/compare") || pathname.startsWith("/alternatives")) {
+  if (pathname?.startsWith("/compare") || pathname?.startsWith("/alternatives")) {
     return null
   }
 

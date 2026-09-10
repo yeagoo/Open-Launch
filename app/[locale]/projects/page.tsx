@@ -11,7 +11,9 @@ import { auth } from "@/lib/auth"
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
-import { ProjectCard } from "@/components/home/project-card"
+import { SerifHeading } from "@/components/ds/serif-heading"
+import { ProjectCardButtons } from "@/components/home/project-card-buttons"
+import { RankedRow } from "@/components/home/v2/ranked-row"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { BreadcrumbSchema } from "@/components/seo/structured-data"
 import { getMonthProjects } from "@/app/actions/projects-page"
@@ -77,8 +79,15 @@ async function ProjectsContent({ page }: { page: number }) {
 
   const { projects: projectsRaw, totalCount, totalPages } = await getMonthProjects(page, 10)
 
-  const locale = await getLocale()
+  const [locale, tSections, tV2] = await Promise.all([
+    getLocale(),
+    getTranslations("home.sections"),
+    // Row labels shared with the home feed rather than duplicated.
+    getTranslations("home.v2"),
+  ])
   const projects = await localizeProjectDescriptions(projectsRaw, locale)
+  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
+  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
   const currentMonth = format(new Date(), "MMMM yyyy")
 
@@ -87,11 +96,15 @@ async function ProjectsContent({ page }: { page: number }) {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="mb-2 text-2xl font-bold sm:text-3xl">This Month&apos;s Launches</h1>
+          {/* Was hardcoded English in Inter bold; reuses the month heading the
+              rest of the site already has in all eight locales. */}
+          <SerifHeading as="h1" size="section" className="mb-2">
+            {tSections("monthTitle")}
+          </SerifHeading>
           <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
             <Calendar className="h-4 w-4" />
             <span>
-              {currentMonth} • {totalCount} {totalCount === 1 ? "project" : "projects"}
+              {currentMonth} • {tSections("projectsCount", { count: totalCount })}
             </span>
           </p>
         </div>
@@ -110,21 +123,29 @@ async function ProjectsContent({ page }: { page: number }) {
         </div>
       ) : (
         <>
-          <div className="-mx-3 flex flex-col sm:-mx-4">
+          <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
             {projects.map((project, index) => (
-              <ProjectCard
+              <RankedRow
                 key={project.id}
-                {...project}
-                description={project.description || ""}
-                websiteUrl={project.websiteUrl ?? undefined}
-                commentCount={project.commentCount ?? 0}
-                index={(page - 1) * 10 + index}
-                userHasUpvoted={project.userHasUpvoted ?? false}
-                categories={project.categories || []}
-                isAuthenticated={isAuthenticated}
+                project={project}
+                rank={(page - 1) * 10 + index + 1}
+                renderCommentLabel={renderCommentLabel}
+                renderRankLabel={renderRankLabel}
+                actions={
+                  <ProjectCardButtons
+                    projectPageUrl={`/projects/${project.slug}`}
+                    commentCount={project.commentCount ?? 0}
+                    projectId={project.id}
+                    upvoteCount={project.upvoteCount ?? 0}
+                    isAuthenticated={isAuthenticated}
+                    hasUpvoted={project.userHasUpvoted ?? false}
+                    launchStatus={project.launchStatus}
+                    projectName={project.name}
+                  />
+                }
               />
             ))}
-          </div>
+          </ol>
 
           {/* Pagination */}
           {totalPages > 1 && (
