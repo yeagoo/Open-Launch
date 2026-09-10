@@ -1,7 +1,15 @@
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals"
 import nextTypescript from "eslint-config-next/typescript"
+import reactHooks from "eslint-plugin-react-hooks"
 
 const eslintConfig = [
+  {
+    // `artifacts/` is scratch space (design-preview exports, local database,
+    // tool caches). tsconfig.json already excludes it; without the same
+    // exclusion here ESLint lints whatever lands in it — a tool cache with a
+    // few thousand JS files turned a clean run into 150k reported problems.
+    ignores: ["artifacts/**"],
+  },
   ...nextCoreWebVitals,
   ...nextTypescript,
   {
@@ -14,6 +22,14 @@ const eslintConfig = [
     // - purity:              Date.now()/Math.random() during render
     // - static-components:   defining components during render
     // - immutability:        const reassignment via TDZ-style access
+    //
+    // The plugin is registered here as well as inside eslint-config-next: flat
+    // config requires a rule's plugin to be defined in the same object that
+    // sets the rule, and relying on the preset's registration worked only under
+    // some node_modules layouts (a plain `bun install` was enough to break it
+    // locally with "the react-hooks plugin is not defined within the same
+    // configuration object").
+    plugins: { "react-hooks": reactHooks },
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/purity": "warn",
