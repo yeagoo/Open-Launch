@@ -236,6 +236,7 @@ jobs:
           CHROME_PATH="$(node -e "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
           bunx lighthouse http://localhost:3100/ \
             --only-categories=performance \
+            --extra-headers '{"Accept-Language":"en-US,en;q=0.9"}' \
             --output=json \
             --output-path=artifacts/performance/lighthouse-home.json \
             --quiet \
@@ -245,6 +246,40 @@ jobs:
             --build artifacts/performance/build-home.json \
             --lighthouse artifacts/performance/lighthouse-home.json \
             --base-url http://localhost:3100
+
+      # The redesigned home ships behind HOME_V2, which defaults to off, so
+      # every other gate in this job exercises the LEGACY home. Without this
+      # step the entire redesign — layout, hero, rails, i18n namespaces — has no
+      # automated coverage at all.
+      - name: Smoke the redesigned home (HOME_V2=1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/performance
+          DATABASE_URL="$E2E_DATABASE_URL" \
+          REDIS_URL="$E2E_REDIS_URL" \
+          BETTER_AUTH_URL="http://localhost:3100" \
+          PORT=3100 \
+          HOSTNAME=localhost \
+          HOME_V2=1 \
+            node .next/standalone/server.js > artifacts/performance/home-v2-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for _ in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3100/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://localhost:3100/api/health >/dev/null
+          # Checks the home plus /trending, /categories and /projects across
+          # three locales: structural slots, and — the class that tsc and eslint
+          # cannot see — a `useTranslations` namespace missing from its client
+          # provider, which renders a raw "namespace.key" instead of text.
+          # Data-dependent slots (ranked rows, the logo wall, the countdown) are
+          # reported rather than enforced when the target has no projects, so a
+          # sparse fixture cannot make this gate red for a data reason.
+          bun run smoke:home-v2 --url http://localhost:3100 --locales en,zh,ja
 
       - name: Create bundle ownership report
         run: bun run analyze:bundle
