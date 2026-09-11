@@ -123,7 +123,7 @@ async function DeferredOwnerBadge({
   if (viewer.userId !== createdBy) return null
 
   return (
-    <div className="border-primary/30 bg-primary/10 text-primary flex flex-col items-center justify-between gap-2 rounded-lg border p-2 sm:flex-row sm:items-center sm:gap-3">
+    <div className="border-primary/30 bg-primary/5 text-primary flex flex-col items-center justify-between gap-2 rounded-lg border p-2 sm:flex-row sm:items-center sm:gap-3">
       <span className="text-center text-sm font-medium">
         Congratulations! You earned a badge for your ranking.
       </span>

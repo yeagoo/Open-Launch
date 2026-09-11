@@ -118,7 +118,7 @@ export default async function BadgePage() {
               <div className="bg-primary/10 text-primary mb-4 inline-flex rounded-lg p-3">
                 <benefit.icon className="h-6 w-6" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold">{benefit.title}</h3>
+              <h2 className="mb-2 text-lg font-semibold">{benefit.title}</h2>
               <p className="text-muted-foreground text-sm">{benefit.description}</p>
             </div>
           ))}

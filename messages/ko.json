@@ -523,7 +523,9 @@
       "toolsServices": "도구 및 서비스",
       "directories": "디렉토리 및 발견",
       "knowledgeReference": "지식 및 참고 자료"
-    }
+    },
+    "pendingDns": "DNS 대기 중",
+    "unreachable": "접속 불가"
   },
   "metadata": {
     "projects": {

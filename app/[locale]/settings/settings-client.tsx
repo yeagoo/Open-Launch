@@ -69,7 +69,7 @@ export function SettingsClient() {
                     alt="Avatar"
                     className="object-cover"
                   />
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback className="bg-primary/5 text-primary">
                     {session.user.name?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>

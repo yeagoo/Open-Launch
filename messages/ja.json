@@ -527,7 +527,9 @@
       "toolsServices": "ツール & サービス",
       "directories": "ディレクトリ & ディスカバリー",
       "knowledgeReference": "知識 & リファレンス"
-    }
+    },
+    "pendingDns": "DNS 反映待ち",
+    "unreachable": "接続不可"
   },
   "metadata": {
     "projects": {

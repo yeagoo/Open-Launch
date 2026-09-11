@@ -225,7 +225,7 @@ export default async function BlogArticlePage({
                     {tags.map((tag: string) => (
                       <span
                         key={tag}
-                        className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm"
+                        className="bg-primary/5 text-primary rounded-full px-3 py-1 text-sm"
                       >
                         {tag}
                       </span>

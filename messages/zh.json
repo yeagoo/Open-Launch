@@ -515,7 +515,9 @@
       "toolsServices": "工具与服务",
       "directories": "目录与发现",
       "knowledgeReference": "知识与参考"
-    }
+    },
+    "pendingDns": "DNS 待生效",
+    "unreachable": "无法访问"
   },
   "metadata": {
     "projects": {

@@ -527,7 +527,9 @@
       "toolsServices": "Tools & Services",
       "directories": "Directories & Discovery",
       "knowledgeReference": "Knowledge & Reference"
-    }
+    },
+    "pendingDns": "DNS pending",
+    "unreachable": "Unreachable"
   },
   "metadata": {
     "projects": {

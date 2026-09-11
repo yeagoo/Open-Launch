@@ -103,7 +103,7 @@ export default async function ReviewsPage({ params }: { params: Promise<{ locale
               <div className="text-muted-foreground mb-4">
                 <Calendar className="mx-auto h-12 w-12" />
               </div>
-              <h3 className="text-card-foreground mb-2 text-lg font-semibold">No reviews yet</h3>
+              <h2 className="text-card-foreground mb-2 text-lg font-semibold">No reviews yet</h2>
               <p className="text-muted-foreground">
                 We&apos;re working on some amazing product reviews. Check back soon!
               </p>
@@ -152,7 +152,7 @@ export default async function ReviewsPage({ params }: { params: Promise<{ locale
 
                     {/* Review Badge */}
                     <div className="mb-4">
-                      <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs">
+                      <span className="bg-primary/5 text-primary rounded-full px-2 py-0.5 text-xs">
                         Product Review
                       </span>
                     </div>

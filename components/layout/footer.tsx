@@ -56,16 +56,16 @@ type FooterTaxonomy = {
  * while the HOME_V2 rollout is in progress, so it must not depend on either
  * palette.
  *
- * Extracted because five near-identical `<div><h3><ul>` blocks were both noisy
+ * Extracted because five near-identical `<div><h2><ul>` blocks were both noisy
  * and — since the footer is a client component that ships on every route —
  * measurably expensive in bundle bytes.
  */
 function LinkColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="text-left">
-      <h3 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
+      <h2 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
         {title}
-      </h3>
+      </h2>
       <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
         {children}
       </ul>
@@ -161,9 +161,9 @@ export default function FooterSection({
 
             {/* Legal Column — the language switcher rides along underneath. */}
             <div className="text-left">
-              <h3 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
+              <h2 className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[0.16em] uppercase">
                 {t("legal")}
-              </h3>
+              </h2>
               <ul role="list" className="mt-4 flex flex-col items-start space-y-3">
                 {legalLinks.map((link) => (
                   <li key={link.key}>
@@ -183,9 +183,9 @@ export default function FooterSection({
         {/* Friends Links */}
         {isHomePage && (
           <div className="border-border/40 mt-8 border-t pt-6">
-            <h3 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
+            <h2 className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase">
               {t("friends")}
-            </h3>
+            </h2>
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
               {navSites.map((site) => (
                 <a

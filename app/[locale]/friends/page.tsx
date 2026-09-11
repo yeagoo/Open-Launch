@@ -28,18 +28,34 @@ export async function generateMetadata({
   }
 }
 
-function SiteCard({ site, locale }: { site: FriendSite; locale: string }) {
+/** Status text for a site that is not serving yet, or null when it is fine.
+ *  Replaces an `opacity-60` dim, which conveyed the state by fading the card —
+ *  the card is still a link, so it is not exempt from contrast, and even 90%
+ *  opacity only reached ~4.3:1. Naming the state is both accessible and more
+ *  informative: the reader learns *why* a card is marked. */
+function statusKeyFor(site: FriendSite): "pendingDns" | "unreachable" | null {
+  if (site.status === "pending_dns") return "pendingDns"
+  if (site.status === "unreachable") return "unreachable"
+  return null
+}
+
+function SiteCard({
+  site,
+  locale,
+  statusLabel,
+}: {
+  site: FriendSite
+  locale: string
+  statusLabel: string | null
+}) {
   const logo = logoUrl(site)
   const desc = siteDescription(site, locale)
-  const dim = site.status === "pending_dns" || site.status === "unreachable"
   return (
     <a
       href={site.url}
       target="_blank"
       rel="noopener"
-      className={`bg-background border-border/40 hover:border-primary/30 hover:bg-muted/50 flex gap-3 rounded-lg border p-4 transition-colors ${
-        dim ? "opacity-60" : ""
-      }`}
+      className="bg-background border-border/40 hover:border-primary/30 hover:bg-muted/50 flex gap-3 rounded-lg border p-4 transition-colors"
     >
       {logo && (
         <img
@@ -57,6 +73,11 @@ function SiteCard({ site, locale }: { site: FriendSite; locale: string }) {
           {typeof site.dr === "number" && (
             <span className="text-muted-foreground bg-muted rounded px-1 py-0.5 font-mono text-[10px]">
               DR {site.dr}
+            </span>
+          )}
+          {statusLabel && (
+            <span className="text-muted-foreground bg-muted rounded px-1 py-0.5 text-[10px]">
+              {statusLabel}
             </span>
           )}
         </span>
@@ -98,7 +119,12 @@ export default async function FriendsPage({ params }: { params: Promise<{ locale
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {section.sites.map((site) => (
-                  <SiteCard key={site.id} site={site} locale={locale} />
+                  <SiteCard
+                    key={site.id}
+                    site={site}
+                    locale={locale}
+                    statusLabel={statusKeyFor(site) ? t(statusKeyFor(site)!) : null}
+                  />
                 ))}
               </div>
             </section>

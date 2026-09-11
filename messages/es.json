@@ -531,7 +531,9 @@
       "toolsServices": "Herramientas y Servicios",
       "directories": "Directorios y Descubrimiento",
       "knowledgeReference": "Conocimiento y Referencia"
-    }
+    },
+    "pendingDns": "DNS pendiente",
+    "unreachable": "Inaccesible"
   },
   "metadata": {
     "projects": {

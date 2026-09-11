@@ -206,7 +206,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                         {article.tags.slice(0, 3).map((tag: string) => (
                           <span
                             key={tag}
-                            className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs"
+                            className="bg-primary/5 text-primary rounded-full px-2 py-0.5 text-xs"
                           >
                             {tag}
                           </span>

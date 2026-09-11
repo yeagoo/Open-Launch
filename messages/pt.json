@@ -527,7 +527,9 @@
       "toolsServices": "Ferramentas e Serviços",
       "directories": "Diretórios e Descoberta",
       "knowledgeReference": "Conhecimento e Referência"
-    }
+    },
+    "pendingDns": "DNS pendente",
+    "unreachable": "Inacessível"
   },
   "metadata": {
     "projects": {

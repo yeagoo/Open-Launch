@@ -527,7 +527,9 @@
       "toolsServices": "Tööriistad ja teenused",
       "directories": "Kataloogid ja avastamine",
       "knowledgeReference": "Teadmised ja teatmikud"
-    }
+    },
+    "pendingDns": "DNS ootel",
+    "unreachable": "Kättesaamatu"
   },
   "metadata": {
     "projects": {
