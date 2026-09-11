@@ -51,7 +51,7 @@ jobs:
     env:
       CRON_LEDGER_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
       REDIS_INTEGRATION_URL: redis://127.0.0.1:6379
-      HOME_QUERY_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
+      HOME_QUERY_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_home_test
 
     steps:
       - name: Checkout
@@ -90,7 +90,14 @@ jobs:
       # Guards the home page's aggregate queries against the legacy JOIN
       # formulation they replaced — the equivalence the redesign depends on.
       # It had never run in CI: the script requires
-      # HOME_QUERY_TEST_DATABASE_URL and nothing set it.
+      # HOME_QUERY_TEST_DATABASE_URL and nothing set it. The script refuses any
+      # database not named open_launch_home_test*, so it needs its own database
+      # rather than the cron-ledger one the service creates.
+      - name: Create home query test database
+        env:
+          PGPASSWORD: cron_test_password
+        run: psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE open_launch_home_test'
+
       - name: Home query equivalence
         run: bun run test:home-query-db
 
