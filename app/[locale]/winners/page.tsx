@@ -93,7 +93,7 @@ export default async function WinnersPage({
   const threeDaysAgoFormatted = format(threeDaysAgo, "yyyy-MM-dd")
 
   return (
-    <main className="bg-secondary/20 min-h-screen">
+    <div className="bg-secondary/20 min-h-screen">
       <div className="container mx-auto max-w-6xl px-4 pt-8 pb-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:items-start">
           {/* Contenu principal */}
@@ -254,6 +254,6 @@ export default async function WinnersPage({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

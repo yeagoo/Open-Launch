@@ -54,7 +54,7 @@ export default async function AlternativeDetailPage({ params }: Props) {
   if (!page) return notFound()
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <BreadcrumbSchema
         items={[
           { name: "Alternatives", url: `${baseUrl}/alternatives` },
@@ -218,6 +218,6 @@ export default async function AlternativeDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

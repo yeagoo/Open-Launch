@@ -366,7 +366,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ local
   const authorityTiers = TIERS.filter((tier) => tier.group === "authority")
 
   return (
-    <main className="bg-background text-foreground min-h-screen">
+    <div className="bg-background text-foreground min-h-screen">
       {/* ─────────────────────── Editorial hero ─────────────────────── */}
       <header className="border-border/60 relative border-b">
         <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32 lg:py-40">
@@ -582,7 +582,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ local
           </div>
         </div>
       </section>
-    </main>
+    </div>
   )
 }
 

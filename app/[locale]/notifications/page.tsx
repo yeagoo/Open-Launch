@@ -77,7 +77,7 @@ export default async function NotificationsPage({
 
   return (
     <NextIntlClientProvider messages={pickClientMessages(messages, ["notifications"])}>
-      <main className="bg-secondary/20 min-h-screen">
+      <div className="bg-secondary/20 min-h-screen">
         <div className="container mx-auto max-w-3xl px-4 pt-8 pb-12">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
@@ -141,7 +141,7 @@ export default async function NotificationsPage({
             </div>
           )}
         </div>
-      </main>
+      </div>
     </NextIntlClientProvider>
   )
 }

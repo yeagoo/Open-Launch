@@ -204,7 +204,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
   ]
 
   return (
-    <main className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-7xl px-4 pt-14 pb-24 sm:pt-20">
         {/* ─── Tight hero ─── */}
         <section className="mx-auto mb-12 max-w-2xl text-center sm:mb-14">
@@ -571,7 +571,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
           </Button>
         </section>
       </div>
-    </main>
+    </div>
   )
 }
 

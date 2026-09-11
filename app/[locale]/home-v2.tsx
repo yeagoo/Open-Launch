@@ -189,7 +189,7 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
   }
 
   return (
-    // The root layout's `<main>` provider ships an EMPTY message bundle (see
+    // The root layout's `<div>` provider ships an EMPTY message bundle (see
     // app/layout.tsx), and `search` is only handed to the Nav. The right rail
     // renders the shared `SearchCommandLazy`, which calls
     // `useTranslations("search")` during SSR — without this provider it would

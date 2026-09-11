@@ -1,6 +1,6 @@
 export default function WinnersLoading() {
   return (
-    <main className="bg-secondary/20 min-h-screen">
+    <div className="bg-secondary/20 min-h-screen">
       <div className="container mx-auto max-w-6xl px-4 pt-8 pb-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:items-start">
           <div className="space-y-4 md:col-span-2">
@@ -16,6 +16,6 @@ export default function WinnersLoading() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

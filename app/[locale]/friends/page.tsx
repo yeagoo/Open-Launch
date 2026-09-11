@@ -80,7 +80,7 @@ export default async function FriendsPage({ params }: { params: Promise<{ locale
   ]
 
   return (
-    <main className="bg-muted/30 min-h-screen">
+    <div className="bg-muted/30 min-h-screen">
       <div className="container mx-auto max-w-4xl px-4 py-8 md:py-12">
         <div className="mb-8">
           <h1 className="text-foreground text-2xl font-bold md:text-3xl">{t("title")}</h1>
@@ -114,6 +114,6 @@ export default async function FriendsPage({ params }: { params: Promise<{ locale
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

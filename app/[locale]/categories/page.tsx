@@ -273,7 +273,7 @@ export default async function CategoriesPage({
   })
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <div className="container mx-auto min-h-screen max-w-6xl px-4 pt-8 pb-12">
         <div className="mb-6 flex flex-col">
           {/* Was hardcoded English in Inter bold; reuses the breadcrumb label
@@ -351,6 +351,6 @@ export default async function CategoriesPage({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

@@ -100,7 +100,7 @@ export default async function DirectoryPricingPage({
   }
 
   return (
-    <main className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl px-4 pt-16 pb-24 sm:pt-24">
         {/* ─── Hero — split layout. Left column: kicker badge,
             headline (with rotating colour-cycled product noun and a
@@ -469,7 +469,7 @@ export default async function DirectoryPricingPage({
           </Button>
         </section>
       </div>
-    </main>
+    </div>
   )
 }
 

@@ -51,7 +51,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   }
 
   return (
-    <main className="bg-secondary/20 min-h-screen">
+    <div className="bg-secondary/20 min-h-screen">
       <script
         type="application/ld+json"
         /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
@@ -125,6 +125,6 @@ export default async function UserProfilePage({ params }: PageProps) {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   )
 }

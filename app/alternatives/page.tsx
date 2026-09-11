@@ -34,7 +34,7 @@ export default async function AlternativesPage({
   const totalPages = Math.ceil(totalCount / 12)
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <div className="container mx-auto min-h-screen max-w-6xl px-4 pt-8 pb-12">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Product Alternatives</h1>
@@ -133,6 +133,6 @@ export default async function AlternativesPage({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

@@ -76,7 +76,7 @@ export default async function SearchPage({
   }
 
   return (
-    <main className="bg-secondary/20 min-h-screen">
+    <div className="bg-secondary/20 min-h-screen">
       <div className="container mx-auto max-w-4xl px-4 pt-8 pb-12">
         <h1 className="mb-6 flex items-center gap-2 text-xl font-bold sm:text-2xl">
           <RiSearchLine className="h-6 w-6" />
@@ -149,6 +149,6 @@ export default async function SearchPage({
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }

@@ -213,7 +213,7 @@ export default async function TrendingPage({
   ).length
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <div className="container mx-auto min-h-screen max-w-6xl px-4 pt-8 pb-12">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-start">
           {/* Contenu principal */}
@@ -325,6 +325,6 @@ export default async function TrendingPage({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

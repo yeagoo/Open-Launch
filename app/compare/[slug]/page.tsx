@@ -53,7 +53,7 @@ export default async function ComparisonDetailPage({ params }: Props) {
   if (!comparison) return notFound()
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <BreadcrumbSchema
         items={[
           { name: "Compare", url: `${baseUrl}/compare` },
@@ -187,6 +187,6 @@ export default async function ComparisonDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

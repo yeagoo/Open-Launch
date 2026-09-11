@@ -39,7 +39,7 @@ export default async function SkillStatusPage({
   const progress = submission.total > 0 ? Math.round((submission.sent / submission.total) * 100) : 0
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 md:px-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 md:px-6">
       <header className="space-y-3">
         <p className="text-muted-foreground text-sm">Free directory submission</p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -114,7 +114,7 @@ export default async function SkillStatusPage({
           ))}
         </div>
       </section>
-    </main>
+    </div>
   )
 }
 

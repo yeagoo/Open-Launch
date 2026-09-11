@@ -81,7 +81,7 @@ export default async function Home({
   }))
 
   return (
-    <main className="bg-muted/30 min-h-screen">
+    <div className="bg-muted/30 min-h-screen">
       {itemListData.length > 0 && (
         <ItemListSchema
           name={t("metadata.today")}
@@ -440,6 +440,6 @@ export default async function Home({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

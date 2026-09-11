@@ -79,7 +79,7 @@ export default async function DirectoryOrdersAdminPage() {
   const other = orders.filter((o) => !["paid", "fulfilled"].includes(o.status))
 
   return (
-    <main className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight">Directory orders</h1>
@@ -138,7 +138,7 @@ export default async function DirectoryOrdersAdminPage() {
           )}
         </Section>
       </div>
-    </main>
+    </div>
   )
 }
 

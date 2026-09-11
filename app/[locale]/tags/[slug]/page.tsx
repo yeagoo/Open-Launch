@@ -238,7 +238,7 @@ export default async function TagPage({ params, searchParams }: Props) {
   if (!tag) return notFound()
 
   return (
-    <main className="bg-secondary/20">
+    <div className="bg-secondary/20">
       <BreadcrumbSchema
         items={[
           { name: tBreadcrumb("tags"), url: `${baseUrl}/tags` },
@@ -302,6 +302,6 @@ export default async function TagPage({ params, searchParams }: Props) {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

@@ -57,7 +57,7 @@ export default function BadgeProjectsPage() {
     : projects
 
   return (
-    <main className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
@@ -209,7 +209,7 @@ export default function BadgeProjectsPage() {
           </p>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 

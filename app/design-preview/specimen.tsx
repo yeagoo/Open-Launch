@@ -358,7 +358,7 @@ function Board({ label }: { label: string }) {
 
 export function DesignSpecimen() {
   return (
-    <main className="bg-background min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-6xl space-y-12 px-4 py-10">
         <header className="border-home-hairline border-b pb-6">
           <SerifHeading as="h1" size="section" kicker="aat.ee · home v2">
@@ -402,6 +402,6 @@ export function DesignSpecimen() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   )
 }
