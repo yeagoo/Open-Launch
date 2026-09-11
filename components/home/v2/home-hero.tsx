@@ -84,15 +84,17 @@ export function HomeHero({ labels, launchedTotal, primaryHref, secondaryHref }: 
           </p>
         )}
 
-        {/* `text-balance` rather than plain wrapping: without it a long headline
-            breaks on whatever fits, which strands the last two characters of a
-            Chinese title on a line of their own. A wider measure gives CJK the
-            room it needs — the same string is roughly twice as wide per
+        {/* `whitespace-pre-line` lets a translation place its own break: a `\n`
+            in the message becomes a line break, and locales carrying none are
+            unaffected. `text-balance` governs everything else — without it a
+            long headline breaks on whatever fits, which stranded the last
+            characters of the Chinese title on a line of their own, and the wider
+            measure gives CJK the room it needs, being roughly twice as wide per
             character as Latin. */}
         <SerifHeading
           as="h1"
           size="display"
-          className="mx-auto mt-4 max-w-3xl text-[1.75rem] text-balance sm:text-[2.6rem]"
+          className="mx-auto mt-4 max-w-3xl text-[1.75rem] text-balance whitespace-pre-line sm:text-[2.6rem]"
         >
           {labels.title}
         </SerifHeading>

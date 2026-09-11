@@ -79,7 +79,7 @@ const V2_STRINGS: Record<string, V2> = {
   },
   zh: {
     hero: {
-      title: "酒香也怕巷子深，别让项目只躺在你的 Git 仓库里。",
+      title: "酒香也怕巷子深，\n别让项目躺在 Git 仓库里",
       subtitle: "热度会过去，外链会留下。Badge、do-follow 外链和一批真实用户。",
       primaryCta: "提交项目",
       secondaryCta: "看今日新上架",
