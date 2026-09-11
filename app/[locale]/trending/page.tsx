@@ -69,7 +69,7 @@ function TrendingDataSkeleton() {
           .map((_, index) => (
             <div
               key={index}
-              className="mx-3 animate-pulse rounded-xl border border-zinc-100 bg-white/70 p-3 shadow-sm sm:mx-4 sm:p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30"
+              className="bg-home-surface border-home-hairline rounded-home-card mx-3 animate-pulse border p-3 sm:mx-4 sm:p-4"
             >
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="flex-shrink-0">
@@ -235,7 +235,7 @@ export default async function TrendingPage({
               </SerifHeading>
               <Link
                 href="/trending"
-                className="bg-secondary/30 hover:bg-secondary/50 border-primary block rounded-md border-l-4 px-5 py-2 shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-colors"
+                className="bg-home-surface-muted hover:bg-home-surface border-primary rounded-home-card block border-l-4 px-5 py-2 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-primary text-2xl font-bold">{ongoingLaunches}</div>

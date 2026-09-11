@@ -59,7 +59,7 @@ export function WinnerCard({
   }
 
   return (
-    <div className="dark:bg-secondary/20 overflow-hidden rounded-lg border border-zinc-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:border-zinc-800/50">
+    <div className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card overflow-hidden border">
       <div className="p-5">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
@@ -83,7 +83,7 @@ export function WinnerCard({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 dark:border-zinc-800/50">
+        <div className="border-home-hairline mt-4 flex items-center justify-between border-t pt-3">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-sm">
               <span className="text-foreground font-medium">{upvoteCount}</span>{" "}
