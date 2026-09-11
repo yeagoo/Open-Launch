@@ -312,7 +312,9 @@ export default async function CategoriesPage({
 
             <div className="space-y-3 py-5 pt-0">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-semibold">Browse Categories</h3>
+                <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                  Browse Categories
+                </SerifHeading>
               </div>
               <div className="-mx-2 max-h-[520px] space-y-2 overflow-y-auto pr-2">
                 {categories.map((category) => (
@@ -335,7 +337,9 @@ export default async function CategoriesPage({
             </div>
 
             <div className="space-y-3 py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                Quick Access
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/trending"

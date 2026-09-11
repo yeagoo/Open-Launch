@@ -4,6 +4,7 @@ import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { SerifHeading } from "@/components/ds/serif-heading"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { getAllTags } from "@/app/actions/tags"
 
@@ -66,7 +67,9 @@ export default async function TagsPage() {
             <SidebarSponsors />
 
             <div className="space-y-3 py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                Quick Access
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/categories"

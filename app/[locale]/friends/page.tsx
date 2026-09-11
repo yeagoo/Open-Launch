@@ -13,6 +13,7 @@ import {
   type FriendSite,
 } from "@/lib/directories-links"
 import { buildLocaleAlternates } from "@/lib/i18n-metadata"
+import { SerifHeading } from "@/components/ds/serif-heading"
 
 export async function generateMetadata({
   params,
@@ -55,7 +56,7 @@ function SiteCard({
       href={site.url}
       target="_blank"
       rel="noopener"
-      className="bg-background border-border/40 hover:border-primary/30 hover:bg-muted/50 flex gap-3 rounded-lg border p-4 transition-colors"
+      className="bg-home-surface border-home-hairline hover:border-home-hairline-strong rounded-home-card shadow-home-card flex gap-3 border p-4 transition-colors"
     >
       {logo && (
         <img
@@ -101,22 +102,24 @@ export default async function FriendsPage({ params }: { params: Promise<{ locale
   ]
 
   return (
-    <div className="bg-muted/30 min-h-screen">
-      <div className="container mx-auto max-w-4xl px-4 py-8 md:py-12">
+    <div className="bg-secondary/20 min-h-screen">
+      <div className="container mx-auto max-w-4xl px-4 pt-8 pb-12">
         <div className="mb-8">
-          <h1 className="text-foreground text-2xl font-bold md:text-3xl">{t("title")}</h1>
+          <SerifHeading as="h1" size="section">
+            {t("title")}
+          </SerifHeading>
           <p className="text-muted-foreground mt-2 text-sm">{t("subtitle")}</p>
         </div>
 
         <div className="space-y-8">
           {sections.map((section) => (
             <section key={section.title}>
-              <h2 className="text-foreground mb-4 text-lg font-semibold">
+              <SerifHeading as="h2" size="card" className="mb-4">
                 {section.title}
                 <span className="text-muted-foreground ml-2 text-sm font-normal">
                   ({section.sites.length})
                 </span>
-              </h2>
+              </SerifHeading>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {section.sites.map((site) => (
                   <SiteCard

@@ -32,6 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { TableOfContents } from "@/components/blog/table-of-contents"
+import { SerifHeading } from "@/components/ds/serif-heading"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ArticleSchema, BreadcrumbSchema } from "@/components/seo/structured-data"
 
@@ -214,7 +215,9 @@ export default async function BlogArticlePage({
                 </div>
 
                 {/* Title */}
-                <h1 className="mb-4 text-2xl font-bold md:text-4xl">{title}</h1>
+                <SerifHeading as="h1" size="section" className="mb-4 text-2xl md:text-4xl">
+                  {title}
+                </SerifHeading>
 
                 {/* Description */}
                 <p className="text-muted-foreground mb-6 text-lg leading-relaxed">{description}</p>
@@ -265,9 +268,9 @@ export default async function BlogArticlePage({
               {/* CTA Card */}
               <div className="from-primary/5 to-primary/10 rounded-2xl bg-gradient-to-br p-4">
                 <div className="mb-4 text-center">
-                  <h2 className="text-foreground text-base font-semibold">
+                  <SerifHeading as="h2" size="card" className="text-foreground">
                     Want a review for your product?
-                  </h2>
+                  </SerifHeading>
                   <p className="text-muted-foreground text-xs">
                     Boost your product&apos;s visibility and credibility
                   </p>
@@ -332,7 +335,9 @@ export default async function BlogArticlePage({
 
                       {/* What's included */}
                       <div>
-                        <h3 className="mb-4 font-medium">What you get:</h3>
+                        <SerifHeading as="h3" size="card" className="mb-4 font-medium">
+                          What you get:
+                        </SerifHeading>
                         <div className="space-y-3">
                           <div className="flex gap-3">
                             <div className="bg-primary/10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded">
@@ -361,7 +366,9 @@ export default async function BlogArticlePage({
 
                       {/* Process */}
                       <div>
-                        <h3 className="mb-4 font-medium">What happens next:</h3>
+                        <SerifHeading as="h3" size="card" className="mb-4 font-medium">
+                          What happens next:
+                        </SerifHeading>
                         <div className="space-y-3">
                           <div className="flex gap-3">
                             <div className="bg-primary flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-xs font-medium text-white">

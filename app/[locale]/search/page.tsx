@@ -11,6 +11,7 @@ import { getClientIp } from "@/lib/client-ip"
 import { API_RATE_LIMITS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { searchProjects } from "@/lib/search-projects"
+import { SerifHeading } from "@/components/ds/serif-heading"
 
 export const dynamic = "force-dynamic"
 
@@ -78,19 +79,19 @@ export default async function SearchPage({
   return (
     <div className="bg-secondary/20 min-h-screen">
       <div className="container mx-auto max-w-4xl px-4 pt-8 pb-12">
-        <h1 className="mb-6 flex items-center gap-2 text-xl font-bold sm:text-2xl">
-          <RiSearchLine className="h-6 w-6" />
+        <SerifHeading as="h1" size="section" className="mb-6 flex items-center gap-2">
+          <RiSearchLine className="text-home-accent-strong h-6 w-6" aria-hidden="true" />
           {query ? t("resultsFor", { query }) : t("placeholder")}
-        </h1>
+        </SerifHeading>
 
         {rateLimited && (
-          <div className="bg-card border-border rounded-xl border border-dashed py-16 text-center">
-            <p className="text-muted-foreground">Too many requests. Please try again later.</p>
+          <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-16 text-center">
+            <p>Too many requests. Please try again later.</p>
           </div>
         )}
         {!rateLimited && query && hits.length === 0 && (
-          <div className="bg-card border-border rounded-xl border border-dashed py-16 text-center">
-            <p className="text-muted-foreground">{t("noResultsFor", { query })}</p>
+          <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-16 text-center">
+            <p>{t("noResultsFor", { query })}</p>
           </div>
         )}
 
@@ -99,18 +100,18 @@ export default async function SearchPage({
             <Link
               key={hit.id}
               href={`/projects/${hit.slug}`}
-              className="bg-card border-border hover:border-primary/50 flex items-center gap-4 rounded-xl border p-4 transition-colors"
+              className="bg-home-surface border-home-hairline hover:border-home-hairline-strong rounded-home-card flex items-center gap-4 border p-4 transition-colors"
             >
               {hit.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={hit.logoUrl}
                   alt={hit.name}
-                  className="border-border h-12 w-12 flex-shrink-0 rounded-full border object-cover"
+                  className="border-home-hairline h-12 w-12 flex-shrink-0 rounded-full border object-cover"
                 />
               ) : (
-                <div className="bg-primary/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
-                  <RiAppsLine className="text-primary h-5 w-5" />
+                <div className="bg-home-accent-soft flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full">
+                  <RiAppsLine className="text-home-accent-strong h-5 w-5" aria-hidden="true" />
                 </div>
               )}
               <div className="min-w-0">

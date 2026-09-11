@@ -9,6 +9,8 @@ import { Calendar, Clock } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { SerifHeading } from "@/components/ds/serif-heading"
+import { SoftCard } from "@/components/ds/soft-card"
 import { ItemListSchema } from "@/components/seo/structured-data"
 
 export async function generateMetadata({
@@ -120,9 +122,11 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
       )}
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-foreground mb-4 text-2xl font-bold md:text-3xl">Blog</h1>
-          <p className="text-muted-foreground text-md mx-auto max-w-4xl md:text-lg">
+        <div className="mb-8">
+          <SerifHeading as="h1" size="section" className="mb-3">
+            Blog
+          </SerifHeading>
+          <p className="text-muted-foreground max-w-2xl text-sm md:text-base">
             Discover insights, tutorials, and resources to help you build and launch successful
             products.
           </p>
@@ -149,15 +153,17 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         {/* Articles Grid */}
         {articles.length === 0 ? (
           <div className="py-16 text-center">
-            <div className="bg-card mx-auto max-w-md rounded-2xl border p-12">
+            <SoftCard padding="lg" className="mx-auto max-w-md">
               <div className="text-muted-foreground mb-4">
-                <Calendar className="mx-auto h-12 w-12" />
+                <Calendar className="mx-auto h-12 w-12" aria-hidden="true" />
               </div>
-              <h3 className="text-card-foreground mb-2 text-lg font-semibold">No articles yet</h3>
+              <SerifHeading as="h2" size="card" className="mb-2">
+                No articles yet
+              </SerifHeading>
               <p className="text-muted-foreground">
                 We&apos;re working on some amazing content. Check back soon!
               </p>
-            </div>
+            </SoftCard>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -165,7 +171,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
               <article key={article.slug} className="group">
                 <Link
                   href={`/blog/${article.slug}`}
-                  className="bg-card hover:border-muted-foreground/20 block overflow-hidden rounded-2xl border"
+                  className="bg-home-surface border-home-hairline hover:border-home-hairline-strong rounded-home-card block overflow-hidden border transition-colors"
                 >
                   {/* Article Image */}
                   <div className="bg-muted relative aspect-[16/9] overflow-hidden">
@@ -220,9 +226,13 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                     )}
 
                     {/* Title */}
-                    <h2 className="text-card-foreground group-hover:text-primary mb-2 line-clamp-3 text-xl font-bold transition-colors">
+                    <SerifHeading
+                      as="h2"
+                      size="card"
+                      className="text-card-foreground group-hover:text-primary mb-2 line-clamp-3 text-xl transition-colors"
+                    >
                       {article.title}
-                    </h2>
+                    </SerifHeading>
 
                     {/* Description */}
                     <p className="text-muted-foreground line-clamp-3 text-sm">

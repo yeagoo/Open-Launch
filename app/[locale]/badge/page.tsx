@@ -8,6 +8,7 @@ import { getTranslations } from "next-intl/server"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { CopyButton } from "@/components/ui/copy-button"
+import { SerifHeading } from "@/components/ds/serif-heading"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { BreadcrumbSchema } from "@/components/seo/structured-data"
 
@@ -102,9 +103,9 @@ export default async function BadgePage() {
 
         {/* Hero Section */}
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-3xl font-bold sm:text-4xl">
+          <SerifHeading as="h1" size="display" className="mb-4">
             Get Priority Launch with Our Badge
-          </h1>
+          </SerifHeading>
           <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
             Add our badge to your website and launch your product in 2 days. No payment required -
             it&apos;s completely free!
@@ -114,26 +115,35 @@ export default async function BadgePage() {
         {/* Benefits Grid */}
         <div className="mb-12 grid gap-6 sm:grid-cols-2">
           {benefits.map((benefit) => (
-            <div key={benefit.title} className="bg-card border-border rounded-xl border p-6">
+            <div
+              key={benefit.title}
+              className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card border p-6"
+            >
               <div className="bg-primary/10 text-primary mb-4 inline-flex rounded-lg p-3">
                 <benefit.icon className="h-6 w-6" />
               </div>
-              <h2 className="mb-2 text-lg font-semibold">{benefit.title}</h2>
+              <SerifHeading as="h2" size="card" className="mb-2">
+                {benefit.title}
+              </SerifHeading>
               <p className="text-muted-foreground text-sm">{benefit.description}</p>
             </div>
           ))}
         </div>
 
         {/* How It Works */}
-        <div className="bg-muted/30 mb-12 rounded-2xl p-8">
-          <h2 className="mb-6 text-2xl font-bold">How It Works</h2>
+        <div className="bg-home-surface-muted rounded-home-card mb-12 p-8">
+          <SerifHeading as="h2" size="section" className="mb-6">
+            How It Works
+          </SerifHeading>
           <div className="space-y-6">
             <div className="flex gap-4">
               <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold">
                 1
               </div>
               <div>
-                <h3 className="mb-1 font-semibold">Copy the Badge Code</h3>
+                <SerifHeading as="h3" size="card" className="mb-1">
+                  Copy the Badge Code
+                </SerifHeading>
                 <p className="text-muted-foreground text-sm">
                   Copy the HTML code below and paste it into your website&apos;s footer or about
                   page.
@@ -146,7 +156,9 @@ export default async function BadgePage() {
                 2
               </div>
               <div>
-                <h3 className="mb-1 font-semibold">Submit Your Product</h3>
+                <SerifHeading as="h3" size="card" className="mb-1">
+                  Submit Your Product
+                </SerifHeading>
                 <p className="text-muted-foreground text-sm">
                   Go to the project submission form and enter your website URL. We&apos;ll
                   automatically detect the badge.
@@ -159,7 +171,9 @@ export default async function BadgePage() {
                 3
               </div>
               <div>
-                <h3 className="mb-1 font-semibold">Get Verified &amp; Launch Fast</h3>
+                <SerifHeading as="h3" size="card" className="mb-1">
+                  Get Verified &amp; Launch Fast
+                </SerifHeading>
                 <p className="text-muted-foreground text-sm">
                   Once verified, your product will be scheduled to launch in 2 days instead of
                   waiting in the regular queue.
@@ -170,12 +184,16 @@ export default async function BadgePage() {
         </div>
 
         {/* Badge Preview and Code */}
-        <div className="bg-card border-border mb-8 rounded-2xl border p-8">
-          <h2 className="mb-6 text-2xl font-bold">Badge Code</h2>
+        <div className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card mb-8 border p-8">
+          <SerifHeading as="h2" size="section" className="mb-6">
+            Badge Code
+          </SerifHeading>
 
           {/* Preview */}
           <div className="mb-6">
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium uppercase">Preview</h3>
+            <SerifHeading as="h3" size="eyebrow" className="mb-3">
+              Preview
+            </SerifHeading>
 
             {/* Light Mode Badge */}
             <div className="mb-3">
@@ -220,7 +238,9 @@ export default async function BadgePage() {
 
           {/* Code */}
           <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium uppercase">HTML Code</h3>
+            <SerifHeading as="h3" size="eyebrow" className="mb-3">
+              HTML Code
+            </SerifHeading>
             <div className="relative">
               <pre className="bg-muted overflow-x-auto rounded-lg p-4 text-sm">
                 <code>{badgeCode}</code>
@@ -231,8 +251,10 @@ export default async function BadgePage() {
         </div>
 
         {/* CTA Section */}
-        <div className="bg-primary/5 rounded-2xl p-8 text-center">
-          <h2 className="mb-3 text-2xl font-bold">Ready to Launch Fast?</h2>
+        <div className="bg-home-accent-soft rounded-home-card p-8 text-center">
+          <SerifHeading as="h2" size="section" className="mb-3">
+            Ready to Launch Fast?
+          </SerifHeading>
           <p className="text-muted-foreground mb-6 text-sm">
             Add the badge to your website and submit your product now. You&apos;ll be live within 24
             hours!
@@ -249,12 +271,14 @@ export default async function BadgePage() {
 
         {/* FAQ Section */}
         <div className="mt-12">
-          <h2 className="mb-6 text-2xl font-bold">Frequently Asked Questions</h2>
+          <SerifHeading as="h2" size="section" className="mb-6">
+            Frequently Asked Questions
+          </SerifHeading>
           <div className="space-y-6">
             <div>
-              <h3 className="mb-2 font-semibold">
+              <SerifHeading as="h3" size="card" className="mb-2">
                 Do I need to keep the badge on my website forever?
-              </h3>
+              </SerifHeading>
               <p className="text-muted-foreground text-sm">
                 Yes, the badge should remain visible on your website to maintain your dofollow
                 backlink and priority status. If removed, your backlink will be changed to nofollow.
@@ -262,7 +286,9 @@ export default async function BadgePage() {
             </div>
 
             <div>
-              <h3 className="mb-2 font-semibold">Where should I place the badge?</h3>
+              <SerifHeading as="h3" size="card" className="mb-2">
+                Where should I place the badge?
+              </SerifHeading>
               <p className="text-muted-foreground text-sm">
                 The badge should be placed in a visible location on your website, such as the
                 footer, about page, or partners section. We need to be able to detect it
@@ -271,9 +297,9 @@ export default async function BadgePage() {
             </div>
 
             <div>
-              <h3 className="mb-2 font-semibold">
+              <SerifHeading as="h3" size="card" className="mb-2">
                 What if the badge is not detected automatically?
-              </h3>
+              </SerifHeading>
               <p className="text-muted-foreground text-sm">
                 Make sure the badge code is added exactly as shown above, including the correct URL
                 and image source. If you&apos;re still having issues, contact us for manual
@@ -282,7 +308,9 @@ export default async function BadgePage() {
             </div>
 
             <div>
-              <h3 className="mb-2 font-semibold">Can I style the badge differently?</h3>
+              <SerifHeading as="h3" size="card" className="mb-2">
+                Can I style the badge differently?
+              </SerifHeading>
               <p className="text-muted-foreground text-sm">
                 You can adjust the size and positioning, but please don&apos;t modify the image URL
                 or remove the link back to aat.ee. This is required for verification.

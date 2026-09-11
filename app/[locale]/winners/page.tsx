@@ -10,6 +10,7 @@ import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/date-picker"
+import { SerifHeading } from "@/components/ds/serif-heading"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import { WinnerCard } from "@/components/winners/winner-card"
 import { getWinnersByDate } from "@/app/actions/home"
@@ -40,11 +41,13 @@ export async function generateMetadata({
 // Composant pour afficher le message quand il n'y a pas de gagnants
 function NoWinnersFound() {
   return (
-    <div className="dark:bg-secondary/20 mx-3 rounded-lg border border-zinc-100 bg-white p-8 text-center shadow-[0_1px_3px_rgba(0,0,0,0.05)] sm:mx-4 dark:border-zinc-800/50">
+    <div className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card mx-3 border p-8 text-center sm:mx-4">
       <div className="bg-muted/30 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
         <RiTrophyFill className="text-muted-foreground h-6 w-6" />
       </div>
-      <h3 className="mb-2 text-lg font-medium">No winners found</h3>
+      <SerifHeading as="h2" size="card" className="mb-2 text-lg">
+        No winners found
+      </SerifHeading>
       <p className="text-muted-foreground mb-4 text-sm">
         There are no winners for this date or the competition hasn't ended yet.
       </p>
@@ -100,13 +103,17 @@ export default async function WinnersPage({
           <div className="md:col-span-2">
             <div className="mb-6">
               <div className="mb-6 flex items-center justify-between">
-                <h1 className="px-3 text-xl font-bold sm:px-4 sm:text-2xl">Daily Winners</h1>
+                <SerifHeading as="h1" size="section" className="px-3 sm:px-4">
+                  Daily Winners
+                </SerifHeading>
               </div>
 
-              <div className="dark:bg-secondary/10 mx-3 rounded-lg border border-zinc-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] sm:mx-4 dark:border-zinc-800/50">
+              <div className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card mx-3 border p-4 sm:mx-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="mb-1 text-lg font-medium">Winners for {formattedDate}</h2>
+                    <SerifHeading as="h2" size="card" className="mb-1">
+                      Winners for {formattedDate}
+                    </SerifHeading>
                     <p className="text-muted-foreground text-sm">
                       These projects were selected as the top performers of the day.
                     </p>
@@ -155,8 +162,10 @@ export default async function WinnersPage({
           <div className="space-y-3">
             {/* About Daily Winners */}
             <div className="space-y-3 p-5 pt-0">
-              <h3 className="flex items-center gap-2 font-semibold">About Daily Winners</h3>
-              <div className="dark:bg-secondary/10 rounded-md border border-zinc-100 bg-white p-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] dark:border-zinc-800/50">
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                About Daily Winners
+              </SerifHeading>
+              <div className="bg-home-surface border-home-hairline rounded-home-card shadow-home-card border p-4">
                 <p className="text-muted-foreground text-sm">
                   Each day, aat.ee automatically ranks the top 3 most upvoted projects that were
                   launched.
@@ -166,10 +175,10 @@ export default async function WinnersPage({
 
             {/* Quick Date Access */}
             <div className="space-y-3 p-5">
-              <h3 className="flex items-center gap-2 font-semibold">
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
                 <RiHistoryLine className="h-4 w-4" />
                 Recent Winners
-              </h3>
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href={`/winners?date=${yesterdayFormatted}`}
@@ -210,7 +219,9 @@ export default async function WinnersPage({
             {/* Categories */}
             <div className="space-y-3 p-5">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-semibold">Top Categories</h3>
+                <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                  Top Categories
+                </SerifHeading>
                 <Button variant="ghost" size="sm" className="text-sm" asChild>
                   <Link href="/categories" className="flex items-center gap-1">
                     View all
@@ -235,7 +246,9 @@ export default async function WinnersPage({
 
             {/* Quick Links */}
             <div className="space-y-3 p-5">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                Quick Access
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/trending"

@@ -277,7 +277,9 @@ export default async function TagPage({ params, searchParams }: Props) {
             <SidebarSponsors />
 
             <div className="space-y-3 py-5">
-              <h3 className="flex items-center gap-2 font-semibold">Quick Access</h3>
+              <SerifHeading as="h2" size="eyebrow" className="flex items-center gap-2">
+                Quick Access
+              </SerifHeading>
               <div className="space-y-2">
                 <Link
                   href="/tags"
