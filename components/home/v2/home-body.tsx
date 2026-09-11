@@ -148,14 +148,16 @@ export function HomeBody({ data, labels, locale }: HomeBodyProps) {
           </div>
 
           <section className="space-y-3">
-            <SerifHeading as="h2">{labels.heading}</SerifHeading>
+            <SerifHeading as="h2" id="home-feed-heading">
+              {labels.heading}
+            </SerifHeading>
 
             {projects.length === 0 ? (
               <p className="text-muted-foreground border-home-hairline rounded-home-card border border-dashed px-4 py-10 text-center text-sm">
                 {labels.empty}
               </p>
             ) : (
-              <ol className="divide-home-hairline divide-y">
+              <ol aria-labelledby="home-feed-heading" className="divide-home-hairline divide-y">
                 {projects.map((project, index) => (
                   <RankedRow
                     key={project.id}

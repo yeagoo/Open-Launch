@@ -133,7 +133,7 @@ async function CategoryData({
   return (
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
-        <SerifHeading as="h2" size="section">
+        <SerifHeading as="h2" size="section" id="category-heading">
           {categoryData.name}
         </SerifHeading>
         <DropdownMenu>
@@ -189,7 +189,10 @@ async function CategoryData({
         // Same row as the home feed and /trending (see the note there): a real
         // <Link> instead of a clickable div, with the interactive controls in
         // the row's `actions` slot.
-        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
+        <ol
+          aria-labelledby="category-heading"
+          className="divide-home-hairline -mx-2 divide-y sm:-mx-3"
+        >
           {paginatedProjects.map((project, index) => (
             <RankedRow
               key={project.id}

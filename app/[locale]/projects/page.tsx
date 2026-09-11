@@ -98,7 +98,7 @@ async function ProjectsContent({ page }: { page: number }) {
         <div>
           {/* Was hardcoded English in Inter bold; reuses the month heading the
               rest of the site already has in all eight locales. */}
-          <SerifHeading as="h1" size="section" className="mb-2">
+          <SerifHeading as="h1" size="section" className="mb-2" id="projects-heading">
             {tSections("monthTitle")}
           </SerifHeading>
           <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
@@ -123,7 +123,10 @@ async function ProjectsContent({ page }: { page: number }) {
         </div>
       ) : (
         <>
-          <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
+          <ol
+            aria-labelledby="projects-heading"
+            className="divide-home-hairline -mx-2 divide-y sm:-mx-3"
+          >
             {projects.map((project, index) => (
               <RankedRow
                 key={project.id}

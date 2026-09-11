@@ -118,7 +118,7 @@ async function TagData({
       <div className="flex items-center justify-between">
         {/* The tag name is this page's only page-level heading — as an h2 the
             route shipped with no h1 at all (same defect /trending had). */}
-        <SerifHeading as="h1" size="section">
+        <SerifHeading as="h1" size="section" id="tag-heading">
           #{tag.name}
         </SerifHeading>
         <DropdownMenu>
@@ -165,7 +165,7 @@ async function TagData({
         </div>
       ) : (
         // Same row as the home feed, /trending, /categories and /projects.
-        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
+        <ol aria-labelledby="tag-heading" className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
           {paginatedProjects.map((project, index) => (
             <RankedRow
               key={project.id}

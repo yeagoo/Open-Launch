@@ -43,6 +43,11 @@ function SerifHeading({
 }: SerifHeadingProps) {
   const heading = (
     <Comp
+      // `id`, `aria-*` and anything else a caller passes belong on the heading
+      // itself. They used to be spread onto the wrapper — and dropped entirely
+      // when there was no kicker or action, so `<SerifHeading id="x">` silently
+      // lost the id and nothing could point `aria-labelledby` at the heading.
+      {...props}
       data-slot="serif-heading"
       data-size={size}
       className={cn(SIZE_CLASSES[size], size === "eyebrow" ? "" : "text-foreground", className)}
@@ -54,7 +59,7 @@ function SerifHeading({
   if (!kicker && !action) return heading
 
   return (
-    <div {...props} className={cn("flex items-end justify-between gap-4", className)}>
+    <div className="flex items-end justify-between gap-4">
       <div className="min-w-0">
         {kicker && (
           <p className={cn(SIZE_CLASSES.eyebrow, "mb-2")} data-slot="serif-heading-kicker">

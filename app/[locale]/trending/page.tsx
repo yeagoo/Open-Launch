@@ -146,7 +146,7 @@ async function TrendingData({
       <div className="flex items-center justify-between">
         {/* This is the page's only page-level heading; it was an h2, which left
             /trending with no h1 at all. */}
-        <SerifHeading as="h1" size="section">
+        <SerifHeading as="h1" size="section" id="trending-heading">
           {title}
         </SerifHeading>
       </div>
@@ -161,7 +161,10 @@ async function TrendingData({
         // costs middle-click and open-in-new-tab, and gives assistive tech no
         // link to announce. `RankedRow` is a real <Link>; the interactive
         // controls ride along in its `actions` slot.
-        <ol className="divide-home-hairline -mx-2 divide-y sm:-mx-3">
+        <ol
+          aria-labelledby="trending-heading"
+          className="divide-home-hairline -mx-2 divide-y sm:-mx-3"
+        >
           {projects.map((project: ProjectSummary, index: number) => (
             <RankedRow
               key={project.id}
