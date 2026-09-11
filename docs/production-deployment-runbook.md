@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-936ec44f7fa2f4caf53e91ad39ee19a64d3919ce
+6e58365d330ac3cafafa8b5290946871e6605811
 ```
 
 Current runtime facts:
@@ -163,14 +163,17 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.home-v2-r33b.yml`
+  `compose.site-r34.yml`
 - deployment marker:
-  `20260911-home-v2-r33b`
+  `20260911-site-r34`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
-- last post-deploy backup: `backup-aat-ee-restic-20260911034623`
+- last post-deploy backup: `opsctl-backup-run@aat-ee.service` returned
+  `Result=success` / `ExecMainStatus=0`, writing
+  `/var/lib/opsctl/backup-dumps/aat-ee-data/postgres.sql.zst`
+  (51,279,366 bytes, 2026-09-11T10:05:20Z)
 
 ### The `HOME_V2` switch
 
@@ -196,8 +199,9 @@ remediation), both deployed on 2026-09-04; their journals exist in
 because the sequence below did not require updating it. Update it as part of
 every release.
 
-The r33b release deploys the home page redesign on top of the r32 log
-remediation. CSP is in an intentional
+The r34 release adds the leaderboard and free tools pages, brings the audited
+pages to an accessibility score of 100, and drops the three dead `PLAUSIBLE_*`
+variables from the registered environment file. `sharp` remains `0.35.4`. CSP is in an intentional
 Report-Only observation phase with reports sent to `/api/csp-report`.
 Production remains in Shadow mode with an empty Canary path, embedded Ledger
 workers disabled, and the payment email outbox disabled. Its canonical plan,
@@ -596,6 +600,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-11 site r34 — leaderboards, free tools, accessibility](./deployments/2026-09-11-site-r34-deployment.md)
 - [2026-09-11 home v2 r33b — enabling the redesigned home](./deployments/2026-09-11-home-v2-r33b-deployment.md)
 - [2026-09-11 home v2 r33 — app-only deploy](./deployments/2026-09-11-home-v2-r33-deployment.md)
 - [2026-09-04 log remediation r32](./deployments/2026-09-04-log-remediation-r32.md) (reconstructed)
