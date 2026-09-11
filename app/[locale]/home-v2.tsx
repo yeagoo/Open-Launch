@@ -5,6 +5,7 @@ import { pickClientMessages } from "@/lib/client-messages"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { promoDirectorySites } from "@/lib/directories-links"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
+import { isFloatingLogo, logoWallScore } from "@/lib/logo-wall-quality"
 import { getServerSession } from "@/lib/server-auth"
 import { HomeBody, type HomeBodyData, type HomeBodyLabels } from "@/components/home/v2/home-body"
 import type { HomeTimeTab } from "@/components/home/v2/time-tabs"
@@ -17,6 +18,7 @@ import {
   getHomeWeekProjects,
   getLatestBlogPosts,
   getLatestCommunityPosts,
+  getWallLogoCandidates,
 } from "@/app/actions/home"
 import { getTopCategories } from "@/app/actions/projects"
 
@@ -62,6 +64,7 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     categories,
     session,
     tabProjects,
+    wallLogoCandidates,
   ] = await Promise.all([
     getTranslations("home.v2"),
     getTranslations("home.metadata"),
@@ -84,6 +87,7 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
       : tab === "monthly"
         ? getHomeMonthProjects(PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, locale)
         : Promise.resolve(null),
+    getWallLogoCandidates(),
   ])
 
   const [todayProjects] = groups
@@ -108,7 +112,7 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
   // Hero wall texture. Drawn from today + yesterday + this month so the wall
   // stays full on quiet days — all real aat.ee launches, deduped. The two
   // numbers shown above the wall come from `stats`, never from this list.
-  const wallProjects = [
+  const wallCandidates = [
     ...new Map(
       [...todayProjects, ...groups[1], ...groups[2]].map((project) => [
         project.id,
@@ -116,6 +120,28 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
       ]),
     ).values(),
   ]
+
+  // Prefer marks that *float*: a logo exported with a transparent background
+  // sits on the page like a mark, while one exported as a full-bleed square
+  // paints its own coloured tile. A wall mixing the two reads as a patchwork of
+  // pastel blocks rather than a wall of products — measured across the
+  // catalogue, 41 of 50 logos are opaque squares, so the difference decides how
+  // the hero looks.
+  //
+  // The pool is the whole catalogue rather than this month's launches: only 9
+  // logos qualify, and a single month rarely holds more than a handful of them,
+  // so drawing from the recent set alone made the wall repeat five marks.
+  //
+  // Scores come from `bun run logos:audit`, which measures the assets because
+  // `project` stores only `logo_url`. Unrated logos — every logo in a fresh
+  // local fixture, and any upload newer than the last audit — are not
+  // preferred; when too few qualify the wall falls back to the recent set, so a
+  // sparse or unrated catalogue still renders a hero.
+  const rated = wallLogoCandidates.filter((project) => isFloatingLogo(project.logoUrl))
+  const wallProjects =
+    rated.length >= 8
+      ? rated.sort((a, b) => logoWallScore(b.logoUrl) - logoWallScore(a.logoUrl))
+      : wallCandidates
 
   const labels: HomeBodyLabels = {
     hero: {

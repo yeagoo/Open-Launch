@@ -26,6 +26,7 @@
     "local:db": "bun scripts/local-db.ts",
     "local:prodsample": "bun scripts/load-prod-sample.ts",
     "local:seed": "bun scripts/local-db.ts seed",
+    "logos:audit": "bun scripts/audit-logo-wall.ts",
     "ops:backup-db": "bun scripts/ops/backup-db.ts",
     "ops:migrate-base64-avatars": "bun scripts/ops/migrate-base64-avatars.ts",
     "ops:sanitize-rich-text": "bun scripts/ops/sanitize-project-rich-text.ts",
