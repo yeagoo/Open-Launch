@@ -569,6 +569,8 @@ doing so restores duplicate task execution and legacy health emails.
 
 - [2026-09-11 home v2 r33b — enabling the redesigned home](./deployments/2026-09-11-home-v2-r33b-deployment.md)
 - [2026-09-11 home v2 r33 — app-only deploy](./deployments/2026-09-11-home-v2-r33-deployment.md)
+- [2026-09-04 log remediation r32](./deployments/2026-09-04-log-remediation-r32.md) (reconstructed)
+- [2026-09-04 AIEO badge r31](./deployments/2026-09-04-aieo-badge-r31.md) (reconstructed)
 - [Frontend redesign decision record](./frontend-redesign-uneed-style.md)
 - [Dependency override register](./dependency-overrides.md)
 - [2026-08-30 review remediation r30](./deployments/2026-08-30-review-remediation-r30.md)
@@ -580,6 +582,8 @@ doing so restores duplicate task execution and legacy health emails.
 - `opsctl` contributor and safety rules:
   `/home/ivmm/tools/deploy-tools/AGENTS.md`
 
-Missing records: **r31** (AIEO badge) and **r32** (log remediation), both
-deployed 2026-09-04, have journals under `/var/lib/opsctl/deploy-journals` but
-no document here. Write them from those journals if the history is needed.
+r31 and r32 were deployed on 2026-09-04 without records being written. They
+were reconstructed on 2026-09-11 from their journals plus the image labels still
+on the host; the reconstruction is marked as such, and the fields the journals
+do not carry (CI run, OCI archive digest, SBOM, backups, post-deploy checks) are
+listed as unavailable rather than inferred.
