@@ -15,7 +15,7 @@ const REQUEST_ID_HEADER = "x-aat-request-id"
 const SESSION_GUARDED_PATHS = ["/dashboard", "/settings", "/admin", "/notifications"]
 
 // Routes that intentionally live outside the [locale] segment (English-only or admin)
-const NON_LOCALIZED_PREFIXES = ["/admin", "/compare", "/alternatives"]
+const NON_LOCALIZED_PREFIXES = ["/admin", "/compare", "/alternatives", "/tools"]
 
 // Build a regex that matches a leading supported-locale segment, e.g. "/zh", "/et"
 const LEADING_LOCALE_REGEX = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`)

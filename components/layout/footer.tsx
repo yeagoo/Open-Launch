@@ -22,6 +22,8 @@ const discoverLinks = [
 const resourcesLinks = [
   { key: "pricing", href: "/pricing" },
   { key: "freeDirectorySubmission", href: "/skill/free-directory-submission" },
+  // English-only, like /compare — bypass locale routing.
+  { key: "freeTools", href: "/tools", localized: false },
   { key: "sponsors", href: "/sponsors" },
   { key: "blog", href: "/blog" },
   { key: "friendsPage", href: "/friends" },

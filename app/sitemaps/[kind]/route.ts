@@ -51,6 +51,9 @@ function staticEntries(): SitemapEntry[] {
     englishSitemapEntry("/legal/privacy", { changeFrequency: "yearly", priority: 0.3 }),
     englishSitemapEntry("/legal/terms", { changeFrequency: "yearly", priority: 0.3 }),
     englishSitemapEntry("/compare", { changeFrequency: "weekly", priority: 0.8 }),
+    englishSitemapEntry("/tools", { changeFrequency: "monthly", priority: 0.7 }),
+    englishSitemapEntry("/tools/launch-checklist", { changeFrequency: "monthly", priority: 0.6 }),
+    englishSitemapEntry("/tools/meta-tags", { changeFrequency: "monthly", priority: 0.6 }),
     englishSitemapEntry("/alternatives", { changeFrequency: "weekly", priority: 0.8 }),
   ]
 }
