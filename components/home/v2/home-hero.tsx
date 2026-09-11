@@ -94,10 +94,15 @@ export function HomeHero({
           </p>
         )}
 
+        {/* `text-balance` rather than plain wrapping: without it a long headline
+            breaks on whatever fits, which strands the last two characters of a
+            Chinese title on a line of their own. A wider measure gives CJK the
+            room it needs — the same string is roughly twice as wide per
+            character as Latin. */}
         <SerifHeading
           as="h1"
           size="display"
-          className="mx-auto mt-4 max-w-2xl text-[2rem] sm:text-[3rem]"
+          className="mx-auto mt-4 max-w-3xl text-[1.75rem] text-balance sm:text-[2.6rem]"
         >
           {labels.title}
         </SerifHeading>

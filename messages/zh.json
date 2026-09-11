@@ -104,8 +104,8 @@
     },
     "v2": {
       "hero": {
-        "title": "让新产品在这里拿到第一次曝光",
-        "subtitle": "提交你的产品，获得认证徽章与 do-follow 外链，同时看看其他开发者今天发布了什么。",
+        "title": "酒香也怕巷子深，别让项目只躺在你的 Git 仓库里。",
+        "subtitle": "热度会过去，外链会留下。Badge、do-follow 外链和一批真实用户。",
         "primaryCta": "提交项目",
         "secondaryCta": "看今日新上架",
         "joinMakers": "已有 {count} 位创作者加入",

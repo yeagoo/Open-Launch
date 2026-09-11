@@ -57,9 +57,9 @@ const WEEK_TITLE: Record<string, string> = {
 const V2_STRINGS: Record<string, V2> = {
   en: {
     hero: {
-      title: "Where new products get their first push",
+      title: "Good work doesn't find its own audience. Don't leave yours in the repo.",
       subtitle:
-        "Launch your product, earn a verified badge and a do-follow backlink, and discover what other makers shipped today.",
+        "Attention fades. Links last. A badge, a do-follow backlink and your first real users.",
       primaryCta: "Submit your project",
       secondaryCta: "Explore today's launches",
       joinMakers: "Join {count} makers",
@@ -85,8 +85,8 @@ const V2_STRINGS: Record<string, V2> = {
   },
   zh: {
     hero: {
-      title: "让新产品在这里拿到第一次曝光",
-      subtitle: "提交你的产品，获得认证徽章与 do-follow 外链，同时看看其他开发者今天发布了什么。",
+      title: "酒香也怕巷子深，别让项目只躺在你的 Git 仓库里。",
+      subtitle: "热度会过去，外链会留下。Badge、do-follow 外链和一批真实用户。",
       primaryCta: "提交项目",
       secondaryCta: "看今日新上架",
       joinMakers: "已有 {count} 位创作者加入",
@@ -112,9 +112,9 @@ const V2_STRINGS: Record<string, V2> = {
   },
   es: {
     hero: {
-      title: "Donde los productos nuevos reciben su primer empujón",
+      title: "Ser bueno no basta. No dejes tu proyecto durmiendo en el repositorio.",
       subtitle:
-        "Publica tu producto, consigue una insignia verificada y un backlink do-follow, y descubre qué han lanzado hoy otros creadores.",
+        "La atención pasa. Los enlaces quedan. Una insignia, un enlace do-follow y tus primeros usuarios reales.",
       primaryCta: "Publica tu proyecto",
       secondaryCta: "Ver los lanzamientos de hoy",
       joinMakers: "Únete a {count} creadores",
@@ -141,9 +141,9 @@ const V2_STRINGS: Record<string, V2> = {
   },
   pt: {
     hero: {
-      title: "Onde os produtos novos ganham o primeiro impulso",
+      title: "Ser bom não basta. Não deixe seu projeto parado no repositório.",
       subtitle:
-        "Publique o seu produto, conquiste um selo verificado e um backlink do-follow, e descubra o que outros criadores lançaram hoje.",
+        "A atenção passa. Os links ficam. Um selo, um link do-follow e seus primeiros usuários reais.",
       primaryCta: "Enviar o seu projeto",
       secondaryCta: "Ver os lançamentos de hoje",
       joinMakers: "Junte-se a {count} criadores",
@@ -169,9 +169,9 @@ const V2_STRINGS: Record<string, V2> = {
   },
   fr: {
     hero: {
-      title: "Là où les nouveaux produits trouvent leur premier élan",
+      title: "Être bon ne suffit pas. Ne laissez pas votre projet dormir dans le dépôt.",
       subtitle:
-        "Publiez votre produit, obtenez un badge vérifié et un backlink do-follow, et découvrez ce que les autres créateurs ont lancé aujourd'hui.",
+        "L'attention passe. Les liens restent. Un badge, un lien do-follow et vos premiers vrais utilisateurs.",
       primaryCta: "Soumettre votre projet",
       secondaryCta: "Voir les lancements du jour",
       joinMakers: "Rejoignez {count} créateurs",
@@ -198,9 +198,9 @@ const V2_STRINGS: Record<string, V2> = {
   },
   ja: {
     hero: {
-      title: "新製品が最初の注目を集める場所",
+      title: "良いものは、放っておけば見つからない。リポジトリに眠らせないで。",
       subtitle:
-        "製品を投稿して認定バッジと do-follow バックリンクを獲得し、他のメーカーが今日何をリリースしたかを見つけよう。",
+        "注目は過ぎ去る。リンクは残る。バッジ、do-follow リンク、そして最初のリアルユーザー。",
       primaryCta: "プロジェクトを投稿",
       secondaryCta: "今日のローンチを見る",
       joinMakers: "{count} 人のメーカーが参加",
@@ -226,9 +226,8 @@ const V2_STRINGS: Record<string, V2> = {
   },
   ko: {
     hero: {
-      title: "새 제품이 첫 주목을 받는 곳",
-      subtitle:
-        "제품을 등록하고 인증 배지와 do-follow 백링크를 받으세요. 다른 메이커들이 오늘 무엇을 출시했는지도 확인할 수 있습니다.",
+      title: "좋은 것만으로는 부족합니다. 저장소에만 묻어두지 마세요.",
+      subtitle: "관심은 지나가고 링크는 남습니다. 배지, do-follow 링크, 그리고 첫 실제 사용자.",
       primaryCta: "프로젝트 등록",
       secondaryCta: "오늘의 런치 보기",
       joinMakers: "{count}명의 메이커 참여",
@@ -254,9 +253,9 @@ const V2_STRINGS: Record<string, V2> = {
   },
   et: {
     hero: {
-      title: "Koht, kus uued tooted saavad oma esimese tõuke",
+      title: "Hea toode ei leia ise oma vaatajaid. Ära jäta seda repositooriumisse.",
       subtitle:
-        "Lisa oma toode, saa kinnitatud märgis ja do-follow tagasilink ning avasta, mida teised tegijad täna välja lasid.",
+        "Tähelepanu kaob, lingid jäävad. Märk, do-follow link ja esimesed tõelised kasutajad.",
       primaryCta: "Esita oma projekt",
       secondaryCta: "Vaata tänaseid lanseerimisi",
       joinMakers: "Liitu {count} tegijaga",

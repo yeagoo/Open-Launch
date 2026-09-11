@@ -104,8 +104,8 @@
     },
     "v2": {
       "hero": {
-        "title": "Koht, kus uued tooted saavad oma esimese tõuke",
-        "subtitle": "Lisa oma toode, saa kinnitatud märgis ja do-follow tagasilink ning avasta, mida teised tegijad täna välja lasid.",
+        "title": "Hea toode ei leia ise oma vaatajaid. Ära jäta seda repositooriumisse.",
+        "subtitle": "Tähelepanu kaob, lingid jäävad. Märk, do-follow link ja esimesed tõelised kasutajad.",
         "primaryCta": "Esita oma projekt",
         "secondaryCta": "Vaata tänaseid lanseerimisi",
         "joinMakers": "Liitu {count} tegijaga",
