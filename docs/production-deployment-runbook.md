@@ -317,12 +317,41 @@ replacement of production files.
    result. Check `restic-idrive-e2`.
 6. Create the Compose contract for this release and validate it — see
    [The Compose contract](#the-compose-contract). Author a new, uniquely named
-   typed deploy plan referencing it, then run `preflight`.
+   typed deploy plan referencing it, then:
+
+   ```bash
+   sudo -n /usr/bin/opsctl --registry /srv/server-registry \
+     --state-dir /var/lib/opsctl preflight <plan> --json
+   ```
+
+   `preflight` is its own subcommand. `deploy --preflight` does not exist and
+   fails with `unexpected argument '--preflight' found`. Read the findings: the
+   ready-state ones (`backup_history_ready`, `backup_plan_ready`,
+   `snapshot_coverage_ready`) are informational; anything at warning or error
+   severity blocks the plan.
+
 7. Create and verify the required snapshot, then run
    `deploy <plan> --dry-run --snapshot <snapshot-id> --json`. **The dry run is
    where the approval token comes from** — it is not obtainable any other way.
-8. Request human approval for the exact ready plan and snapshot. Destructive
-   operations require their own typed approval scope.
+8. Request human approval for the exact ready plan and snapshot. **The snapshot
+   is a required argument**, and the reason is recorded in the audit trail:
+
+   ```bash
+   sudo -n /usr/bin/opsctl --registry /srv/server-registry \
+     --state-dir /var/lib/opsctl --actor <actor> \
+     request-deploy-execution <plan> --snapshot <snapshot-id> \
+     --reason '<what this release ships and why>' --json
+   ```
+
+   The response carries an `approval.id` (`appr_<plan>_<ts>`), the
+   `execution_approval_token`, and the path of the approval file under
+   `/srv/server-registry/approvals/`. Without `--snapshot` the request is
+   refused with "deploy execution approval can only be requested after deploy
+   dry-run is ready", which reads as though the dry run had not been done even
+   when it had. The human decision is recorded with
+   `opsctl approve <approval-id>`. Destructive operations require their own
+   typed approval scope.
+
 9. Execute only the approved plan, snapshot, and approval token. Preserve the
    resulting journal ID. Pass the token from step 7:
 
