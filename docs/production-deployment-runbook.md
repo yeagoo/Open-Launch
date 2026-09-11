@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-5469a0b99f6a64ffca5ce38b0c57537f1994723b
+936ec44f7fa2f4caf53e91ad39ee19a64d3919ce
 ```
 
 Current runtime facts:
@@ -163,17 +163,41 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.review-remediation-r30.yml`
+  `compose.home-v2-r33b.yml`
 - deployment marker:
-  `20260830-review-remediation-r30`
-- runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.3`
+  `20260911-home-v2-r33b`
+- runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
+- `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
+- last post-deploy backup: `backup-aat-ee-restic-20260911034623`
 
-The current r30 release deploys the completed review remediation and P2
-hardening work. Its exact non-root migrator applied migrations `0060` and
-`0061`; production has 62 tracked migrations, the campaign-sync table exists,
-and the category lookup index is valid and ready. CSP is in an intentional
+### The `HOME_V2` switch
+
+`HOME_V2` selects the home page layout and is read per request
+(`app/[locale]/page.tsx`), so it needs no rebuild to change:
+
+- `HOME_V2=1` — redesigned three-column home (`components/home/v2`)
+- unset or anything else — the legacy two-column home
+
+It also drives the app-wide action colour: `app/layout.tsx` stamps
+`data-app-palette` on `<html>` and `app/globals.css` remaps `--primary`, so
+turning it off reverts button colours on every route, not only the home page.
+
+**Rollback of the redesign is this one variable**, not a snapshot restore:
+recreate `aat-ee-app` from a contract without the entry (for example
+`compose.home-v2-r33.yml`) and the previous home page is served again.
+
+### Releases with no deployment record
+
+`docs/deployments/` has no record for **r31** (AIEO badge) or **r32** (log
+remediation), both deployed on 2026-09-04; their journals exist in
+`/var/lib/opsctl/deploy-journals`. This section drifted for three releases
+because the sequence below did not require updating it. Update it as part of
+every release.
+
+The r33b release deploys the home page redesign on top of the r32 log
+remediation. CSP is in an intentional
 Report-Only observation phase with reports sent to `/api/csp-report`.
 Production remains in Shadow mode with an empty Canary path, embedded Ledger
 workers disabled, and the payment email outbox disabled. Its canonical plan,
@@ -284,22 +308,153 @@ replacement of production files.
 
 1. Resolve and record the exact source commit.
 2. Run the repository's Bun lint, typecheck, tests, production build, dependency
-   audit, and available secret/supply-chain checks.
-3. Construct a Linux/amd64 standalone artifact from that exact commit. Supply
-   `DEPLOYMENT_VERSION` during the build.
+   audit, and available secret/supply-chain checks. CI does all of this on a
+   push to `main`; a green run is the evidence, not a substitute for step 3.
+3. Build the Linux/amd64 artifact from that exact commit — see
+   [Building the release artifact](#building-the-release-artifact).
 4. Check `opsctl status`, `deploy-gates`, backup history, and snapshot coverage.
 5. Run the registered before-deploy backup for `aat-ee` and verify its systemd
    result. Check `restic-idrive-e2`.
-6. Create a new, uniquely named typed deploy plan and run `preflight`.
+6. Create the Compose contract for this release and validate it — see
+   [The Compose contract](#the-compose-contract). Author a new, uniquely named
+   typed deploy plan referencing it, then run `preflight`.
 7. Create and verify the required snapshot, then run
-   `deploy <plan> --dry-run --snapshot <snapshot-id> --json`.
+   `deploy <plan> --dry-run --snapshot <snapshot-id> --json`. **The dry run is
+   where the approval token comes from** — it is not obtainable any other way.
 8. Request human approval for the exact ready plan and snapshot. Destructive
    operations require their own typed approval scope.
 9. Execute only the approved plan, snapshot, and approval token. Preserve the
-   resulting journal ID.
+   resulting journal ID. Pass the token from step 7:
+
+   ```bash
+   sudo -n /usr/bin/opsctl --registry /srv/server-registry \
+     --state-dir /var/lib/opsctl --actor <actor> \
+     deploy <plan> --execute --snapshot <snapshot-id> \
+     --approval-token 'deploy:<plan-id>:<snapshot-id>' --json
+   ```
+
+   Without `--approval-token` the command fails with
+   `deploy --execute requires --approval-token from deploy --dry-run`.
+
 10. Verify container health, public HTTP routes, structured data, sitemap XML,
     authorization boundaries, cron state, and error logs.
 11. Run and verify the post-deploy backup and repository check.
+12. **Update this file's "Current application state" section and add a record
+    under `docs/deployments/`.** Both were skipped for r31 and r32; the section
+    is only accurate if this step is part of the release.
+
+If an execution fails partway, the remaining operations are recoverable without
+redoing the successful ones — see
+[Recovering a failed execution](#recovering-a-failed-execution).
+
+## Building the release artifact
+
+The artifact is built by `scripts/build-immutable-runner.sh`, which requires a
+working Docker daemon (via the current user or passwordless `sudo`), a clean
+worktree, and `HEAD` equal to `--commit`:
+
+```bash
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<production key> \
+scripts/build-immutable-runner.sh \
+  --commit <full 40-hex commit> \
+  --output-dir <empty directory> \
+  --tag open-launch:<short commit>
+```
+
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` is **required**; the script exits 1
+  without it. The value must match production's, or server actions break after
+  the deploy. It is available in the operator's `.env.local`. **Do not pass
+  `--validation-only`** for a releasable artifact — that flag marks the release
+  manifest `releasable=false`, which is what the CI
+  `Immutable runner validation` workflow produces.
+- There is no `DEPLOYMENT_VERSION` argument; the script derives it from
+  `--commit` itself.
+- Output is an OCI archive plus `build-metadata.json`, `provenance.json`,
+  `release-manifest.json`, `sbom.spdx.json` and `SHA256SUMS`.
+
+Then deliver it to the host and load it:
+
+```bash
+ssh <host> 'mkdir -p <release-dir>'
+scp open-launch-runner.oci.tar SHA256SUMS release-manifest.json \
+    build-metadata.json provenance.json sbom.spdx.json <host>:<release-dir>/
+ssh <host> "cd <release-dir> && sha256sum --check SHA256SUMS"
+ssh <host> "cd <release-dir> && sudo -n docker load -i open-launch-runner.oci.tar"
+```
+
+Verify the digest matches `release-manifest.json`'s `imageDigest`, tag it with
+the full commit, and confirm the labels before going further:
+
+```bash
+sudo -n docker tag <digest> open-launch:<full commit>
+sudo -n docker image inspect open-launch:<full commit> --format \
+  'revision={{ index .Config.Labels "org.opencontainers.image.revision" }}
+build-input={{ index .Config.Labels "ee.aat.open-launch.build-input-sha256" }}
+platform={{.Os}}/{{.Architecture}} user={{.Config.User}}'
+```
+
+`revision` must equal the release commit, `build-input` must equal
+`buildMetadata.buildInputSha256`, and `platform` must be `linux/amd64`.
+
+## The Compose contract
+
+Each release gets its own `compose.<name>.yml` in the project root
+(`/home/ecs-user/aat-ee-production-…/app/project`); the deploy plan references
+it by filename, and nothing generates it automatically. It is not tracked by
+git — the project directory is a delivered checkout, not a repository.
+
+Derive it mechanically from the contract currently in use, changing only what
+the release needs:
+
+```bash
+sudo -n sed 's|image: open-launch:<old>|image: open-launch:<new>|' \
+  compose.<current>.yml | sudo -n tee compose.<new>.yml >/dev/null
+sudo -n chown ecs-user:ecs-user compose.<new>.yml
+sudo -n chmod 640 compose.<new>.yml
+```
+
+**Validate it before it reaches a plan.** A hand-edited contract that is one
+indentation level off is invalid YAML, and Compose rejects it at parse time
+with `controlled command exited non-zero` — which reads like a runtime failure
+even though nothing was deployed:
+
+```bash
+cd <project root>
+sudo -n docker compose --file compose.<new>.yml --project-name aat-ee config --quiet
+```
+
+Exit 0 means the file parses. Run the same check against the contract you would
+roll back to, so the rollback path is known-good too.
+
+## Recovering a failed execution
+
+A failed execution leaves a journal. Inspect it, then resume rather than
+re-running the plan — the resume repeats only the operations that did not
+succeed:
+
+```bash
+opsctl deploy-journal-inspect <journal-id> --json
+opsctl deploy-resume <plan> --journal <journal-id> --dry-run --json   # shows can_resume + next_operations
+opsctl request-deploy-resume <plan> --journal <journal-id> --reason '<why>'
+opsctl approve <approval-id>
+opsctl deploy-resume <plan> --journal <journal-id> --execute \
+  --approval-token 'deploy-resume:<plan-id>:<journal-id>' --json
+```
+
+The resume approval is a **separate scope**
+(`deploy_resume.<journal-id>`) from the execution approval, and its token comes
+from `deploy-resume --dry-run`'s `resume_approval_token`.
+
+Two failure modes seen in practice, both benign if handled this way:
+
+- **Health check ran too early.** `PostDeployHealthCheck` samples the container
+  immediately; if the Docker healthcheck is still in its start period it
+  reports `health=starting` and fails the journal, then stops before
+  `WriteRegistry`. The service is fine. Raise
+  `changes.health.stabilization_seconds` in the plan (30 is enough for the
+  current image) and resume.
+- **Contract rejected by Compose.** Nothing was deployed; the container was
+  never recreated. Fix and re-validate the contract, then resume.
 
 The registered backup unit used before and after this deployment was:
 
@@ -412,6 +567,10 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-11 home v2 r33b — enabling the redesigned home](./deployments/2026-09-11-home-v2-r33b-deployment.md)
+- [2026-09-11 home v2 r33 — app-only deploy](./deployments/2026-09-11-home-v2-r33-deployment.md)
+- [Frontend redesign decision record](./frontend-redesign-uneed-style.md)
+- [Dependency override register](./dependency-overrides.md)
 - [2026-08-30 review remediation r30](./deployments/2026-08-30-review-remediation-r30.md)
 - [2026-08-09 payment reconciliation r28/r29](./deployments/2026-08-09-payment-reconciliation-r28-r29.md)
 - [2026-08-04 directory DR refresh](./deployments/2026-08-04-directory-dr-refresh.md)
@@ -420,3 +579,7 @@ doing so restores duplicate task execution and legacy health emails.
 - [Database backup design](../BACKUP.md)
 - `opsctl` contributor and safety rules:
   `/home/ivmm/tools/deploy-tools/AGENTS.md`
+
+Missing records: **r31** (AIEO badge) and **r32** (log remediation), both
+deployed 2026-09-04, have journals under `/var/lib/opsctl/deploy-journals` but
+no document here. Write them from those journals if the history is needed.

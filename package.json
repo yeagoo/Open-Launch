@@ -21,6 +21,7 @@
     "e2e": "playwright test",
     "e2e:install": "playwright install chromium",
     "generate:og-font-shards": "bun scripts/generate-og-font-shards.ts",
+    "i18n:home-v2:check": "bun scripts/backfill-home-v2-messages.ts --check",
     "lint": "eslint .",
     "local:db": "bun scripts/local-db.ts",
     "local:prodsample": "bun scripts/load-prod-sample.ts",

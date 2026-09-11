@@ -33,6 +33,25 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Job-level on purpose. `CRON_LEDGER_TEST_DATABASE_URL` used to sit on the
+    # "Cron ledger migration" step only, so it was absent when `bun run test`
+    # ran and the three integration cases in that file silently skipped.
+    # Together with the Redis service this closes every vitest case that was
+    # being skipped in CI.
+    env:
+      CRON_LEDGER_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
+      REDIS_INTEGRATION_URL: redis://127.0.0.1:6379
+      HOME_QUERY_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
 
     steps:
       - name: Checkout
@@ -66,9 +85,17 @@ jobs:
         run: bun run cron:policy:check
 
       - name: Cron ledger migration
-        env:
-          CRON_LEDGER_TEST_DATABASE_URL: postgresql://postgres:cron_test_password@127.0.0.1:5432/open_launch_cron_test
         run: bun run test:cron-ledger-db
+
+      # Guards the home page's aggregate queries against the legacy JOIN
+      # formulation they replaced — the equivalence the redesign depends on.
+      # It had never run in CI: the script requires
+      # HOME_QUERY_TEST_DATABASE_URL and nothing set it.
+      - name: Home query equivalence
+        run: bun run test:home-query-db
+
+      - name: Home v2 message keys
+        run: bun run i18n:home-v2:check
 
       - name: Lint
         run: bun run lint
