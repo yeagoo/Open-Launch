@@ -19,10 +19,8 @@ type V2 = {
     primaryCta: string
     secondaryCta: string
     joinMakers: string
-    /** Launch-wall kicker: "{count} launched today". */
-    launchedToday: string
-    /** Launch-wall kicker: "{count} queued". */
-    queuedNext: string
+    /** Launch-wall kicker: "{count} products launched", all time. */
+    launchedTotal: string
   }
   tabs: { daily: string; weekly: string; monthly: string }
   countdownLabel: string
@@ -65,8 +63,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "Submit your project",
       secondaryCta: "Explore today's launches",
       joinMakers: "Join {count} makers",
-      launchedToday: "{count} launched today",
-      queuedNext: "{count} queued",
+      launchedTotal: "{count} products launched",
     },
     tabs: { daily: "Daily", weekly: "Weekly", monthly: "Monthly" },
     countdownLabel: "New launches in",
@@ -93,8 +90,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "提交项目",
       secondaryCta: "看今日新上架",
       joinMakers: "已有 {count} 位创作者加入",
-      launchedToday: "{count} 个今日上架",
-      queuedNext: "{count} 个排队中",
+      launchedTotal: "已上架 {count} 个产品",
     },
     tabs: { daily: "日榜", weekly: "周榜", monthly: "月榜" },
     countdownLabel: "距离下一批上架还有",
@@ -122,8 +118,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "Publica tu proyecto",
       secondaryCta: "Ver los lanzamientos de hoy",
       joinMakers: "Únete a {count} creadores",
-      launchedToday: "{count} lanzados hoy",
-      queuedNext: "{count} en cola",
+      launchedTotal: "{count} productos lanzados",
     },
     tabs: { daily: "Diario", weekly: "Semanal", monthly: "Mensual" },
     countdownLabel: "Nuevos lanzamientos en",
@@ -152,8 +147,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "Enviar o seu projeto",
       secondaryCta: "Ver os lançamentos de hoje",
       joinMakers: "Junte-se a {count} criadores",
-      launchedToday: "{count} lançados hoje",
-      queuedNext: "{count} na fila",
+      launchedTotal: "{count} produtos lançados",
     },
     tabs: { daily: "Diário", weekly: "Semanal", monthly: "Mensal" },
     countdownLabel: "Novos lançamentos em",
@@ -181,8 +175,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "Soumettre votre projet",
       secondaryCta: "Voir les lancements du jour",
       joinMakers: "Rejoignez {count} créateurs",
-      launchedToday: "{count} lancés aujourd'hui",
-      queuedNext: "{count} en attente",
+      launchedTotal: "{count} produits lancés",
     },
     tabs: { daily: "Quotidien", weekly: "Hebdomadaire", monthly: "Mensuel" },
     countdownLabel: "Nouveaux lancements dans",
@@ -211,8 +204,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "プロジェクトを投稿",
       secondaryCta: "今日のローンチを見る",
       joinMakers: "{count} 人のメーカーが参加",
-      launchedToday: "本日 {count} 件がローンチ",
-      queuedNext: "{count} 件が待機中",
+      launchedTotal: "{count} 件のプロダクトがローンチ済み",
     },
     tabs: { daily: "日間", weekly: "週間", monthly: "月間" },
     countdownLabel: "次のローンチまで",
@@ -240,8 +232,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "프로젝트 등록",
       secondaryCta: "오늘의 런치 보기",
       joinMakers: "{count}명의 메이커 참여",
-      launchedToday: "오늘 {count}개 런치",
-      queuedNext: "{count}개 대기 중",
+      launchedTotal: "{count}개 프로덕트 런칭 완료",
     },
     tabs: { daily: "일간", weekly: "주간", monthly: "월간" },
     countdownLabel: "다음 런치까지",
@@ -269,8 +260,7 @@ const V2_STRINGS: Record<string, V2> = {
       primaryCta: "Esita oma projekt",
       secondaryCta: "Vaata tänaseid lanseerimisi",
       joinMakers: "Liitu {count} tegijaga",
-      launchedToday: "{count} lanseeritud täna",
-      queuedNext: "{count} järjekorras",
+      launchedTotal: "{count} toodet on lanseeritud",
     },
     tabs: { daily: "Päevane", weekly: "Nädalane", monthly: "Kuine" },
     countdownLabel: "Uued lanseerimised",
