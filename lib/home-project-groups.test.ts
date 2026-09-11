@@ -4,6 +4,7 @@ import {
   attachUserUpvotesToGroups,
   getUtcMonthWindow,
   getUtcWeekWindow,
+  getUtcYearWindow,
   uniqueProjectIdsFromGroups,
 } from "./home-project-groups"
 
@@ -18,6 +19,24 @@ describe("home project group user augmentation", () => {
       end: new Date("2026-02-01T00:00:00.000Z"),
     })
     expect(() => getUtcMonthWindow(new Date("invalid"))).toThrow()
+  })
+
+  it("uses the calendar year, half-open at 1 January, and resets rather than slides", () => {
+    expect(getUtcYearWindow(new Date("2026-09-11T04:00:00.000Z"))).toEqual({
+      start: new Date("2026-01-01T00:00:00.000Z"),
+      end: new Date("2027-01-01T00:00:00.000Z"),
+    })
+    // The last instant of a year still belongs to that year: this is what makes
+    // the yearly board a retrospective rather than a rolling window.
+    expect(getUtcYearWindow(new Date("2026-12-31T23:59:59.999Z"))).toEqual({
+      start: new Date("2026-01-01T00:00:00.000Z"),
+      end: new Date("2027-01-01T00:00:00.000Z"),
+    })
+    expect(getUtcYearWindow(new Date("2027-01-01T00:00:00.000Z"))).toEqual({
+      start: new Date("2027-01-01T00:00:00.000Z"),
+      end: new Date("2028-01-01T00:00:00.000Z"),
+    })
+    expect(() => getUtcYearWindow(new Date("invalid"))).toThrow()
   })
 
   it("uses a trailing 7-day window that is half-open at the current instant", () => {

@@ -27,7 +27,9 @@
       "monthTitle": "本月最佳",
       "monthDesc": "查看本月最佳项目",
       "categoriesTitle": "分类",
-      "categoriesDesc": "按分类浏览项目"
+      "categoriesDesc": "按分类浏览项目",
+      "leaderboardTitle": "排行榜",
+      "leaderboardDesc": "周榜、月榜与年榜"
     },
     "dashboard": "仪表盘",
     "submitProject": "提交项目",
@@ -61,7 +63,8 @@
       "blog": "博客",
       "friendsPage": "友情链接",
       "termsOfService": "服务条款",
-      "privacyPolicy": "隐私政策"
+      "privacyPolicy": "隐私政策",
+      "leaderboard": "排行榜"
     },
     "bestTags": "热门标签"
   },
@@ -570,7 +573,8 @@
     "winners": "优胜者",
     "pricing": "定价",
     "blog": "博客",
-    "badge": "精选徽章"
+    "badge": "精选徽章",
+    "leaderboard": "排行榜"
   },
   "upvote": {
     "mustBeLoggedIn": "您必须登录才能点赞",
@@ -1207,5 +1211,16 @@
   "tags": {
     "emptyTitle": "这个标签下还没有项目。",
     "emptyHint": "看看其他标签，或者稍后再来。"
+  },
+  "leaderboard": {
+    "week": "周榜",
+    "month": "月榜",
+    "year": "年榜",
+    "weekTitle": "本周最佳",
+    "monthTitle": "本月最佳",
+    "yearTitle": "年度最佳",
+    "tabsLabel": "榜单周期",
+    "empty": "这个周期还没有上榜项目。",
+    "intro": "按得票数排列的周期内上架项目。"
   }
 }

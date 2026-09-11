@@ -27,7 +27,9 @@
       "monthTitle": "이달의 베스트",
       "monthDesc": "이달의 최고 프로젝트를 확인하세요",
       "categoriesTitle": "카테고리",
-      "categoriesDesc": "카테고리별로 프로젝트 둘러보기"
+      "categoriesDesc": "카테고리별로 프로젝트 둘러보기",
+      "leaderboardTitle": "순위",
+      "leaderboardDesc": "주간·월간·연간 베스트"
     },
     "dashboard": "대시보드",
     "submitProject": "프로젝트 제출",
@@ -61,7 +63,8 @@
       "blog": "블로그",
       "friendsPage": "친구",
       "termsOfService": "서비스 이용약관",
-      "privacyPolicy": "개인정보 처리방침"
+      "privacyPolicy": "개인정보 처리방침",
+      "leaderboard": "순위"
     },
     "bestTags": "인기 태그"
   },
@@ -578,7 +581,8 @@
     "winners": "수상작",
     "pricing": "가격",
     "blog": "블로그",
-    "badge": "추천 배지"
+    "badge": "추천 배지",
+    "leaderboard": "순위"
   },
   "upvote": {
     "mustBeLoggedIn": "추천하려면 로그인이 필요합니다.",
@@ -1215,5 +1219,16 @@
   "tags": {
     "emptyTitle": "이 태그에는 아직 프로젝트가 없습니다.",
     "emptyHint": "다른 태그를 보거나 나중에 다시 확인해 주세요."
+  },
+  "leaderboard": {
+    "week": "주간",
+    "month": "월간",
+    "year": "연간",
+    "weekTitle": "이번 주 베스트",
+    "monthTitle": "이번 달 베스트",
+    "yearTitle": "올해의 베스트",
+    "tabsLabel": "순위 기간",
+    "empty": "이 기간에는 아직 순위에 오른 프로젝트가 없습니다.",
+    "intro": "기간 내 런치를 투표순으로 정렬했습니다."
   }
 }

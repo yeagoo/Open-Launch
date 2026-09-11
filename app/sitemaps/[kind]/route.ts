@@ -42,6 +42,7 @@ function staticEntries(): SitemapEntry[] {
     ...localizedSitemapEntries("/categories", { changeFrequency: "weekly", priority: 0.9 }),
     ...localizedSitemapEntries("/trending", { changeFrequency: "daily", priority: 0.8 }),
     ...localizedSitemapEntries("/winners", { changeFrequency: "daily", priority: 0.8 }),
+    ...localizedSitemapEntries("/leaderboard", { changeFrequency: "daily", priority: 0.8 }),
     ...localizedSitemapEntries("/blog", { changeFrequency: "weekly", priority: 0.7 }),
     ...localizedSitemapEntries("/reviews", { changeFrequency: "weekly", priority: 0.7 }),
     ...localizedSitemapEntries("/friends", { changeFrequency: "monthly", priority: 0.5 }),

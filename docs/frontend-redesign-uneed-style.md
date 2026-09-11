@@ -1145,3 +1145,41 @@ home 剩下两条与颜色无关：正文内链与周围文字对比不足 1.03:
 **两臂对照后这不算回归**：同一方法各测两次，旧首页中位数 3730ms、新首页 3802ms，差 +72ms，而臂内波动就有 ±380ms。
 
 **顺带修了一个 CI 脆弱点**：CI 的 Lighthouse 步骤没有固定语言，非英语 locale 的 runner 上 `/` 会被重定向到 `/zh`，`perf:budget` 会直接以 `Lighthouse target mismatch` **报错退出**（我在本机就复现了），而不是给出预算结论。已给该步骤加上 `--extra-headers '{"Accept-Language":"en-US,en;q=0.9"}'`。
+
+---
+
+## 二十六、legacy 首页的退场计划（决定：观察期后删除）
+
+生产已于 2026-09-11 启用 `HOME_V2=1`（r33b）。开关保留**作为回滚手段**，但它承载的是两条并行实现，不能无限期留着。
+
+### 现状
+
+| 部分                                   | 行数 | 说明        |
+| -------------------------------------- | ---- | ----------- |
+| `app/[locale]/page.tsx` 的 legacy 分支 | ~390 | 旧两栏首页  |
+| `components/home/dense-list.tsx`       | ~122 | 仅供 legacy |
+| `components/home/editorial-hero.tsx`   | ~132 | 仅供 legacy |
+
+**共享契约**：两条分支都调 `getHomeProjectGroups(locale)`（legacy `page.tsx:57`、v2 `home-v2.tsx:72` 取 `groups[0]` 作今日列表），并共用 `PROJECT_LIMITS_VARIABLES`。周/月页签用各自的 fetcher，但传入同一个 `TODAY_LIMIT`，以保证三个页签行数一致。
+
+这个共享是**有意的**（重设计不应改变"列出什么"，只改变"怎么呈现"），但它的副作用是：**改 `getHomeProjectGroups` 的 limit 或本地化步骤会同时影响两条路径**，而改错一边不会立刻显形。
+
+### 退场条件（全部满足即可执行）
+
+- [ ] 生产 `HOME_V2=1` 稳定运行 **14 天**（即 2026-09-25 之后）
+- [ ] 期间无需要回滚首页的事件
+- [ ] 首页相关的错误日志与 `unsubscribe` 类告警无异常上升
+
+### 退场步骤（一次性提交）
+
+1. 删除 `app/[locale]/page.tsx` 中的 `isHomeV2Enabled()` 分支与 legacy 渲染路径，把 `HomeV2` 变成该路由的唯一输出
+2. 删除 `components/home/dense-list.tsx`、`components/home/editorial-hero.tsx`，并确认 `components/home/premium-card.tsx` 等 legacy 依赖已无引用（本轮已删 11 个零引用组件，需再查一次）
+3. 移除 `HOME_V2`：`app/layout.tsx` 的 `data-app-palette` 改为无条件挂载、`.env.example`、生产 compose 契约的 `environment` 块
+4. 用 `grep -rn "HOME_V2" app components lib scripts docs` 清零，并删除本节
+5. 跑全量门禁 + 部署
+
+**注意第 3 步的语义变化**：`HOME_V2` 不只切首页，它还通过 `data-app-palette` 驱动**全站**的 `--primary` 动作色。无条件挂载后，回滚首页将不再可能只靠环境变量——这正是要一次性做完的原因，也是**在退场前不要再改 legacy 分支**的理由。
+
+### 在那之前
+
+若必须调整首页数据（limit、窗口、本地化），**改 `app/actions/home.ts` 里的共享函数**，两条分支会一起变；不要只改其中一条分支的调用点。

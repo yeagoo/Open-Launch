@@ -27,7 +27,9 @@
       "monthTitle": "Best of Month",
       "monthDesc": "See the best projects of the month",
       "categoriesTitle": "Categories",
-      "categoriesDesc": "Browse projects by category"
+      "categoriesDesc": "Browse projects by category",
+      "leaderboardTitle": "Leaderboards",
+      "leaderboardDesc": "Best launches by week, month and year"
     },
     "dashboard": "Dashboard",
     "submitProject": "Submit Project",
@@ -61,7 +63,8 @@
       "blog": "Blog",
       "friendsPage": "Friends",
       "termsOfService": "Terms of Service",
-      "privacyPolicy": "Privacy Policy"
+      "privacyPolicy": "Privacy Policy",
+      "leaderboard": "Leaderboards"
     },
     "bestTags": "Best tags"
   },
@@ -582,7 +585,8 @@
     "winners": "Winners",
     "pricing": "Pricing",
     "blog": "Blog",
-    "badge": "Featured Badges"
+    "badge": "Featured Badges",
+    "leaderboard": "Leaderboards"
   },
   "upvote": {
     "mustBeLoggedIn": "You must be logged in to upvote",
@@ -1219,5 +1223,16 @@
   "tags": {
     "emptyTitle": "No projects with this tag yet.",
     "emptyHint": "Check other tags or come back later."
+  },
+  "leaderboard": {
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "weekTitle": "Best of the Week",
+    "monthTitle": "Best of the Month",
+    "yearTitle": "Best of the Year",
+    "tabsLabel": "Leaderboard period",
+    "empty": "Nothing has been ranked for this period yet.",
+    "intro": "The highest-voted launches of the period, ranked by upvotes."
   }
 }

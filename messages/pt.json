@@ -27,7 +27,9 @@
       "monthTitle": "Melhor do Mês",
       "monthDesc": "Veja os melhores projetos do mês",
       "categoriesTitle": "Categorias",
-      "categoriesDesc": "Navegue por projetos por categoria"
+      "categoriesDesc": "Navegue por projetos por categoria",
+      "leaderboardTitle": "Rankings",
+      "leaderboardDesc": "Os melhores lançamentos por semana, mês e ano"
     },
     "dashboard": "Painel",
     "submitProject": "Enviar Projeto",
@@ -61,7 +63,8 @@
       "blog": "Blog",
       "friendsPage": "Amigos",
       "termsOfService": "Termos de Serviço",
-      "privacyPolicy": "Política de Privacidade"
+      "privacyPolicy": "Política de Privacidade",
+      "leaderboard": "Rankings"
     },
     "bestTags": "Tags populares"
   },
@@ -582,7 +585,8 @@
     "winners": "Vencedores",
     "pricing": "Preços",
     "blog": "Blog",
-    "badge": "Distintivos em Destaque"
+    "badge": "Distintivos em Destaque",
+    "leaderboard": "Rankings"
   },
   "upvote": {
     "mustBeLoggedIn": "Você precisa estar logado para votar",
@@ -1219,5 +1223,16 @@
   "tags": {
     "emptyTitle": "Ainda não há projetos com esta tag.",
     "emptyHint": "Veja outras tags ou volte mais tarde."
+  },
+  "leaderboard": {
+    "week": "Semana",
+    "month": "Mês",
+    "year": "Ano",
+    "weekTitle": "Melhores da semana",
+    "monthTitle": "Melhores do mês",
+    "yearTitle": "Melhores do ano",
+    "tabsLabel": "Período do ranking",
+    "empty": "Ainda não há projetos classificados neste período.",
+    "intro": "Os lançamentos mais votados do período."
   }
 }

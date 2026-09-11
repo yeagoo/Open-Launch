@@ -27,6 +27,19 @@ export function getUtcWeekWindow(now: Date): { start: Date; end: Date } {
   return { start, end: new Date(now) }
 }
 
+/**
+ * Calendar-year window for the leaderboard's "Yearly" period.
+ *
+ * A calendar year, unlike the trailing week: the yearly board is a
+ * retrospective, so it should reset on 1 January rather than slide. Half-open
+ * [Jan 1, next Jan 1), matching the month window's convention.
+ */
+export function getUtcYearWindow(now: Date): { start: Date; end: Date } {
+  if (!Number.isFinite(now.getTime())) throw new Error("year window requires a valid date")
+  const year = now.getUTCFullYear()
+  return { start: new Date(Date.UTC(year, 0, 1)), end: new Date(Date.UTC(year + 1, 0, 1)) }
+}
+
 export function attachUserUpvotesToGroups<T extends { id: string }>(
   groups: readonly (readonly T[])[],
   upvoted: ReadonlySet<string>,

@@ -66,6 +66,19 @@ export function NavMenu({ showDashboard = true, useHomeAccent = false }: NavMenu
               <li>
                 <NavigationMenuLink asChild>
                   <Link
+                    href="/leaderboard"
+                    className="block rounded-md px-2 py-2 text-sm no-underline transition-colors outline-none select-none"
+                  >
+                    <div className="mb-1 font-medium">{tDesc("leaderboardTitle")}</div>
+                    <p className="text-muted-foreground text-xs leading-tight">
+                      {tDesc("leaderboardDesc")}
+                    </p>
+                  </Link>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink asChild>
+                  <Link
                     href="/trending?filter=month"
                     className="block rounded-md px-2 py-2 text-sm no-underline transition-colors outline-none select-none"
                   >

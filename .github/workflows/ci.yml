@@ -18,7 +18,7 @@ permissions:
 jobs:
   checks:
     name: Bun checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       postgres:
@@ -137,7 +137,7 @@ jobs:
 
   release-gates:
     name: Browser, database and performance release gates
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     services:
       postgres:
@@ -337,7 +337,7 @@ jobs:
     needs:
       - checks
       - release-gates
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
 
     steps:

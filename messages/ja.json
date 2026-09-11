@@ -27,7 +27,9 @@
       "monthTitle": "今月のベスト",
       "monthDesc": "今月のベストプロジェクト",
       "categoriesTitle": "カテゴリ",
-      "categoriesDesc": "カテゴリ別にプロジェクトを閲覧"
+      "categoriesDesc": "カテゴリ別にプロジェクトを閲覧",
+      "leaderboardTitle": "ランキング",
+      "leaderboardDesc": "週間・月間・年間のベスト"
     },
     "dashboard": "ダッシュボード",
     "submitProject": "プロジェクトを投稿",
@@ -61,7 +63,8 @@
       "blog": "ブログ",
       "friendsPage": "フレンド",
       "termsOfService": "利用規約",
-      "privacyPolicy": "プライバシーポリシー"
+      "privacyPolicy": "プライバシーポリシー",
+      "leaderboard": "ランキング"
     },
     "bestTags": "人気タグ"
   },
@@ -582,7 +585,8 @@
     "winners": "受賞者",
     "pricing": "料金",
     "blog": "ブログ",
-    "badge": "注目のバッジ"
+    "badge": "注目のバッジ",
+    "leaderboard": "ランキング"
   },
   "upvote": {
     "mustBeLoggedIn": "投票するにはログインが必要です",
@@ -1219,5 +1223,16 @@
   "tags": {
     "emptyTitle": "このタグのプロジェクトはまだありません。",
     "emptyHint": "他のタグを見るか、後でもう一度どうぞ。"
+  },
+  "leaderboard": {
+    "week": "週間",
+    "month": "月間",
+    "year": "年間",
+    "weekTitle": "週間ベスト",
+    "monthTitle": "月間ベスト",
+    "yearTitle": "年間ベスト",
+    "tabsLabel": "ランキング期間",
+    "empty": "この期間のランクインはまだありません。",
+    "intro": "期間内のローンチを投票数順に並べています。"
   }
 }

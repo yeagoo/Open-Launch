@@ -27,7 +27,9 @@
       "monthTitle": "Kuu parimad",
       "monthDesc": "Vaata kuu parimaid projekte",
       "categoriesTitle": "Kategooriad",
-      "categoriesDesc": "Sirvi projekte kategooriate kaupa"
+      "categoriesDesc": "Sirvi projekte kategooriate kaupa",
+      "leaderboardTitle": "Edetabelid",
+      "leaderboardDesc": "Nädala, kuu ja aasta parimad lanseerimised"
     },
     "dashboard": "Töölaud",
     "submitProject": "Esita projekt",
@@ -61,7 +63,8 @@
       "blog": "Blogi",
       "friendsPage": "Sõbrad",
       "termsOfService": "Kasutustingimused",
-      "privacyPolicy": "Privaatsuspoliitika"
+      "privacyPolicy": "Privaatsuspoliitika",
+      "leaderboard": "Edetabelid"
     },
     "bestTags": "Populaarsed sildid"
   },
@@ -582,7 +585,8 @@
     "winners": "Võitjad",
     "pricing": "Hinnakiri",
     "blog": "Blogi",
-    "badge": "Esiletõstetud märgid"
+    "badge": "Esiletõstetud märgid",
+    "leaderboard": "Edetabelid"
   },
   "upvote": {
     "mustBeLoggedIn": "Hääletamiseks pead olema sisse logitud",
@@ -1219,5 +1223,16 @@
   "tags": {
     "emptyTitle": "Selle sildiga projekte veel pole.",
     "emptyHint": "Vaata teisi silte või tule hiljem tagasi."
+  },
+  "leaderboard": {
+    "week": "Nädal",
+    "month": "Kuu",
+    "year": "Aasta",
+    "weekTitle": "Nädala parimad",
+    "monthTitle": "Kuu parimad",
+    "yearTitle": "Aasta parimad",
+    "tabsLabel": "Edetabeli periood",
+    "empty": "Sellel perioodil pole veel projekte edetabelis.",
+    "intro": "Perioodi enim hääli saanud lanseerimised."
   }
 }

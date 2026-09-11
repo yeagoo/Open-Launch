@@ -11,6 +11,7 @@ import { LanguageSwitcher } from "./language-switcher"
 
 const discoverLinks = [
   { key: "trending", href: "/trending", localized: true },
+  { key: "leaderboard", href: "/leaderboard", localized: true },
   { key: "categories", href: "/categories", localized: true },
   // /compare and /alternatives are English-only — bypass locale routing
   { key: "compareTools", href: "/compare", localized: false },

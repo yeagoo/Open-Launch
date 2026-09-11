@@ -21,6 +21,7 @@ import {
   attachUserUpvotesToGroups,
   getUtcMonthWindow,
   getUtcWeekWindow,
+  getUtcYearWindow,
   uniqueProjectIdsFromGroups,
 } from "@/lib/home-project-groups"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
@@ -128,8 +129,15 @@ const fetchYesterdayProjectsBase = unstable_cache(
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
 )
 
-const fetchMonthBestProjectsBase = unstable_cache(
-  async (limit: number, monthStartIso: string, monthEndIso: string) => {
+/**
+ * The query behind every leaderboard period. Week, month and year differ only
+ * in the window they pass; that window is part of the cache key through the
+ * arguments, so one cached function serves all three. Only *finished* launch
+ * days rank — `ONGOING` projects are today's live race and belong to the Daily
+ * view.
+ */
+const fetchLeaderboardProjectsBase = unstable_cache(
+  async (limit: number, startIso: string, endIso: string) => {
     const base = await db
       .select(projectSummarySelect)
       .from(projectTable)
@@ -138,15 +146,15 @@ const fetchMonthBestProjectsBase = unstable_cache(
       .where(
         and(
           eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-          sql`${projectTable.scheduledLaunchDate} >= ${monthStartIso}`,
-          sql`${projectTable.scheduledLaunchDate} < ${monthEndIso}`,
+          sql`${projectTable.scheduledLaunchDate} >= ${startIso}`,
+          sql`${projectTable.scheduledLaunchDate} < ${endIso}`,
         ),
       )
       .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
       .limit(limit)
     return attachCategories(base)
   },
-  ["home-month-projects-v2"],
+  ["home-leaderboard-projects-v1"],
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
 )
 
@@ -215,7 +223,7 @@ export async function getHomeProjectGroups(locale?: string) {
       yesterdayWindow.queryStart.toISOString(),
       yesterdayWindow.yesterdayEnd.toISOString(),
     ),
-    fetchMonthBestProjectsBase(
+    fetchLeaderboardProjectsBase(
       PROJECT_LIMITS_VARIABLES.MONTH_LIMIT,
       monthWindow.start.toISOString(),
       monthWindow.end.toISOString(),
@@ -269,7 +277,7 @@ export async function getMonthBestProjects(limit: number = PROJECT_LIMITS_VARIAB
   const monthWindow = getUtcMonthWindow(new Date())
 
   const [base, userId] = await Promise.all([
-    fetchMonthBestProjectsBase(
+    fetchLeaderboardProjectsBase(
       limit,
       monthWindow.start.toISOString(),
       monthWindow.end.toISOString(),
@@ -310,31 +318,6 @@ export async function getWinnersByDate(date: Date) {
 // `unstable_cache`-wrapped and tagged with HOME_PROJECTS_TAG so the 8 AM
 // launch-transition cron busts the whole home surface at once.
 
-const fetchWeekBestProjectsBase = unstable_cache(
-  async (limit: number, weekStartIso: string, weekEndIso: string) => {
-    const base = await db
-      .select(projectSummarySelect)
-      .from(projectTable)
-      .leftJoin(homeUpvoteCounts, eq(homeUpvoteCounts.projectId, projectTable.id))
-      .leftJoin(homeCommentCounts, eq(homeCommentCounts.projectId, projectTable.id))
-      .where(
-        and(
-          // Same visibility rule as the month leaderboard: only *finished*
-          // launch days rank. `ONGOING` projects are today's live race and
-          // belong to the Daily tab.
-          eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-          sql`${projectTable.scheduledLaunchDate} >= ${weekStartIso}`,
-          sql`${projectTable.scheduledLaunchDate} < ${weekEndIso}`,
-        ),
-      )
-      .orderBy(desc(sql`coalesce(${homeUpvoteCounts.upvoteCount}, 0)`))
-      .limit(limit)
-    return attachCategories(base)
-  },
-  ["home-week-projects-v1"],
-  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
-)
-
 /**
  * Rolling-7-day leaderboard behind the home page's "Weekly" tab.
  *
@@ -357,7 +340,7 @@ export async function getHomeWeekProjects(
   const { start, end } = getUtcWeekWindow(now)
 
   const [base, userId] = await Promise.all([
-    fetchWeekBestProjectsBase(limit, start.toISOString(), end.toISOString()),
+    fetchLeaderboardProjectsBase(limit, start.toISOString(), end.toISOString()),
     getCurrentUserId(),
   ])
   const upvoted = await getUpvotedSet(
@@ -384,7 +367,7 @@ export async function getHomeMonthProjects(
   const { start, end } = getUtcMonthWindow(new Date())
 
   const [base, userId] = await Promise.all([
-    fetchMonthBestProjectsBase(limit, start.toISOString(), end.toISOString()),
+    fetchLeaderboardProjectsBase(limit, start.toISOString(), end.toISOString()),
     getCurrentUserId(),
   ])
   const upvoted = await getUpvotedSet(
@@ -467,6 +450,31 @@ const fetchHomeStatsBase = unstable_cache(
  * and registered makers (left rail), plus today's live batch and the queue for
  * the next window (hero).
  */
+/**
+ * Same shape as the weekly and monthly fetchers, over the calendar year. The
+ * leaderboard page is the only caller; the home page uses the weekly and
+ * monthly ones for its tabs.
+ */
+export async function getLeaderboardYearProjects(
+  limit: number = PROJECT_LIMITS_VARIABLES.TODAY_LIMIT,
+  locale?: string,
+) {
+  limit = clampInteger(limit, PROJECT_LIMITS_VARIABLES.TODAY_LIMIT, 1, 100)
+  const { start, end } = getUtcYearWindow(new Date())
+
+  const [base, userId] = await Promise.all([
+    fetchLeaderboardProjectsBase(limit, start.toISOString(), end.toISOString()),
+    getCurrentUserId(),
+  ])
+  const upvoted = await getUpvotedSet(
+    userId,
+    base.map((p) => p.id),
+  )
+  const withUpvotes = withUserUpvoted(base, upvoted)
+  if (!locale) return withUpvotes
+  return (await localizeProjectDescriptionGroups([withUpvotes], locale))[0]
+}
+
 export async function getHomeStats() {
   const { start, end } = getUtcMonthWindow(new Date())
   const today = getCurrentLaunchWindow()
