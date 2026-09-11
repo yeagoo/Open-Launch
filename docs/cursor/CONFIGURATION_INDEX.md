@@ -14,49 +14,49 @@
 
 ### 必需配置
 
-| 文档 | 说明 | 预计时间 |
-|-----|------|---------|
-| **R2_SETUP.md** | Cloudflare R2 文件存储配置 | 15 分钟 |
-| **SERVICES_SETUP_GUIDE.md** | Resend 邮件、Turnstile、Discord | 30 分钟 |
-| - `SERVICES_QUICK_REFERENCE.md` | 服务配置快速参考 | - |
+| 文档                            | 说明                            | 预计时间 |
+| ------------------------------- | ------------------------------- | -------- |
+| **R2_SETUP.md**                 | Cloudflare R2 文件存储配置      | 15 分钟  |
+| **SERVICES_SETUP_GUIDE.md**     | Resend 邮件、Turnstile、Discord | 30 分钟  |
+| - `SERVICES_QUICK_REFERENCE.md` | 服务配置快速参考                | -        |
 
 ### 可选配置
 
-| 文档 | 说明 | 预计时间 |
-|-----|------|---------|
-| **OAUTH_SETUP_GUIDE.md** | Google & GitHub 登录配置 | 20 分钟 |
-| - `OAUTH_QUICK_REFERENCE.md` | OAuth 配置快速参考 | - |
-| **STRIPE_SETUP_GUIDE.md** | Stripe 支付配置 | 30 分钟 |
-| - `STRIPE_QUICK_REFERENCE.md` | Stripe 快速参考 | - |
-| - `STRIPE_WEBHOOK_CONFIG.md` | Webhook 详细配置 | - |
-| - `WEBHOOK_URL_GUIDE.md` | Webhook URL 快速指南 | - |
+| 文档                          | 说明                     | 预计时间 |
+| ----------------------------- | ------------------------ | -------- |
+| **OAUTH_SETUP_GUIDE.md**      | Google & GitHub 登录配置 | 20 分钟  |
+| - `OAUTH_QUICK_REFERENCE.md`  | OAuth 配置快速参考       | -        |
+| **STRIPE_SETUP_GUIDE.md**     | Stripe 支付配置          | 30 分钟  |
+| - `STRIPE_QUICK_REFERENCE.md` | Stripe 快速参考          | -        |
+| - `STRIPE_WEBHOOK_CONFIG.md`  | Webhook 详细配置         | -        |
+| - `WEBHOOK_URL_GUIDE.md`      | Webhook URL 快速指南     | -        |
 
 ### 部署指南
 
-| 文档 | 说明 | 预计时间 |
-|-----|------|---------|
-| **ZEABUR_DEPLOYMENT_GUIDE.md** | Zeabur 部署完整指南 | 30 分钟 |
-| **DEPLOYMENT_TROUBLESHOOTING.md** | 部署故障排查 | - |
+| 文档                              | 说明                | 预计时间 |
+| --------------------------------- | ------------------- | -------- |
+| **ZEABUR_DEPLOYMENT_GUIDE.md**    | Zeabur 部署完整指南 | 30 分钟  |
+| **DEPLOYMENT_TROUBLESHOOTING.md** | 部署故障排查        | -        |
 
 ### 管理指南
 
-| 文档 | 说明 | 预计时间 |
-|-----|------|---------|
-| **ADMIN_SETUP_GUIDE.md** | 管理员账号设置指南 | 5 分钟 |
-| **CRON_SETUP_GUIDE.md** | Cron 定时任务实现指南 | 20 分钟 |
+| 文档                     | 说明                  | 预计时间 |
+| ------------------------ | --------------------- | -------- |
+| **ADMIN_SETUP_GUIDE.md** | 管理员账号设置指南    | 5 分钟   |
+| **CRON_SETUP_GUIDE.md**  | Cron 定时任务实现指南 | 20 分钟  |
 
 ### 迁移指南
 
-| 文档 | 说明 |
-|-----|------|
+| 文档                | 说明                      |
+| ------------------- | ------------------------- |
 | **MIGRATION_R2.md** | uploadthing → R2 迁移指南 |
 
 ### 故障修复
 
-| 文档 | 说明 |
-|-----|------|
-| **NEXT_CONFIG_FIX.md** | next.config.ts 构建错误修复 |
-| **RESEND_TROUBLESHOOTING.md** | Resend 邮件发送故障排查 |
+| 文档                          | 说明                        |
+| ----------------------------- | --------------------------- |
+| **NEXT_CONFIG_FIX.md**        | next.config.ts 构建错误修复 |
+| **RESEND_TROUBLESHOOTING.md** | Resend 邮件发送故障排查     |
 
 ---
 
@@ -194,11 +194,11 @@
 - **文档**: `SERVICES_SETUP_GUIDE.md`
 - **快速参考**: `SERVICES_QUICK_REFERENCE.md`
 
-### Plausible (分析)
+### 分析
 
-- **环境变量**: 3 个 `PLAUSIBLE_*`
-- **文档**: `PLAUSIBLE_SETUP_GUIDE.md`
-- **快速参考**: `PLAUSIBLE_QUICK_REFERENCE.md`
+- **环境变量**: 1 个 `NEXT_PUBLIC_GA_MEASUREMENT_ID`（GA4）
+- **服务端**: Matomo，端点与站点 ID 是 `lib/analytics/matomo.ts` 里的常量，不需要环境变量
+- Plausible 已于 `446d3b1` 移除，相关变量与文档均已删除
 
 ---
 
@@ -226,22 +226,22 @@
 
 9. 💰 `STRIPE_*` (4 个) - 支付功能
 10. 💬 `DISCORD_*` (2 个) - 通知
-11. 📊 `PLAUSIBLE_*` (3 个) - 分析
+11. 📊 `NEXT_PUBLIC_GA_MEASUREMENT_ID` - 分析（GA4；Matomo 走常量，无需配置）
 
-**文档**: `STRIPE_SETUP_GUIDE.md` + `SERVICES_SETUP_GUIDE.md` + `PLAUSIBLE_SETUP_GUIDE.md`
+**文档**: `STRIPE_SETUP_GUIDE.md` + `SERVICES_SETUP_GUIDE.md`
 
 ---
 
 ## ⏱️ 预计配置时间
 
-| 阶段 | 内容 | 时间 |
-|-----|------|------|
-| **核心配置** | Better Auth + DB + Redis + R2 + Resend | 60-90 分钟 |
-| **OAuth** | Google + GitHub | 20-30 分钟 |
-| **支付** | Stripe | 30-45 分钟 |
-| **其他服务** | Turnstile + Discord + Plausible | 30-45 分钟 |
-| **部署** | Zeabur 部署 | 30-60 分钟 |
-| **总计** | 完整配置 | **3-4 小时** |
+| 阶段         | 内容                                   | 时间         |
+| ------------ | -------------------------------------- | ------------ |
+| **核心配置** | Better Auth + DB + Redis + R2 + Resend | 60-90 分钟   |
+| **OAuth**    | Google + GitHub                        | 20-30 分钟   |
+| **支付**     | Stripe                                 | 30-45 分钟   |
+| **其他服务** | Turnstile + Discord + Plausible        | 30-45 分钟   |
+| **部署**     | Zeabur 部署                            | 30-60 分钟   |
+| **总计**     | 完整配置                               | **3-4 小时** |
 
 ---
 
@@ -266,11 +266,11 @@
 
 ## 📝 文档更新日志
 
-| 日期 | 文档 | 更新内容 |
-|-----|------|---------|
-| 2024-11 | 所有文档 | 创建完整配置指南 |
-| 2024-11 | R2 相关 | uploadthing → R2 迁移 |
-| 2024-11 | Zeabur | 添加 Zeabur 部署指南 |
+| 日期    | 文档     | 更新内容              |
+| ------- | -------- | --------------------- |
+| 2024-11 | 所有文档 | 创建完整配置指南      |
+| 2024-11 | R2 相关  | uploadthing → R2 迁移 |
+| 2024-11 | Zeabur   | 添加 Zeabur 部署指南  |
 
 ---
 
@@ -305,4 +305,3 @@
 ---
 
 **祝您配置顺利！如有问题，请查阅对应的详细文档。** 🚀
-

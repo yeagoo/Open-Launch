@@ -1,0 +1,43 @@
+# gitleaks configuration
+#
+# `AGENTS.md` and the deployment runbook both tell contributors to scan before
+# pushing. Without this file that instruction is unusable: the tracked tree
+# contains command examples and fixtures that the default ruleset flags, so the
+# scanner returns a non-zero exit on a clean checkout and cannot gate anything.
+#
+# Exemptions are by MATCHED VALUE, never by path. An earlier revision scoped an
+# exemption to `*.md`, which also silenced a real-looking key planted in a
+# Markdown file — verified by probe, and the reason this file no longer
+# mentions any path.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = '''
+Placeholder credentials. Every entry is a literal marker of "this is not a
+real secret" rather than a location: the docs write `Bearer your_cron_api_key`
+and `-H 'Authorization: Bearer $CRON_API_KEY'` in copy-pasteable commands, and
+the two fixtures below use `aat_skill_test_…` and `token=abc123xyz789` because
+tests assert on those exact strings.
+
+A match is only ignored when the matched text itself contains one of these, so
+a real credential pasted anywhere — source, docs, config — is still reported.
+'''
+regexTarget = "match"
+regexes = [
+  '''(?i)your[_-]''',
+  '''(?i)_here''',
+  '''(?i)placeholder''',
+  '''(?i)example''',
+  '''(?i)sample''',
+  '''(?i)dummy''',
+  '''(?i)redacted''',
+  '''(?i)changeme''',
+  '''(?i)aat_skill_test_''',
+  '''(?i)abc123xyz789''',
+  '''(?i)test[_-][a-z0-9]{6,}''',
+  '''\$\{?[A-Z][A-Z0-9_]{2,}\}?''',
+  '''[<\[][A-Za-z_][A-Za-z0-9_]*[>\]]''',
+  '''(?i)x{6,}''',
+]
