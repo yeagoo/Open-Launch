@@ -30,7 +30,6 @@ export interface HomeBodyLabels {
   blogTitle: string
   left: {
     launchesThisMonth: string
-    makers: string
     latestPosts: string
   }
   right: RightRailLabels
@@ -46,7 +45,6 @@ export interface HomeBodyData {
   projects: HomeFeedProject[]
   stats: {
     launchesThisMonth: number
-    makers: number
     /** Every completed launch, all time — what the hero's kicker states. */
     launchedTotal: number
   }

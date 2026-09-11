@@ -19,10 +19,9 @@ export interface HomeCommunityPost {
 interface LeftRailProps {
   labels: {
     launchesThisMonth: string
-    makers: string
     latestPosts: string
   }
-  stats: { launchesThisMonth: number; makers: number }
+  stats: { launchesThisMonth: number }
   posts: HomeCommunityPost[]
   /** BCP-47 tag for the counter formatting ("1 248" vs "1,248" vs "1,248"). */
   locale: string
@@ -68,11 +67,11 @@ export function LeftRail({ labels, stats, posts, locale }: LeftRailProps) {
   return (
     <div className="space-y-5">
       {/* `flex flex-col`, not `space-y-*`: StatPill renders an inline-flex
-          span, and vertical margins do not apply to inline-level boxes — the
-          two counters silently collided into one line on wide mobile rails. */}
+          span, and vertical margins do not apply to inline-level boxes, so
+          another counter added here would collide with this one on a wide
+          mobile rail instead of stacking. */}
       <SoftCard padding="md" className="flex flex-col items-start gap-2">
         <StatPill value={counter(stats.launchesThisMonth)} label={labels.launchesThisMonth} />
-        <StatPill value={counter(stats.makers)} label={labels.makers} />
       </SoftCard>
 
       {posts.length > 0 && (

@@ -123,7 +123,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     blogTitle: t("blogTitle"),
     left: {
       launchesThisMonth: t("launchesThisMonth"),
-      makers: t("makers"),
       latestPosts: t("latestPosts"),
     },
     right: {

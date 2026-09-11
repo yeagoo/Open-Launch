@@ -98,7 +98,7 @@ const FIXTURE_PROJECTS: HomeFeedProject[] = [
 
 export const HOME_FIXTURE_DATA: HomeBodyData = {
   projects: FIXTURE_PROJECTS,
-  stats: { launchesThisMonth: 1248, makers: 85420, launchedTotal: 3120 },
+  stats: { launchesThisMonth: 1248, launchedTotal: 3120 },
   community: [
     {
       id: 101,
@@ -204,7 +204,6 @@ export const HOME_FIXTURE_LABELS: HomeBodyLabels = {
   blogTitle: "Latest from the blog",
   left: {
     launchesThisMonth: "launches this month",
-    makers: "makers",
     latestPosts: "Latest posts",
   },
   right: {

@@ -416,6 +416,19 @@ div[role="dialog"],
   background-position: center top;
 }
 
+/* Hero scrim: the radial that keeps the headline legible over the wall.
+   One set of values for both themes — dark mode recedes by fading the wall
+   layer itself, which is the only lever that worked; a stronger scrim there
+   just turned the chips into grey blocks behind the text. */
+.home-hero-scrim-radial {
+  background: radial-gradient(
+    38% 42% at 50% 46%,
+    var(--background) 0%,
+    var(--background) 38%,
+    transparent 100%
+  );
+}
+
 /* ─── Hero logo marquee ─────────────────────────────────────────────────── */
 
 /* Rows of brand marks drifting behind the hero copy, alternating direction.

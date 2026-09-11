@@ -49,24 +49,30 @@ export function HomeHero({ labels, launchedTotal, primaryHref, secondaryHref }: 
       <div
         aria-hidden="true"
         data-slot="home-hero-wall"
-        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2"
+        // Dimmed as a whole in dark mode. A white chip on a near-black page
+        // carries far more contrast than the same chip on a light one, so at
+        // this density the wall stops reading as texture and starts competing
+        // with the headline. Fading the layer is what makes it recede; pushing
+        // the scrim harder instead only turns the chips into grey blocks.
+        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 dark:opacity-45"
       >
         <HeroBrandMarquee />
       </div>
 
       {/* Scrim: vertical for the top/bottom fade, radial to hold the copy
-          block clear without flattening the whole wall. */}
+          block clear without flattening the whole wall.
+          Tuned down from 55/70 once the wall became four rows: the earlier
+          values were picked for two sparse rows, and at this density they left
+          the marks nearly invisible. The radial still does the work of keeping
+          the headline clear — it is opaque across the middle and fully
+          transparent by 100%, so the marks fade in as they leave the copy. */}
       <div
         aria-hidden="true"
-        className="from-background/55 via-background/70 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
+        className="from-background/25 via-background/40 to-background/85 pointer-events-none absolute inset-0 bg-gradient-to-b"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(42% 46% at 50% 48%, var(--background) 0%, var(--background) 42%, transparent 100%)",
-        }}
+        className="home-hero-scrim-radial pointer-events-none absolute inset-0"
       />
 
       <div className="relative px-6 py-14 text-center sm:px-8 sm:py-20">

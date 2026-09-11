@@ -394,7 +394,7 @@ const fetchHomeStatsBase = unstable_cache(
         .from(projectTable)
         .where(where)
 
-    const [launchCount, makerCount, todayCount, queuedCount, launchedTotal] = await Promise.all([
+    const [launchCount, todayCount, queuedCount, launchedTotal] = await Promise.all([
       // Launched OR ongoing: "N launches this month" should include the race
       // that is running right now, unlike the leaderboards.
       countProjects(
@@ -404,12 +404,6 @@ const fetchHomeStatsBase = unstable_cache(
           sql`${projectTable.scheduledLaunchDate} < ${monthEndIso}`,
         ),
       ),
-      db
-        .select({ value: sql<number>`cast(count(*) as int)`.mapWith(Number) })
-        .from(userTable)
-        // `is_bot` is nullable with a default of false, so `= false` alone
-        // would silently drop legacy NULL rows from the maker count.
-        .where(sql`coalesce(${userTable.isBot}, false) = false`),
       // Today's live batch — exactly the window the home feed is showing.
       countProjects(
         and(
@@ -436,7 +430,6 @@ const fetchHomeStatsBase = unstable_cache(
 
     return {
       launchesThisMonth: launchCount[0]?.value ?? 0,
-      makers: makerCount[0]?.value ?? 0,
       launchesToday: todayCount[0]?.value ?? 0,
       queuedNext: queuedCount[0]?.value ?? 0,
       launchedTotal: launchedTotal[0]?.value ?? 0,

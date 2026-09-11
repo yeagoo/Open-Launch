@@ -33,7 +33,6 @@ type V2 = {
   blogTitle: string
   latestPosts: string
   launchesThisMonth: string
-  makers: string
   reviewsCount: string
   /** Screen-reader label for a feed row's rank marker. */
   rankLabel: string
@@ -74,7 +73,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "Latest from the blog",
     latestPosts: "Latest posts",
     launchesThisMonth: "launches this month",
-    makers: "makers",
     reviewsCount: "{count} reviews",
     rankLabel: "Rank {rank}",
     tabsLabel: "Ranking period",
@@ -99,7 +97,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "最新博客",
     latestPosts: "最新动态",
     launchesThisMonth: "本月上架",
-    makers: "位创作者",
     reviewsCount: "{count} 条评论",
     rankLabel: "第 {rank} 名",
     tabsLabel: "榜单周期",
@@ -126,7 +123,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "Lo último del blog",
     latestPosts: "Últimas publicaciones",
     launchesThisMonth: "lanzamientos este mes",
-    makers: "creadores",
     reviewsCount: "{count} reseñas",
     rankLabel: "Puesto {rank}",
     tabsLabel: "Periodo de clasificación",
@@ -152,7 +148,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "Últimas do blog",
     latestPosts: "Últimas publicações",
     launchesThisMonth: "lançamentos este mês",
-    makers: "criadores",
     reviewsCount: "{count} avaliações",
     rankLabel: "Posição {rank}",
     tabsLabel: "Período de classificação",
@@ -179,7 +174,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "Derniers articles du blog",
     latestPosts: "Dernières publications",
     launchesThisMonth: "lancements ce mois-ci",
-    makers: "créateurs",
     reviewsCount: "{count} avis",
     rankLabel: "Rang {rank}",
     tabsLabel: "Période de classement",
@@ -205,7 +199,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "最新ブログ",
     latestPosts: "最新の投稿",
     launchesThisMonth: "今月のローンチ",
-    makers: "人のメーカー",
     reviewsCount: "{count} 件のレビュー",
     rankLabel: "{rank} 位",
     tabsLabel: "ランキング期間",
@@ -230,7 +223,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "최신 블로그",
     latestPosts: "최신 소식",
     launchesThisMonth: "이번 달 런치",
-    makers: "명의 메이커",
     reviewsCount: "리뷰 {count}개",
     rankLabel: "{rank}위",
     tabsLabel: "랭킹 기간",
@@ -256,7 +248,6 @@ const V2_STRINGS: Record<string, V2> = {
     blogTitle: "Viimased blogipostitused",
     latestPosts: "Viimased postitused",
     launchesThisMonth: "lanseerimist sel kuul",
-    makers: "tegijat",
     reviewsCount: "{count} arvustust",
     rankLabel: "{rank}. koht",
     tabsLabel: "Edetabeli periood",

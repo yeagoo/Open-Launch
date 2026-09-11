@@ -5,7 +5,7 @@ import { HOME_FIXTURE_DATA } from "./home-fixture"
 const LAB_PROPS: HeroConceptProps = {
   labels: HERO_LAB_LABELS,
   projects: HOME_FIXTURE_DATA.projects,
-  stats: HOME_FIXTURE_DATA.stats,
+  stats: { ...HOME_FIXTURE_DATA.stats, makers: 85420 },
   // The lab's concepts still draw an avatar row; the product hero no longer has
   // one, so this fixture supplies its own rather than borrowing the product's.
   makers: [
