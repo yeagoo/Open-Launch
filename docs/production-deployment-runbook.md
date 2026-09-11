@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-6e58365d330ac3cafafa8b5290946871e6605811
+c4c478e8c8dedb62acbf44b24560f0a9ca9dfd8c
 ```
 
 Current runtime facts:
@@ -163,9 +163,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.site-r34.yml`
+  `compose.site-r35.yml`
 - deployment marker:
-  `20260911-site-r34`
+  `20260911-pages-r35`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
@@ -199,9 +199,10 @@ remediation), both deployed on 2026-09-04; their journals exist in
 because the sequence below did not require updating it. Update it as part of
 every release.
 
-The r34 release adds the leaderboard and free tools pages, brings the audited
-pages to an accessibility score of 100, and drops the three dead `PLAUSIBLE_*`
-variables from the registered environment file. `sharp` remains `0.35.4`. CSP is in an intentional
+The r35 release brings the last five pages — winners, blog, search, friends and
+badge — into the redesigned visual language and removes the final literal
+colours from the application. r34 added the leaderboard and free tools pages and
+dropped the three dead `PLAUSIBLE_*` variables. `sharp` remains `0.35.4`. CSP is in an intentional
 Report-Only observation phase with reports sent to `/api/csp-report`.
 Production remains in Shadow mode with an empty Canary path, embedded Ledger
 workers disabled, and the payment email outbox disabled. Its canonical plan,
@@ -600,6 +601,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-11 pages r35 — visual unification](./deployments/2026-09-11-pages-r35-deployment.md)
 - [2026-09-11 site r34 — leaderboards, free tools, accessibility](./deployments/2026-09-11-site-r34-deployment.md)
 - [2026-09-11 home v2 r33b — enabling the redesigned home](./deployments/2026-09-11-home-v2-r33b-deployment.md)
 - [2026-09-11 home v2 r33 — app-only deploy](./deployments/2026-09-11-home-v2-r33-deployment.md)
