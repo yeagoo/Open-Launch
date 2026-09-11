@@ -108,7 +108,6 @@
         "subtitle": "注目は過ぎ去る。リンクは残る。バッジ、do-follow リンク、そして最初のリアルユーザー。",
         "primaryCta": "プロジェクトを投稿",
         "secondaryCta": "今日のローンチを見る",
-        "joinMakers": "{count} 人のメーカーが参加",
         "launchedTotal": "{count} 件のプロダクトがローンチ済み"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "最新の投稿",
       "launchesThisMonth": "今月のローンチ",
       "makers": "人のメーカー",
-      "partners": "パートナー",
       "reviewsCount": "{count} 件のレビュー",
       "rankLabel": "{rank} 位",
       "tabsLabel": "ランキング期間"

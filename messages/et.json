@@ -108,7 +108,6 @@
         "subtitle": "Tähelepanu kaob, lingid jäävad. Märk, do-follow link ja esimesed tõelised kasutajad.",
         "primaryCta": "Esita oma projekt",
         "secondaryCta": "Vaata tänaseid lanseerimisi",
-        "joinMakers": "Liitu {count} tegijaga",
         "launchedTotal": "{count} toodet on lanseeritud"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "Viimased postitused",
       "launchesThisMonth": "lanseerimist sel kuul",
       "makers": "tegijat",
-      "partners": "Meie partnerid",
       "reviewsCount": "{count} arvustust",
       "rankLabel": "{rank}. koht",
       "tabsLabel": "Edetabeli periood"

@@ -253,7 +253,7 @@ try {
   )
 
   // ── People ────────────────────────────────────────────────────────────────
-  // One maker has no avatar on purpose: `getHomeMakers` no longer filters on
+  // One maker has no avatar on purpose: the avatar stack must not break on
   // `image IS NOT NULL`, and the hero's initials fallback should be exercised.
   const makers = [
     { id: "maker-1", name: "Vladyslav Havrylash", image: "https://i.pravatar.cc/64?img=12" },

@@ -1,4 +1,3 @@
-import type { HomeHeroMaker } from "@/components/home/v2/home-hero"
 import type { HomeFeedProject } from "@/components/home/v2/ranked-row"
 
 /**
@@ -33,8 +32,9 @@ export interface HeroConceptProps {
   }
   /** Today's launches, already ranked by upvotes. */
   projects: HomeFeedProject[]
+  /** The lab renders its own concept hero, so it carries its own maker shape. */
+  makers: { id: string; name: string; image: string | null }[]
   stats: { launchesThisMonth: number; makers: number }
-  makers: HomeHeroMaker[]
   /**
    * Pre-computed remaining time to the next launch window. Passed in rather
    * than measured so the static export (no JS) can show real digits instead of

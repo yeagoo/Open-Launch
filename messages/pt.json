@@ -108,7 +108,6 @@
         "subtitle": "A atenção passa. Os links ficam. Um selo, um link do-follow e seus primeiros usuários reais.",
         "primaryCta": "Enviar o seu projeto",
         "secondaryCta": "Ver os lançamentos de hoje",
-        "joinMakers": "Junte-se a {count} criadores",
         "launchedTotal": "{count} produtos lançados"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "Últimas publicações",
       "launchesThisMonth": "lançamentos este mês",
       "makers": "criadores",
-      "partners": "Nossos parceiros",
       "reviewsCount": "{count} avaliações",
       "rankLabel": "Posição {rank}",
       "tabsLabel": "Período de classificação"

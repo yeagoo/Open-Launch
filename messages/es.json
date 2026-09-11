@@ -108,7 +108,6 @@
         "subtitle": "La atención pasa. Los enlaces quedan. Una insignia, un enlace do-follow y tus primeros usuarios reales.",
         "primaryCta": "Publica tu proyecto",
         "secondaryCta": "Ver los lanzamientos de hoy",
-        "joinMakers": "Únete a {count} creadores",
         "launchedTotal": "{count} productos lanzados"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "Últimas publicaciones",
       "launchesThisMonth": "lanzamientos este mes",
       "makers": "creadores",
-      "partners": "Nuestros socios",
       "reviewsCount": "{count} reseñas",
       "rankLabel": "Puesto {rank}",
       "tabsLabel": "Periodo de clasificación"

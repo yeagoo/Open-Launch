@@ -3,14 +3,12 @@ import { getMessages, getTranslations } from "next-intl/server"
 
 import { pickClientMessages } from "@/lib/client-messages"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
-import { promoDirectorySites } from "@/lib/directories-links"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { getServerSession } from "@/lib/server-auth"
 import { HomeBody, type HomeBodyData, type HomeBodyLabels } from "@/components/home/v2/home-body"
 import type { HomeTimeTab } from "@/components/home/v2/time-tabs"
 import { ItemListSchema } from "@/components/seo/structured-data"
 import {
-  getHomeMakers,
   getHomeMonthProjects,
   getHomeProjectGroups,
   getHomeStats,
@@ -58,7 +56,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     stats,
     community,
     blog,
-    makers,
     categories,
     session,
     tabProjects,
@@ -73,7 +70,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     getHomeStats(),
     getLatestCommunityPosts(4),
     getLatestBlogPosts(2),
-    getHomeMakers(5),
     getTopCategories(5),
     getServerSession(),
     // Only paid for when a non-default tab is actually open — the conditional
@@ -111,9 +107,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
       subtitle: t("hero.subtitle"),
       primaryCta: t("hero.primaryCta"),
       secondaryCta: t("hero.secondaryCta"),
-      // A zero maker count would render "Join 0 makers"; the hero drops the
-      // whole social-proof row when this string is empty.
-      joinMakers: stats.makers > 0 ? t("hero.joinMakers", { count: stats.makers }) : "",
       launchedTotal: t("hero.launchedTotal", { count: stats.launchedTotal }),
     },
     heading,
@@ -135,7 +128,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     },
     right: {
       submitCta: tNav("submitProject"),
-      partners: t("partners"),
       topCategories: tSections("topCategories"),
       quickAccess: tSections("quickAccess"),
       trendingNow: tSections("trendingNow"),
@@ -161,8 +153,6 @@ export async function HomeV2({ locale, tab }: { locale: string; tab: HomeTab }) 
     stats,
     community,
     blog,
-    makers,
-    partners: promoDirectorySites(5),
     categories,
     // The countdown targets the end of the CURRENT launch window, i.e. when
     // the next batch goes live.

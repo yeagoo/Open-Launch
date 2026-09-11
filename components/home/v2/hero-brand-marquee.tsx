@@ -52,7 +52,18 @@ export const HERO_BRANDS = [
   { slug: "zulip", title: "Zulip" },
 ] as const
 
-const ROW_SIZE = Math.ceil(HERO_BRANDS.length / 2)
+/**
+ * Four rows, so the wall reads as texture rather than as a list of clients.
+ *
+ * The list is repeated inside each track (`TRACK_REPEATS`) rather than rendered
+ * once: a row of seven or eight marks is narrower than a desktop viewport, and a
+ * track that cannot fill the screen leaves a visible gap where the loop should
+ * be. Four copies is comfortably wider than any common viewport at this tile
+ * size, and translating by half the track — two copies — still lands on an
+ * identical frame, so the seam stays invisible.
+ */
+const ROW_COUNT = 4
+const TRACK_REPEATS = 4
 
 interface BrandMark {
   slug: string
@@ -80,11 +91,10 @@ interface BrandMark {
  * `documenso` and `dub` publish a dark-ink variant, which is what is vendored
  * here, and the other twenty-eight are light enough as published.
  *
- * The list is rendered twice and the animation translates the track by half its
- * width, which is what makes the loop seamless without measuring anything at
- * runtime. The duplicate is `aria-hidden` so a screen reader hears thirty
- * brands, not sixty — though the whole wall is decorative and hidden from
- * assistive technology anyway.
+ * The list is repeated inside each track and the animation translates by half
+ * the track's width, which is what makes the loop seamless without measuring
+ * anything at runtime. The repeats are `aria-hidden`, and the whole wall is
+ * decorative and hidden from assistive technology anyway.
  */
 function MarqueeRow({
   brands,
@@ -93,7 +103,7 @@ function MarqueeRow({
   brands: readonly BrandMark[]
   direction: "left" | "right"
 }) {
-  const items = [...brands, ...brands]
+  const items = Array.from({ length: TRACK_REPEATS }, () => brands).flat()
   return (
     <div className="flex overflow-hidden">
       <div className="home-marquee-track" data-direction={direction} aria-hidden="true">
@@ -126,11 +136,21 @@ function MarqueeRow({
  * The scrim is applied by the caller so the headline keeps its contrast; this
  * component only lays out the rows.
  */
+/** Split into `ROW_COUNT` roughly equal rows, preserving order. */
+function chunk<T>(items: readonly T[], parts: number): T[][] {
+  const size = Math.ceil(items.length / parts)
+  return Array.from({ length: parts }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  ).filter((row) => row.length > 0)
+}
+
 export function HeroBrandMarquee() {
+  const rows = chunk(HERO_BRANDS, ROW_COUNT)
   return (
-    <div className="space-y-5 sm:space-y-7">
-      <MarqueeRow brands={HERO_BRANDS.slice(0, ROW_SIZE)} direction="left" />
-      <MarqueeRow brands={HERO_BRANDS.slice(ROW_SIZE)} direction="right" />
+    <div className="space-y-3 sm:space-y-4">
+      {rows.map((row, index) => (
+        <MarqueeRow key={row[0].slug} brands={row} direction={index % 2 === 0 ? "left" : "right"} />
+      ))}
     </div>
   )
 }

@@ -11,7 +11,7 @@ import {
   upvote,
   user as userTable,
 } from "@/drizzle/db/schema"
-import { and, desc, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm"
+import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm"
 
 import { HOME_PROJECTS_TAG, WINNERS_TAG } from "@/lib/cache-tags"
 import { LAUNCH_SETTINGS, PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
@@ -590,45 +590,4 @@ const fetchLatestBlogPostsBase = unstable_cache(
 /** Newest published blog posts for the home page's blog strip. */
 export async function getLatestBlogPosts(limit = 4) {
   return fetchLatestBlogPostsBase(clampInteger(limit, 4, 1, 12))
-}
-
-const fetchHomeMakersBase = unstable_cache(
-  async (limit: number) => {
-    const rows = await db
-      .select({
-        id: userTable.id,
-        name: userTable.name,
-        image: userTable.image,
-      })
-      .from(projectTable)
-      .innerJoin(userTable, eq(userTable.id, projectTable.createdBy))
-      .where(
-        and(
-          isNotNull(projectTable.createdBy),
-          // Same bot exclusion as the maker count right next to it in the hero.
-          // Without it the stack could be nothing but `bot-user-*` accounts:
-          // the Product Hunt import cron attributes imported projects to a bot
-          // creator, and this list is ordered by most recent launch.
-          sql`coalesce(${userTable.isBot}, false) = false`,
-        ),
-      )
-      // No `image IS NOT NULL` filter: plenty of real accounts never upload an
-      // avatar, and `HomeHero` renders an initial-disc fallback for exactly
-      // that case. Filtering here would silently shrink the stack to whoever
-      // happens to have a picture.
-      .groupBy(userTable.id, userTable.name, userTable.image)
-      // Most recent launchers first: the hero's avatar stack should read as
-      // "people shipping right now", not "people who signed up".
-      .orderBy(desc(sql`max(${projectTable.createdAt})`))
-      .limit(limit)
-
-    return rows
-  },
-  ["home-makers-v1"],
-  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
-)
-
-/** Recent launchers (with avatars) for the hero's social-proof stack. */
-export async function getHomeMakers(limit = 5) {
-  return fetchHomeMakersBase(clampInteger(limit, 5, 1, 12))
 }

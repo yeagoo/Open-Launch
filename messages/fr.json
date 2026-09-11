@@ -108,7 +108,6 @@
         "subtitle": "L'attention passe. Les liens restent. Un badge, un lien do-follow et vos premiers vrais utilisateurs.",
         "primaryCta": "Soumettre votre projet",
         "secondaryCta": "Voir les lancements du jour",
-        "joinMakers": "Rejoignez {count} créateurs",
         "launchedTotal": "{count} produits lancés"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "Dernières publications",
       "launchesThisMonth": "lancements ce mois-ci",
       "makers": "créateurs",
-      "partners": "Nos partenaires",
       "reviewsCount": "{count} avis",
       "rankLabel": "Rang {rank}",
       "tabsLabel": "Période de classement"

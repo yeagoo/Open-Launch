@@ -108,7 +108,6 @@
         "subtitle": "관심은 지나가고 링크는 남습니다. 배지, do-follow 링크, 그리고 첫 실제 사용자.",
         "primaryCta": "프로젝트 등록",
         "secondaryCta": "오늘의 런치 보기",
-        "joinMakers": "{count}명의 메이커 참여",
         "launchedTotal": "{count}개 프로덕트 런칭 완료"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "최신 소식",
       "launchesThisMonth": "이번 달 런치",
       "makers": "명의 메이커",
-      "partners": "파트너",
       "reviewsCount": "리뷰 {count}개",
       "rankLabel": "{rank}위",
       "tabsLabel": "랭킹 기간"

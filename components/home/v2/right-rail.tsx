@@ -1,13 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 import Image from "next/image"
 
 import { Link } from "@/i18n/navigation"
-import { RiExternalLinkLine, RiFlashlightLine } from "@remixicon/react"
+import { RiFlashlightLine } from "@remixicon/react"
 
-import type { PromoDirectorySite } from "@/lib/directories-links"
 import { PillButton } from "@/components/ds/pill-button"
 import { SerifHeading } from "@/components/ds/serif-heading"
-import { SoftCard } from "@/components/ds/soft-card"
 import { TagPill } from "@/components/ds/tag-pill"
 import { SearchCommandLazy } from "@/components/layout/search-command-lazy"
 import { SidebarExplore } from "@/components/layout/sidebar-explore"
@@ -20,7 +17,6 @@ export interface HomeCategoryLink {
 
 export interface RightRailLabels {
   submitCta: string
-  partners: string
   topCategories: string
   quickAccess: string
   trendingNow: string
@@ -43,7 +39,6 @@ export interface RightRailLabels {
 interface RightRailProps {
   labels: RightRailLabels
   isAuthenticated: boolean
-  partners: PromoDirectorySite[]
   categories: HomeCategoryLink[]
 }
 
@@ -68,7 +63,7 @@ const RECOMMENDED_SITES = [
  * main source of internal links to /categories, /compare and /alternatives, so
  * dropping them for visual tidiness would have been a silent SEO regression.
  */
-export function RightRail({ labels, isAuthenticated, partners, categories }: RightRailProps) {
+export function RightRail({ labels, isAuthenticated, categories }: RightRailProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -80,48 +75,6 @@ export function RightRail({ labels, isAuthenticated, partners, categories }: Rig
           </Link>
         </PillButton>
       </div>
-
-      {partners.length > 0 && (
-        <div className="space-y-3">
-          <SerifHeading as="h2" size="eyebrow">
-            {labels.partners}
-          </SerifHeading>
-          <SoftCard padding="sm" className="space-y-2">
-            {partners.map((partner) => (
-              <a
-                key={partner.domain}
-                // The snapshot carries a bare domain, not a URL — the promo
-                // banner on the legacy home links to /pricing instead, but a
-                // partner logo that does nothing is worse than an outbound
-                // link, so build the https URL here.
-                href={`https://${partner.domain}/`}
-                target="_blank"
-                rel="noopener"
-                className="hover:bg-home-surface-muted group flex items-center gap-3 rounded-md p-2 transition-colors"
-              >
-                <span className="bg-home-surface border-home-hairline flex size-9 flex-shrink-0 items-center justify-center rounded-md border p-1.5">
-                  <img
-                    src={partner.logo ?? "/logo.svg"}
-                    alt=""
-                    loading="lazy"
-                    className="h-full w-full object-contain"
-                  />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-semibold">{partner.name}</span>
-                  {partner.dr !== null && (
-                    <span className="text-muted-foreground block text-[11px]">DR {partner.dr}</span>
-                  )}
-                </span>
-                <RiExternalLinkLine
-                  aria-hidden="true"
-                  className="text-muted-foreground h-3.5 w-3.5 shrink-0"
-                />
-              </a>
-            ))}
-          </SoftCard>
-        </div>
-      )}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">

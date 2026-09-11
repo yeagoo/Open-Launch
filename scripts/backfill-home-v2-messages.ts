@@ -18,7 +18,6 @@ type V2 = {
     subtitle: string
     primaryCta: string
     secondaryCta: string
-    joinMakers: string
     /** Launch-wall kicker: "{count} products launched", all time. */
     launchedTotal: string
   }
@@ -35,7 +34,6 @@ type V2 = {
   latestPosts: string
   launchesThisMonth: string
   makers: string
-  partners: string
   reviewsCount: string
   /** Screen-reader label for a feed row's rank marker. */
   rankLabel: string
@@ -62,7 +60,6 @@ const V2_STRINGS: Record<string, V2> = {
         "Attention fades. Links last. A badge, a do-follow backlink and your first real users.",
       primaryCta: "Submit your project",
       secondaryCta: "Explore today's launches",
-      joinMakers: "Join {count} makers",
       launchedTotal: "{count} products launched",
     },
     tabs: { daily: "Daily", weekly: "Weekly", monthly: "Monthly" },
@@ -78,7 +75,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "Latest posts",
     launchesThisMonth: "launches this month",
     makers: "makers",
-    partners: "Our partners",
     reviewsCount: "{count} reviews",
     rankLabel: "Rank {rank}",
     tabsLabel: "Ranking period",
@@ -89,7 +85,6 @@ const V2_STRINGS: Record<string, V2> = {
       subtitle: "热度会过去，外链会留下。Badge、do-follow 外链和一批真实用户。",
       primaryCta: "提交项目",
       secondaryCta: "看今日新上架",
-      joinMakers: "已有 {count} 位创作者加入",
       launchedTotal: "已上架 {count} 个产品",
     },
     tabs: { daily: "日榜", weekly: "周榜", monthly: "月榜" },
@@ -105,7 +100,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "最新动态",
     launchesThisMonth: "本月上架",
     makers: "位创作者",
-    partners: "合作伙伴",
     reviewsCount: "{count} 条评论",
     rankLabel: "第 {rank} 名",
     tabsLabel: "榜单周期",
@@ -117,7 +111,6 @@ const V2_STRINGS: Record<string, V2> = {
         "La atención pasa. Los enlaces quedan. Una insignia, un enlace do-follow y tus primeros usuarios reales.",
       primaryCta: "Publica tu proyecto",
       secondaryCta: "Ver los lanzamientos de hoy",
-      joinMakers: "Únete a {count} creadores",
       launchedTotal: "{count} productos lanzados",
     },
     tabs: { daily: "Diario", weekly: "Semanal", monthly: "Mensual" },
@@ -134,7 +127,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "Últimas publicaciones",
     launchesThisMonth: "lanzamientos este mes",
     makers: "creadores",
-    partners: "Nuestros socios",
     reviewsCount: "{count} reseñas",
     rankLabel: "Puesto {rank}",
     tabsLabel: "Periodo de clasificación",
@@ -146,7 +138,6 @@ const V2_STRINGS: Record<string, V2> = {
         "A atenção passa. Os links ficam. Um selo, um link do-follow e seus primeiros usuários reais.",
       primaryCta: "Enviar o seu projeto",
       secondaryCta: "Ver os lançamentos de hoje",
-      joinMakers: "Junte-se a {count} criadores",
       launchedTotal: "{count} produtos lançados",
     },
     tabs: { daily: "Diário", weekly: "Semanal", monthly: "Mensal" },
@@ -162,7 +153,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "Últimas publicações",
     launchesThisMonth: "lançamentos este mês",
     makers: "criadores",
-    partners: "Nossos parceiros",
     reviewsCount: "{count} avaliações",
     rankLabel: "Posição {rank}",
     tabsLabel: "Período de classificação",
@@ -174,7 +164,6 @@ const V2_STRINGS: Record<string, V2> = {
         "L'attention passe. Les liens restent. Un badge, un lien do-follow et vos premiers vrais utilisateurs.",
       primaryCta: "Soumettre votre projet",
       secondaryCta: "Voir les lancements du jour",
-      joinMakers: "Rejoignez {count} créateurs",
       launchedTotal: "{count} produits lancés",
     },
     tabs: { daily: "Quotidien", weekly: "Hebdomadaire", monthly: "Mensuel" },
@@ -191,7 +180,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "Dernières publications",
     launchesThisMonth: "lancements ce mois-ci",
     makers: "créateurs",
-    partners: "Nos partenaires",
     reviewsCount: "{count} avis",
     rankLabel: "Rang {rank}",
     tabsLabel: "Période de classement",
@@ -203,7 +191,6 @@ const V2_STRINGS: Record<string, V2> = {
         "注目は過ぎ去る。リンクは残る。バッジ、do-follow リンク、そして最初のリアルユーザー。",
       primaryCta: "プロジェクトを投稿",
       secondaryCta: "今日のローンチを見る",
-      joinMakers: "{count} 人のメーカーが参加",
       launchedTotal: "{count} 件のプロダクトがローンチ済み",
     },
     tabs: { daily: "日間", weekly: "週間", monthly: "月間" },
@@ -219,7 +206,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "最新の投稿",
     launchesThisMonth: "今月のローンチ",
     makers: "人のメーカー",
-    partners: "パートナー",
     reviewsCount: "{count} 件のレビュー",
     rankLabel: "{rank} 位",
     tabsLabel: "ランキング期間",
@@ -230,7 +216,6 @@ const V2_STRINGS: Record<string, V2> = {
       subtitle: "관심은 지나가고 링크는 남습니다. 배지, do-follow 링크, 그리고 첫 실제 사용자.",
       primaryCta: "프로젝트 등록",
       secondaryCta: "오늘의 런치 보기",
-      joinMakers: "{count}명의 메이커 참여",
       launchedTotal: "{count}개 프로덕트 런칭 완료",
     },
     tabs: { daily: "일간", weekly: "주간", monthly: "월간" },
@@ -246,7 +231,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "최신 소식",
     launchesThisMonth: "이번 달 런치",
     makers: "명의 메이커",
-    partners: "파트너",
     reviewsCount: "리뷰 {count}개",
     rankLabel: "{rank}위",
     tabsLabel: "랭킹 기간",
@@ -258,7 +242,6 @@ const V2_STRINGS: Record<string, V2> = {
         "Tähelepanu kaob, lingid jäävad. Märk, do-follow link ja esimesed tõelised kasutajad.",
       primaryCta: "Esita oma projekt",
       secondaryCta: "Vaata tänaseid lanseerimisi",
-      joinMakers: "Liitu {count} tegijaga",
       launchedTotal: "{count} toodet on lanseeritud",
     },
     tabs: { daily: "Päevane", weekly: "Nädalane", monthly: "Kuine" },
@@ -274,7 +257,6 @@ const V2_STRINGS: Record<string, V2> = {
     latestPosts: "Viimased postitused",
     launchesThisMonth: "lanseerimist sel kuul",
     makers: "tegijat",
-    partners: "Meie partnerid",
     reviewsCount: "{count} arvustust",
     rankLabel: "{rank}. koht",
     tabsLabel: "Edetabeli periood",

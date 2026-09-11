@@ -108,7 +108,6 @@
         "subtitle": "Attention fades. Links last. A badge, a do-follow backlink and your first real users.",
         "primaryCta": "Submit your project",
         "secondaryCta": "Explore today's launches",
-        "joinMakers": "Join {count} makers",
         "launchedTotal": "{count} products launched"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "Latest posts",
       "launchesThisMonth": "launches this month",
       "makers": "makers",
-      "partners": "Our partners",
       "reviewsCount": "{count} reviews",
       "rankLabel": "Rank {rank}",
       "tabsLabel": "Ranking period"

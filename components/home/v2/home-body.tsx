@@ -1,11 +1,10 @@
 import { Link } from "@/i18n/navigation"
 
-import type { PromoDirectorySite } from "@/lib/directories-links"
 import { PillButton } from "@/components/ds/pill-button"
 import { SerifHeading } from "@/components/ds/serif-heading"
 
 import { BlogStrip, type HomeBlogPost } from "./blog-strip"
-import { HomeHero, type HomeHeroLabels, type HomeHeroMaker } from "./home-hero"
+import { HomeHero, type HomeHeroLabels } from "./home-hero"
 import { LaunchCountdown } from "./launch-countdown"
 import { LeftRail, type HomeCommunityPost } from "./left-rail"
 import { PremiumSpot } from "./premium-spot"
@@ -53,8 +52,6 @@ export interface HomeBodyData {
   }
   community: HomeCommunityPost[]
   blog: HomeBlogPost[]
-  makers: HomeHeroMaker[]
-  partners: PromoDirectorySite[]
   categories: HomeCategoryLink[]
   /** ISO timestamp of the next launch-window boundary (countdown target). */
   nextLaunchIso: string
@@ -95,7 +92,6 @@ export function HomeBody({ data, labels, locale }: HomeBodyProps) {
     <div data-home-v2="true" className="container mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <HomeHero
         labels={labels.hero}
-        makers={data.makers}
         launchedTotal={data.stats.launchedTotal}
         primaryHref={data.primaryCtaHref}
         secondaryHref={data.secondaryCtaHref}
@@ -192,7 +188,6 @@ export function HomeBody({ data, labels, locale }: HomeBodyProps) {
           <RightRail
             labels={labels.right}
             isAuthenticated={data.isAuthenticated}
-            partners={data.partners}
             categories={data.categories}
           />
         </aside>

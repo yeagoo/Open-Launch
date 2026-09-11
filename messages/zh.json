@@ -108,7 +108,6 @@
         "subtitle": "热度会过去，外链会留下。Badge、do-follow 外链和一批真实用户。",
         "primaryCta": "提交项目",
         "secondaryCta": "看今日新上架",
-        "joinMakers": "已有 {count} 位创作者加入",
         "launchedTotal": "已上架 {count} 个产品"
       },
       "tabs": {
@@ -128,7 +127,6 @@
       "latestPosts": "最新动态",
       "launchesThisMonth": "本月上架",
       "makers": "位创作者",
-      "partners": "合作伙伴",
       "reviewsCount": "{count} 条评论",
       "rankLabel": "第 {rank} 名",
       "tabsLabel": "榜单周期"

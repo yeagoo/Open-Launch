@@ -1,30 +1,20 @@
-/* eslint-disable @next/next/no-img-element */
 import { Link } from "@/i18n/navigation"
 
 import { PillButton } from "@/components/ds/pill-button"
 import { SerifHeading } from "@/components/ds/serif-heading"
 import { HeroBrandMarquee } from "@/components/home/v2/hero-brand-marquee"
 
-export interface HomeHeroMaker {
-  id: string
-  name: string
-  image: string | null
-}
-
 export interface HomeHeroLabels {
   title: string
   subtitle: string
   primaryCta: string
   secondaryCta: string
-  /** e.g. "Join {count} makers" — already interpolated by the caller. */
-  joinMakers: string
   /** e.g. "{count} products launched" — already interpolated by the caller. */
   launchedTotal: string
 }
 
 interface HomeHeroProps {
   labels: HomeHeroLabels
-  makers: HomeHeroMaker[]
   /** Every launch the site has completed, all time. */
   launchedTotal: number
   /** Where the primary CTA points. */
@@ -53,13 +43,7 @@ interface HomeHeroProps {
  * 3. **Text first.** Nothing in the wall is above the copy in paint order or in
  *    the preload queue.
  */
-export function HomeHero({
-  labels,
-  makers,
-  launchedTotal,
-  primaryHref,
-  secondaryHref,
-}: HomeHeroProps) {
+export function HomeHero({ labels, launchedTotal, primaryHref, secondaryHref }: HomeHeroProps) {
   return (
     <section className="border-home-hairline rounded-home-card relative overflow-hidden border">
       <div
@@ -119,45 +103,6 @@ export function HomeHero({
             <Link href={secondaryHref}>{labels.secondaryCta}</Link>
           </PillButton>
         </div>
-
-        {(makers.length > 0 || labels.joinMakers) && (
-          <div className="mt-7 flex items-center justify-center gap-3">
-            {makers.length > 0 && (
-              <div className="flex -space-x-2">
-                {makers.slice(0, 5).map((maker, index) =>
-                  maker.image ? (
-                    <img
-                      key={maker.id}
-                      src={maker.image}
-                      alt=""
-                      width={28}
-                      height={28}
-                      loading="lazy"
-                      decoding="async"
-                      className="border-background bg-home-surface-muted size-7 rounded-full border-2 object-cover"
-                    />
-                  ) : (
-                    // Most accounts never upload an avatar, so the stack must
-                    // not collapse (or show broken images) without one.
-                    <span
-                      key={maker.id}
-                      aria-hidden="true"
-                      className="border-background text-home-accent-strong flex size-7 items-center justify-center rounded-full border-2 text-[10px] font-bold"
-                      style={{
-                        background: `color-mix(in oklab, var(--home-accent) ${
-                          10 + index * 6
-                        }%, var(--home-surface))`,
-                      }}
-                    >
-                      {maker.name.trim().charAt(0).toUpperCase() || "?"}
-                    </span>
-                  ),
-                )}
-              </div>
-            )}
-            <span className="text-muted-foreground text-xs sm:text-sm">{labels.joinMakers}</span>
-          </div>
-        )}
       </div>
     </section>
   )

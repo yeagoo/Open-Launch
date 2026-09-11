@@ -6,7 +6,15 @@ const LAB_PROPS: HeroConceptProps = {
   labels: HERO_LAB_LABELS,
   projects: HOME_FIXTURE_DATA.projects,
   stats: HOME_FIXTURE_DATA.stats,
-  makers: HOME_FIXTURE_DATA.makers,
+  // The lab's concepts still draw an avatar row; the product hero no longer has
+  // one, so this fixture supplies its own rather than borrowing the product's.
+  makers: [
+    { id: "m1", name: "Ada", image: null },
+    { id: "m2", name: "Kenji", image: null },
+    { id: "m3", name: "Lena", image: null },
+    { id: "m4", name: "Omar", image: null },
+    { id: "m5", name: "Yuki", image: null },
+  ],
   countdownInitial: HERO_LAB_COUNTDOWN,
   primaryHref: HOME_FIXTURE_DATA.primaryCtaHref,
   secondaryHref: HOME_FIXTURE_DATA.secondaryCtaHref,

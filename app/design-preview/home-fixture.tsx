@@ -162,20 +162,6 @@ export const HOME_FIXTURE_DATA: HomeBodyData = {
       publishedAt: new Date("2026-08-31T00:00:00Z").toISOString(),
     },
   ],
-  makers: [
-    { id: "m1", name: "Mira K.", image: null },
-    { id: "m2", name: "Devon", image: null },
-    { id: "m3", name: "Ana Ruiz", image: null },
-    { id: "m4", name: "Tomas", image: null },
-    { id: "m5", name: "Yuki", image: null },
-  ],
-  partners: [
-    { name: "BlackHawkGame", domain: "blackhawkegames.com", logo: logoTile("B", 0), dr: 73 },
-    { name: "NexaBlocks", domain: "nexablocks.com", logo: logoTile("N", 260), dr: 58 },
-    { name: "Upperstory", domain: "upperstory.io", logo: logoTile("U", 190), dr: 57 },
-    { name: "XemVIP", domain: "xemvip.com", logo: logoTile("X", 30), dr: 56 },
-    { name: "Libmir", domain: "libmir.org", logo: logoTile("L", 120), dr: 55 },
-  ],
   categories: [
     { id: "all", name: "All categories", count: 4820 },
     { id: "ai", name: "Artificial Intelligence", count: 1089 },
@@ -202,7 +188,6 @@ export const HOME_FIXTURE_LABELS: HomeBodyLabels = {
       "Launch your product, earn a verified badge and a do-follow backlink, and discover what other makers shipped today.",
     primaryCta: "Submit your project",
     secondaryCta: "Explore today's launches",
-    joinMakers: "Join 85,420 makers",
     launchedTotal: "3,120 products launched",
   },
   heading: "Best products launching today",
@@ -224,7 +209,6 @@ export const HOME_FIXTURE_LABELS: HomeBodyLabels = {
   },
   right: {
     submitCta: "Submit Project",
-    partners: "Our partners",
     topCategories: "Top categories",
     quickAccess: "Quick access",
     trendingNow: "Trending now",
