@@ -41,6 +41,34 @@ function assertLocalTarget(url: string): URL {
 const target = assertLocalTarget(connectionString)
 console.log(`[seed] target ${target.hostname}:${target.port || 5432}/${target.pathname.slice(1)}`)
 
+/**
+ * Render a Date as a wall-clock timestamp for a `timestamp without time zone`
+ * column.
+ *
+ * `scheduled_launch_date` has no time zone, and production stores it as literal
+ * wall time — a launch on 2026-09-09 sits at `08:00`, not at a UTC instant. The
+ * app compares it against `timestamptz` bounds, which PostgreSQL resolves in the
+ * connection's zone, so what the column holds has to be the wall time the
+ * comparison expects.
+ *
+ * Passing a Date instead lets `pg` serialise it in the machine's local zone:
+ * `setUTCHours(8)` yields the instant 08:00Z, which `pg` writes as `16:00+08:00`
+ * on a UTC+8 host, and the column keeps `16:00`. That put every fixture launch
+ * eight hours later than production's, outside the winners window — so
+ * `/winners` rendered its empty state locally and the card component was never
+ * exercised during review.
+ *
+ * Formatting here rather than relying on `setHours` keeps the result identical
+ * on any host, whatever its zone.
+ */
+function toWallClock(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0")
+  return (
+    `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ` +
+    `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`
+  )
+}
+
 /** The launch window is 08:00 UTC → 08:00 UTC, so anchor fixtures to it. */
 function launchWindowStart(dayOffset: number): Date {
   const start = new Date()
@@ -264,23 +292,27 @@ try {
     name: string
     tagline: string
     status: "ongoing" | "launched" | "scheduled"
-    launchAt: Date
+    /** Wall-clock timestamp, already formatted for the column. */
+    launchAt: string
     votes: number
     category: string
     makerIndex: number
+    /** Ranks 1-3 are what `/winners` shows; leave undefined for everything else. */
+    dailyRanking?: number
   }) => {
     const slug = slugify(input.name)
     const id = `project-${slug}`
     await client.query(
       `INSERT INTO project
          (id, name, slug, description, website_url, logo_url, pricing, launch_status,
-          scheduled_launch_date, created_by, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'free', $7, $8, $9, now(), now())
+          scheduled_launch_date, daily_ranking, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'free', $7, $8, $10, $9, now(), now())
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          description = EXCLUDED.description,
          launch_status = EXCLUDED.launch_status,
-         scheduled_launch_date = EXCLUDED.scheduled_launch_date`,
+         scheduled_launch_date = EXCLUDED.scheduled_launch_date,
+         daily_ranking = EXCLUDED.daily_ranking`,
       [
         id,
         input.name,
@@ -291,6 +323,7 @@ try {
         input.status,
         input.launchAt,
         makers[input.makerIndex % makers.length].id,
+        input.dailyRanking ?? null,
       ],
     )
     await client.query(
@@ -324,7 +357,7 @@ try {
       await upsertProject({
         ...project,
         status: "ongoing",
-        launchAt: TODAY,
+        launchAt: toWallClock(TODAY),
         makerIndex: index,
       }),
     )
@@ -335,7 +368,17 @@ try {
     const launchAt = new Date(YESTERDAY)
     launchAt.setUTCDate(launchAt.getUTCDate() + (project.day + 1))
     completedIds.push(
-      await upsertProject({ ...project, status: "launched", launchAt, makerIndex: index + 1 }),
+      await upsertProject({
+        ...project,
+        status: "launched",
+        launchAt: toWallClock(launchAt),
+        makerIndex: index + 1,
+        // The first three launched yesterday (`day: -1`) stand in for the
+        // ranks the 08:00 cron would have stamped, so `/winners` has content.
+        // Without them the page renders its empty state and its card component
+        // — where the r35 token migration was missed — never renders at all.
+        ...(project.day === -1 && index < 3 ? { dailyRanking: index + 1 } : {}),
+      }),
     )
   }
 
@@ -346,7 +389,7 @@ try {
         name,
         tagline: `Scheduled for the next launch window (#${index + 1} in the queue)`,
         status: "scheduled",
-        launchAt: TOMORROW,
+        launchAt: toWallClock(TOMORROW),
         votes: 0,
         category: CATEGORIES[index % CATEGORIES.length].id,
         makerIndex: index,
@@ -359,7 +402,7 @@ try {
     name: "Archive Runner",
     tagline: "Long-running archive jobs with resumable checkpoints",
     status: "launched",
-    launchAt: MONTH_ANCHOR,
+    launchAt: toWallClock(MONTH_ANCHOR),
     votes: 64,
     category: "developer-tools",
     makerIndex: 2,
