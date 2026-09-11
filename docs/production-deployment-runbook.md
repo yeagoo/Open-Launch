@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-c4c478e8c8dedb62acbf44b24560f0a9ca9dfd8c
+8410435de8cc3b74725fa4653d4ef9ee06fb22c5
 ```
 
 Current runtime facts:
@@ -163,9 +163,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.site-r35.yml`
+  `compose.winner-fix-r36.yml`
 - deployment marker:
-  `20260911-pages-r35`
+  `20260911-winner-fix-r36`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
@@ -199,9 +199,11 @@ remediation), both deployed on 2026-09-04; their journals exist in
 because the sequence below did not require updating it. Update it as part of
 every release.
 
-The r35 release brings the last five pages — winners, blog, search, friends and
-badge — into the redesigned visual language and removes the final literal
-colours from the application. r34 added the leaderboard and free tools pages and
+The r36 release completes the token migration r35 began: r35 converted the
+`/winners` page but not the card component it renders, leaving the winner cards
+unreadable in dark mode for four hours. The r35 release brought the last five
+pages — winners, blog, search, friends and badge — into the redesigned visual
+language. r34 added the leaderboard and free tools pages and
 dropped the three dead `PLAUSIBLE_*` variables. `sharp` remains `0.35.4`. CSP is in an intentional
 Report-Only observation phase with reports sent to `/api/csp-report`.
 Production remains in Shadow mode with an empty Canary path, embedded Ledger
@@ -601,6 +603,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-11 winner fix r36 — completing the token migration](./deployments/2026-09-11-winner-fix-r36-deployment.md)
 - [2026-09-11 pages r35 — visual unification](./deployments/2026-09-11-pages-r35-deployment.md)
 - [2026-09-11 site r34 — leaderboards, free tools, accessibility](./deployments/2026-09-11-site-r34-deployment.md)
 - [2026-09-11 home v2 r33b — enabling the redesigned home](./deployments/2026-09-11-home-v2-r33b-deployment.md)
