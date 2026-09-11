@@ -140,7 +140,7 @@ export function HomeBody({ data, labels, locale }: HomeBodyProps) {
               {labels.feedNote}{" "}
               <Link
                 href="/pricing"
-                className="text-home-accent-strong underline-offset-4 hover:underline"
+                className="text-home-accent-strong underline underline-offset-4"
               >
                 {labels.moreDetails}
               </Link>

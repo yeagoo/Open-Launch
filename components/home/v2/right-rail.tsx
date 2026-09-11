@@ -214,7 +214,7 @@ export function RightRail({ labels, isAuthenticated, partners, categories }: Rig
             href="https://eol.wiki/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-home-accent-strong ml-1 hover:underline"
+            className="text-home-accent-strong ml-1 underline underline-offset-2"
           >
             EOL.Wiki
           </a>

@@ -193,7 +193,7 @@ export default function FooterSection({
                   href={site.url}
                   target="_blank"
                   rel="noopener"
-                  className={`hover:text-primary inline-flex items-center gap-1.5 transition-colors ${
+                  className={`hover:text-primary inline-flex items-center gap-1.5 py-1 transition-colors ${
                     site.deemphasized ? "opacity-50" : ""
                   }`}
                 >
