@@ -109,8 +109,7 @@
         "primaryCta": "Submit your project",
         "secondaryCta": "Explore today's launches",
         "joinMakers": "Join {count} makers",
-        "launchedToday": "{count} launched today",
-        "queuedNext": "{count} queued"
+        "launchedTotal": "{count} products launched"
       },
       "tabs": {
         "daily": "Daily",

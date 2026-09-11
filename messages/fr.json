@@ -109,8 +109,7 @@
         "primaryCta": "Soumettre votre projet",
         "secondaryCta": "Voir les lancements du jour",
         "joinMakers": "Rejoignez {count} créateurs",
-        "launchedToday": "{count} lancés aujourd'hui",
-        "queuedNext": "{count} en attente"
+        "launchedTotal": "{count} produits lancés"
       },
       "tabs": {
         "daily": "Quotidien",

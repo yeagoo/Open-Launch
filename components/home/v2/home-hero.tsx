@@ -3,17 +3,12 @@ import { Link } from "@/i18n/navigation"
 
 import { PillButton } from "@/components/ds/pill-button"
 import { SerifHeading } from "@/components/ds/serif-heading"
+import { HeroBrandMarquee } from "@/components/home/v2/hero-brand-marquee"
 
 export interface HomeHeroMaker {
   id: string
   name: string
   image: string | null
-}
-
-export interface HomeHeroProject {
-  id: string
-  /** Nullable in practice: a project can exist before its logo resolves. */
-  logoUrl: string | null
 }
 
 export interface HomeHeroLabels {
@@ -23,26 +18,15 @@ export interface HomeHeroLabels {
   secondaryCta: string
   /** e.g. "Join {count} makers" — already interpolated by the caller. */
   joinMakers: string
-  /** e.g. "{count} launched today" — already interpolated by the caller. */
-  launchedToday: string
-  /** e.g. "{count} queued" — already interpolated by the caller. */
-  queuedNext: string
+  /** e.g. "{count} products launched" — already interpolated by the caller. */
+  launchedTotal: string
 }
 
 interface HomeHeroProps {
   labels: HomeHeroLabels
   makers: HomeHeroMaker[]
-  /**
-   * Recent launches used as the wall texture. Decorative: the wall is
-   * `aria-hidden` and the count in the kicker is a separate, real number, so
-   * this list only has to be *representative* of the catalogue, not exhaustive
-   * for the day.
-   */
-  wallProjects: HomeHeroProject[]
-  /** Real count of launches in the current window. */
-  launchesToday: number
-  /** Real count of launches already scheduled for the next window. */
-  queuedNext: number
+  /** Every launch the site has completed, all time. */
+  launchedTotal: number
   /** Where the primary CTA points. */
   primaryHref: string
   /** Where the secondary CTA points. */
@@ -50,23 +34,21 @@ interface HomeHeroProps {
 }
 
 /**
- * Launch Wall hero.
+ * Launch hero.
  *
- * The artwork is the product: a wall of recent launch logos behind the copy,
- * faded into the page so the headline stays the LCP element. It answers "is
- * anything happening here?" before a word is read, and the two numbers in the
- * kicker are real database counts rather than marketing filler.
+ * The artwork is the product: two rows of brand marks drifting in opposite
+ * directions behind the copy, faded into the page so the headline stays the LCP
+ * element. It answers "is anything happening here?" before a word is read, and
+ * the kicker states how many products have launched here in total — a fact
+ * about the site's history rather than a snapshot of one quiet afternoon.
  *
  * Three constraints hold this together:
  *
- * 1. **Tile count is bounded per breakpoint.** Exactly three rows render at
- *    every width (12 / 18 / 24 tiles), and the tiles that a breakpoint cannot
- *    show are `hidden` rather than clipped, so a phone never fetches 24 images
- *    for decoration. All of them are lazy, `aria-hidden` and plain `<img>` —
- *    routing 24 decorative 40px marks through the image optimizer would cost
- *    more than it saves.
+ * 1. **The wall is decoration, not data.** It is `aria-hidden`, the marks are
+ *    lazy and low priority, and the marquee is pure CSS — see
+ *    `hero-brand-marquee.tsx` for where the marks come from and why.
  * 2. **The scrim is a tight radial, not a full wash.** A wash wide enough to be
- *    safe erases the wall and the concept with it; this keeps the logos legible
+ *    safe erases the wall and the concept with it; this keeps the marks legible
  *    at the edges while the centre stays readable.
  * 3. **Text first.** Nothing in the wall is above the copy in paint order or in
  *    the preload queue.
@@ -74,59 +56,19 @@ interface HomeHeroProps {
 export function HomeHero({
   labels,
   makers,
-  wallProjects,
-  launchesToday,
-  queuedNext,
+  launchedTotal,
   primaryHref,
   secondaryHref,
 }: HomeHeroProps) {
-  // The predicate (not just truthiness) is what narrows `logoUrl` to a string
-  // for the <img> below.
-  const sources = wallProjects.filter((project): project is { id: string; logoUrl: string } =>
-    Boolean(project.logoUrl),
-  )
-  // 24 ceiling = 3 rows at the widest grid; the modulo keeps the wall full even
-  // when the catalogue is small, and the varied opacity hides the repeat.
-  const tiles =
-    sources.length > 0
-      ? Array.from({ length: 24 }, (_, index) => sources[index % sources.length])
-      : []
-
   return (
     <section className="border-home-hairline rounded-home-card relative overflow-hidden border">
-      {tiles.length > 0 && (
-        <div
-          aria-hidden="true"
-          data-slot="home-hero-wall"
-          className="pointer-events-none absolute inset-0 grid grid-cols-4 gap-4 p-6 sm:grid-cols-6 sm:gap-6 lg:grid-cols-8"
-        >
-          {tiles.map((tile, index) => (
-            <span
-              key={`${tile.id}-${index}`}
-              className={`flex aspect-square items-center justify-center ${
-                // Three rows per breakpoint: 12 / 18 / 24.
-                index >= 18 ? "hidden lg:flex" : index >= 12 ? "hidden sm:flex" : "flex"
-              }`}
-              // Bare marks, no card chrome: a boxed grid reads as a table of
-              // contents, floating marks read as a wall of products.
-              style={{ opacity: 0.3 + ((index * 7) % 5) * 0.12 }}
-            >
-              <img
-                src={tile.logoUrl}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                // The wall sits in the first viewport, so `lazy` alone still
-                // fetches it on load. Pushing it to low priority keeps the
-                // decorative tiles from competing with the LCP text for
-                // connections.
-                fetchPriority="low"
-                className="size-full object-contain"
-              />
-            </span>
-          ))}
-        </div>
-      )}
+      <div
+        aria-hidden="true"
+        data-slot="home-hero-wall"
+        className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2"
+      >
+        <HeroBrandMarquee />
+      </div>
 
       {/* Scrim: vertical for the top/bottom fade, radial to hold the copy
           block clear without flattening the whole wall. */}
@@ -144,19 +86,11 @@ export function HomeHero({
       />
 
       <div className="relative px-6 py-14 text-center sm:px-8 sm:py-20">
-        {/* Cold start: with nothing live and nothing queued, "0 launched today
-            · 0 queued" would be worse than saying nothing at all. */}
-        {(launchesToday > 0 || queuedNext > 0) && (
-          <p className="font-mono text-[11px] font-semibold tracking-[0.16em] uppercase">
-            {launchesToday > 0 && (
-              <span className="text-home-accent-strong">{labels.launchedToday}</span>
-            )}
-            {launchesToday > 0 && queuedNext > 0 && (
-              <span className="text-muted-foreground"> · </span>
-            )}
-            {queuedNext > 0 && (
-              <span className="text-home-highlight-strong">{labels.queuedNext}</span>
-            )}
+        {/* History, not today's snapshot. A cold start still has something
+            true to say here as soon as one project has launched. */}
+        {launchedTotal > 0 && (
+          <p className="text-home-accent-strong font-mono text-[11px] font-semibold tracking-[0.16em] uppercase">
+            {labels.launchedTotal}
           </p>
         )}
 

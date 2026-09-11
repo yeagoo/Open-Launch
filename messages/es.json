@@ -109,8 +109,7 @@
         "primaryCta": "Publica tu proyecto",
         "secondaryCta": "Ver los lanzamientos de hoy",
         "joinMakers": "Únete a {count} creadores",
-        "launchedToday": "{count} lanzados hoy",
-        "queuedNext": "{count} en cola"
+        "launchedTotal": "{count} productos lanzados"
       },
       "tabs": {
         "daily": "Diario",

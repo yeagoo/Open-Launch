@@ -109,8 +109,7 @@
         "primaryCta": "プロジェクトを投稿",
         "secondaryCta": "今日のローンチを見る",
         "joinMakers": "{count} 人のメーカーが参加",
-        "launchedToday": "本日 {count} 件がローンチ",
-        "queuedNext": "{count} 件が待機中"
+        "launchedTotal": "{count} 件のプロダクトがローンチ済み"
       },
       "tabs": {
         "daily": "日間",

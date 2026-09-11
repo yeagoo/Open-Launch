@@ -109,8 +109,7 @@
         "primaryCta": "Esita oma projekt",
         "secondaryCta": "Vaata tänaseid lanseerimisi",
         "joinMakers": "Liitu {count} tegijaga",
-        "launchedToday": "{count} lanseeritud täna",
-        "queuedNext": "{count} järjekorras"
+        "launchedTotal": "{count} toodet on lanseeritud"
       },
       "tabs": {
         "daily": "Päevane",

@@ -5,12 +5,7 @@ import { PillButton } from "@/components/ds/pill-button"
 import { SerifHeading } from "@/components/ds/serif-heading"
 
 import { BlogStrip, type HomeBlogPost } from "./blog-strip"
-import {
-  HomeHero,
-  type HomeHeroLabels,
-  type HomeHeroMaker,
-  type HomeHeroProject,
-} from "./home-hero"
+import { HomeHero, type HomeHeroLabels, type HomeHeroMaker } from "./home-hero"
 import { LaunchCountdown } from "./launch-countdown"
 import { LeftRail, type HomeCommunityPost } from "./left-rail"
 import { PremiumSpot } from "./premium-spot"
@@ -50,13 +45,11 @@ export interface HomeBodyLabels {
 
 export interface HomeBodyData {
   projects: HomeFeedProject[]
-  /** Decorative texture for the hero wall — recent launches, not a count. */
-  wallProjects: HomeHeroProject[]
   stats: {
     launchesThisMonth: number
     makers: number
-    launchesToday: number
-    queuedNext: number
+    /** Every completed launch, all time — what the hero's kicker states. */
+    launchedTotal: number
   }
   community: HomeCommunityPost[]
   blog: HomeBlogPost[]
@@ -103,9 +96,7 @@ export function HomeBody({ data, labels, locale }: HomeBodyProps) {
       <HomeHero
         labels={labels.hero}
         makers={data.makers}
-        wallProjects={data.wallProjects}
-        launchesToday={data.stats.launchesToday}
-        queuedNext={data.stats.queuedNext}
+        launchedTotal={data.stats.launchedTotal}
         primaryHref={data.primaryCtaHref}
         secondaryHref={data.secondaryCtaHref}
       />

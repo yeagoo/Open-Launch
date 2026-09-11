@@ -394,7 +394,7 @@ const fetchHomeStatsBase = unstable_cache(
         .from(projectTable)
         .where(where)
 
-    const [launchCount, makerCount, todayCount, queuedCount] = await Promise.all([
+    const [launchCount, makerCount, todayCount, queuedCount, launchedTotal] = await Promise.all([
       // Launched OR ongoing: "N launches this month" should include the race
       // that is running right now, unlike the leaderboards.
       countProjects(
@@ -428,6 +428,10 @@ const fetchHomeStatsBase = unstable_cache(
           sql`${projectTable.scheduledLaunchDate} < ${nextEndIso}`,
         ),
       ),
+      // Everything that has actually completed a launch day, ever. The hero
+      // states this instead of today's counts: what a visitor needs is evidence
+      // that products launch here, not a snapshot of one quiet afternoon.
+      countProjects(eq(projectTable.launchStatus, launchStatus.LAUNCHED)),
     ])
 
     return {
@@ -435,49 +439,10 @@ const fetchHomeStatsBase = unstable_cache(
       makers: makerCount[0]?.value ?? 0,
       launchesToday: todayCount[0]?.value ?? 0,
       queuedNext: queuedCount[0]?.value ?? 0,
+      launchedTotal: launchedTotal[0]?.value ?? 0,
     }
   },
   ["home-stats-v2"],
-  { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
-)
-
-/**
- * Candidate logos for the hero wall, newest first.
- *
- * The wall used to draw from this month's launches only, which is too small a
- * pool to choose from: measured across the catalogue, 9 of 50 logos are marks
- * with a transparent background, and a single month rarely contains more than a
- * handful of them. That is why the wall read as a patchwork — not because the
- * wrong logos were picked, but because the right ones were not eligible.
- *
- * The caller ranks these by measured quality (`lib/logo-wall-quality`), so this
- * only has to return enough of them and stay cheap: `id` and `logoUrl`, no
- * joins, capped.
- */
-export async function getWallLogoCandidates(limit: number = 400) {
-  limit = clampInteger(limit, 400, 1, 1000)
-  return fetchWallLogoCandidatesBase(limit)
-}
-
-const fetchWallLogoCandidatesBase = unstable_cache(
-  async (limit: number) => {
-    return db
-      .select({ id: projectTable.id, logoUrl: projectTable.logoUrl })
-      .from(projectTable)
-      .where(
-        and(
-          sql`${projectTable.logoUrl} is not null`,
-          sql`${projectTable.logoUrl} <> ''`,
-          // Everything committed to a launch window, including the queue:
-          // a queued product's mark is as real as a launched one, and
-          // excluding the queue cost three of the nine marks that qualify.
-          sql`${projectTable.launchStatus} in (${launchStatus.LAUNCHED}, ${launchStatus.ONGOING}, ${launchStatus.SCHEDULED})`,
-        ),
-      )
-      .orderBy(desc(projectTable.scheduledLaunchDate))
-      .limit(limit)
-  },
-  ["wall-logo-candidates-v1"],
   { revalidate: 3600, tags: [HOME_PROJECTS_TAG] },
 )
 

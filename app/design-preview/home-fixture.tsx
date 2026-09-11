@@ -98,11 +98,7 @@ const FIXTURE_PROJECTS: HomeFeedProject[] = [
 
 export const HOME_FIXTURE_DATA: HomeBodyData = {
   projects: FIXTURE_PROJECTS,
-  wallProjects: FIXTURE_PROJECTS.map((project) => ({
-    id: project.id,
-    logoUrl: project.logoUrl,
-  })),
-  stats: { launchesThisMonth: 1248, makers: 85420, launchesToday: 128, queuedNext: 12 },
+  stats: { launchesThisMonth: 1248, makers: 85420, launchedTotal: 3120 },
   community: [
     {
       id: 101,
@@ -207,8 +203,7 @@ export const HOME_FIXTURE_LABELS: HomeBodyLabels = {
     primaryCta: "Submit your project",
     secondaryCta: "Explore today's launches",
     joinMakers: "Join 85,420 makers",
-    launchedToday: "128 launched today",
-    queuedNext: "12 queued",
+    launchedTotal: "3,120 products launched",
   },
   heading: "Best products launching today",
   feedNote: "Weekly and monthly winners earn badges and are featured in our newsletter.",

@@ -109,8 +109,7 @@
         "primaryCta": "提交项目",
         "secondaryCta": "看今日新上架",
         "joinMakers": "已有 {count} 位创作者加入",
-        "launchedToday": "{count} 个今日上架",
-        "queuedNext": "{count} 个排队中"
+        "launchedTotal": "已上架 {count} 个产品"
       },
       "tabs": {
         "daily": "日榜",
