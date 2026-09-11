@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SerifHeading } from "@/components/ds/serif-heading"
 import { ProjectCardButtons } from "@/components/home/project-card-buttons"
-import { RankedRow } from "@/components/home/v2/ranked-row"
+import { RankedRow, RankedRowSkeleton } from "@/components/home/v2/ranked-row"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
 import { BreadcrumbSchema, ItemListSchema } from "@/components/seo/structured-data"
 import { getProjectsByTag, getTagBySlug } from "@/app/actions/tags"
@@ -50,24 +50,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
     },
   }
-}
-
-function ProjectCardSkeleton() {
-  return (
-    <div className="mx-3 animate-pulse rounded-xl border border-zinc-100 bg-white/70 p-3 shadow-sm sm:mx-4 sm:p-4 dark:border-zinc-800/50 dark:bg-zinc-900/30">
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="flex-shrink-0">
-          <div className="bg-muted h-12 w-12 rounded-md sm:h-14 sm:w-14"></div>
-        </div>
-        <div className="min-w-0 flex-grow">
-          <div className="flex flex-col">
-            <div className="bg-muted mb-2 h-5 w-1/3 rounded"></div>
-            <div className="bg-muted h-4 w-2/3 rounded"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 async function TagData({
@@ -176,7 +158,7 @@ async function TagData({
         </DropdownMenu>
       </div>
 
-      {totalCount === 0 ? (
+      {paginatedProjects.length === 0 ? (
         <div className="text-muted-foreground border-border bg-card rounded-lg border border-dashed py-8 text-center text-sm">
           {tTags("emptyTitle")}
           <p className="mt-2">{tTags("emptyHint")}</p>
@@ -282,7 +264,7 @@ export default async function TagPage({ params, searchParams }: Props) {
                   {Array(5)
                     .fill(0)
                     .map((_, i) => (
-                      <ProjectCardSkeleton key={i} />
+                      <RankedRowSkeleton key={i} />
                     ))}
                 </div>
               }

@@ -7,7 +7,6 @@ import {
   blogArticle,
   fumaComments,
   launchStatus,
-  launchType,
   project as projectTable,
   upvote,
   user as userTable,
@@ -282,60 +281,6 @@ export async function getMonthBestProjects(limit: number = PROJECT_LIMITS_VARIAB
     base.map((p) => p.id),
   )
   return withUserUpvoted(base, upvoted)
-}
-
-export async function getFeaturedPremiumProjects() {
-  const projects = await db.query.project.findMany({
-    where: and(
-      eq(projectTable.featuredOnHomepage, true),
-      eq(projectTable.launchType, launchType.PREMIUM_PLUS),
-      eq(projectTable.launchStatus, launchStatus.ONGOING),
-    ),
-    columns: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      logoUrl: true,
-      websiteUrl: true,
-      launchStatus: true,
-      launchType: true,
-      dailyRanking: true,
-    },
-    limit: 3,
-    orderBy: [desc(projectTable.createdAt)],
-  })
-  return projects
-}
-
-export async function getYesterdayTopProjects() {
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  yesterday.setHours(0, 0, 0, 0)
-  const yesterdayEnd = new Date(yesterday)
-  yesterdayEnd.setHours(23, 59, 59, 999)
-
-  const topProjects = await db
-    .select({
-      id: projectTable.id,
-      name: projectTable.name,
-      slug: projectTable.slug,
-      logoUrl: projectTable.logoUrl,
-      dailyRanking: projectTable.dailyRanking,
-    })
-    .from(projectTable)
-    .where(
-      and(
-        eq(projectTable.launchStatus, launchStatus.LAUNCHED),
-        sql`${projectTable.dailyRanking} IS NOT NULL`,
-        sql`${projectTable.scheduledLaunchDate} >= ${yesterday.toISOString()}`,
-        sql`${projectTable.scheduledLaunchDate} <= ${yesterdayEnd.toISOString()}`,
-      ),
-    )
-    .orderBy(projectTable.dailyRanking)
-    .limit(3)
-
-  return topProjects
 }
 
 export async function getWinnersByDate(date: Date) {

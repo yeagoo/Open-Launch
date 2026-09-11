@@ -38,6 +38,36 @@ interface RankedRowProps {
 }
 
 /**
+ * Loading placeholder for `RankedRow`, kept in the same file on purpose.
+ *
+ * The skeletons it replaces described the deleted `ProjectCard` — a bordered
+ * card with a 48/56px logo — long after the real row had become a borderless
+ * `<li>` with a 40px logo, so the list visibly reflowed when data arrived.
+ * Living next to the row is what keeps the two from drifting apart again.
+ */
+export function RankedRowSkeleton({ withActions = true }: { withActions?: boolean } = {}) {
+  return (
+    <li className="flex animate-pulse items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3 px-2 py-3 sm:gap-4 sm:px-3">
+        <span className="bg-home-surface-muted border-home-hairline rounded-home-pill h-6 min-w-6 border" />
+        <span className="bg-home-surface-muted border-home-hairline size-10 flex-shrink-0 rounded-[10px] border" />
+        <div className="min-w-0 flex-1">
+          <div className="bg-muted h-4 w-1/3 rounded" />
+          <div className="bg-muted mt-1.5 h-3 w-2/3 rounded" />
+          <div className="bg-muted rounded-home-pill mt-1.5 h-5 w-24 rounded" />
+        </div>
+      </div>
+      {withActions && (
+        <div className="flex flex-shrink-0 items-center gap-2 pr-2 sm:pr-3">
+          <span className="bg-muted h-11 w-11 rounded-lg border border-dashed" />
+          <span className="bg-muted hidden h-11 w-11 rounded-lg border border-dashed sm:block" />
+        </div>
+      )}
+    </li>
+  )
+}
+
+/**
  * One row of the home feed: rank, logo, name, one-liner, category chips and the
  * upvote score. Mirrors the reference layout's list item, including the mobile
  * reflow — the review chip is the first thing to go on narrow screens, because
