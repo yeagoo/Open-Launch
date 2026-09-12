@@ -452,7 +452,7 @@ AND timestamp >= CURRENT_DATE;
 
 - [ProductHunt 自动导入](./PRODUCTHUNT_AUTO_IMPORT.md)
 - [Cron 定时任务配置](./docs/cursor/CRON_SETUP_GUIDE.md)
-- [环境变量配置](./env.example.txt)
+- [环境变量配置](./.env.example)
 - [点赞模拟](./SIMULATE_UPVOTES.md)
 
 ## ❓ 常见问题

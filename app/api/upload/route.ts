@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import type { Metadata } from "sharp"
 
 import { auth } from "@/lib/auth"
+import { logger } from "@/lib/observability/structured-logger"
 import { uploadFileToR2 } from "@/lib/r2-client"
 import { checkByteBudget, checkRateLimit } from "@/lib/rate-limit"
 
@@ -227,7 +228,7 @@ export async function POST(request: NextRequest) {
       uploadedBy: user.id,
     })
   } catch (error) {
-    console.error("Upload error:", error)
+    logger.error("upload_failed", { error, route: "/api/upload" })
     if (error instanceof PayloadTooLargeError) {
       return NextResponse.json({ error: error.message }, { status: 413 })
     }

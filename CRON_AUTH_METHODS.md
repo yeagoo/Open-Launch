@@ -86,4 +86,4 @@ curl -v -X GET "https://www.aat.ee/api/cron/dispatch" \
 
 - [CRON_JOB_ORG_SETUP.md](./CRON_JOB_ORG_SETUP.md) - 完整配置指南
 - [CRON_QUICK_REFERENCE.md](./CRON_QUICK_REFERENCE.md) - 快速参考卡片
-- [env.example.txt](./env.example.txt) - 环境变量示例
+- [.env.example](./.env.example) - 环境变量示例

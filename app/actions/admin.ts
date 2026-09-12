@@ -5,12 +5,13 @@ import { revalidateTag } from "next/cache"
 import { db } from "@/drizzle/db"
 import { category, project, user } from "@/drizzle/db/schema"
 import { addDays, format } from "date-fns"
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm"
 
 import { queryAdminUsersPage } from "@/lib/admin-user-pagination"
 import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
 import { countInt } from "@/lib/db-utils"
+import { logger } from "@/lib/observability/structured-logger"
 import { requireAdmin } from "@/lib/server-auth"
 
 import { getLaunchAvailabilityRange } from "./launch"
@@ -148,7 +149,7 @@ export async function addCategory(name: string) {
     revalidateTag(TOP_CATEGORIES_TAG, "max")
     return { success: true }
   } catch (error) {
-    console.error("Error adding category:", error)
+    logger.error("admin_category_create_failed", { error })
     if (error instanceof Error && error.message.includes("unique constraint")) {
       return { success: false, error: "This category already exists" }
     }
@@ -220,7 +221,10 @@ export async function deleteProject(projectId: string) {
     await db.delete(project).where(eq(project.id, projectId))
     return { success: true }
   } catch (error) {
-    console.error("Error deleting project:", error)
+    logger.error("admin_project_delete_failed", {
+      error,
+      context: { projectId },
+    })
     return { success: false, error: "Failed to delete project" }
   }
 }
@@ -247,7 +251,7 @@ export async function getPaidProjects() {
     })
     .from(project)
     .leftJoin(user, eq(project.createdBy, user.id))
-    .where(sql`${project.launchType} IN ('premium', 'premium_plus')`)
+    .where(inArray(project.launchType, ["premium", "premium_plus"]))
     .orderBy(desc(project.updatedAt))
 
   // Get statistics

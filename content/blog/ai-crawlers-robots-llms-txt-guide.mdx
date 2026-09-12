@@ -1,0 +1,185 @@
+---
+slug: ai-crawlers-robots-llms-txt-guide
+title: "The 2026 Founder's Guide to AI Crawlers: robots.txt, llms.txt, and Getting Cited"
+description: "How AI crawlers actually reach your site, what belongs in robots.txt and llms.txt, and the on-page signals that decide whether an assistant can quote you."
+metaTitle: "AI Crawlers, robots.txt & llms.txt: A 2026 Founder's Guide"
+metaDescription: "A practical guide to AI crawlers in 2026: disambiguating GPTBot, ClaudeBot and friends, writing robots.txt rules that allow citation, serving an llms.txt, and the page-level signals that get you quoted."
+image: "/images/blog-covers/ai-crawlers-robots-llms-txt-guide.webp"
+author: "aat.ee Team"
+tags: ["GEO", "AIEO", "SEO", "Technical SEO", "AI Crawlers"]
+publishedAt: "2026-07-13T00:00:00Z"
+---
+
+**Getting cited by an AI assistant is a crawler problem before it is a content problem: if the bot cannot fetch and parse the page, no amount of good writing will show up in an answer.** The good news is that the technical layer is small — a handful of robots.txt rules, optionally an `llms.txt`, and a set of page-level signals that make your content trivially quotable. This guide covers exactly that, in the order you should do it.
+
+It is written from experience running these files in production on aat.ee, including the AI-crawler rules and `llms.txt` that serve this site.
+
+## How an AI assistant ends up quoting you
+
+There are two paths, and you should optimize for both:
+
+1. **Live retrieval.** The assistant searches or fetches pages at answer time. This is where crawlability, freshness, and extractable structure decide everything. If your page is blocked, it cannot be retrieved.
+2. **Training data.** The association "category → leading products" was learned from text the model was trained on. Products mentioned often, on credible sources, in clear language become defaults the model reaches for. This path is slower and less controllable, and it is why consistency across the web matters.
+
+Live retrieval is the one you can influence this week. Start there.
+
+## Step 1: Let the AI crawlers in
+
+The first failure is silent over-blocking. Many sites disallow "unknown bots" or copy a robots.txt that blocks AI user agents — then wonder why they are never mentioned. Decide deliberately.
+
+### Know who is who
+
+The critical distinction: **training crawlers** and **live-fetch agents** are separate user agents, and blocking one does not block the other.
+
+| User agent        | What it does                                                  | If you block it                                                |
+| ----------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
+| `GPTBot`          | OpenAI training crawler                                       | You are excluded from future training data                     |
+| `ChatGPT-User`    | Live fetch when a user's prompt needs a page                  | ChatGPT cannot read your page in answers that browse           |
+| `ClaudeBot`       | Anthropic crawling                                            | Reduced training and retrieval coverage                        |
+| `Claude-User`     | Live fetch triggered by a Claude user                         | Claude cannot read the page on demand                          |
+| `PerplexityBot`   | Perplexity's crawler                                          | You are absent from Perplexity's sourced answers               |
+| `Google-Extended` | Controls Gemini/Vertex training use of Google-crawled content | Google Search still works, but Gemini training use is disabled |
+| `CCBot`           | Common Crawl, a corpus many models train on                   | Excluded from a widely used open corpus                        |
+
+If your goal is to be recommended, the default should be **allow** for both classes. If you have a specific reason to refuse training while still being citable in live answers, block the training agents (`GPTBot`, `ClaudeBot`, `CCBot`, `Google-Extended`) and explicitly allow the live-fetch agents (`ChatGPT-User`, `Claude-User`, `PerplexityBot`). That is a coherent position — just make it on purpose.
+
+### A working robots.txt pattern
+
+Block the paths you must (private app surfaces, admin, internal tooling) and let everything else be crawled. Keep the same private-path list for AI agents as for everyone else, and declare your sitemap:
+
+```
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /settings/
+Sitemap: https://example.com/sitemap.xml
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Crawl-delay: 10
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Crawl-delay: 10
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Crawl-delay: 10
+```
+
+Two notes that save real debugging time:
+
+- **Test the live file, not the source.** Fetch `https://yoursite.com/robots.txt` in a browser and confirm the rendered output — most frameworks generate it from code, and a bug in that code is invisible until you look.
+- **A `Crawl-delay` is a request, not a guarantee.** It is still worth setting a polite value: aggressive crawling of a small site is how you end up rate-limited or blocked by your own host.
+
+### One thing to remove
+
+If you have a rule that disallows a URL pattern and you are not sure why it is there, check whether it is blocking an AI agent before you leave it in. Inherited robots.txt rules are one of the most common causes of "we are indexed in Google but never named by ChatGPT."
+
+## Step 2: Serve an llms.txt (if it earns its place)
+
+`llms.txt` is a proposed convention, not a standard: a Markdown file at `/llms.txt` that gives models a curated map of your site — what you are, your most important pages, and what may be crawled and reused. There is no guarantee any given assistant reads it, and you should not expect it to substitute for crawlable pages.
+
+It is still worth publishing, for two reasons: it costs about an hour, and it is the only place where you can state, in plain language, **how you want your content attributed**. That is useful to any system that chooses to read it, and it is a clean public statement of your crawling policy.
+
+A useful `llms.txt` has five parts:
+
+```
+# llms.txt - AI/LLM Crawling Instructions for example.com
+
+# About
+> example.com is a [one-line description of what the site is and who it is for].
+
+# Key pages
+- [Product directory](https://example.com/categories)
+- [Pricing](https://example.com/pricing)
+- [Blog](https://example.com/blog)
+- [Latest launches](https://example.com/trending)
+
+# Crawling permissions
+## Allowed
+- Homepage, product pages, blog articles, categories, legal pages
+## Restricted
+- API endpoints, dashboard, settings, admin areas
+
+# Usage policy
+- AI training: with attribution
+- Indexing and retrieval: allowed
+- Attribution: cite "according to example.com"
+
+# Contact
+- Website: https://example.com
+- Sitemap: https://example.com/sitemap.xml
+```
+
+Adapt it to your real routes. The most common mistake is publishing a template that describes a site you do not have — stale paths are worse than no file.
+
+### Do not let llms.txt become an excuse
+
+The convention is seductive because it feels like a switch you can flip. It is not. A model that retrieves live pages will read your _pages_, not your manifest. Publish `llms.txt` for the attribution clarity, then go do the page-level work.
+
+## Step 3: Make pages quotable
+
+This is where citations are actually won. Retrieval systems extract self-contained statements, so structure your pages to hand them over.
+
+- **One-sentence answer at the top.** The first paragraph after the title should define the thing in a single sentence, in plain declarative language. That sentence is what gets lifted into an answer.
+- **Question-shaped headings.** Use the phrasing people actually type — "How much does X cost?", "Is X better than Y?" — so the heading and the answer align.
+- **Comparison tables.** Tables map directly onto comparison questions and are disproportionately quoted. Keep them narrow (3–4 columns) and complete.
+- **A real FAQ.** Five to eight genuine questions with direct answers. Not marketing copy in question form.
+- **Dates and versions.** "As of July 2026" tells a retrieval system the page is current. Undated pages compete badly against dated ones.
+- **Facts that match everywhere else.** Same product name, same one-liner, same category, same canonical URL across your site, your directory listings, and your profiles. Inconsistency lowers a model's confidence — and confident models name products.
+
+## Step 4: Give it a reason to prefer your domain
+
+Crawlability gets you considered; credibility gets you cited. The inputs are unglamorous and they compound:
+
+- **Permanent, relevant listings.** Structured directory pages are easy to parse and frequently used as sources ([dofollow directory backlinks](/blog/dofollow-directory-backlinks-saas)).
+- **Mentions on authoritative, on-topic sites.** Where a mention appears carries more weight than how many exist ([domain rating and AI visibility](/blog/domain-rating-dr-ai-visibility)).
+- **Consistency across pages.** The same facts everywhere, so nothing has to be reconciled.
+- **Freshness.** Update your key pages on a real schedule; retrieval favors current content ([the GEO/AIEO playbook](/blog/geo-aieo-get-recommended-by-ai)).
+
+## A 90-minute checklist
+
+- [ ] Fetch `/robots.txt` live and read it as a crawler would
+- [ ] Confirm training and live-fetch agents are allowed (or blocked) on purpose
+- [ ] Verify `/sitemap.xml` exists, is valid, and lists your real pages
+- [ ] Publish or update `/llms.txt` with accurate paths and an attribution line
+- [ ] Add a one-sentence answer to the top of your five most important pages
+- [ ] Add one comparison table and one FAQ to your main product page
+- [ ] Check that your name, one-liner, and category match across site, listings, and profiles
+
+Do that once, and the ongoing work is just freshness.
+
+## FAQ
+
+**Do I need llms.txt to be cited by AI assistants?**
+No. It is an optional convention with no guaranteed readership. Crawlable pages and extractable content are what actually get you cited; treat `llms.txt` as a low-cost bonus for attribution clarity.
+
+**Should I block GPTBot or ClaudeBot?**
+Only if you deliberately do not want your content used for training. Blocking training crawlers reduces how often models learn your category association; it generally does not prevent live-fetch agents from reading your pages in an answer. If your goal is to be recommended, allowing both is the pragmatic default.
+
+**What is the difference between ClaudeBot and Claude-User?**
+`ClaudeBot` is Anthropic's crawler, used for building and refreshing training data. `Claude-User` is the agent that fetches a page _because a person asked Claude about it right now_. Blocking the second one removes you from live answers while leaving training unaffected.
+
+**Does Google-Extended affect my search rankings?**
+No. `Google-Extended` controls whether Google-crawled content may be used for Gemini and Vertex AI training. Google Search indexing and ranking are governed by the regular Googlebot rules.
+
+**How long until I see results?**
+Live retrieval can reflect a new, indexed, well-structured page within days. Training-data associations build over months, as credible mentions accumulate across the web. That asymmetry is exactly why you do the technical work now.
+
+---
+
+_Make your site easy to cite: [list your product on aat.ee](/projects/submit) for a permanent dofollow listing that crawlers and assistants can actually read, or [compare the directory & GEO tiers](/pricing)._

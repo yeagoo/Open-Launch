@@ -200,7 +200,7 @@ openssl rand -base64 32
 
 ```bash
 # 复制环境变量文件
-cp env.example.txt .env
+cp .env.example .env
 
 # 编辑 .env 文件
 nano .env
@@ -688,7 +688,7 @@ sudo systemctl stop cron
 
 ## 📚 相关文档
 
-- **环境变量配置**: `env.example.txt`
+- **环境变量配置**: `.env.example`
 - **数据库迁移**: `drizzle/migrations/add_bot_and_producthunt.sql`
 - **API 客户端**: `lib/producthunt.ts`
 - **Cron 端点**: `app/api/cron/import-producthunt/route.ts`

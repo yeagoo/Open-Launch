@@ -386,7 +386,7 @@ Header: Authorization: Bearer <CRON_SECRET>
 
 - **API 端点实现**: `app/api/cron/import-producthunt/route.ts`
 - **ProductHunt 客户端**: `lib/producthunt.ts`
-- **环境变量配置**: `env.example.txt`
+- **环境变量配置**: `.env.example`
 - **完整指南**: `PRODUCTHUNT_AUTO_IMPORT.md`
 
 ---

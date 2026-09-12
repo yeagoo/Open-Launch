@@ -159,7 +159,7 @@ bash scripts/setup-cron.sh
 - **Zeabur 环境 Cron 配置**: [PRODUCTHUNT_CRON_ZEABUR.md](./PRODUCTHUNT_CRON_ZEABUR.md)
 - **完整安装指南**: [PRODUCTHUNT_AUTO_IMPORT.md](./PRODUCTHUNT_AUTO_IMPORT.md)
 - **快速开始**: [PRODUCTHUNT_QUICKSTART.md](./PRODUCTHUNT_QUICKSTART.md)
-- **环境变量配置**: [env.example.txt](./env.example.txt)
+- **环境变量配置**: [.env.example](./.env.example)
 
 ---
 

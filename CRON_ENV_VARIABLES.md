@@ -328,7 +328,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 - [CRON_AUTH_METHODS.md](./CRON_AUTH_METHODS.md) - 认证方式详解
 - [CRON_JOB_ORG_SETUP.md](./CRON_JOB_ORG_SETUP.md) - 完整配置指南
 - [CRON_QUICK_REFERENCE.md](./CRON_QUICK_REFERENCE.md) - 快速参考
-- [env.example.txt](./env.example.txt) - 环境变量示例
+- [.env.example](./.env.example) - 环境变量示例
 
 ---
 

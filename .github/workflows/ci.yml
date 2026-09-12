@@ -78,6 +78,9 @@ jobs:
       - name: TypeScript
         run: bunx tsc --noEmit
 
+      - name: Repository contracts
+        run: bun run repo:contracts
+
       - name: Strict indexed-access slice
         run: bun run typecheck:strict-indexes
 

@@ -2,11 +2,11 @@
 
 ## 🎯 服务概览
 
-| 服务 | 用途 | 是否必需 | 免费额度 |
-|-----|------|---------|---------|
-| **Cloudflare Turnstile** | Bot 防护 | 推荐 | ✅ 完全免费 |
-| **Discord Webhook** | 通知推送 | 可选 | ✅ 完全免费 |
-| **Resend** | 邮件发送 | 必需 | ✅ 3,000封/月 |
+| 服务                     | 用途     | 是否必需 | 免费额度      |
+| ------------------------ | -------- | -------- | ------------- |
+| **Cloudflare Turnstile** | Bot 防护 | 推荐     | ✅ 完全免费   |
+| **Discord Webhook**      | 通知推送 | 可选     | ✅ 完全免费   |
+| **Resend**               | 邮件发送 | 必需     | ✅ 3,000封/月 |
 
 ---
 
@@ -14,13 +14,13 @@
 
 ### 快速配置（5 分钟）
 
-| 步骤 | 操作 | 链接 |
-|-----|------|------|
-| 1️⃣ | 访问 Cloudflare Dashboard | https://dash.cloudflare.com/ |
-| 2️⃣ | 进入 Turnstile | 左侧菜单 > Turnstile |
-| 3️⃣ | 添加站点 | Add site |
-| 4️⃣ | 配置站点 | 填写名称和域名 |
-| 5️⃣ | 复制密钥 | Site Key + Secret Key |
+| 步骤 | 操作                      | 链接                         |
+| ---- | ------------------------- | ---------------------------- |
+| 1️⃣   | 访问 Cloudflare Dashboard | https://dash.cloudflare.com/ |
+| 2️⃣   | 进入 Turnstile            | 左侧菜单 > Turnstile         |
+| 3️⃣   | 添加站点                  | Add site                     |
+| 4️⃣   | 配置站点                  | 填写名称和域名               |
+| 5️⃣   | 复制密钥                  | Site Key + Secret Key        |
 
 ### 配置信息
 
@@ -31,11 +31,11 @@ TURNSTILE_SECRET_KEY=0x4AAAAAAAAAAAA
 
 ### 站点配置
 
-| 字段 | 开发环境 | 生产环境 |
-|-----|---------|---------|
-| **Site name** | `Open Launch (Dev)` | `Open Launch` |
-| **Domain** | `localhost` | `yourdomain.com` |
-| **Widget Mode** | Managed | Managed |
+| 字段            | 开发环境            | 生产环境         |
+| --------------- | ------------------- | ---------------- |
+| **Site name**   | `Open Launch (Dev)` | `Open Launch`    |
+| **Domain**      | `localhost`         | `yourdomain.com` |
+| **Widget Mode** | Managed             | Managed          |
 
 ### 使用场景
 
@@ -58,13 +58,13 @@ http://localhost:3000/sign-up
 
 ### 快速配置（10 分钟）
 
-| 步骤 | 操作 | 说明 |
-|-----|------|------|
-| 1️⃣ | 创建 Discord 服务器 | 如果没有的话 |
-| 2️⃣ | 创建频道 #comments | 用于评论通知 |
-| 3️⃣ | 创建频道 #launches | 用于发布通知 |
-| 4️⃣ | 配置 Webhook (评论) | 右键频道 > 编辑 > 集成 > Webhooks |
-| 5️⃣ | 配置 Webhook (发布) | 重复步骤 4 |
+| 步骤 | 操作                | 说明                              |
+| ---- | ------------------- | --------------------------------- |
+| 1️⃣   | 创建 Discord 服务器 | 如果没有的话                      |
+| 2️⃣   | 创建频道 #comments  | 用于评论通知                      |
+| 3️⃣   | 创建频道 #launches  | 用于发布通知                      |
+| 4️⃣   | 配置 Webhook (评论) | 右键频道 > 编辑 > 集成 > Webhooks |
+| 5️⃣   | 配置 Webhook (发布) | 重复步骤 4                        |
 
 ### 配置信息
 
@@ -101,6 +101,7 @@ curl -X POST "YOUR_DISCORD_LAUNCH_WEBHOOK_URL" \
 ### 通知示例
 
 **评论通知：**
+
 ```
 🟢 New Comment
 ━━━━━━━━━━━━━━━
@@ -111,6 +112,7 @@ User: John Doe (john@example.com)
 ```
 
 **发布通知：**
+
 ```
 🚀 New Project Launch Scheduled
 ━━━━━━━━━━━━━━━
@@ -127,13 +129,13 @@ Website: https://example.com
 
 ### 快速配置（15 分钟）
 
-| 步骤 | 操作 | 时间 |
-|-----|------|------|
-| 1️⃣ | 注册 Resend | 2 分钟 |
-| 2️⃣ | 添加域名 | 1 分钟 |
-| 3️⃣ | 配置 DNS 记录 | 5 分钟 |
-| 4️⃣ | 等待验证 | 5-10 分钟 |
-| 5️⃣ | 创建 API 密钥 | 2 分钟 |
+| 步骤 | 操作          | 时间      |
+| ---- | ------------- | --------- |
+| 1️⃣   | 注册 Resend   | 2 分钟    |
+| 2️⃣   | 添加域名      | 1 分钟    |
+| 3️⃣   | 配置 DNS 记录 | 5 分钟    |
+| 4️⃣   | 等待验证      | 5-10 分钟 |
+| 5️⃣   | 创建 API 密钥 | 2 分钟    |
 
 ### 配置信息
 
@@ -146,19 +148,19 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 **需要添加的记录：**
 
-| 类型 | 名称 | 值 | 优先级 |
-|------|------|---|-------|
-| **TXT** | `@` | `resend-verification=xxx...` | - |
-| **MX** | `@` | `feedback-smtp.resend.com` | 10 |
-| **TXT** | `resend._domainkey` | `p=MIGfMA0GC...` | - |
+| 类型    | 名称                | 值                           | 优先级 |
+| ------- | ------------------- | ---------------------------- | ------ |
+| **TXT** | `@`                 | `resend-verification=xxx...` | -      |
+| **MX**  | `@`                 | `feedback-smtp.resend.com`   | 10     |
+| **TXT** | `resend._domainkey` | `p=MIGfMA0GC...`             | -      |
 
 ### 域名验证状态
 
-| 状态 | 说明 | 下一步 |
-|-----|------|--------|
-| 🟡 Pending | DNS 记录未生效 | 等待（最多 48 小时） |
-| 🟢 Verified | 域名已验证 | 可以发送邮件 |
-| 🔴 Failed | 验证失败 | 检查 DNS 配置 |
+| 状态        | 说明           | 下一步               |
+| ----------- | -------------- | -------------------- |
+| 🟡 Pending  | DNS 记录未生效 | 等待（最多 48 小时） |
+| 🟢 Verified | 域名已验证     | 可以发送邮件         |
+| 🔴 Failed   | 验证失败       | 检查 DNS 配置        |
 
 ### 测试
 
@@ -190,6 +192,7 @@ from: "Open Launch <onboarding@resend.dev>"
 ```
 
 ⚠️ **限制**：
+
 - 只能发送到注册邮箱
 - 不能用于生产环境
 - 可能进入垃圾箱
@@ -271,25 +274,25 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 ## 🚨 常见错误速查
 
-| 错误信息 | 服务 | 解决方案 |
-|---------|------|---------|
-| "Invalid site key" | Turnstile | 检查 Site Key 是否正确 |
-| "Domain not allowed" | Turnstile | 在站点配置中添加当前域名 |
-| "Webhook execution failed" | Discord | 检查 Webhook URL 是否完整 |
-| "Unauthorized" | Discord | Webhook 可能已被删除，重新创建 |
-| "Domain not verified" | Resend | 检查 DNS 记录，等待验证 |
-| "API key invalid" | Resend | 重新生成 API 密钥 |
-| "Recipient not allowed" | Resend | 未验证域名时只能发送到注册邮箱 |
+| 错误信息                   | 服务      | 解决方案                       |
+| -------------------------- | --------- | ------------------------------ |
+| "Invalid site key"         | Turnstile | 检查 Site Key 是否正确         |
+| "Domain not allowed"       | Turnstile | 在站点配置中添加当前域名       |
+| "Webhook execution failed" | Discord   | 检查 Webhook URL 是否完整      |
+| "Unauthorized"             | Discord   | Webhook 可能已被删除，重新创建 |
+| "Domain not verified"      | Resend    | 检查 DNS 记录，等待验证        |
+| "API key invalid"          | Resend    | 重新生成 API 密钥              |
+| "Recipient not allowed"    | Resend    | 未验证域名时只能发送到注册邮箱 |
 
 ---
 
 ## 💰 成本对比
 
-| 服务 | 免费额度 | 付费计划起步价 | 推荐 |
-|-----|---------|---------------|------|
-| **Turnstile** | 无限制 | N/A (完全免费) | ⭐⭐⭐⭐⭐ |
-| **Discord** | 无限制 | N/A (完全免费) | ⭐⭐⭐⭐⭐ |
-| **Resend** | 3,000封/月 | $20/月 (50,000封) | ⭐⭐⭐⭐ |
+| 服务          | 免费额度   | 付费计划起步价    | 推荐       |
+| ------------- | ---------- | ----------------- | ---------- |
+| **Turnstile** | 无限制     | N/A (完全免费)    | ⭐⭐⭐⭐⭐ |
+| **Discord**   | 无限制     | N/A (完全免费)    | ⭐⭐⭐⭐⭐ |
+| **Resend**    | 3,000封/月 | $20/月 (50,000封) | ⭐⭐⭐⭐   |
 
 对于中小型项目，完全可以免费使用这些服务！
 
@@ -297,11 +300,11 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 ## ⏱️ 预计配置时间
 
-| 服务 | 首次配置 | 更新配置 |
-|-----|---------|---------|
-| **Turnstile** | 5 分钟 | 2 分钟 |
-| **Discord** | 10 分钟 | 3 分钟 |
-| **Resend** | 15-30 分钟* | 5 分钟 |
+| 服务          | 首次配置    | 更新配置 |
+| ------------- | ----------- | -------- |
+| **Turnstile** | 5 分钟      | 2 分钟   |
+| **Discord**   | 10 分钟     | 3 分钟   |
+| **Resend**    | 15-30 分钟* | 5 分钟   |
 
 *包含 DNS 传播等待时间
 
@@ -313,21 +316,24 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 
 - 📖 **完整配置指南**: `SERVICES_SETUP_GUIDE.md`
 - 📖 **所有环境变量**: `ENV_SETUP_GUIDE.md`
-- 📖 **环境变量模板**: `env.example.txt`
+- 📖 **环境变量模板**: `../../.env.example`
 
 ---
 
 ## 🔗 快速链接
 
 ### Cloudflare Turnstile
+
 - Dashboard: https://dash.cloudflare.com/
 - 文档: https://developers.cloudflare.com/turnstile/
 
 ### Discord
+
 - 开发者门户: https://discord.com/developers
 - Webhook 文档: https://discord.com/developers/docs/resources/webhook
 
 ### Resend
+
 - Dashboard: https://resend.com/
 - 文档: https://resend.com/docs
 - 域名验证: https://resend.com/domains
@@ -339,5 +345,3 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 ```bash
 bun dev  # 或 npm run dev
 ```
-
-

@@ -5,7 +5,7 @@
 ## 🚀 快速开始
 
 1. **环境变量总览**: `ENV_SETUP_GUIDE.md` - 所有环境变量的配置指南
-2. **环境变量模板**: `env.example.txt` - 可直接复制的配置模板
+2. **环境变量模板**: `../../.env.example` - 可直接复制的配置模板
 3. **故障排查**: `DEPLOYMENT_TROUBLESHOOTING.md` - 遇到问题时查看
 
 ---

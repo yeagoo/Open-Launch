@@ -1,7 +1,7 @@
 # Open-Launch
 
 [![License: Open Launch](https://img.shields.io/badge/License-Open_Launch-yellow.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.12-black?logo=next.js)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19.2.7-blue?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue?logo=typescript)](https://www.typescriptlang.org)
 [![Contributors](https://img.shields.io/github/contributors/yeagoo/Open-Launch)](https://github.com/yeagoo/Open-Launch/graphs/contributors)
@@ -112,16 +112,17 @@ Visit `http://localhost:3000` to see your app running.
 
 ## 📚 Documentation
 
-完整的配置和部署文档位于 [`docs/cursor/`](./docs/cursor/) 目录：
+Configuration and operations guides are currently available in Chinese under
+[`docs/cursor/`](./docs/cursor/):
 
-- **📖 [配置文档总索引](./docs/cursor/CONFIGURATION_INDEX.md)** - 从这里开始
-- **🚀 [快速开始指南](./docs/cursor/README.md)** - 新手指南
-- **⚙️ [环境变量配置](./docs/cursor/ENV_SETUP_GUIDE.md)** - 详细的环境变量设置
-- **🚢 [当前生产运行手册](./docs/production-runtime.md)** - standalone、systemd/Docker 与 cron
-- **🛠️ [管理员设置](./docs/cursor/ADMIN_SETUP_GUIDE.md)** - 设置管理员账号
-- **🔧 [故障排查](./docs/cursor/DEPLOYMENT_TROUBLESHOOTING.md)** - 常见问题解决
+- **📖 [Configuration index](./docs/cursor/CONFIGURATION_INDEX.md)** — start here
+- **🚀 [Quick-start guide](./docs/cursor/README.md)** — first deployment
+- **⚙️ [Environment setup](./docs/cursor/ENV_SETUP_GUIDE.md)** — configuration reference
+- **🚢 [Production runtime checklist](./docs/production-runtime.md)** — standalone, systemd/Docker, and cron
+- **🛠️ [Admin setup](./docs/cursor/ADMIN_SETUP_GUIDE.md)** — administrator account setup
+- **🔧 [Troubleshooting](./docs/cursor/DEPLOYMENT_TROUBLESHOOTING.md)** — common deployment issues
 
-所有文档均为中文，包含详细的步骤说明和预计配置时间。
+The English Quick Start above covers the minimum local setup.
 
 ## Tech Stack
 
@@ -157,12 +158,9 @@ Visit `http://localhost:3000` to see your app running.
 
 ## Deployment
 
-Open Launch is deployed to `8.210.175.190` through
-`/home/ivmm/tools/deploy-tools` as a Next.js standalone artifact in a managed
-Docker Compose service. See the
-[production deployment runbook](./docs/production-deployment-runbook.md) for
-the exact SSH connection, managed paths, safety gates, and production
-verification, and the
+Open Launch is packaged as a Next.js standalone artifact and can run in a
+managed Docker Compose service. Keep host-specific SSH connection details and
+managed paths in private operator documentation. See the
 [production runtime checklist](./docs/production-runtime.md) for application
 runtime requirements.
 

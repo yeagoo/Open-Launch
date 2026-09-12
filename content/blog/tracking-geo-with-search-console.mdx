@@ -1,0 +1,126 @@
+---
+slug: tracking-geo-with-search-console
+title: "How to Track GEO: Using Google Search Console as an AI-Visibility Proxy"
+description: "There is no dashboard for AI citations yet — but Search Console has lagging indicators that tell you whether the work is landing. Here is the measurement routine."
+metaTitle: "How to Track GEO & AI Visibility Without a Dashboard (2026)"
+metaDescription: "Measure GEO with Google Search Console proxies: impressions on question queries, brand-name volume, page-level citation patterns — plus the manual prompt audit that gives the direct answer."
+image: "/images/blog-covers/tracking-geo-with-search-console.webp"
+author: "aat.ee Team"
+tags: ["GEO", "AIEO", "Analytics", "SEO", "AI Visibility"]
+publishedAt: "2026-07-09T00:00:00Z"
+---
+
+**There is no Search Console for AI assistants, so GEO measurement is done in two halves: a manual prompt audit that gives you the direct answer ("are we named?"), and Google Search Console proxies that show whether the underlying signals are moving.** Do both monthly, on a fixed list of queries and prompts, and you have something better than a dashboard: a record of whether the work is compounding.
+
+This is the routine we use. It takes about 90 minutes a month and it is the only measurement approach that has survived contact with how these systems actually behave.
+
+## Why there is no reliable AI dashboard (yet)
+
+The reasons are structural, not a tooling gap someone is about to close:
+
+- **Answers are non-deterministic.** The same prompt can produce different products on different days, and personalization, location, and account history all shift the result.
+- **There is no impression data.** When ChatGPT names you, you get no log line, no click report, no referrer you can trust — most assistant traffic arrives as direct or dark social.
+- **Citations are partially opaque.** Assistants cite some sources and not others; some answers are built from training data with no live retrieval at all.
+
+Anyone selling you a precise "AI visibility score" is measuring something adjacent and calling it the thing. What you _can_ measure reliably is whether the inputs are improving — and that is what Search Console shows you.
+
+## What Search Console can and cannot tell you
+
+| Signal                          | What GSC shows                               | What it means for GEO                                                                                                                 |
+| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Impressions on question queries | Queries starting with how / what / best / vs | Models and searchers phrase things the same way — rising impressions mean your extractable content is being matched to real questions |
+| Brand-name impressions          | Searches for your product name               | A lagging indicator of being talked about and recommended                                                                             |
+| Which pages earn impressions    | Page-level performance report                | Tells you which of your assets are citation-shaped                                                                                    |
+| Query diversity                 | Number of distinct queries per page          | Broad coverage means the page answers a topic, not a keyword                                                                          |
+| Clicks and CTR                  | Standard performance data                    | Weak proxy — assistant traffic often does not show as a click at all                                                                  |
+| **AI citations**                | **Nothing**                                  | Requires the manual audit below                                                                                                       |
+| **Whether you were named**      | **Nothing**                                  | Same — manual audit                                                                                                                   |
+
+Read that table as the core discipline: Search Console tells you whether the _supply_ of citable content is working, and the manual audit tells you whether it is being _consumed_.
+
+## The four Search Console proxies worth tracking
+
+Open the Performance report, set the range to the last 3 months with a comparison against the previous period, then extract these four numbers:
+
+### 1. Question-query impressions
+
+Filter queries containing `how`, `what`, `best`, `vs`, `alternative`, or `for` (as in "for freelancers"). Track the total month over month. This is the single best proxy for whether your comparison and FAQ content is matching how people actually phrase needs — to search engines and assistants alike.
+
+### 2. Brand impressions
+
+Filter queries containing your product name. Brand search volume rises _after_ people encounter you somewhere — a directory listing, an AI answer, a newsletter. It lags by weeks, which makes it a slow but honest confirmation signal.
+
+### 3. Pages earning impressions on zero clicks
+
+Filter for pages with impressions but near-zero clicks. Pages that get shown but not clicked are often being used to _compose_ an answer rather than to be visited. That is not failure; that is the signature of a page that is being read by something that summarizes.
+
+### 4. New queries per month
+
+Export queries, diff against last month's export, count the new ones. Growing query diversity means you are being discovered for problems you did not explicitly target — a sign the content is being generalized by retrieval systems.
+
+## The manual prompt audit
+
+This is the half that gives you a straight answer. Once a month, on the same day, run the same prompts.
+
+**Build a list of 10–15 prompts** in three groups:
+
+- **Category prompts** — "what's the best [your category] tool?", "best [category] for [your audience]"
+- **Comparison prompts** — "[you] vs [competitor]", "[competitor] alternatives"
+- **Problem prompts** — the job your product does, phrased as a question a buyer would actually ask
+
+**Run each one in ChatGPT, Claude, Perplexity, and Gemini.** Use a fresh chat each time, and turn on web search where the assistant offers it — that is the mode that reflects discoverability.
+
+**Record four things per prompt, in a simple sheet:**
+
+| Field                | Why                                              |
+| -------------------- | ------------------------------------------------ |
+| Were you named?      | The headline metric                              |
+| Position             | First mention is worth more than fifth           |
+| Description accuracy | Wrong facts are worse than no mention            |
+| Sources cited        | Your next worklist — the pages the model trusted |
+
+Those cited sources are the highest-value output of the entire exercise. If an assistant answers your category question using three directory pages and one roundup, you now know exactly which four pages to get onto.
+
+## Putting it on a monthly cadence
+
+Ninety minutes, once a month, in this order:
+
+1. **Export Search Console** (last 3 months vs. previous) → log the four proxies.
+2. **Run the prompt audit** → log named / position / accuracy / sources.
+3. **Diff against last month** → note what changed, and pick one explanation.
+4. **Turn citations into work** → the pages cited most often become the month's link-building and content targets.
+5. **Refresh one page** → retrieval favors recent, updated pages. Pick your best-performing asset and genuinely improve it.
+
+Do that for six months and you will have something almost nobody has: a longitudinal record of how AI assistants talk about your product, and evidence for which channels moved it.
+
+## Where the compounding actually comes from
+
+The measurement is only useful if it points at work. In practice, the inputs that move these numbers are consistent:
+
+- **Permanent, relevant listings.** Structured directory pages are highly retrievable and heavily cited ([dofollow directory backlinks](/blog/dofollow-directory-backlinks-saas)).
+- **Category-relevant authority.** Where a mention appears matters more than how many mentions exist ([domain rating and AI visibility](/blog/domain-rating-dr-ai-visibility)).
+- **Extractable pages of your own.** A one-sentence answer at the top, a comparison table, a genuine FAQ ([the GEO/AIEO guide](/blog/geo-aieo-get-recommended-by-ai)).
+- **Consistent facts everywhere.** Same name, same one-liner, same category, same URL.
+
+Measurement tells you whether those are landing. It does not replace them.
+
+## FAQ
+
+**Is there a tool that tracks AI citations automatically?**
+Several tools attempt it, and they are useful as a starting point for the prompt list — but none produces stable, comparable numbers, because assistant answers are non-deterministic. Treat any single "AI visibility score" as directional, and keep your own audit as the source of truth.
+
+**How often should I run an AI visibility audit?**
+Monthly. Weekly is too noisy to interpret; quarterly is too slow to catch a problem before it compounds. Same day each month, identical prompt list.
+
+**Can I measure GEO purely with Search Console?**
+No. GSC shows whether your citable content is being matched to real questions, which is a strong leading indicator — but it cannot tell you whether an assistant named you. That part is manual.
+
+**Does assistant traffic show up in analytics?**
+Sometimes, as referrers from the assistant's domain, but often it does not — many users read the answer and type your brand into a new tab. Watch brand-name search impressions instead; that is where the effect surfaces.
+
+**What is the one number to watch?**
+Question-query impressions in Search Console, paired with "were we named?" from the prompt audit. The first is a leading indicator you can move this month; the second is the outcome you are actually optimizing for.
+
+---
+
+_Want the inputs that move these numbers? [List your product on aat.ee](/projects/submit) for a permanent dofollow listing, or [see the directory & GEO tiers](/pricing)._

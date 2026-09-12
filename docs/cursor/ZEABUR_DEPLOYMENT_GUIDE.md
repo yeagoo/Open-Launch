@@ -5,6 +5,7 @@
 ## 🚨 您遇到的错误分析
 
 ### 错误 1: Google OAuth 警告
+
 ```
 WARN [Better Auth]: Social provider google is missing clientId or clientSecret
 ```
@@ -16,6 +17,7 @@ WARN [Better Auth]: Social provider google is missing clientId or clientSecret
 ---
 
 ### 错误 2: 数据库表不存在
+
 ```
 error: relation "project" does not exist
 ```
@@ -64,6 +66,7 @@ error: relation "project" does not exist
 5. 点击 PostgreSQL 服务，复制 **Connection String**
 
 格式类似：
+
 ```
 postgresql://user:password@host.zeabur.internal:5432/zeabur
 ```
@@ -77,6 +80,7 @@ postgresql://user:password@host.zeabur.internal:5432/zeabur
 5. 复制 **Connection String**
 
 格式类似：
+
 ```
 redis://default:password@host.zeabur.internal:6379
 ```
@@ -123,6 +127,7 @@ BETTER_AUTH_SECRET=your_random_32_char_secret_here
 ```
 
 生成命令：
+
 ```bash
 openssl rand -base64 32
 ```
@@ -166,7 +171,6 @@ NEXT_PUBLIC_ONE_TAP_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 ```env
 STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
 NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/your_payment_link
 ```
 
@@ -300,6 +304,7 @@ bun scripts/categories.ts
 **原因**: 数据库迁移未执行
 
 **解决**:
+
 1. 确认 `DATABASE_URL` 配置正确
 2. 在 Zeabur Terminal 运行:
    ```bash
@@ -314,6 +319,7 @@ bun scripts/categories.ts
 **解决**:
 
 **选项 A**: 配置 OAuth（如果需要）
+
 ```env
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
@@ -326,7 +332,6 @@ GOOGLE_CLIENT_SECRET=...
 ```typescript
 export const auth = betterAuth({
   // ...其他配置
-  
   // 注释掉 OAuth 配置
   // socialProviders: {
   //   google: { ... },
@@ -340,6 +345,7 @@ export const auth = betterAuth({
 **原因**: R2 配置错误
 
 **解决**:
+
 1. 检查所有 `R2_*` 环境变量
 2. 验证 R2 存储桶权限
 3. 确认 `R2_PUBLIC_DOMAIN` 可访问
@@ -349,6 +355,7 @@ export const auth = betterAuth({
 **原因**: Resend 配置错误
 
 **解决**:
+
 1. 验证 `RESEND_API_KEY`
 2. 确认域名已在 Resend 验证
 3. 检查 `RESEND_FROM_EMAIL` 使用验证的域名
@@ -358,6 +365,7 @@ export const auth = betterAuth({
 **原因**: 缺少必需的环境变量
 
 **解决**:
+
 1. 检查日志找出缺少的变量
 2. 添加所有必需的环境变量：
    - `BETTER_AUTH_SECRET`
@@ -418,11 +426,11 @@ Zeabur 支持 Git 自动部署：
 
 ## 💰 Zeabur 成本估算
 
-| 服务 | 免费额度 | 付费价格 |
-|-----|---------|---------|
-| **应用** | 1 个免费实例 | $5/月起 |
-| **PostgreSQL** | 5GB 存储 | 超出后 $0.15/GB/月 |
-| **Redis** | 512MB | 超出后 $1/GB/月 |
+| 服务           | 免费额度     | 付费价格           |
+| -------------- | ------------ | ------------------ |
+| **应用**       | 1 个免费实例 | $5/月起            |
+| **PostgreSQL** | 5GB 存储     | 超出后 $0.15/GB/月 |
+| **Redis**      | 512MB        | 超出后 $1/GB/月    |
 
 **预计成本**: 小型项目约 $5-10/月
 
@@ -431,11 +439,13 @@ Zeabur 支持 Git 自动部署：
 ## 🔗 相关资源
 
 ### Zeabur
+
 - [Zeabur 文档](https://zeabur.com/docs)
 - [Zeabur Dashboard](https://dash.zeabur.com/)
 - [定价](https://zeabur.com/pricing)
 
 ### 项目文档
+
 - 环境变量配置: `ENV_SETUP_GUIDE.md`
 - R2 配置: `R2_SETUP.md`
 - OAuth 配置: `OAUTH_SETUP_GUIDE.md`
@@ -474,5 +484,3 @@ Zeabur 支持 Git 自动部署：
 ---
 
 **部署成功后，您的 Open Launch 就上线了！** 🎉
-
-

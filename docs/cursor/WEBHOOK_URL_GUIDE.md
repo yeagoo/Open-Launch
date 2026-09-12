@@ -24,12 +24,12 @@ https://yourdomain.com/api/auth/stripe/webhook
 
 **实际示例：**
 
-| 部署平台 | Webhook URL 示例 |
-|---------|-----------------|
-| Vercel | `https://yourapp.vercel.app/api/auth/stripe/webhook` |
-| Netlify | `https://yourapp.netlify.app/api/auth/stripe/webhook` |
-| 自定义域名 | `https://www.yourdomain.com/api/auth/stripe/webhook` |
-| Railway | `https://yourapp.up.railway.app/api/auth/stripe/webhook` |
+| 部署平台   | Webhook URL 示例                                         |
+| ---------- | -------------------------------------------------------- |
+| Vercel     | `https://yourapp.vercel.app/api/auth/stripe/webhook`     |
+| Netlify    | `https://yourapp.netlify.app/api/auth/stripe/webhook`    |
+| 自定义域名 | `https://www.yourdomain.com/api/auth/stripe/webhook`     |
+| Railway    | `https://yourapp.up.railway.app/api/auth/stripe/webhook` |
 
 ---
 
@@ -48,6 +48,7 @@ https://dashboard.stripe.com/webhooks
 ### 3. 填写表单
 
 **Endpoint URL:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ https://yourdomain.com/api/auth/stripe/webhook             │
@@ -55,6 +56,7 @@ https://dashboard.stripe.com/webhooks
 ```
 
 **Description (可选):**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Open Launch - Payment Webhook                               │
@@ -62,12 +64,14 @@ https://dashboard.stripe.com/webhooks
 ```
 
 **Listen to:**
+
 ```
 ⚫ Events on your account  ← 选择这个
 ⚪ Events on Connected accounts
 ```
 
 **Select events:**
+
 ```
 ☑️ checkout.session.completed
 ☑️ checkout.session.expired
@@ -84,6 +88,7 @@ Signing secret  [Reveal]  ← 点击 Reveal
 ```
 
 显示后复制：
+
 ```
 whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
@@ -97,7 +102,6 @@ whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```env
 # Stripe 配置
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 
 # 从 stripe listen 命令获取
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxx
@@ -107,6 +111,7 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/test_xxxxx
 ```
 
 **终端命令：**
+
 ```bash
 # Terminal 1: 启动开发服务器
 bun dev
@@ -122,7 +127,6 @@ stripe listen --forward-to localhost:3000/api/auth/stripe/webhook
 ```env
 # Stripe 配置
 STRIPE_SECRET_KEY=sk_live_YOUR_KEY_HERE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_KEY_HERE
 
 # 从 Stripe Dashboard Webhook 端点获取
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxx
@@ -132,6 +136,7 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx
 ```
 
 **Stripe Dashboard 配置：**
+
 - Endpoint URL: `https://yourapp.vercel.app/api/auth/stripe/webhook`
 - Events: `checkout.session.completed`, `checkout.session.expired`
 
@@ -149,12 +154,14 @@ NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx
 ### 方法 2: 查看 Webhook 日志
 
 **Stripe Dashboard:**
+
 1. 访问 Dashboard > Developers > Webhooks
 2. 点击您的端点
 3. 查看 "Recent deliveries"
 4. 确认请求成功（200 状态码）
 
 **服务器日志:**
+
 ```bash
 # 查看 Next.js 日志
 # 应该看到类似的输出：
@@ -252,5 +259,3 @@ vercel env add STRIPE_WEBHOOK_SECRET production
 
 **一句话总结:**  
 生产环境填写 `https://yourdomain.com/api/auth/stripe/webhook`，本地开发使用 `stripe listen` 命令。
-
-

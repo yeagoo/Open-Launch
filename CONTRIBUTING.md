@@ -16,7 +16,7 @@ Please be respectful and considerate of others. We follow the [Contributor Coven
    ```
 3. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 4. Create a new branch:
    ```bash
@@ -37,11 +37,16 @@ Before submitting a pull request, please ensure:
 
 1. All tests pass:
    ```bash
-   npm test
+   bun run test
    ```
 2. Linting passes:
    ```bash
-   npm run lint
+   bun run lint
+   ```
+3. Type checking and the production build pass:
+   ```bash
+   bunx tsc --noEmit
+   bun run build:next
    ```
 
 ## 📚 Documentation

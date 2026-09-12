@@ -4,17 +4,17 @@
 
 ### 本地开发环境
 
-| OAuth 提供商 | 回调 URL |
-|-------------|---------|
-| **Google** | `http://localhost:3000/api/auth/callback/google` |
-| **GitHub** | `http://localhost:3000/api/auth/callback/github` |
+| OAuth 提供商 | 回调 URL                                         |
+| ------------ | ------------------------------------------------ |
+| **Google**   | `http://localhost:3000/api/auth/callback/google` |
+| **GitHub**   | `http://localhost:3000/api/auth/callback/github` |
 
 ### 生产环境
 
-| OAuth 提供商 | 回调 URL |
-|-------------|---------|
-| **Google** | `https://yourdomain.com/api/auth/callback/google` |
-| **GitHub** | `https://yourdomain.com/api/auth/callback/github` |
+| OAuth 提供商 | 回调 URL                                          |
+| ------------ | ------------------------------------------------- |
+| **Google**   | `https://yourdomain.com/api/auth/callback/google` |
+| **GitHub**   | `https://yourdomain.com/api/auth/callback/github` |
 
 ⚠️ **重要**: 将 `yourdomain.com` 替换为您的实际域名
 
@@ -24,15 +24,16 @@
 
 ### Google OAuth - 5 步配置
 
-| 步骤 | 操作 | 链接 |
-|-----|------|------|
-| 1️⃣ | 访问 Google Cloud Console | https://console.cloud.google.com/ |
-| 2️⃣ | 创建项目 / 选择项目 | 顶部项目选择器 |
-| 3️⃣ | 启用 API | API 和服务 > 库 > 搜索 "Google+" |
-| 4️⃣ | 创建 OAuth 凭据 | API 和服务 > 凭据 > 创建凭据 > OAuth 客户端 ID |
-| 5️⃣ | 配置重定向 URI | 添加回调 URL（见上表） |
+| 步骤 | 操作                      | 链接                                           |
+| ---- | ------------------------- | ---------------------------------------------- |
+| 1️⃣   | 访问 Google Cloud Console | https://console.cloud.google.com/              |
+| 2️⃣   | 创建项目 / 选择项目       | 顶部项目选择器                                 |
+| 3️⃣   | 启用 API                  | API 和服务 > 库 > 搜索 "Google+"               |
+| 4️⃣   | 创建 OAuth 凭据           | API 和服务 > 凭据 > 创建凭据 > OAuth 客户端 ID |
+| 5️⃣   | 配置重定向 URI            | 添加回调 URL（见上表）                         |
 
 **获取结果:**
+
 ```env
 GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxx
@@ -42,14 +43,15 @@ GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxx
 
 ### GitHub OAuth - 4 步配置
 
-| 步骤 | 操作 | 链接 |
-|-----|------|------|
-| 1️⃣ | 访问 GitHub 开发者设置 | https://github.com/settings/developers |
-| 2️⃣ | 创建 OAuth App | OAuth Apps > New OAuth App |
-| 3️⃣ | 填写应用信息 | 名称、主页、回调 URL |
-| 4️⃣ | 生成 Client Secret | Generate a new client secret |
+| 步骤 | 操作                   | 链接                                   |
+| ---- | ---------------------- | -------------------------------------- |
+| 1️⃣   | 访问 GitHub 开发者设置 | https://github.com/settings/developers |
+| 2️⃣   | 创建 OAuth App         | OAuth Apps > New OAuth App             |
+| 3️⃣   | 填写应用信息           | 名称、主页、回调 URL                   |
+| 4️⃣   | 生成 Client Secret     | Generate a new client secret           |
 
 **获取结果:**
+
 ```env
 GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxx
 GITHUB_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -114,25 +116,25 @@ open http://localhost:3000/sign-in
 
 ## 🚨 常见错误速查
 
-| 错误信息 | 原因 | 解决方案 |
-|---------|------|---------|
-| `redirect_uri_mismatch` | 回调 URL 不匹配 | 检查并修正 OAuth 配置中的重定向 URI |
-| `invalid_client` | Client ID 或 Secret 错误 | 重新复制凭据，确保无多余空格 |
-| `access_denied` | 用户拒绝授权 | 正常情况，引导用户重新授权 |
-| `unauthorized_client` | OAuth App 未授权 | 检查 OAuth 同意屏幕配置 |
+| 错误信息                | 原因                     | 解决方案                            |
+| ----------------------- | ------------------------ | ----------------------------------- |
+| `redirect_uri_mismatch` | 回调 URL 不匹配          | 检查并修正 OAuth 配置中的重定向 URI |
+| `invalid_client`        | Client ID 或 Secret 错误 | 重新复制凭据，确保无多余空格        |
+| `access_denied`         | 用户拒绝授权             | 正常情况，引导用户重新授权          |
+| `unauthorized_client`   | OAuth App 未授权         | 检查 OAuth 同意屏幕配置             |
 
 ---
 
 ## 📊 配置对比
 
-| 特性 | Google OAuth | GitHub OAuth |
-|-----|-------------|-------------|
-| **配置位置** | Google Cloud Console | GitHub Settings |
-| **多重定向 URI** | ✅ 支持多个 | ❌ 仅支持一个 |
-| **需要域名验证** | ✅ 生产环境需要 | ❌ 不需要 |
-| **同意屏幕配置** | ✅ 需要配置 | ❌ 自动生成 |
-| **开发建议** | 一个 App 多环境 | 开发和生产分别创建 |
-| **密钥查看** | ✅ 可随时查看 | ❌ 只显示一次 |
+| 特性             | Google OAuth         | GitHub OAuth       |
+| ---------------- | -------------------- | ------------------ |
+| **配置位置**     | Google Cloud Console | GitHub Settings    |
+| **多重定向 URI** | ✅ 支持多个          | ❌ 仅支持一个      |
+| **需要域名验证** | ✅ 生产环境需要      | ❌ 不需要          |
+| **同意屏幕配置** | ✅ 需要配置          | ❌ 自动生成        |
+| **开发建议**     | 一个 App 多环境      | 开发和生产分别创建 |
+| **密钥查看**     | ✅ 可随时查看        | ❌ 只显示一次      |
 
 ---
 
@@ -154,10 +156,10 @@ open http://localhost:3000/sign-in
 
 ### Client ID vs Client Secret
 
-| 类型 | 公开性 | 用途 | 示例 |
-|-----|-------|------|------|
-| **Client ID** | 🌐 公开 | 标识应用 | `123-abc.apps.googleusercontent.com` |
-| **Client Secret** | 🔒 私密 | 验证应用 | `GOCSPX-xxxxx` |
+| 类型              | 公开性  | 用途     | 示例                                 |
+| ----------------- | ------- | -------- | ------------------------------------ |
+| **Client ID**     | 🌐 公开 | 标识应用 | `123-abc.apps.googleusercontent.com` |
+| **Client Secret** | 🔒 私密 | 验证应用 | `GOCSPX-xxxxx`                       |
 
 ### 环境变量命名
 
@@ -179,7 +181,7 @@ GOOGLE_CLIENT_ID=xxx
 
 - 📖 **完整配置指南**: `OAUTH_SETUP_GUIDE.md`
 - 📖 **所有环境变量**: `ENV_SETUP_GUIDE.md`
-- 📖 **环境变量模板**: `env.example.txt`
+- 📖 **环境变量模板**: `.env.example`
 
 ---
 
@@ -216,8 +218,7 @@ cat .env | grep -E "(GOOGLE|GITHUB)"
 ---
 
 **预计配置时间:**
+
 - Google OAuth: 10 分钟
 - GitHub OAuth: 5 分钟（开发）+ 5 分钟（生产）
 - **总计: 约 20 分钟**
-
-

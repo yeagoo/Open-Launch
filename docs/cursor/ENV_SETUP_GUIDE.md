@@ -210,18 +210,20 @@ GITHUB_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```env
 STRIPE_SECRET_KEY=sk_test_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
 NEXT_PUBLIC_PREMIUM_PAYMENT_LINK=https://buy.stripe.com/xxxxx
 ```
 
 **快速获取步骤**:
 
-### 1. STRIPE_SECRET_KEY 和 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+### 1. STRIPE_SECRET_KEY
 
 1. 登录 [Stripe Dashboard](https://dashboard.stripe.com/)
 2. 点击 **"开发者"** > **"API keys"**
-3. 复制 **Secret key** (sk_test_...) 和 **Publishable key** (pk_test_...)
+3. 复制 **Secret key** (sk_test_...)
 4. 测试环境使用 `test`，生产环境使用 `live`
+
+当前支付流程使用 Stripe Payment Links 和服务器端验证，不需要
+`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`。
 
 ### 2. STRIPE_WEBHOOK_SECRET
 

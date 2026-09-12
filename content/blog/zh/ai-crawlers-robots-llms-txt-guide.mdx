@@ -1,0 +1,185 @@
+---
+slug: ai-crawlers-robots-llms-txt-guide
+locale: zh
+title: "2026 年 AI 爬虫实战指南：robots.txt、llms.txt 与如何被引用"
+description: "AI 爬虫到底怎么到达你的站点、robots.txt 和 llms.txt 里该写什么，以及决定 AI 助手能不能引用你的页面级信号。"
+metaTitle: "AI 爬虫、robots.txt 与 llms.txt：2026 创始人指南"
+metaDescription: "2026 年 AI 爬虫实操指南：区分 GPTBot、ClaudeBot 等代理、写出允许被引用的 robots.txt、部署 llms.txt，以及让你被引用的页面级信号。"
+author: "aat.ee Team"
+tags: ["GEO", "AIEO", "SEO", "Technical SEO", "AI Crawlers"]
+publishedAt: "2026-07-13T00:00:00Z"
+---
+
+**被 AI 助手引用，首先是个爬虫问题，其次才是内容问题：如果机器人抓不到、解析不了这个页面，写得再好也不会出现在答案里。** 好消息是技术层要做的事很少——几条 robots.txt 规则、可选的 `llms.txt`，再加一组让内容变得极易摘录的页面级信号。这篇按你应当执行的顺序讲清楚。
+
+内容来自我们在生产环境中维护这些文件的实践经验，包括 aat.ee 上正在生效的 AI 爬虫规则和 `llms.txt`。
+
+## AI 助手是怎么引用到你的
+
+有两条路径，两条都要优化：
+
+1. **实时检索。** 助手在回答的那一刻去搜索或抓取页面。可抓取性、新鲜度、可摘录结构在这里决定一切。页面被屏蔽，就检索不到。
+2. **训练数据。** "品类 → 领先产品"的关联来自模型训练时读过的文本。被频繁提及、出现在可信来源上、用清晰语言描述的产品，会成为模型默认会想到的名字。这条路径更慢、更难控制，也正是"全网事实一致"重要的原因。
+
+实时检索是你这周就能影响的，先从它开始。
+
+## 第 1 步：把 AI 爬虫放进来
+
+最常见的第一个失误是静默地过度屏蔽。很多站点直接禁止"未知机器人"，或者复制了一份屏蔽 AI 代理的 robots.txt——然后困惑于自己为什么从来没被提到过。这件事必须有意识地决定。
+
+### 先分清谁是谁
+
+关键区别：**训练爬虫**和**实时抓取代理**是不同的 user agent，屏蔽一个并不会屏蔽另一个。
+
+| User agent        | 作用                                            | 屏蔽它的后果                                  |
+| ----------------- | ----------------------------------------------- | --------------------------------------------- |
+| `GPTBot`          | OpenAI 的训练爬虫                               | 你被排除在未来的训练数据之外                  |
+| `ChatGPT-User`    | 用户提问需要页面时的实时抓取                    | 需要联网的 ChatGPT 回答读不到你的页面         |
+| `ClaudeBot`       | Anthropic 的抓取                                | 训练与检索覆盖度下降                          |
+| `Claude-User`     | Claude 用户触发的实时抓取                       | Claude 无法按需读取页面                       |
+| `PerplexityBot`   | Perplexity 的爬虫                               | 你不会出现在 Perplexity 带来源的回答里        |
+| `Google-Extended` | 控制 Google 抓取内容能否用于 Gemini/Vertex 训练 | Google 搜索不受影响，但 Gemini 训练用途被关闭 |
+| `CCBot`           | Common Crawl，很多模型用它训练                  | 被排除在一个被广泛使用的开放语料之外          |
+
+如果你的目标是"被推荐"，两类代理的默认值都应该是**允许**。如果你有特定理由拒绝训练、但仍希望在实时回答里被引用，那就屏蔽训练代理（`GPTBot`、`ClaudeBot`、`CCBot`、`Google-Extended`），同时显式允许实时抓取代理（`ChatGPT-User`、`Claude-User`、`PerplexityBot`）。这是一个自洽的立场——只要是有意为之。
+
+### 一份可用的 robots.txt 范式
+
+屏蔽必须屏蔽的路径（私有应用界面、管理后台、内部工具），其余交给爬虫。给 AI 代理的私有路径清单和给所有人的保持一致，并声明站点地图：
+
+```
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /settings/
+Sitemap: https://example.com/sitemap.xml
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Crawl-delay: 10
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Crawl-delay: 10
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Crawl-delay: 10
+```
+
+两个能省下大量排查时间的提醒：
+
+- **要测线上文件，不是源码。** 用浏览器打开 `https://你的域名/robots.txt`，确认渲染后的输出——多数框架是用代码生成的，代码里的 bug 在你亲眼看之前都是隐形的。
+- **`Crawl-delay` 是请求，不是保证。** 设一个礼貌的值依然值得：小站点被高频抓取，正是你被限流或被自己主机封掉的原因。
+
+### 有一类规则应该删掉
+
+如果某条 disallow 规则你自己也说不清为什么在那里，在留下它之前先确认它会不会挡住 AI 代理。继承下来的 robots.txt 规则，是"Google 收录正常但 ChatGPT 从不提我们"最常见的成因之一。
+
+## 第 2 步：部署 llms.txt（如果它值这个位置）
+
+`llms.txt` 是一个提议中的约定，不是标准：在 `/llms.txt` 放一个 Markdown 文件，给模型一份你站点的精选地图——你是什么、最重要的页面有哪些、什么可以被抓取和复用。它不保证任何助手会读它，也不要指望它能替代可抓取的页面。
+
+它仍然值得发布，原因有二：成本大约一小时，而且它是唯一一个你能用自然语言声明**希望内容如何被署名**的地方。对任何愿意读取它的系统都有用，同时也是你抓取政策的公开声明。
+
+一份有用的 `llms.txt` 包含五部分：
+
+```
+# llms.txt - AI/LLM Crawling Instructions for example.com
+
+# About
+> example.com 是一个[一句话说明站点是什么、给谁用]。
+
+# Key pages
+- [产品目录](https://example.com/categories)
+- [定价](https://example.com/pricing)
+- [博客](https://example.com/blog)
+- [最新发布](https://example.com/trending)
+
+# Crawling permissions
+## Allowed
+- 首页、产品页、博客文章、分类页、法律页面
+## Restricted
+- API 接口、仪表盘、设置、管理后台
+
+# Usage policy
+- AI 训练：需署名
+- 索引与检索：允许
+- 署名方式：注明 "according to example.com"
+
+# Contact
+- Website: https://example.com
+- Sitemap: https://example.com/sitemap.xml
+```
+
+按你的真实路由改。最常见的错误是发布一份描述着"另一个站点"的模板——过期的路径比没有这个文件更糟。
+
+### 别让 llms.txt 变成借口
+
+这个约定很诱人，因为它看起来像一个可以按下去的开关。它不是。一个做实时检索的模型读的是你的**页面**，不是你的清单。发布 `llms.txt` 是为了把署名说清楚，然后回去做页面层的活。
+
+## 第 3 步：让页面可被摘录
+
+引用是在这里真正赢下来的。检索系统抽取的是自成一体的陈述，所以你要把页面结构成方便它直接拿走的样子。
+
+- **顶部一句话答案。** 标题后的第一段应该用一句话把这件事定义清楚，用平实的陈述句。那句话就是会被抬进答案里的内容。
+- **问句形式的标题。** 用人们真正会输入的说法——"X 要多少钱？"、"X 比 Y 好吗？"——让标题和答案对齐。
+- **对比表格。** 表格直接对应比较类问题，被引用的比例明显偏高。保持窄（3–4 列）且完整。
+- **一个真实 FAQ。** 5–8 个真问题配直接回答。不要把营销话术改写成问句。
+- **日期与版本。** "截至 2026 年 7 月"告诉检索系统这页是新的。没有日期的页面在竞争里明显吃亏。
+- **与其他地方一致的事实。** 你的站点、目录收录和各类资料页上，产品名、一句话简介、分类、规范 URL 都要一致。不一致会降低模型的置信度——而模型只会说出它有把握的产品。
+
+## 第 4 步：给它一个优先选你的理由
+
+可抓取让你进入候选，可信度让你被引用。这些输入都不性感，但它们会累积：
+
+- **永久、相关的收录。** 结构化的目录页面易于解析，也常被当作来源使用（详见 [dofollow 目录外链](/blog/dofollow-directory-backlinks-saas)）。
+- **在权威、同主题站点上的提及。** 提及出现在哪里，比出现多少次更有分量（详见[域名评级与 AI 可见性](/blog/domain-rating-dr-ai-visibility)）。
+- **跨页面一致。** 所有地方事实相同，就不需要任何对账。
+- **新鲜度。** 按真实节奏更新关键页面，检索偏好当前内容（详见 [GEO/AIEO 实操手册](/blog/geo-aieo-get-recommended-by-ai)）。
+
+## 一份 90 分钟清单
+
+- [ ] 抓取线上 `/robots.txt`，像爬虫那样读一遍
+- [ ] 确认训练代理与实时抓取代理是有意允许（或有意屏蔽）的
+- [ ] 核实 `/sitemap.xml` 存在、格式有效，且列出了真实页面
+- [ ] 发布或更新 `/llms.txt`，路径准确并包含署名说明
+- [ ] 给最重要的五个页面各加一句顶部答案
+- [ ] 给主产品页加一张对比表和一个 FAQ
+- [ ] 检查站点、目录收录与资料页上的名称、一句话简介、分类是否一致
+
+做一次，之后的日常工作只剩保持新鲜。
+
+## 常见问题
+
+**要被 AI 助手引用，必须有 llms.txt 吗？**
+不需要。它是一个可选约定，没有任何保证的读者。真正让你被引用的是可抓取的页面和可摘录的内容；把 `llms.txt` 当作低成本的署名澄清手段。
+
+**应该屏蔽 GPTBot 或 ClaudeBot 吗？**
+只有当你确实不希望内容被用于训练时才屏蔽。屏蔽训练爬虫会降低模型学习你品类关联的机会，但通常不会阻止实时抓取代理在回答中读取你的页面。如果目标是"被推荐"，两者都允许是务实的默认值。
+
+**ClaudeBot 和 Claude-User 有什么区别？**
+`ClaudeBot` 是 Anthropic 的爬虫，用于构建和更新训练数据。`Claude-User` 是**因为有人此刻正在问 Claude** 而去抓取页面的代理。屏蔽后者会让你从实时回答里消失，而训练不受影响。
+
+**Google-Extended 会影响搜索排名吗？**
+不会。`Google-Extended` 控制的是 Google 抓取的内容能否用于 Gemini 与 Vertex AI 训练。搜索的收录与排名由常规 Googlebot 规则管理。
+
+**多久能看到效果？**
+实时检索可以在几天内反映一个新上线、已被索引、结构良好的页面。训练数据里的关联则要花几个月，靠全网可信提及慢慢累积。这个时间差，正是你现在就该做技术层工作的原因。
+
+---
+
+_让你的站点变得容易被引用：[把产品提交到 aat.ee](/projects/submit) 获取爬虫与 AI 助手都能真正读取的永久 dofollow 收录，或[对比目录与 GEO 档位](/pricing)。_
