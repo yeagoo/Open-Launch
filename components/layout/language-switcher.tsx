@@ -1,13 +1,13 @@
 "use client"
 
-import { useTransition } from "react"
 import { useSearchParams } from "next/navigation"
 
 import { usePathname } from "@/i18n/navigation"
-import { routing } from "@/i18n/routing"
+import { routing, type Locale } from "@/i18n/routing"
 import { RiGlobalLine } from "@remixicon/react"
 import { useLocale } from "next-intl"
 
+import { getLocaleSwitchTarget } from "@/lib/locale-switch"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -35,21 +35,15 @@ export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps)
   const locale = useLocale()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [isPending, startTransition] = useTransition()
 
-  const handleSelect = (next: string) => {
+  const handleSelect = (next: Locale) => {
     if (next === locale) return
-    const query = searchParams.toString()
-    const path = pathname && pathname !== "/" ? pathname : ""
-    const prefix =
-      next === routing.defaultLocale && routing.localePrefix === "as-needed" ? "" : `/${next}`
-    const target = `${prefix}${path}${query ? `?${query}` : ""}` || "/"
-    startTransition(() => {
-      // Hard navigation: soft-routing keeps RSC payloads cached per-locale, so
-      // server-rendered strings (project descriptions, etc.) stay in the old
-      // language until the user manually refreshes.
-      window.location.assign(target)
-    })
+    const target = getLocaleSwitchTarget(pathname, searchParams.toString(), next)
+
+    // Use a full navigation because soft routing can retain RSC payloads from
+    // the old locale. The explicit locale prefix also updates NEXT_LOCALE before
+    // next-intl canonicalizes the default-locale URL.
+    window.location.assign(target)
   }
 
   const triggerClass = variant === "footer" ? "h-7 gap-1 px-2 text-xs" : "h-9 gap-1 px-2 text-sm"
@@ -57,7 +51,7 @@ export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className={triggerClass} disabled={isPending}>
+        <Button variant="ghost" size="sm" className={triggerClass}>
           <RiGlobalLine className="h-4 w-4" />
           <span>{LOCALE_LABELS[locale as keyof typeof LOCALE_LABELS] ?? locale}</span>
         </Button>

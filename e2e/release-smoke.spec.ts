@@ -16,6 +16,22 @@ test("locale route preserves locale during navigation", async ({ page }) => {
   await expect(page).toHaveURL(/\/es\/trending$/)
 })
 
+test("language switcher can return a prefixed locale to English", async ({ page }) => {
+  await page.goto("/zh?source=language-switcher&tag=ai&tag=saas")
+
+  const nav = page.locator("nav")
+  await nav.getByRole("button", { name: "简体中文", exact: true }).click()
+  await page.getByRole("menuitem", { name: "English", exact: true }).click()
+
+  await expect(page).toHaveURL(/\/\?source=language-switcher&tag=ai&tag=saas$/)
+  await expect(page.locator("html")).toHaveAttribute("lang", "en")
+
+  const localeCookie = (await page.context().cookies()).find(
+    (cookie) => cookie.name === "NEXT_LOCALE",
+  )
+  expect(localeCookie?.value).toBe("en")
+})
+
 test("anonymous search returns the database-backed release fixture", async ({ page }) => {
   await page.goto("/")
   await page.getByRole("button", { name: /search projects/i }).click()
