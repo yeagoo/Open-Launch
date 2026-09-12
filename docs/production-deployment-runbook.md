@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260830155212`; the independent repository check is
-`check-restic-idrive-e2-20260830155402`. Both completed successfully without
+`backup-aat-ee-restic-20260912185825`; the independent repository check is
+`check-restic-idrive-e2-20260912190022`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-fffbfae7a72281318fe29ad42546cfa23240a237
+b2b552fec97cb09bd0fb5dab6aa267a31652f240
 ```
 
 Current runtime facts:
@@ -163,17 +163,18 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.hero-r38.yml`
+  `compose.blog-covers-r39.yml`
 - deployment marker:
-  `20260912-hero-r38`
+  `20260913-blog-covers-r39`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
-- last post-deploy backup: `opsctl-backup-run@aat-ee.service` returned
-  `Result=success` / `ExecMainStatus=0`, writing
-  `/var/lib/opsctl/backup-dumps/aat-ee-data/postgres.sql.zst`
-  (51,279,366 bytes, 2026-09-11T10:05:20Z)
+- blog data state: 13 published articles have assigned WebP covers; every
+  Chinese translation is current with its English source
+- last post-deploy backup: `backup-aat-ee-restic-20260912185825`, with
+  `opsctl-backup-run@aat-ee.service` returning `Result=success` /
+  `ExecMainStatus=0`
 
 ### The `HOME_V2` switch
 
@@ -608,6 +609,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-13 blog covers r39 — editorial image library and publication safeguards](./deployments/2026-09-13-blog-covers-r39-deployment.md)
 - [2026-09-12 hero r38 — new copy, history, brand marquee](./deployments/2026-09-12-hero-r38-deployment.md)
 - [2026-09-12 logo wall r37 — hero logos by measured quality](./deployments/2026-09-12-logo-wall-r37-deployment.md)
 - [2026-09-11 winner fix r36 — completing the token migration](./deployments/2026-09-11-winner-fix-r36-deployment.md)
