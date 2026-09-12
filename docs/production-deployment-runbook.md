@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-8297c35851dbba3bbed1b4c011f59f9fa6e5381a
+fffbfae7a72281318fe29ad42546cfa23240a237
 ```
 
 Current runtime facts:
@@ -163,9 +163,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.logo-wall-r37.yml`
+  `compose.hero-r38.yml`
 - deployment marker:
-  `20260912-logo-wall-r37`
+  `20260912-hero-r38`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
@@ -199,8 +199,11 @@ remediation), both deployed on 2026-09-04; their journals exist in
 because the sequence below did not require updating it. Update it as part of
 every release.
 
-The r37 release chooses the hero launch wall's logos by measured quality,
-drawing from the whole catalogue because only 9 of 50 logos qualify. The r36
+The r38 release rewrites the hero copy in eight locales, states the all-time
+launch count instead of today's, and replaces the wall with four rows of thirty
+vendored brand marks; it also removes the makers row and the partners block.
+The r37 release chose the wall's logos by measured quality from the catalogue's
+own uploads, which r38 supersedes. The r36
 release completed the token migration r35 began: r35 converted the
 `/winners` page but not the card component it renders, leaving the winner cards
 unreadable in dark mode for four hours. The r35 release brought the last five
@@ -605,6 +608,7 @@ doing so restores duplicate task execution and legacy health emails.
 
 ## Related records
 
+- [2026-09-12 hero r38 — new copy, history, brand marquee](./deployments/2026-09-12-hero-r38-deployment.md)
 - [2026-09-12 logo wall r37 — hero logos by measured quality](./deployments/2026-09-12-logo-wall-r37-deployment.md)
 - [2026-09-11 winner fix r36 — completing the token migration](./deployments/2026-09-11-winner-fix-r36-deployment.md)
 - [2026-09-11 pages r35 — visual unification](./deployments/2026-09-11-pages-r35-deployment.md)
