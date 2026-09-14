@@ -10,6 +10,12 @@ import { useFormatter, useNow, useTranslations } from "next-intl"
 import { toast } from "sonner"
 
 import { poolAvatarUrl } from "@/lib/avatar-pool"
+import {
+  COMMENT_FETCH_LIMIT,
+  COMMENT_WITH_REPLIES_THREAD,
+  createThreadedCommentPage,
+  mergeCommentsById,
+} from "@/lib/comment-pagination"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ReportCommentButton } from "@/components/project/report-comment-button"
@@ -63,6 +69,20 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
+async function fetchCommentPage(projectId: string, before?: number) {
+  const query = new URLSearchParams({
+    sort: "newest",
+    thread: COMMENT_WITH_REPLIES_THREAD,
+    limit: String(COMMENT_FETCH_LIMIT),
+  })
+  if (before !== undefined) query.set("before", String(before))
+
+  const rows = await fetchJson<CommentRow[]>(
+    `${API_BASE}/${encodeURIComponent(projectId)}?${query.toString()}`,
+  )
+  return createThreadedCommentPage(rows)
+}
+
 export function TranslatedComments({
   projectId,
   placeholder,
@@ -77,6 +97,9 @@ export function TranslatedComments({
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [nextBefore, setNextBefore] = useState<number | undefined>()
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
@@ -89,12 +112,16 @@ export function TranslatedComments({
       if (!cancelled) setError(null)
     })
     Promise.all([
-      fetchJson<CommentRow[]>(`${API_BASE}/${projectId}?sort=newest`),
-      fetchJson<AuthInfo | null>(`${API_BASE}/${projectId}/auth`).catch(() => null),
+      fetchCommentPage(projectId),
+      fetchJson<AuthInfo | null>(`${API_BASE}/${encodeURIComponent(projectId)}/auth`).catch(
+        () => null,
+      ),
     ])
-      .then(([list, authInfo]) => {
+      .then(([page, authInfo]) => {
         if (cancelled) return
-        setComments(list)
+        setComments(page.comments)
+        setHasMore(page.hasMore)
+        setNextBefore(page.nextBefore)
         setAuth(authInfo ?? null)
       })
       .catch((err) => {
@@ -105,6 +132,24 @@ export function TranslatedComments({
       cancelled = true
     }
   }, [projectId, refreshKey, t])
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || nextBefore === undefined) return
+
+    setLoadingMore(true)
+    try {
+      const page = await fetchCommentPage(projectId, nextBefore)
+      setComments((current) =>
+        current === null ? page.comments : mergeCommentsById(current, page.comments),
+      )
+      setHasMore(page.hasMore)
+      setNextBefore(page.nextBefore)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("loadFailed"))
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [hasMore, loadingMore, nextBefore, projectId, t])
 
   // Group replies under their parent for flat-with-thread display
   const { topLevel, repliesByThread } = useMemo(() => {
@@ -230,6 +275,13 @@ export function TranslatedComments({
               authUserId={auth?.id}
             />
           ))}
+        </div>
+      )}
+      {hasMore && (
+        <div className="flex justify-center pt-1">
+          <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
+            {loadingMore ? t("loadingMore") : t("loadMore")}
+          </Button>
         </div>
       )}
     </div>

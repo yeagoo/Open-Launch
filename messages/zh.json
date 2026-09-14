@@ -254,6 +254,8 @@
       "noComments": "暂无评论，快来抢沙发！",
       "loading": "加载评论中...",
       "loadFailed": "评论加载失败，请重试。",
+      "loadMore": "加载更多评论",
+      "loadingMore": "正在加载更多评论...",
       "signInPrompt": "登录后评论",
       "reply": "回复",
       "like": "赞",

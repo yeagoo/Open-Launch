@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawnSync } from "node:child_process"
-import { createHash } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import { readdir, readFile } from "node:fs/promises"
 import { join, resolve } from "node:path"
 
@@ -242,6 +242,58 @@ async function assertSchemaContract(client: Client) {
   }
 }
 
+/** Verify the comment tombstone trigger can be created and enforces its invariant. */
+async function assertCommentTombstoneGuard(client: Client) {
+  const page = `release-comment-guard-${randomUUID()}`
+  const content = JSON.stringify({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text: "original" }] }],
+  })
+  const replacement = JSON.stringify({
+    type: "doc",
+    content: [{ type: "paragraph", content: [{ type: "text", text: "replacement" }] }],
+  })
+
+  const inserted = await client.query<{ id: number }>(
+    `INSERT INTO fuma_comments (page, author, content)
+     VALUES ($1, $2, $3::json)
+     RETURNING id`,
+    [page, "release-guard-author", content],
+  )
+  const id = inserted.rows[0]?.id
+  if (!id) throw new Error("failed to create comment-tombstone migration fixture")
+
+  try {
+    await client.query(
+      `UPDATE fuma_comments
+          SET hidden_at = now(), hidden_by = $2
+        WHERE id = $1`,
+      [id, "release-guard-admin"],
+    )
+
+    try {
+      await client.query(`UPDATE fuma_comments SET content = $2::json WHERE id = $1`, [
+        id,
+        replacement,
+      ])
+      throw new Error("comment tombstone trigger allowed a content restore")
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "comment tombstone trigger allowed a content restore"
+      ) {
+        throw error
+      }
+      const code = (error as { code?: unknown } | null)?.code
+      if (code !== "23514") {
+        throw new Error(`comment tombstone trigger returned unexpected error code: ${String(code)}`)
+      }
+    }
+  } finally {
+    await client.query(`DELETE FROM fuma_comments WHERE id = $1`, [id])
+  }
+}
+
 async function main() {
   const connectionString = process.env.RELEASE_TEST_DATABASE_URL
   if (!connectionString) throw new Error("RELEASE_TEST_DATABASE_URL is not set")
@@ -271,6 +323,7 @@ async function main() {
   try {
     await assertMigrationTrackers(verificationClient)
     await assertSchemaContract(verificationClient)
+    await assertCommentTombstoneGuard(verificationClient)
   } finally {
     await verificationClient.end()
   }

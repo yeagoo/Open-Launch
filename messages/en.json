@@ -254,6 +254,8 @@
       "noComments": "No comments yet. Be the first!",
       "loading": "Loading comments...",
       "loadFailed": "Failed to load comments. Please try again.",
+      "loadMore": "Load more comments",
+      "loadingMore": "Loading more comments...",
       "signInPrompt": "Sign in to comment",
       "reply": "Reply",
       "like": "Like",

@@ -218,7 +218,7 @@ export function EditProjectForm({ projectId, initial, onUpdate, onCancel }: Edit
         />
         {websiteUrl !== initial.websiteUrl && (
           <p className="text-muted-foreground mt-1 text-xs">
-            ⚠️ Changing the URL resets badge verification.
+            ⚠️ Changing the URL resets badge verification and releases any badge fast-track date.
           </p>
         )}
       </div>

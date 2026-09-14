@@ -254,6 +254,8 @@
       "noComments": "Kommentaare veel pole. Ole esimene!",
       "loading": "Laen kommentaare...",
       "loadFailed": "Kommentaaride laadimine ebaõnnestus. Palun proovi uuesti.",
+      "loadMore": "Laadi rohkem kommentaare",
+      "loadingMore": "Laen rohkem kommentaare...",
       "signInPrompt": "Kommenteerimiseks logi sisse",
       "reply": "Vasta",
       "like": "Meeldib",

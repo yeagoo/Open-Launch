@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/drizzle/db"
 import {
   category,
+  launchQuota,
   launchStatus,
+  launchType,
   project,
   projectToCategory,
   projectToTag,
@@ -13,8 +15,10 @@ import {
   tagModerationStatus,
   tag as tagTable,
 } from "@/drizzle/db/schema"
-import { and, eq, ne, sql } from "drizzle-orm"
+import { and, eq, gte, inArray, lt, ne, sql } from "drizzle-orm"
 
+import { countInt } from "@/lib/db-utils"
+import { shouldReleaseBadgeFastTrack } from "@/lib/project-edit-guards"
 import { sanitizeRichText } from "@/lib/sanitize"
 import { getServerSession } from "@/lib/server-auth"
 import { projectUpdateSchema, type ProjectUpdateInput } from "@/lib/validations/project"
@@ -60,11 +64,14 @@ export async function getProjectForEdit(projectId: string) {
 // Statuses where the maker can still edit. ongoing/launched are
 // publicly visible and out of scope; payment_pending/failed are stuck
 // pre-launch states where the user needs editing to unblock themselves.
-const EDITABLE_STATUSES = new Set([
+const EDITABLE_STATUS_VALUES = [
   launchStatus.PAYMENT_PENDING,
   launchStatus.PAYMENT_FAILED,
   launchStatus.SCHEDULED,
-])
+] as const
+const EDITABLE_STATUSES = new Set<string>(EDITABLE_STATUS_VALUES)
+
+class ProjectEditGuardError extends Error {}
 
 function normalizeProjectTag(raw: string) {
   const name = raw.trim()
@@ -177,22 +184,6 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
 
     if (typeof data.websiteUrl === "string") {
       normalizedWebsiteUrl = data.websiteUrl.toLowerCase().trim().replace(/\/$/, "")
-      if (normalizedWebsiteUrl !== projectData.websiteUrl) {
-        // Uniqueness check — same rule as submitProject. If another
-        // active project already owns this URL, refuse.
-        const [conflict] = await db
-          .select({ id: project.id })
-          .from(project)
-          .where(and(eq(project.websiteUrl, normalizedWebsiteUrl), ne(project.id, projectId)))
-          .limit(1)
-        if (conflict) {
-          return { success: false, error: "This website URL is already used by another project" }
-        }
-        updates.websiteUrl = normalizedWebsiteUrl
-        // Changing the URL invalidates the previous badge verification —
-        // the badge lives on the old domain, not the new one.
-        updates.hasBadgeVerified = false
-      }
     }
 
     if (typeof data.logoUrl === "string" && data.logoUrl) updates.logoUrl = data.logoUrl
@@ -203,8 +194,137 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
     if ("githubUrl" in data) updates.githubUrl = data.githubUrl ?? null
     if ("twitterUrl" in data) updates.twitterUrl = data.twitterUrl ?? null
 
+    let projectSlug = projectData.slug
+
     await db.transaction(async (tx) => {
-      await tx.update(project).set(updates).where(eq(project.id, projectId))
+      // A launch cron and this edit can race. Lock and re-check the canonical
+      // row inside the same transaction that changes text/categories/tags so
+      // a project that just went live cannot receive a stale pre-launch edit.
+      const [lockedProject] = await tx
+        .select()
+        .from(project)
+        .where(eq(project.id, projectId))
+        .for("update")
+        .limit(1)
+      if (!lockedProject) throw new ProjectEditGuardError("Project not found")
+      if (lockedProject.createdBy !== session.user.id) {
+        throw new ProjectEditGuardError("You don't have permission to edit this project")
+      }
+      if (!EDITABLE_STATUSES.has(lockedProject.launchStatus)) {
+        throw new ProjectEditGuardError(
+          "You can only edit projects that are pre-launch (scheduled / pending / failed)",
+        )
+      }
+      projectSlug = lockedProject.slug
+
+      const websiteUrlChanged =
+        normalizedWebsiteUrl !== null && normalizedWebsiteUrl !== lockedProject.websiteUrl
+      if (websiteUrlChanged && normalizedWebsiteUrl) {
+        // This check and the unique constraint make a friendly collision
+        // response likely while still letting Postgres be the final arbiter.
+        const [conflict] = await tx
+          .select({ id: project.id })
+          .from(project)
+          .where(and(eq(project.websiteUrl, normalizedWebsiteUrl), ne(project.id, projectId)))
+          .limit(1)
+        if (conflict) {
+          throw new ProjectEditGuardError("This website URL is already used by another project")
+        }
+
+        updates.websiteUrl = normalizedWebsiteUrl
+        updates.hasBadgeVerified = false
+        updates.badgeVerifiedAt = null
+
+        if (
+          shouldReleaseBadgeFastTrack({
+            websiteUrlChanged,
+            launchType: lockedProject.launchType,
+            launchStatus: lockedProject.launchStatus,
+            scheduledLaunchDate: lockedProject.scheduledLaunchDate,
+          })
+        ) {
+          // A verified badge belongs to the previous domain. Release its
+          // fast-track reservation and make the maker schedule the new URL
+          // through the normal free queue after verifying again.
+          updates.launchType = launchType.FREE
+          updates.scheduledLaunchDate = null
+          updates.premiumPriceCents = null
+          updates.featuredOnHomepage = false
+        }
+      }
+
+      const updated = await tx
+        .update(project)
+        .set(updates)
+        .where(
+          and(
+            eq(project.id, projectId),
+            eq(project.createdBy, session.user.id),
+            inArray(project.launchStatus, EDITABLE_STATUS_VALUES),
+          ),
+        )
+        .returning({ id: project.id })
+      if (updated.length === 0) {
+        throw new ProjectEditGuardError(
+          "You can only edit projects that are pre-launch (scheduled / pending / failed)",
+        )
+      }
+
+      if (
+        shouldReleaseBadgeFastTrack({
+          websiteUrlChanged,
+          launchType: lockedProject.launchType,
+          launchStatus: lockedProject.launchStatus,
+          scheduledLaunchDate: lockedProject.scheduledLaunchDate,
+        }) &&
+        lockedProject.scheduledLaunchDate
+      ) {
+        // Keep the denormalized counter aligned with the canonical project
+        // rows. Lock ordering matches scheduleLaunch: project first, quota
+        // second, which avoids an AB-BA deadlock with concurrent scheduling.
+        const [quota] = await tx
+          .select({ id: launchQuota.id })
+          .from(launchQuota)
+          .where(eq(launchQuota.date, lockedProject.scheduledLaunchDate))
+          .for("update")
+          .limit(1)
+
+        if (quota) {
+          const dayStart = new Date(
+            Date.UTC(
+              lockedProject.scheduledLaunchDate.getUTCFullYear(),
+              lockedProject.scheduledLaunchDate.getUTCMonth(),
+              lockedProject.scheduledLaunchDate.getUTCDate(),
+            ),
+          )
+          const dayEnd = new Date(dayStart)
+          dayEnd.setUTCDate(dayEnd.getUTCDate() + 1)
+          const [counts] = await tx
+            .select({
+              freeCount: countInt(sql`${project.launchType} = ${launchType.FREE}`),
+              badgeCount: countInt(sql`${project.launchType} = ${launchType.FREE_WITH_BADGE}`),
+              premiumCount: countInt(sql`${project.launchType} = ${launchType.PREMIUM}`),
+            })
+            .from(project)
+            .where(
+              and(
+                gte(project.scheduledLaunchDate, dayStart),
+                lt(project.scheduledLaunchDate, dayEnd),
+                eq(project.launchStatus, launchStatus.SCHEDULED),
+              ),
+            )
+
+          await tx
+            .update(launchQuota)
+            .set({
+              freeCount: counts?.freeCount ?? 0,
+              badgeCount: counts?.badgeCount ?? 0,
+              premiumCount: counts?.premiumCount ?? 0,
+              updatedAt: new Date(),
+            })
+            .where(eq(launchQuota.id, quota.id))
+        }
+      }
 
       if (Array.isArray(data.categories)) {
         await tx.delete(projectToCategory).where(eq(projectToCategory.projectId, projectId))
@@ -279,7 +399,7 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
           .insert(projectTranslation)
           .values({
             projectId,
-            locale: projectData.sourceLocale,
+            locale: lockedProject.sourceLocale,
             description: sanitizedDescription,
             isSource: true,
             aiGenerated: false,
@@ -296,7 +416,7 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
             },
           })
 
-        if (projectData.sourceLocale !== "en") {
+        if (lockedProject.sourceLocale !== "en") {
           await tx
             .update(projectTranslation)
             .set({ longDescription: null, longDescriptionGeneratedAt: null })
@@ -334,7 +454,7 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
           .where(
             and(
               eq(projectTranslation.projectId, projectId),
-              eq(projectTranslation.locale, projectData.sourceLocale),
+              eq(projectTranslation.locale, lockedProject.sourceLocale),
             ),
           )
 
@@ -350,18 +470,21 @@ export async function updateProject(projectId: string, data: UpdateProjectData) 
             .where(
               and(
                 eq(projectTranslation.projectId, projectId),
-                ne(projectTranslation.locale, projectData.sourceLocale),
+                ne(projectTranslation.locale, lockedProject.sourceLocale),
               ),
             )
         }
       }
     })
 
-    revalidatePath(`/projects/${projectData.slug}`)
+    revalidatePath(`/projects/${projectSlug}`)
     revalidatePath("/dashboard")
 
     return { success: true, message: "Project updated successfully" }
   } catch (error) {
+    if (error instanceof ProjectEditGuardError) {
+      return { success: false, error: error.message }
+    }
     console.error("Error updating project:", error)
     return { success: false, error: "Failed to update project" }
   }

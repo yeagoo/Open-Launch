@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidateTag } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 
 import { db } from "@/drizzle/db"
 import { category, project, user } from "@/drizzle/db/schema"
@@ -8,7 +8,14 @@ import { addDays, format } from "date-fns"
 import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm"
 
 import { queryAdminUsersPage } from "@/lib/admin-user-pagination"
-import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
+import {
+  HOME_PROJECTS_TAG,
+  PROJECT_RELATED_TAG,
+  PROJECT_SIDEBAR_LINKS_TAG,
+  SITEMAP_ENTRIES_TAG,
+  TOP_CATEGORIES_TAG,
+  WINNERS_TAG,
+} from "@/lib/cache-tags"
 import { DATE_FORMAT, LAUNCH_SETTINGS } from "@/lib/constants"
 import { countInt } from "@/lib/db-utils"
 import { logger } from "@/lib/observability/structured-logger"
@@ -217,9 +224,13 @@ export async function getScheduledProjects(daysAhead: number = 7) {
 export async function deleteProject(projectId: string) {
   await requireAdmin()
 
+  let deleted: { id: string; slug: string } | undefined
   try {
-    await db.delete(project).where(eq(project.id, projectId))
-    return { success: true }
+    const rows = await db
+      .delete(project)
+      .where(eq(project.id, projectId))
+      .returning({ id: project.id, slug: project.slug })
+    deleted = rows[0]
   } catch (error) {
     logger.error("admin_project_delete_failed", {
       error,
@@ -227,6 +238,34 @@ export async function deleteProject(projectId: string) {
     })
     return { success: false, error: "Failed to delete project" }
   }
+
+  if (!deleted) return { success: false, error: "Project not found" }
+
+  try {
+    for (const tag of [
+      HOME_PROJECTS_TAG,
+      TOP_CATEGORIES_TAG,
+      WINNERS_TAG,
+      PROJECT_RELATED_TAG,
+      PROJECT_SIDEBAR_LINKS_TAG,
+      SITEMAP_ENTRIES_TAG,
+    ]) {
+      revalidateTag(tag, "max")
+    }
+    revalidatePath("/")
+    revalidatePath("/projects")
+    revalidatePath(`/projects/${deleted.slug}`)
+    revalidatePath("/winners")
+  } catch (error) {
+    // The deletion has committed. Record an invalidation failure without
+    // returning a misleading failure that invites an unsafe retry.
+    logger.error("admin_project_delete_cache_invalidation_failed", {
+      error,
+      context: { projectId: deleted.id },
+    })
+  }
+
+  return { success: true }
 }
 
 // Get all paid projects (premium and premium_plus)
