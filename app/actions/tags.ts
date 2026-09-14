@@ -4,7 +4,6 @@ import { revalidatePath, revalidateTag } from "next/cache"
 
 import { db } from "@/drizzle/db"
 import {
-  fumaComments,
   project as projectTable,
   projectToTag,
   tagModerationStatus,
@@ -14,7 +13,13 @@ import {
 import { and, asc, count, desc, eq, inArray, or, sql } from "drizzle-orm"
 
 import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
-import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import {
+  attachCategories,
+  getProjectEngagementCounts,
+  getUpvotedSet,
+  withEngagementCounts,
+  withUserUpvoted,
+} from "@/lib/project-enrich"
 import { clampInteger } from "@/lib/query-limits"
 import { getCurrentUserId, getServerSession, requireAdmin } from "@/lib/server-auth"
 
@@ -56,14 +61,8 @@ export async function getTagBySlug(slug: string) {
 }
 
 export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, sort = "recent") {
-  const tagData = await getTagBySlug(tagSlug)
-  if (!tagData) return { projects: [], totalCount: 0 }
-
   let orderByClause
   switch (sort) {
-    case "upvotes":
-      orderByClause = desc(sql`count(distinct ${upvote.id})`)
-      break
     case "alphabetical":
       orderByClause = asc(projectTable.name)
       break
@@ -78,64 +77,91 @@ export async function getProjectsByTag(tagSlug: string, page = 1, limit = 10, so
   const offset = (page - 1) * limit
 
   const queryConditions = and(
-    eq(projectToTag.tagId, tagData.id),
+    eq(tagTable.slug, tagSlug),
+    eq(tagTable.moderationStatus, tagModerationStatus.APPROVED),
     or(eq(projectTable.launchStatus, "ongoing"), eq(projectTable.launchStatus, "launched")),
   )
 
-  // Run the projects query, the count query, and the auth lookup
-  // all in parallel. Previously these were sequential awaits, so
-  // the count blocked the enrichment even though they share no
-  // data.
+  const projectListSelect = {
+    id: projectTable.id,
+    name: projectTable.name,
+    slug: projectTable.slug,
+    description: projectTable.description,
+    logoUrl: projectTable.logoUrl,
+    websiteUrl: projectTable.websiteUrl,
+    launchStatus: projectTable.launchStatus,
+    launchType: projectTable.launchType,
+    dailyRanking: projectTable.dailyRanking,
+    scheduledLaunchDate: projectTable.scheduledLaunchDate,
+    createdAt: projectTable.createdAt,
+  } as const
+
+  // Pagination by vote count needs an aggregate in the ordering query. Scope
+  // that aggregate to this tag, then fetch both final counts in the batched
+  // page-ID stage below; raw upvotes and raw comments must never be joined
+  // together on a public list.
+  const tagUpvoteCounts = db
+    .select({
+      projectId: upvote.projectId,
+      upvoteCount: sql<number>`cast(count(${upvote.id}) as int)`.mapWith(Number).as("upvote_count"),
+    })
+    .from(projectToTag)
+    .innerJoin(tagTable, eq(tagTable.id, projectToTag.tagId))
+    .innerJoin(upvote, eq(upvote.projectId, projectToTag.projectId))
+    .where(
+      and(eq(tagTable.slug, tagSlug), eq(tagTable.moderationStatus, tagModerationStatus.APPROVED)),
+    )
+    .groupBy(upvote.projectId)
+    .as("tag_upvote_counts")
+
+  const projectsQuery =
+    sort === "upvotes"
+      ? db
+          .select(projectListSelect)
+          .from(projectTable)
+          .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
+          .innerJoin(tagTable, eq(tagTable.id, projectToTag.tagId))
+          .leftJoin(tagUpvoteCounts, eq(tagUpvoteCounts.projectId, projectTable.id))
+          .where(queryConditions)
+          .orderBy(desc(sql`coalesce(${tagUpvoteCounts.upvoteCount}, 0)`))
+          .limit(limit)
+          .offset(offset)
+      : db
+          .select(projectListSelect)
+          .from(projectTable)
+          .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
+          .innerJoin(tagTable, eq(tagTable.id, projectToTag.tagId))
+          .where(queryConditions)
+          .orderBy(orderByClause)
+          .limit(limit)
+          .offset(offset)
+
+  // The page, total and viewer identity have no dependency. Once the page IDs
+  // exist, all enrichment reads run together and avoid a vote x comment join.
   const [projectsData, totalResult, userId] = await Promise.all([
-    db
-      .select({
-        id: projectTable.id,
-        name: projectTable.name,
-        slug: projectTable.slug,
-        description: projectTable.description,
-        logoUrl: projectTable.logoUrl,
-        websiteUrl: projectTable.websiteUrl,
-        launchStatus: projectTable.launchStatus,
-        launchType: projectTable.launchType,
-        dailyRanking: projectTable.dailyRanking,
-        scheduledLaunchDate: projectTable.scheduledLaunchDate,
-        createdAt: projectTable.createdAt,
-        upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
-        commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
-      })
-      .from(projectTable)
-      .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
-      .where(queryConditions)
-      .groupBy(
-        projectTable.id,
-        projectTable.name,
-        projectTable.slug,
-        projectTable.description,
-        projectTable.logoUrl,
-        projectTable.websiteUrl,
-        projectTable.launchStatus,
-        projectTable.launchType,
-        projectTable.dailyRanking,
-        projectTable.scheduledLaunchDate,
-        projectTable.createdAt,
-      )
-      .orderBy(orderByClause)
-      .limit(limit)
-      .offset(offset),
+    projectsQuery,
     db
       .select({ count: count(projectTable.id) })
       .from(projectTable)
       .innerJoin(projectToTag, eq(projectTable.id, projectToTag.projectId))
+      .innerJoin(tagTable, eq(tagTable.id, projectToTag.tagId))
       .where(queryConditions),
     getCurrentUserId(),
   ])
 
-  const enrichedProjects = await enrichWithCategoriesAndUpvotes(projectsData, userId)
+  const projectIds = projectsData.map((project) => project.id)
+  const [categorizedProjects, engagementCounts, upvoted] = await Promise.all([
+    attachCategories(projectsData),
+    getProjectEngagementCounts(projectIds),
+    getUpvotedSet(userId, projectIds),
+  ])
+  const projects = withUserUpvoted(
+    withEngagementCounts(categorizedProjects, engagementCounts),
+    upvoted,
+  )
 
   return {
-    projects: enrichedProjects,
+    projects,
     totalCount: totalResult[0]?.count || 0,
   }
 }

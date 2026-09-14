@@ -8,6 +8,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { getServerSession } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -54,38 +55,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function TagData({
   slug,
+  tag,
   sort = "recent",
   page = 1,
 }: {
   slug: string
+  tag: NonNullable<Awaited<ReturnType<typeof getTagBySlug>>>
   sort?: string
   page?: number
 }) {
   const ITEMS_PER_PAGE = 10
   const currentPage = Math.max(1, page)
 
-  const tag = await getTagBySlug(slug)
-  if (!tag) return notFound()
+  const projectsPromise = getProjectsByTag(slug, currentPage, ITEMS_PER_PAGE, sort)
 
-  const { projects: paginatedProjectsRaw, totalCount } = await getProjectsByTag(
-    slug,
-    currentPage,
-    ITEMS_PER_PAGE,
-    sort,
-  )
-
-  const [locale, tTags, tV2] = await Promise.all([
-    getLocale(),
-    getTranslations("tags"),
-    // Row labels shared with the home feed rather than duplicated.
-    getTranslations("home.v2"),
-  ])
+  const [{ projects: paginatedProjectsRaw, totalCount }, locale, tTags, tV2, session] =
+    await Promise.all([
+      projectsPromise,
+      getLocale(),
+      getTranslations("tags"),
+      // Row labels shared with the home feed rather than duplicated.
+      getTranslations("home.v2"),
+      // getProjectsByTag() uses the same request-cached lookup via
+      // getCurrentUserId(), keeping the rendered action state authoritative.
+      getServerSession(),
+    ])
   const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
   const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
   const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
-  const isAuthenticated =
-    paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false
+  const isAuthenticated = Boolean(session?.user)
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
@@ -228,13 +227,11 @@ async function TagData({
 }
 
 export default async function TagPage({ params, searchParams }: Props) {
-  const { slug } = await params
-  const resolvedSearchParams = await searchParams
+  const [{ slug }, resolvedSearchParams] = await Promise.all([params, searchParams])
   const sortParam = resolvedSearchParams.sort || "recent"
   const pageParam = Math.max(1, parseInt(resolvedSearchParams.page || "1", 10) || 1)
-  const tBreadcrumb = await getTranslations("breadcrumb")
 
-  const tag = await getTagBySlug(slug)
+  const [tBreadcrumb, tag] = await Promise.all([getTranslations("breadcrumb"), getTagBySlug(slug)])
   if (!tag) return notFound()
 
   return (
@@ -269,7 +266,7 @@ export default async function TagPage({ params, searchParams }: Props) {
                 </div>
               }
             >
-              <TagData slug={slug} sort={sortParam} page={pageParam} />
+              <TagData tag={tag} slug={slug} sort={sortParam} page={pageParam} />
             </Suspense>
           </div>
 

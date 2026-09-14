@@ -7,6 +7,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { getServerSession } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,12 +20,7 @@ import { SerifHeading } from "@/components/ds/serif-heading"
 import { ProjectCardButtons } from "@/components/home/project-card-buttons"
 import { RankedRow, RankedRowSkeleton } from "@/components/home/v2/ranked-row"
 import { SidebarSponsors } from "@/components/layout/sidebar-sponsors"
-import {
-  getAllCategories,
-  getCategoryById,
-  getProjectsByCategory,
-  getTopCategories,
-} from "@/app/actions/projects"
+import { getAllCategories, getProjectsByCategory, getTopCategories } from "@/app/actions/projects"
 
 export async function generateMetadata({
   params,
@@ -77,44 +73,45 @@ function CategoryDataSkeleton() {
 
 async function CategoryData({
   categoryId,
+  categoryName,
   sort = "recent",
   page = 1,
 }: {
   categoryId: string
+  categoryName?: string
   sort?: string
   page?: number
 }) {
   const ITEMS_PER_PAGE = 10
   const currentPage = Math.max(1, page)
 
-  const { projects: paginatedProjectsRaw, totalCount } = await getProjectsByCategory(
-    categoryId,
-    currentPage,
-    ITEMS_PER_PAGE,
-    sort,
-  )
-
-  const [locale, tCategories, tV2] = await Promise.all([
-    getLocale(),
-    getTranslations("categories"),
-    // Row labels shared with the home feed rather than duplicated.
-    getTranslations("home.v2"),
-  ])
-  const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
-  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
-  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
-
-  const isAuthenticated =
-    paginatedProjects.length > 0 ? typeof paginatedProjects[0].userHasUpvoted === "boolean" : false
-
-  const categoryData = await getCategoryById(categoryId)
-  if (!categoryData) {
+  if (!categoryName) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Category not found.</p>
       </div>
     )
   }
+
+  const projectsPromise = getProjectsByCategory(categoryId, currentPage, ITEMS_PER_PAGE, sort)
+
+  const [{ projects: paginatedProjectsRaw, totalCount }, locale, tCategories, tV2, session] =
+    await Promise.all([
+      projectsPromise,
+      getLocale(),
+      getTranslations("categories"),
+      // Row labels shared with the home feed rather than duplicated.
+      getTranslations("home.v2"),
+      // getProjectsByCategory() calls getCurrentUserId(); both paths share the
+      // request-cached session getter, so this also fixes the action controls'
+      // anonymous state without another auth round-trip.
+      getServerSession(),
+    ])
+  const paginatedProjects = await localizeProjectDescriptions(paginatedProjectsRaw, locale)
+  const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
+  const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
+
+  const isAuthenticated = Boolean(session?.user)
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
@@ -134,7 +131,7 @@ async function CategoryData({
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center justify-between">
         <SerifHeading as="h2" size="section" id="category-heading">
-          {categoryData.name}
+          {categoryName}
         </SerifHeading>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -259,14 +256,15 @@ export default async function CategoriesPage({
 }: {
   searchParams: Promise<{ category?: string; sort?: string; page?: string }>
 }) {
-  const [categories, categoriesWithCount, tBreadcrumb] = await Promise.all([
+  const [categories, categoriesWithCount, tBreadcrumb, params] = await Promise.all([
     getAllCategories(),
     getTopCategories(100),
     getTranslations("breadcrumb"),
+    searchParams,
   ])
 
-  const params = await searchParams
   const selectedCategoryId = params.category || (categories.length > 0 ? categories[0].id : "")
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId)
   const sortParam = params.sort || "recent"
   const pageParam = parseInt(params.page || "1", 10)
 
@@ -297,7 +295,12 @@ export default async function CategoriesPage({
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
             <Suspense fallback={<CategoryDataSkeleton />}>
               {selectedCategoryId ? (
-                <CategoryData categoryId={selectedCategoryId} sort={sortParam} page={pageParam} />
+                <CategoryData
+                  categoryId={selectedCategoryId}
+                  categoryName={selectedCategory?.name}
+                  sort={sortParam}
+                  page={pageParam}
+                />
               ) : (
                 <div className="py-12 text-center">
                   <p className="text-muted-foreground">Please select a category.</p>

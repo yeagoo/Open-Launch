@@ -5,7 +5,6 @@ import { revalidatePath, unstable_cache } from "next/cache"
 import { db } from "@/drizzle/db"
 import {
   category as categoryTable,
-  fumaComments,
   project,
   project as projectTable,
   projectToCategory,
@@ -21,7 +20,13 @@ import { TOP_CATEGORIES_TAG } from "@/lib/cache-tags"
 import { getCurrentLaunchWindow } from "@/lib/launch-window"
 import { notifyUpvoteMilestone } from "@/lib/notifications"
 import { logger } from "@/lib/observability/structured-logger"
-import { enrichWithCategoriesAndUpvotes } from "@/lib/project-enrich"
+import {
+  attachCategories,
+  getProjectEngagementCounts,
+  getUpvotedSet,
+  withEngagementCounts,
+  withUserUpvoted,
+} from "@/lib/project-enrich"
 import {
   classifyProjectInsertError,
   decideProjectUrlCollision,
@@ -517,9 +522,6 @@ export async function getProjectsByCategory(
 
   let orderByClause
   switch (sort) {
-    case "upvotes":
-      orderByClause = desc(sql`count(distinct ${upvote.id})`)
-      break
     case "alphabetical":
       orderByClause = asc(projectTable.name)
       break
@@ -536,47 +538,60 @@ export async function getProjectsByCategory(
     or(eq(projectTable.launchStatus, "ongoing"), eq(projectTable.launchStatus, "launched")),
   )
 
-  // Projects, count, and auth lookup all in parallel. The count
-  // query and the projects query share `queryConditions` but have
-  // no data dependency on each other.
+  const projectListSelect = {
+    id: projectTable.id,
+    name: projectTable.name,
+    slug: projectTable.slug,
+    description: projectTable.description,
+    logoUrl: projectTable.logoUrl,
+    websiteUrl: projectTable.websiteUrl,
+    launchStatus: projectTable.launchStatus,
+    launchType: projectTable.launchType,
+    dailyRanking: projectTable.dailyRanking,
+    scheduledLaunchDate: projectTable.scheduledLaunchDate,
+    createdAt: projectTable.createdAt,
+  } as const
+
+  // A paginated "most upvoted" list has to order in SQL, but it must not
+  // join raw votes and comments together. Aggregate votes only for the active
+  // category, then fetch comment counts in the same batched enrichment stage
+  // used by the other sort modes below.
+  const categoryUpvoteCounts = db
+    .select({
+      projectId: upvote.projectId,
+      upvoteCount: sql<number>`cast(count(${upvote.id}) as int)`.mapWith(Number).as("upvote_count"),
+    })
+    .from(projectToCategory)
+    .innerJoin(upvote, eq(upvote.projectId, projectToCategory.projectId))
+    .where(eq(projectToCategory.categoryId, categoryId))
+    .groupBy(upvote.projectId)
+    .as("category_upvote_counts")
+
+  const projectsQuery =
+    sort === "upvotes"
+      ? db
+          .select(projectListSelect)
+          .from(projectTable)
+          .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+          .leftJoin(categoryUpvoteCounts, eq(categoryUpvoteCounts.projectId, projectTable.id))
+          .where(queryConditions)
+          .orderBy(desc(sql`coalesce(${categoryUpvoteCounts.upvoteCount}, 0)`))
+          .limit(limit)
+          .offset(offset)
+      : db
+          .select(projectListSelect)
+          .from(projectTable)
+          .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
+          .where(queryConditions)
+          .orderBy(orderByClause)
+          .limit(limit)
+          .offset(offset)
+
+  // Resolve the page, total and viewer identity together. Categories,
+  // engagement and the signed-in viewer's own votes depend on the page IDs,
+  // then run as one parallel second stage rather than expanding U x C rows.
   const [projectsData, totalProjectsResult, userId] = await Promise.all([
-    db
-      .select({
-        id: projectTable.id,
-        name: projectTable.name,
-        slug: projectTable.slug,
-        description: projectTable.description,
-        logoUrl: projectTable.logoUrl,
-        websiteUrl: projectTable.websiteUrl,
-        launchStatus: projectTable.launchStatus,
-        launchType: projectTable.launchType,
-        dailyRanking: projectTable.dailyRanking,
-        scheduledLaunchDate: projectTable.scheduledLaunchDate,
-        createdAt: projectTable.createdAt,
-        upvoteCount: sql<number>`count(distinct ${upvote.id})`.mapWith(Number),
-        commentCount: sql<number>`count(distinct ${fumaComments.id})`.mapWith(Number),
-      })
-      .from(projectTable)
-      .innerJoin(projectToCategory, eq(projectTable.id, projectToCategory.projectId))
-      .leftJoin(upvote, eq(upvote.projectId, projectTable.id))
-      .leftJoin(fumaComments, sql`(${fumaComments.page}::text = ${projectTable.id}::text)`)
-      .where(queryConditions)
-      .groupBy(
-        projectTable.id,
-        projectTable.name,
-        projectTable.slug,
-        projectTable.description,
-        projectTable.logoUrl,
-        projectTable.websiteUrl,
-        projectTable.launchStatus,
-        projectTable.launchType,
-        projectTable.dailyRanking,
-        projectTable.scheduledLaunchDate,
-        projectTable.createdAt,
-      )
-      .orderBy(orderByClause)
-      .limit(limit)
-      .offset(offset),
+    projectsQuery,
     db
       .select({ count: count(projectTable.id) })
       .from(projectTable)
@@ -585,11 +600,20 @@ export async function getProjectsByCategory(
     getCurrentUserId(),
   ])
 
-  const enrichedProjects = await enrichWithCategoriesAndUpvotes(projectsData, userId)
+  const projectIds = projectsData.map((project) => project.id)
+  const [categorizedProjects, engagementCounts, upvoted] = await Promise.all([
+    attachCategories(projectsData),
+    getProjectEngagementCounts(projectIds),
+    getUpvotedSet(userId, projectIds),
+  ])
+  const projects = withUserUpvoted(
+    withEngagementCounts(categorizedProjects, engagementCounts),
+    upvoted,
+  )
   const totalCount = totalProjectsResult[0]?.count || 0
 
   return {
-    projects: enrichedProjects,
+    projects,
     totalCount,
   }
 }

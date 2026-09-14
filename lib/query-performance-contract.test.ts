@@ -23,6 +23,44 @@ describe("query performance contracts", () => {
     expect(actionSource).not.toMatch(/count\s*\(\s*distinct/i)
   })
 
+  it("keeps category and tag lists out of vote-by-comment cross products", async () => {
+    const [categorySource, tagSource] = await Promise.all([
+      readFile(resolve(repositoryRoot, "app/actions/projects.ts"), "utf8"),
+      readFile(resolve(repositoryRoot, "app/actions/tags.ts"), "utf8"),
+    ])
+
+    for (const source of [categorySource, tagSource]) {
+      expect(source).toContain("getProjectEngagementCounts(projectIds)")
+      expect(source).toContain("withEngagementCounts(categorizedProjects, engagementCounts)")
+      expect(source).not.toContain(".leftJoin(fumaComments,")
+      expect(source).not.toMatch(/count\s*\(\s*distinct/i)
+    }
+
+    // A tag page already reads its metadata for the breadcrumb. Listing by
+    // slug in the query avoids a second serial tag lookup inside the action.
+    expect(tagSource).not.toContain("const tagData = await getTagBySlug(tagSlug)")
+    expect(tagSource).toContain("eq(tagTable.slug, tagSlug)")
+  })
+
+  it("starts independent discovery-page reads together and reuses the server session", async () => {
+    const [categoryPage, tagPage, trendingPage, leaderboardPage] = await Promise.all([
+      readFile(resolve(repositoryRoot, "app/[locale]/categories/page.tsx"), "utf8"),
+      readFile(resolve(repositoryRoot, "app/[locale]/tags/[slug]/page.tsx"), "utf8"),
+      readFile(resolve(repositoryRoot, "app/[locale]/trending/page.tsx"), "utf8"),
+      readFile(resolve(repositoryRoot, "app/[locale]/leaderboard/page.tsx"), "utf8"),
+    ])
+
+    expect(categoryPage).toContain("getServerSession()")
+    expect(categoryPage).not.toContain("getCategoryById")
+    expect(tagPage).toContain("<TagData tag={tag}")
+    expect(tagPage).toContain("getServerSession()")
+    expect(trendingPage).toContain("todayProjectsPromise")
+    expect(trendingPage).toContain("getServerSession()")
+    expect(trendingPage).not.toContain("auth.api.getSession")
+    expect(trendingPage).not.toContain('from "next/headers"')
+    expect(leaderboardPage).toContain("const projectsPromise")
+  })
+
   it("shares cached project search between the results page and command palette", async () => {
     const [searchPageSource, apiSource, serviceSource] = await Promise.all([
       readFile(resolve(repositoryRoot, "app/[locale]/search/page.tsx"), "utf8"),

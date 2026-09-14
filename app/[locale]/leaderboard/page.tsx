@@ -66,17 +66,19 @@ export default async function LeaderboardPage({
   const [{ locale }, { period: periodParam }] = await Promise.all([params, searchParams])
   const period = parsePeriod(periodParam)
 
-  const t = await getTranslations("leaderboard")
-  const tBreadcrumb = await getTranslations("breadcrumb")
-  const tV2 = await getTranslations("home.v2")
-
   const limit = PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT
-  const projects =
+  const projectsPromise =
     period === "year"
-      ? await getLeaderboardYearProjects(limit, locale)
+      ? getLeaderboardYearProjects(limit, locale)
       : period === "month"
-        ? await getHomeMonthProjects(limit, locale)
-        : await getHomeWeekProjects(limit, locale)
+        ? getHomeMonthProjects(limit, locale)
+        : getHomeWeekProjects(limit, locale)
+  const [t, tBreadcrumb, tV2, projects] = await Promise.all([
+    getTranslations("leaderboard"),
+    getTranslations("breadcrumb"),
+    getTranslations("home.v2"),
+    projectsPromise,
+  ])
 
   const title = t(`${period}Title` as const)
   const tabs: HomeTimeTab[] = [

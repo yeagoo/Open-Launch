@@ -1,14 +1,13 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
-import { headers } from "next/headers"
 import Link from "next/link"
 
 import { getLocale, getTranslations } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
 import { PROJECT_LIMITS_VARIABLES } from "@/lib/constants"
 import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { getServerSession } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import { SerifHeading } from "@/components/ds/serif-heading"
 // import { RiFilterLine, RiArrowDownSLine } from "@remixicon/react";
@@ -97,41 +96,41 @@ function TrendingDataSkeleton() {
 async function TrendingData({
   filter,
   isAuthenticated,
+  todayProjects,
 }: {
   filter: string
   isAuthenticated: boolean
+  todayProjects: ProjectSummary[]
 }) {
-  let projects: ProjectSummary[] = [] // Utiliser le type défini
-  let title
+  const projectsPromise =
+    filter === "today"
+      ? Promise.resolve(todayProjects)
+      : filter === "yesterday"
+        ? getYesterdayProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT)
+        : getMonthBestProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_MONTH_LIMIT)
 
   // These were hardcoded English on an eight-locale site. The titles reuse the
   // home page's existing translations where the wording already matches, and
   // only the genuinely new strings live in the `trending` namespace.
-  const [t, tSections, tV2, locale] = await Promise.all([
+  const [t, tSections, tV2, locale, projectsRaw] = await Promise.all([
     getTranslations("trending"),
     getTranslations("home.sections"),
     // The row's "{count} reviews" / "Rank {rank}" labels already exist for the
     // home feed; reusing them avoids a second identical translation set.
     getTranslations("home.v2"),
     getLocale(),
+    projectsPromise,
   ])
   const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
   const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
-  if (filter === "today") {
-    projects = await getTodayProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT)
-    title = t("todayTitle")
-  } else if (filter === "yesterday") {
-    projects = await getYesterdayProjects(
-      PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT,
-    )
-    title = tSections("yesterdayTitle")
-  } else {
-    projects = await getMonthBestProjects(PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_MONTH_LIMIT)
-    title = tSections("monthTitle")
-  }
-
-  projects = await localizeProjectDescriptions(projects, locale)
+  const title =
+    filter === "today"
+      ? t("todayTitle")
+      : filter === "yesterday"
+        ? tSections("yesterdayTitle")
+        : tSections("monthTitle")
+  const projects = await localizeProjectDescriptions(projectsRaw, locale)
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -199,18 +198,24 @@ export default async function TrendingPage({
 }) {
   const params = await searchParams
   const filter = params.filter || "today"
+  // The sidebar's live count and the Today view intentionally share this
+  // exact page-sized read. Keeping the limit explicit prevents a future
+  // homepage-limit change from silently reintroducing a second list fetch.
+  const todayProjectsPromise = getTodayProjects(
+    PROJECT_LIMITS_VARIABLES.VIEW_ALL_PAGE_TODAY_YESTERDAY_LIMIT,
+  )
 
   // The sidebar lives in this component, not in `TrendingData`, so it needs its
   // own translator handles.
-  const [t, tSections, topCategories, session] = await Promise.all([
+  const [t, tSections, topCategories, session, todayProjects] = await Promise.all([
     getTranslations("trending"),
     getTranslations("home.sections"),
     getTopCategories(5),
-    auth.api.getSession({ headers: await headers() }),
+    getServerSession(),
+    todayProjectsPromise,
   ])
   const isAuthenticated = !!session?.user
 
-  const todayProjects = await getTodayProjects()
   const ongoingLaunches = todayProjects.filter(
     (project) => project.launchStatus === "ongoing",
   ).length
@@ -222,7 +227,11 @@ export default async function TrendingPage({
           {/* Contenu principal */}
           <div className="space-y-6 sm:space-y-8 lg:col-span-2">
             <Suspense fallback={<TrendingDataSkeleton />}>
-              <TrendingData filter={filter} isAuthenticated={isAuthenticated} />
+              <TrendingData
+                filter={filter}
+                isAuthenticated={isAuthenticated}
+                todayProjects={todayProjects}
+              />
             </Suspense>
           </div>
 

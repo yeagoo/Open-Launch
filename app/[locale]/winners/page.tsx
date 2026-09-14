@@ -81,11 +81,15 @@ export default async function WinnersPage({
     selectedDate = yesterday
   }
 
-  // Récupérer les gagnants de la date sélectionnée
-  const winnersRaw = await getWinnersByDate(selectedDate)
-  const locale = await getLocale()
+  // These reads are independent. The localized display copy waits only on the
+  // winner rows themselves, while the cache-backed sidebar and locale lookup
+  // start at the same time.
+  const [winnersRaw, locale, topCategories] = await Promise.all([
+    getWinnersByDate(selectedDate),
+    getLocale(),
+    getTopCategories(5),
+  ])
   const winners = await localizeProjectDescriptions(winnersRaw, locale)
-  const topCategories = await getTopCategories(5)
 
   // Date formatée pour l'affichage
   const formattedDate = format(selectedDate, "MMMM d, yyyy")
