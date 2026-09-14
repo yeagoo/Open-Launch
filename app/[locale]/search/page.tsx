@@ -10,7 +10,7 @@ import { stripHtml } from "@/lib/ai-input"
 import { getClientIp } from "@/lib/client-ip"
 import { API_RATE_LIMITS } from "@/lib/constants"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { searchProjects } from "@/lib/search-projects"
+import { getCachedProjectSearchPage } from "@/lib/search-service"
 import { SerifHeading } from "@/components/ds/serif-heading"
 
 export const dynamic = "force-dynamic"
@@ -44,10 +44,9 @@ export default async function SearchPage({
   const MAX_PAGE = 100
   const page = Math.min(MAX_PAGE, Math.max(1, parseInt(pageParam || "1", 10) || 1))
 
-  // The page calls searchProjects directly — no API rate limit or
-  // unstable_cache in front. Without its own limiter, bots could force
-  // the zero-match full-similarity fallback (a full-table scan) with
-  // unique garbage terms. Same budget as /api/search.
+  // Keep the request limiter outside the shared data cache. This protects
+  // the zero-match full-similarity fallback while letting the results page
+  // and the command palette reuse the same public project-search result.
   const ip = getClientIp(await headers())
   const rate = await checkRateLimit(
     `search-page:${ip}`,
@@ -58,11 +57,7 @@ export default async function SearchPage({
 
   const { hits, totalCount } =
     query && !rateLimited
-      ? await searchProjects({
-          query,
-          limit: PAGE_SIZE,
-          offset: (page - 1) * PAGE_SIZE,
-        })
+      ? await getCachedProjectSearchPage(query, PAGE_SIZE, (page - 1) * PAGE_SIZE)
       : { hits: [], totalCount: 0 }
 
   // Deep pages beyond MAX_PAGE are neither served nor advertised (a Next
@@ -107,6 +102,10 @@ export default async function SearchPage({
                 <img
                   src={hit.logoUrl}
                   alt={hit.name}
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  decoding="async"
                   className="border-home-hairline h-12 w-12 flex-shrink-0 rounded-full border object-cover"
                 />
               ) : (

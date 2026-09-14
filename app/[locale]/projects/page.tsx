@@ -1,15 +1,13 @@
 import { Suspense } from "react"
 import { Metadata } from "next"
-import { headers } from "next/headers"
 import Link from "next/link"
 
 import { format } from "date-fns"
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react"
-import { getLocale, getTranslations } from "next-intl/server"
+import { getTranslations } from "next-intl/server"
 
-import { auth } from "@/lib/auth"
-import { localizeProjectDescriptions } from "@/lib/get-project-translation"
 import { buildLocaleAlternates, buildLocaleOpenGraph } from "@/lib/i18n-metadata"
+import { getServerSession } from "@/lib/server-auth"
 import { Button } from "@/components/ui/button"
 import { SerifHeading } from "@/components/ds/serif-heading"
 import { ProjectCardButtons } from "@/components/home/project-card-buttons"
@@ -48,6 +46,7 @@ export async function generateMetadata({
 }
 
 interface ProjectsPageProps {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{
     page?: string
   }>
@@ -73,19 +72,16 @@ function ProjectsSkeleton() {
 }
 
 // Projects content component
-async function ProjectsContent({ page }: { page: number }) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  const isAuthenticated = !!session?.user
-
-  const { projects: projectsRaw, totalCount, totalPages } = await getMonthProjects(page, 10)
-
-  const [locale, tSections, tV2] = await Promise.all([
-    getLocale(),
+async function ProjectsContent({ page, locale }: { page: number; locale: string }) {
+  const projectsPromise = getMonthProjects(page, 10, locale)
+  const [session, { projects, totalCount, totalPages }, tSections, tV2] = await Promise.all([
+    getServerSession(),
+    projectsPromise,
     getTranslations("home.sections"),
     // Row labels shared with the home feed rather than duplicated.
     getTranslations("home.v2"),
   ])
-  const projects = await localizeProjectDescriptions(projectsRaw, locale)
+  const isAuthenticated = !!session?.user
   const renderCommentLabel = (count: number) => tV2("reviewsCount", { count })
   const renderRankLabel = (rank: number) => tV2("rankLabel", { rank })
 
@@ -199,10 +195,13 @@ async function ProjectsContent({ page }: { page: number }) {
   )
 }
 
-export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
-  const params = await searchParams
-  const page = Number(params.page) || 1
-  const tBreadcrumb = await getTranslations("breadcrumb")
+export default async function ProjectsPage({ params, searchParams }: ProjectsPageProps) {
+  const [{ locale }, resolvedSearchParams, tBreadcrumb] = await Promise.all([
+    params,
+    searchParams,
+    getTranslations("breadcrumb"),
+  ])
+  const page = Number(resolvedSearchParams.page) || 1
 
   return (
     <div className="bg-background min-h-screen">
@@ -221,7 +220,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         </div>
 
         <Suspense fallback={<ProjectsSkeleton />}>
-          <ProjectsContent page={page} />
+          <ProjectsContent page={page} locale={locale} />
         </Suspense>
       </div>
     </div>

@@ -1,6 +1,11 @@
 import { db } from "@/drizzle/db"
-import { category as categoryTable, projectToCategory, upvote } from "@/drizzle/db/schema"
-import { and, eq, inArray } from "drizzle-orm"
+import {
+  category as categoryTable,
+  fumaComments,
+  projectToCategory,
+  upvote,
+} from "@/drizzle/db/schema"
+import { and, eq, inArray, sql } from "drizzle-orm"
 
 /**
  * Shared project-list enrichment helpers.
@@ -62,6 +67,71 @@ export async function getUpvotedSet(
     .from(upvote)
     .where(and(eq(upvote.userId, userId), inArray(upvote.projectId, projectIds)))
   return new Set(rows.map((r) => r.projectId))
+}
+
+export interface ProjectEngagementCounts {
+  upvoteCount: number
+  commentCount: number
+}
+
+/**
+ * Reads engagement for only the projects rendered by a list page.
+ *
+ * Counting after joining both `upvote` and `fuma_comments` produces one row
+ * per upvote/comment pair and forces `count(distinct ...)` to repair that
+ * multiplication. These two indexed, batched aggregates avoid the expanded
+ * intermediate result and can run alongside the other list enrichments.
+ */
+export async function getProjectEngagementCounts(
+  projectIds: string[],
+): Promise<Map<string, ProjectEngagementCounts>> {
+  if (!projectIds.length) return new Map()
+
+  const [upvoteRows, commentRows] = await Promise.all([
+    db
+      .select({
+        projectId: upvote.projectId,
+        upvoteCount: sql<number>`cast(count(${upvote.id}) as int)`.mapWith(Number),
+      })
+      .from(upvote)
+      .where(inArray(upvote.projectId, projectIds))
+      .groupBy(upvote.projectId),
+    db
+      .select({
+        projectId: fumaComments.page,
+        commentCount: sql<number>`cast(count(${fumaComments.id}) as int)`.mapWith(Number),
+      })
+      .from(fumaComments)
+      .where(inArray(fumaComments.page, projectIds))
+      .groupBy(fumaComments.page),
+  ])
+
+  const counts = new Map<string, ProjectEngagementCounts>()
+  for (const row of upvoteRows) {
+    counts.set(row.projectId, { upvoteCount: row.upvoteCount, commentCount: 0 })
+  }
+  for (const row of commentRows) {
+    const current = counts.get(row.projectId)
+    counts.set(row.projectId, {
+      upvoteCount: current?.upvoteCount ?? 0,
+      commentCount: row.commentCount,
+    })
+  }
+  return counts
+}
+
+export function withEngagementCounts<T extends { id: string }>(
+  projects: T[],
+  counts: Map<string, ProjectEngagementCounts>,
+): (T & ProjectEngagementCounts)[] {
+  return projects.map((project) => {
+    const engagement = counts.get(project.id)
+    return {
+      ...project,
+      upvoteCount: engagement?.upvoteCount ?? 0,
+      commentCount: engagement?.commentCount ?? 0,
+    }
+  })
 }
 
 export function withUserUpvoted<T extends { id: string }>(projects: T[], upvoted: Set<string>) {
