@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260912185825`; the independent repository check is
-`check-restic-idrive-e2-20260912190022`. Both completed successfully without
+`backup-aat-ee-restic-20260914040011`; the independent repository check is
+`check-restic-idrive-e2-20260914040157`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-b2b552fec97cb09bd0fb5dab6aa267a31652f240
+2e3bafd6d5f72312541736bd5fe5f9c3693fe252
 ```
 
 Current runtime facts:
@@ -163,16 +163,19 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.blog-covers-r39.yml`
+  `compose.performance-comment-r40.yml`
 - deployment marker:
-  `20260913-blog-covers-r39`
+  `20260914-performance-comment-r40`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
+- the one-shot migration container completed with exit code 0 before the app
+  started; this release includes
+  `0062_comment_tombstone_guard.sql`
 - blog data state: 13 published articles have assigned WebP covers; every
   Chinese translation is current with its English source
-- last post-deploy backup: `backup-aat-ee-restic-20260912185825`, with
+- last post-deploy backup: `backup-aat-ee-restic-20260914040011`, with
   `opsctl-backup-run@aat-ee.service` returning `Result=success` /
   `ExecMainStatus=0`
 
