@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-08-30 (Asia/Shanghai)
+Last verified: 2026-09-15 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260914040011`; the independent repository check is
-`check-restic-idrive-e2-20260914040157`. Both completed successfully without
+`backup-aat-ee-restic-20260915143610`; the independent repository check is
+`check-restic-idrive-e2-20260915143753`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-2e3bafd6d5f72312541736bd5fe5f9c3693fe252
+c7b46ad73d45efa1985a306386a998af2f706f00
 ```
 
 Current runtime facts:
@@ -163,19 +163,21 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.performance-comment-r40.yml`
+  `compose.community-r41.yml`
 - deployment marker:
-  `20260914-performance-comment-r40`
+  `20260915-community-r41`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
 - `/app/.next/cache` is a bounded 256 MiB `tmpfs`, UID/GID `1001`, mode `0750`
 - the one-shot migration container completed with exit code 0 before the app
-  started; this release includes
-  `0062_comment_tombstone_guard.sql`
+  started; this release includes `0063_community_core.sql` and
+  `0064_community_search_indexes.sql`
+- the Community schema is present, but `COMMUNITY_ENABLED` remains unset:
+  `/community` intentionally returns 404 and no Community navigation is shown
 - blog data state: 13 published articles have assigned WebP covers; every
   Chinese translation is current with its English source
-- last post-deploy backup: `backup-aat-ee-restic-20260914040011`, with
+- last post-deploy backup: `backup-aat-ee-restic-20260915143610`, with
   `opsctl-backup-run@aat-ee.service` returning `Result=success` /
   `ExecMainStatus=0`
 
