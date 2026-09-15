@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  communityCanaryCookieValue,
   evaluateCommunityCanaryBudget,
   hasCommunityCanaryCookie,
   medianCommunityCanaryTtfb,
@@ -80,10 +81,17 @@ describe("community canary response helpers", () => {
     ).toThrow("redirect must not include a hash")
   })
 
-  it("finds an emitted locale cookie without confusing other cookies", () => {
+  it("finds an emitted locale cookie without confusing attributes or prefixed names", () => {
+    expect(
+      communityCanaryCookieValue(
+        "session=ok; Expires=Wed, 21 Oct 2026 07:28:00 GMT; Path=/, NEXT_LOCALE=zh; Path=/",
+        "NEXT_LOCALE",
+      ),
+    ).toBe("zh")
     expect(
       hasCommunityCanaryCookie("session=ok; Path=/, NEXT_LOCALE=zh; Path=/", "NEXT_LOCALE"),
     ).toBe(true)
+    expect(hasCommunityCanaryCookie("NOT_NEXT_LOCALE=zh; Path=/", "NEXT_LOCALE")).toBe(false)
     expect(hasCommunityCanaryCookie("session=ok; Path=/", "NEXT_LOCALE")).toBe(false)
   })
 })

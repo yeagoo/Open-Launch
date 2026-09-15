@@ -2,6 +2,7 @@
 import { performance } from "node:perf_hooks"
 
 import {
+  communityCanaryCookieValue,
   evaluateCommunityCanaryBudget,
   hasCommunityCanaryCookie,
   parseCommunityCanaryArguments,
@@ -263,10 +264,11 @@ function expectRedirect(
 }
 
 function expectLocaleCookie(result: ProbeResult, locale: string): void {
-  if (!hasCommunityCanaryCookie(result.setCookie, "NEXT_LOCALE")) {
+  const persistedLocale = communityCanaryCookieValue(result.setCookie, "NEXT_LOCALE")
+  if (persistedLocale === null) {
     throw new Error(result.name + " does not persist NEXT_LOCALE")
   }
-  if (!new RegExp("NEXT_LOCALE=" + locale + "(?:[;,]|$)", "i").test(result.setCookie ?? "")) {
+  if (persistedLocale.toLowerCase() !== locale.toLowerCase()) {
     throw new Error(result.name + " does not persist NEXT_LOCALE=" + locale)
   }
 }

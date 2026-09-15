@@ -85,10 +85,26 @@ export function resolveCommunityCanaryRedirect(baseUrl: URL, location: string): 
   return target
 }
 
+/**
+ * `Headers.get('set-cookie')` can join cookie fields. Read each cookie-pair
+ * without constructing a regular expression from an operator-provided name.
+ */
+export function communityCanaryCookieValue(value: string | null, name: string): string | null {
+  const expectedName = name.toLowerCase()
+  for (const segment of (value ?? "").split(",")) {
+    const cookiePair = segment.trimStart().split(";", 1)[0]?.trim()
+    if (!cookiePair) continue
+    const separator = cookiePair.indexOf("=")
+    if (separator <= 0) continue
+    if (cookiePair.slice(0, separator).trim().toLowerCase() !== expectedName) continue
+    return cookiePair.slice(separator + 1).trim()
+  }
+  return null
+}
+
 /** `Headers.get('set-cookie')` can join values; this detects a named cookie in either form. */
 export function hasCommunityCanaryCookie(value: string | null, name: string): boolean {
-  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  return new RegExp("(?:^|[,;]\\s*)" + escapedName + "=", "i").test(value ?? "")
+  return communityCanaryCookieValue(value, name) !== null
 }
 
 export function medianCommunityCanaryTtfb(values: number[]): number {
