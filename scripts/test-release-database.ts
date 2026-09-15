@@ -38,7 +38,14 @@ function assertReleaseDatabaseUrl(connectionString: string): URL {
 function expectedType(sqlType: string): string {
   if (sqlType === "serial") return "integer"
   if (sqlType === "timestamp") return "timestamp without time zone"
-  if (sqlType === "varchar(256)") return "character varying(256)"
+  // Drizzle represents fractional timestamp precision as `timestamp (3)`,
+  // while PostgreSQL's catalog formatter emits the equivalent `timestamp(3)`.
+  // Normalize that presentation-only difference before comparing the schema.
+  if (/^timestamp \(\d+\) with time zone$/.test(sqlType)) {
+    return sqlType.replace("timestamp (", "timestamp(")
+  }
+  const varchar = /^varchar\((\d+)\)$/.exec(sqlType)
+  if (varchar) return `character varying(${varchar[1]})`
   return sqlType.replace(/,\s+/g, ",")
 }
 
