@@ -31,6 +31,7 @@ describe("sitemap XML", () => {
     expect(xml).not.toContain("https://www.aat.ee/sitemaps/tags-5.xml")
     expect(xml).toContain("https://www.aat.ee/sitemaps/users-3.xml")
     expect(xml).not.toContain("https://www.aat.ee/sitemaps/tags.xml")
+    expect(xml).not.toContain("https://www.aat.ee/sitemaps/community-1.xml")
   })
 
   it("keeps one empty shard and parses only bounded shard routes", () => {
@@ -43,9 +44,19 @@ describe("sitemap XML", () => {
     expect(parseSitemapRoute("projects-12.xml")).toEqual({ kind: "projects", shard: 12 })
     expect(parseSitemapRoute("tags-2.xml")).toEqual({ kind: "tags", shard: 2 })
     expect(parseSitemapRoute("users-3.xml")).toEqual({ kind: "users", shard: 3 })
+    expect(parseSitemapRoute("community-2.xml")).toEqual({ kind: "community", shard: 2 })
     expect(parseSitemapRoute("projects-0.xml")).toBeNull()
     expect(parseSitemapRoute("projects-1001.xml")).toBeNull()
     expect(parseSitemapRoute("projects-1.json")).toBeNull()
+  })
+
+  it("adds community shards only while the feature is enabled", () => {
+    expect(
+      getSitemapIndexPaths(
+        { projects: 0, tags: 0, users: 0, community: 251 },
+        { includeCommunity: true },
+      ),
+    ).toEqual(expect.arrayContaining(["community-1", "community-2"]))
   })
 
   it("builds legacy redirects from the canonical origin, not the internal request host", () => {

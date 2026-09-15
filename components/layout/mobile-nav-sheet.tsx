@@ -1,7 +1,10 @@
 "use client"
 
+import NextLink from "next/link"
+
 import { Link } from "@/i18n/navigation"
 import {
+  RiCommunityLine,
   RiDashboardLine,
   RiFlashlightLine,
   RiHomeLine,
@@ -30,6 +33,7 @@ import { SearchCommandLazy } from "./search-command-lazy"
 
 interface MobileNavSheetProps {
   isAuthenticated: boolean
+  showCommunity?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Match the home v2 accent palette; see NavMenu for why this is a prop. */
@@ -38,6 +42,7 @@ interface MobileNavSheetProps {
 
 export function MobileNavSheet({
   isAuthenticated,
+  showCommunity = false,
   open,
   onOpenChange,
   useHomeAccent = false,
@@ -81,6 +86,20 @@ export function MobileNavSheet({
             <div className="mt-2 mb-6 px-6">
               <SearchCommandLazy isAuthenticated={isAuthenticated} enableShortcut={false} />
             </div>
+            {showCommunity && (
+              <div className="space-y-1">
+                <SheetClose asChild>
+                  {/* Community is intentionally not locale-prefixed. */}
+                  <NextLink
+                    href="/community"
+                    className="hover:bg-muted/50 flex items-center gap-3 px-6 py-2.5 text-sm transition-colors"
+                  >
+                    <RiCommunityLine className="text-muted-foreground h-4 w-4" />
+                    <span>Community</span>
+                  </NextLink>
+                </SheetClose>
+              </div>
+            )}
             <div className="bg-border my-4 h-px" />
 
             {isAuthenticated && (

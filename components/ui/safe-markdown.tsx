@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm"
  *  - No raw HTML (we don't pass rehype-raw, so embedded HTML is escaped to text).
  *  - No <img>: AI markdown can't pull third-party resources or leak visitor IPs.
  *  - No javascript:/data:/vbscript: URLs in anchor hrefs.
- *  - All anchors carry rel="noopener noreferrer nofollow" target="_blank".
+ *  - All anchors carry rel="ugc nofollow noopener noreferrer" target="_blank".
  *  - Headings are downgraded one level so the section's wrapper heading stays
  *    the dominant H2; AI's intended H2 sections render as H3.
  *
@@ -64,7 +64,7 @@ const linkComponent: Components["a"] = (props) => {
   const safe = safeHref(href)
   if (!safe) return <span {...rest}>{children}</span>
   return (
-    <a href={safe} target="_blank" rel="noopener noreferrer nofollow" {...rest}>
+    <a href={safe} target="_blank" rel="ugc nofollow noopener noreferrer" {...rest}>
       {children}
     </a>
   )

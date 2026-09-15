@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["lib/**/*.test.ts", "tests/**/*.test.ts"],
+    include: ["lib/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
     // Most lib code is server-only; no DOM needed.
   },
 })

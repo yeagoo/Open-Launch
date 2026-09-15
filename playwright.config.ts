@@ -2,10 +2,13 @@ import { defineConfig, devices } from "@playwright/test"
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3100"
 const target = new URL(baseURL)
-if (!["127.0.0.1", "localhost", "::1"].includes(target.hostname)) {
-  throw new Error("E2E_BASE_URL must target loopback")
+// The standalone server and next-intl's default-locale rewrite use one
+// canonical host. Other loopback spellings can otherwise create a rewrite
+// loop even though they resolve to this machine.
+if (target.protocol !== "http:" || target.hostname !== "localhost") {
+  throw new Error("E2E_BASE_URL must use http://localhost")
 }
-const serverPort = target.port || (target.protocol === "https:" ? "443" : "80")
+const serverPort = target.port || "80"
 const databaseUrl = process.env.E2E_DATABASE_URL
 const redisUrl = process.env.E2E_REDIS_URL ?? process.env.REDIS_URL
 const authSecret = process.env.BETTER_AUTH_SECRET ?? "open-launch-e2e-auth-secret-32-bytes"
@@ -43,6 +46,9 @@ const runtimeEnv = {
   R2_PUBLIC_DOMAIN: "static.example.invalid",
   CRON_API_KEY: "open-launch-e2e-cron-key",
   EMBEDDED_CRON_DISABLED: "true",
+  // The real production flag stays default-closed. Browser tests exercise the
+  // opt-in path only against the loopback database fixture guarded above.
+  COMMUNITY_ENABLED: "1",
 } satisfies Record<string, string | undefined>
 
 export default defineConfig({

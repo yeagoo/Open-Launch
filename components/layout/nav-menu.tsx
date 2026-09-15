@@ -1,5 +1,7 @@
 "use client"
 
+import NextLink from "next/link"
+
 import { Link } from "@/i18n/navigation"
 import { RiRocketLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
@@ -16,6 +18,7 @@ import {
 
 interface NavMenuProps {
   showDashboard?: boolean
+  showCommunity?: boolean
   /**
    * Use the redesigned home's CTA *shape* (pill, semibold, roomier). Colour is
    * not part of this: `--primary` is remapped app-wide when HOME_V2 is on (see
@@ -25,7 +28,11 @@ interface NavMenuProps {
   useHomeAccent?: boolean
 }
 
-export function NavMenu({ showDashboard = true, useHomeAccent = false }: NavMenuProps) {
+export function NavMenu({
+  showDashboard = true,
+  showCommunity = false,
+  useHomeAccent = false,
+}: NavMenuProps) {
   const t = useTranslations("nav")
   const tDesc = useTranslations("nav.exploreDesc")
   return (
@@ -105,6 +112,20 @@ export function NavMenu({ showDashboard = true, useHomeAccent = false }: NavMenu
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>
+
+        {showCommunity && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              {/* Community is deliberately English-only and bypasses next-intl routing. */}
+              <NextLink
+                href="/community"
+                className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}
+              >
+                Community
+              </NextLink>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
 
         {showDashboard && (
           <NavigationMenuItem>

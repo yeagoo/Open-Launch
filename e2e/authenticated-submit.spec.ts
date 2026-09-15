@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test"
 
 import { blockExternalBrowserRequests } from "./helpers/network"
-import { releaseFixture } from "./helpers/release-fixture"
+import { releaseFixture, releaseUserAuthFile } from "./helpers/release-fixture"
 
-test.use({ storageState: "test-results/.auth/release-user.json" })
+test.use({ storageState: releaseUserAuthFile })
 
 test("authenticated submit exposes all visible client validation errors", async ({ page }) => {
   await blockExternalBrowserRequests(page)

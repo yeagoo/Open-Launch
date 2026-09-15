@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm"
 import {
   boolean,
+  check,
   date,
+  foreignKey,
   index,
   integer,
   json,
@@ -177,6 +179,11 @@ export const project = pgTable(
       ),
       // Dashboard / quota recount / admin queries filter by owner.
       createdByIdx: index("project_created_by_idx").on(table.createdBy),
+      // Used by the bounded community composer product picker. Mirrors
+      // 0064_community_search_indexes.sql.
+      publicStatusUpdatedIdx: index("project_public_status_updated_idx")
+        .on(table.updatedAt.desc(), table.name.asc(), table.id.asc())
+        .where(sql`${table.launchStatus} IN ('ongoing','launched')`),
       crawlSuspendedIdx: index("project_crawl_suspended_until_idx").on(table.crawlSuspendedUntil),
     }
   },
@@ -1292,4 +1299,208 @@ export const skillPublication = pgTable(
     ),
     submissionIdx: index("skill_publication_submission_idx").on(table.submissionId),
   }),
+)
+
+// Community is independent of product comments. Applied by 0063_community_core.sql.
+const communityTime = (name: string) => timestamp(name, { withTimezone: true, precision: 3 })
+export const communityThread = pgTable(
+  "community_thread",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    type: text("type").notNull(),
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
+    title: text("title"),
+    body: text("body").notNull(),
+    lifecycle: text("lifecycle").notNull().default("draft"),
+    moderation: text("moderation").notNull().default("public"),
+    lockedAt: communityTime("locked_at"),
+    pinnedUntil: communityTime("pinned_until"),
+    version: integer("version").notNull().default(1),
+    voteCount: integer("vote_count").notNull().default(0),
+    replyCount: integer("reply_count").notNull().default(0),
+    requestKey: varchar("request_key", { length: 100 }),
+    requestHash: varchar("request_hash", { length: 64 }),
+    createdAt: communityTime("created_at").notNull().defaultNow(),
+    updatedAt: communityTime("updated_at").notNull().defaultNow(),
+    publishedAt: communityTime("published_at"),
+  },
+  (t) => [
+    check(
+      "community_thread_type_check",
+      sql`${t.type} IN ('Shipped','Learning','Question','Milestone','Todo')`,
+    ),
+    check(
+      "community_thread_lifecycle_check",
+      sql`${t.lifecycle} IN ('draft','published','deleted')`,
+    ),
+    check(
+      "community_thread_moderation_check",
+      sql`${t.moderation} IN ('public','pending','hidden')`,
+    ),
+    check("community_thread_title_check", sql`char_length(${t.title}) <= 160`),
+    check("community_thread_body_check", sql`char_length(${t.body}) <= 10000`),
+    check("community_thread_version_check", sql`${t.version} > 0`),
+    check("community_thread_vote_count_check", sql`${t.voteCount} >= 0`),
+    check("community_thread_reply_count_check", sql`${t.replyCount} >= 0`),
+    check(
+      "community_thread_check",
+      sql`${t.lifecycle} = 'draft' OR (${t.publishedAt} IS NOT NULL AND char_length(btrim(${t.body})) > 0)`,
+    ),
+    check("community_thread_check1", sql`(${t.requestKey} IS NULL) = (${t.requestHash} IS NULL)`),
+    uniqueIndex("community_thread_draft_owner_idx")
+      .on(t.authorId)
+      .where(sql`${t.lifecycle}='draft'`),
+    uniqueIndex("community_thread_request_idx")
+      .on(t.authorId, t.requestKey)
+      .where(sql`${t.requestKey} IS NOT NULL`),
+    index("community_thread_public_date_idx")
+      .on(t.publishedAt.desc(), t.id.desc())
+      .where(sql`${t.lifecycle}='published' AND ${t.moderation}='public'`),
+    index("community_thread_public_type_date_idx")
+      .on(t.type, t.publishedAt.desc(), t.id.desc())
+      .where(sql`${t.lifecycle}='published' AND ${t.moderation}='public'`),
+    index("community_thread_author_date_idx").on(t.authorId, t.createdAt.desc(), t.id.desc()),
+    index("community_thread_project_idx").on(t.projectId),
+    // Keep the expression in sync with 0064_community_search_indexes.sql and
+    // the literal-search predicate in lib/community/queries.ts.
+    index("community_thread_public_text_trgm_idx")
+      .using("gin", sql`(lower(coalesce(${t.title}, '') || ' ' || ${t.body})) gin_trgm_ops`)
+      .where(sql`${t.lifecycle}='published' AND ${t.moderation}='public'`),
+  ],
+)
+export const communityReply = pgTable(
+  "community_reply",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => communityThread.id, { onDelete: "cascade" }),
+    authorId: text("author_id").references(() => user.id, { onDelete: "set null" }),
+    parentId: uuid("parent_id"),
+    body: text("body").notNull(),
+    moderation: text("moderation").notNull().default("public"),
+    deletedAt: communityTime("deleted_at"),
+    version: integer("version").notNull().default(1),
+    requestKey: varchar("request_key", { length: 100 }).notNull(),
+    requestHash: varchar("request_hash", { length: 64 }).notNull(),
+    createdAt: communityTime("created_at").notNull().defaultNow(),
+    updatedAt: communityTime("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("community_reply_thread_id_id_key").on(t.threadId, t.id),
+    foreignKey({ columns: [t.threadId, t.parentId], foreignColumns: [t.threadId, t.id] }),
+    uniqueIndex("community_reply_author_id_thread_id_request_key_key").on(
+      t.authorId,
+      t.threadId,
+      t.requestKey,
+    ),
+    check(
+      "community_reply_body_check",
+      sql`char_length(btrim(${t.body})) > 0 AND char_length(${t.body}) <= 4000`,
+    ),
+    check(
+      "community_reply_moderation_check",
+      sql`${t.moderation} IN ('public','pending','hidden')`,
+    ),
+    check("community_reply_version_check", sql`${t.version} > 0`),
+    check("community_reply_check", sql`${t.parentId} IS NULL OR ${t.parentId} <> ${t.id}`),
+    index("community_reply_thread_date_idx").on(t.threadId, t.createdAt, t.id),
+    index("community_reply_parent_idx").on(t.threadId, t.parentId),
+    index("community_reply_author_idx").on(t.authorId),
+  ],
+)
+export const communityThreadVote = pgTable(
+  "community_thread_vote",
+  {
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => communityThread.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.threadId, t.userId] }),
+    index("community_thread_vote_user_idx").on(t.userId),
+  ],
+)
+export const communityBookmark = pgTable(
+  "community_bookmark",
+  {
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => communityThread.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.threadId, t.userId] }),
+    index("community_bookmark_user_idx").on(t.userId, t.threadId),
+  ],
+)
+export const communityReport = pgTable(
+  "community_report",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reporterId: text("reporter_id").references(() => user.id, { onDelete: "set null" }),
+    threadId: uuid("thread_id").references(() => communityThread.id, { onDelete: "cascade" }),
+    replyId: uuid("reply_id").references(() => communityReply.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    contentSnapshot: text("content_snapshot").notNull(),
+    status: text("status").notNull().default("pending"),
+    resolverId: text("resolver_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: communityTime("created_at").notNull().defaultNow(),
+    resolvedAt: communityTime("resolved_at"),
+  },
+  (t) => [
+    check(
+      "community_report_reason_check",
+      sql`char_length(btrim(${t.reason})) > 0 AND char_length(${t.reason}) <= 1000`,
+    ),
+    check("community_report_status_check", sql`${t.status} IN ('pending','resolved')`),
+    check(
+      "community_report_check",
+      sql`(${t.threadId} IS NOT NULL)::integer + (${t.replyId} IS NOT NULL)::integer = 1`,
+    ),
+    uniqueIndex("community_report_thread_reporter_idx")
+      .on(t.threadId, t.reporterId)
+      .where(sql`${t.threadId} IS NOT NULL`),
+    uniqueIndex("community_report_reply_reporter_idx")
+      .on(t.replyId, t.reporterId)
+      .where(sql`${t.replyId} IS NOT NULL`),
+    index("community_report_status_date_idx").on(t.status, t.createdAt, t.id),
+    index("community_report_reporter_idx").on(t.reporterId),
+    index("community_report_resolver_idx").on(t.resolverId),
+  ],
+)
+export const communityModerationEvent = pgTable(
+  "community_moderation_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    threadId: uuid("thread_id").references(() => communityThread.id, { onDelete: "set null" }),
+    replyId: uuid("reply_id").references(() => communityReply.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: communityTime("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("community_moderation_thread_idx").on(t.threadId, t.createdAt),
+    index("community_moderation_reply_idx").on(t.replyId),
+    index("community_moderation_actor_idx").on(t.actorId),
+  ],
+)
+export const communityFeedSnapshot = pgTable(
+  "community_feed_snapshot",
+  {
+    id: text("id").primaryKey(),
+    threadIds: uuid("thread_ids").array().notNull(),
+    expiresAt: communityTime("expires_at").notNull(),
+  },
+  (t) => [
+    check("community_feed_snapshot_thread_ids_check", sql`cardinality(${t.threadIds}) <= 2000`),
+    index("community_feed_snapshot_expiry_idx").on(t.expiresAt),
+  ],
 )

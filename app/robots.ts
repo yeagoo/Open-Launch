@@ -7,7 +7,16 @@ import { routing } from "@/i18n/routing"
 // exist in both the bare and the locale-prefixed form — otherwise
 // /zh/dashboard etc. stay crawlable.
 function privatePaths(): string[] {
-  const bare = ["/dashboard", "/settings", "/projects/submit", "/notifications"]
+  const bare = [
+    "/dashboard",
+    "/settings",
+    "/projects/submit",
+    "/notifications",
+    "/community/new",
+    "/community/moderation",
+    "/community/*/edit",
+    "/community/t/*/edit",
+  ]
   const localized = routing.locales
     .filter((locale) => locale !== routing.defaultLocale)
     .flatMap((locale) => bare.map((path) => `/${locale}${path}`))

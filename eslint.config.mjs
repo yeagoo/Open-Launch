@@ -4,11 +4,10 @@ import reactHooks from "eslint-plugin-react-hooks"
 
 const eslintConfig = [
   {
-    // `artifacts/` is scratch space (design-preview exports, local database,
-    // tool caches). tsconfig.json already excludes it; without the same
-    // exclusion here ESLint lints whatever lands in it — a tool cache with a
-    // few thousand JS files turned a clean run into 150k reported problems.
-    ignores: ["artifacts/**"],
+    // Generated reports and `artifacts/` are scratch space. tsconfig.json
+    // already excludes them; without the same exclusion here a failed browser
+    // run makes ESLint lint its bundled viewer assets on the next check.
+    ignores: ["artifacts/**", "playwright-report/**", "test-results/**"],
   },
   ...nextCoreWebVitals,
   ...nextTypescript,

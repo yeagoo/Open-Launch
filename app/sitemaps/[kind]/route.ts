@@ -4,6 +4,7 @@ import { db } from "@/drizzle/db"
 import {
   alternativePage,
   blogArticle,
+  communityThread,
   comparisonPage,
   launchStatus,
   project,
@@ -11,7 +12,7 @@ import {
   tag,
   tagModerationStatus,
 } from "@/drizzle/db/schema"
-import { eq, or } from "drizzle-orm"
+import { and, asc, eq, or } from "drizzle-orm"
 
 import { SITEMAP_ENTRIES_TAG } from "@/lib/cache-tags"
 import {
@@ -33,7 +34,7 @@ import { listPublicProfileUserIds } from "@/lib/user-profile-query"
 // results are cached below and invalidated by the corresponding writers.
 export const dynamic = "force-dynamic"
 
-function staticEntries(): SitemapEntry[] {
+function staticEntries(communityEnabled: boolean): SitemapEntry[] {
   return [
     ...localizedSitemapEntries("/", { changeFrequency: "hourly", priority: 1 }),
     ...localizedSitemapEntries("/projects", { changeFrequency: "daily", priority: 0.9 }),
@@ -55,6 +56,9 @@ function staticEntries(): SitemapEntry[] {
     englishSitemapEntry("/tools/launch-checklist", { changeFrequency: "monthly", priority: 0.6 }),
     englishSitemapEntry("/tools/meta-tags", { changeFrequency: "monthly", priority: 0.6 }),
     englishSitemapEntry("/alternatives", { changeFrequency: "weekly", priority: 0.8 }),
+    ...(communityEnabled
+      ? [englishSitemapEntry("/community", { changeFrequency: "daily", priority: 0.7 })]
+      : []),
   ]
 }
 
@@ -115,8 +119,34 @@ const cachedPublicUserSourceRowsFor = unstable_cache(
   },
 )
 
-async function entriesFor(kind: SitemapKind, shard: number): Promise<SitemapEntry[]> {
-  if (kind === "static") return staticEntries()
+async function communitySourceRowsFor(shard: number) {
+  const offset = (shard - 1) * SITEMAP_SOURCE_ROWS_PER_SHARD
+  return db
+    .select({ id: communityThread.id, updatedAt: communityThread.updatedAt })
+    .from(communityThread)
+    .where(
+      and(eq(communityThread.lifecycle, "published"), eq(communityThread.moderation, "public")),
+    )
+    .orderBy(asc(communityThread.id))
+    .limit(SITEMAP_SOURCE_ROWS_PER_SHARD)
+    .offset(offset)
+}
+
+const cachedCommunitySourceRowsFor = unstable_cache(
+  communitySourceRowsFor,
+  ["sitemap-community-source-rows"],
+  {
+    revalidate: 3600,
+    tags: [SITEMAP_ENTRIES_TAG],
+  },
+)
+
+async function entriesFor(
+  kind: SitemapKind,
+  shard: number,
+  communityEnabled: boolean,
+): Promise<SitemapEntry[]> {
+  if (kind === "static") return staticEntries(communityEnabled)
 
   if (kind === "projects") {
     const projects = await cachedProjectSourceRowsFor(shard)
@@ -165,6 +195,18 @@ async function entriesFor(kind: SitemapKind, shard: number): Promise<SitemapEntr
       localizedSitemapEntries(`/users/${id}`, {
         changeFrequency: "weekly",
         priority: 0.5,
+      }),
+    )
+  }
+
+  if (kind === "community") {
+    if (!communityEnabled) return []
+    const posts = await cachedCommunitySourceRowsFor(shard)
+    return posts.map((post) =>
+      englishSitemapEntry(`/community/t/${post.id}`, {
+        lastModified: post.updatedAt,
+        changeFrequency: "weekly",
+        priority: 0.6,
       }),
     )
   }
@@ -226,14 +268,18 @@ export async function GET(
   if (!route) {
     return new Response("Not Found", { status: 404 })
   }
+  const communityEnabled = process.env.COMMUNITY_ENABLED === "1"
+  if (route.kind === "community" && !communityEnabled) {
+    return new Response("Not Found", { status: 404 })
+  }
 
   // Sharded routes cache only their compact source rows above. Caching the
   // expanded hreflang objects would reintroduce the 2 MiB Data Cache failure
   // this split is designed to remove.
   const isShardedKind = SHARDED_SITEMAP_KINDS.includes(route.kind as ShardedSitemapKind)
   const entries = isShardedKind
-    ? await entriesFor(route.kind, route.shard)
-    : await cachedEntriesFor(route.kind, route.shard)
+    ? await entriesFor(route.kind, route.shard, communityEnabled)
+    : await cachedEntriesFor(route.kind, route.shard, communityEnabled)
   return new Response(serializeSitemap(entries), {
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400",

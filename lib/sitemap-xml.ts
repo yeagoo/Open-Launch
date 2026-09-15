@@ -22,10 +22,11 @@ export const SITEMAP_KINDS = [
   "reviews",
   "users",
   "editorial",
+  "community",
 ] as const
 export type SitemapKind = (typeof SITEMAP_KINDS)[number]
 
-export const SHARDED_SITEMAP_KINDS = ["projects", "tags", "users"] as const
+export const SHARDED_SITEMAP_KINDS = ["projects", "tags", "users", "community"] as const
 export type ShardedSitemapKind = (typeof SHARDED_SITEMAP_KINDS)[number]
 
 // A source row expands to one URL per locale, with every hreflang alternate
@@ -44,6 +45,7 @@ export interface SitemapShardCounts {
   projects: number
   tags: number
   users: number
+  community?: number
 }
 
 export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
@@ -59,7 +61,7 @@ export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
     return { kind: stem as SitemapKind, shard: 1 }
   }
 
-  const match = /^(projects|tags|users)-([1-9]\d*)$/.exec(stem)
+  const match = /^(projects|tags|users|community)-([1-9]\d*)$/.exec(stem)
   if (!match) return null
   const shard = Number(match[2])
   if (!Number.isSafeInteger(shard) || shard > MAX_SITEMAP_SHARDS) return null
@@ -67,11 +69,17 @@ export function parseSitemapRoute(rawKind: string): SitemapRoute | null {
   return { kind: match[1] as ShardedSitemapKind, shard }
 }
 
-export function getSitemapIndexPaths(counts: SitemapShardCounts): string[] {
-  return SITEMAP_KINDS.flatMap((kind) => {
+export function getSitemapIndexPaths(
+  counts: SitemapShardCounts,
+  { includeCommunity = false }: { includeCommunity?: boolean } = {},
+): string[] {
+  const kinds = includeCommunity
+    ? SITEMAP_KINDS
+    : SITEMAP_KINDS.filter((kind) => kind !== "community")
+  return kinds.flatMap((kind) => {
     if (!SHARDED_SITEMAP_KINDS.includes(kind as ShardedSitemapKind)) return [kind]
 
-    const sourceRows = counts[kind as ShardedSitemapKind]
+    const sourceRows = counts[kind as ShardedSitemapKind] ?? 0
     const shardCount = Math.max(1, Math.ceil(sourceRows / SITEMAP_SOURCE_ROWS_PER_SHARD))
     return Array.from({ length: shardCount }, (_, index) => `${kind}-${index + 1}`)
   })

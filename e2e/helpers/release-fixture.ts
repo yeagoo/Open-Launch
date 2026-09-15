@@ -12,6 +12,25 @@ export const releaseFixture = {
   projectSlug: "release-gate-fixture",
 } as const
 
+export const releaseUserAuthFile = "test-results/.auth/release-user.json"
+export const communityModeratorAuthFile = "test-results/.auth/community-moderator.json"
+
+/** Forum rows used only by the loopback Playwright release fixture. */
+export const communityFixture = {
+  authorId: "open-launch-e2e-community-author",
+  moderatorId: "open-launch-e2e-community-moderator",
+  moderatorSessionId: "open-launch-e2e-community-moderator-session",
+  moderatorSessionToken: "open-launch-e2e-community-moderator-session-token",
+  threadId: "10000000-0000-4000-8000-000000000001",
+  threadTitle: "Release-gate community update",
+  threadBody: "A deterministic public community update for the browser release gate.",
+  moderationThreadId: "10000000-0000-4000-8000-000000000002",
+  moderationTitle: "Release-gate moderation fixture",
+  moderationBody: "A deterministic report target for the moderator browser release gate.",
+  reportId: "10000000-0000-4000-8000-000000000003",
+  reportReason: "The isolated moderator fixture needs review before a public launch.",
+} as const
+
 function assertSafeE2EUrl(connectionString: string): URL {
   const url = new URL(connectionString)
   if (
@@ -33,6 +52,25 @@ export function signedSessionCookie(token: string, secret: string): string {
   return encodeURIComponent(`${token}.${signature}`)
 }
 
+/** Read only the moderation state needed to synchronize a loopback browser fixture. */
+export async function communityThreadModeration(
+  connectionString: string,
+  threadId: string,
+): Promise<string | null> {
+  assertSafeE2EUrl(connectionString)
+  const client = new Client({ connectionString })
+  await client.connect()
+  try {
+    const { rows } = await client.query<{ moderation: string }>(
+      "SELECT moderation FROM community_thread WHERE id = $1",
+      [threadId],
+    )
+    return rows[0]?.moderation ?? null
+  } finally {
+    await client.end()
+  }
+}
+
 export async function seedReleaseFixture(connectionString: string): Promise<void> {
   assertSafeE2EUrl(connectionString)
   const client = new Client({ connectionString })
@@ -51,6 +89,34 @@ export async function seedReleaseFixture(connectionString: string): Promise<void
              banned = false`,
       [releaseFixture.userId, "Release Gate User", "release-gate@example.invalid"],
     )
+    for (const fixtureUser of [
+      {
+        id: communityFixture.authorId,
+        name: "Community Fixture Author",
+        email: "community-author@example.invalid",
+        role: "user",
+      },
+      {
+        id: communityFixture.moderatorId,
+        name: "Community Fixture Moderator",
+        email: "community-moderator@example.invalid",
+        role: "admin",
+      },
+    ]) {
+      await client.query(
+        `INSERT INTO "user"
+           (id, name, email, email_verified, created_at, updated_at, role, banned, is_bot)
+         VALUES ($1, $2, $3, true, now(), now(), $4, false, false)
+         ON CONFLICT (id) DO UPDATE
+           SET name = EXCLUDED.name,
+               email = EXCLUDED.email,
+               email_verified = true,
+               role = EXCLUDED.role,
+               updated_at = now(),
+               banned = false`,
+        [fixtureUser.id, fixtureUser.name, fixtureUser.email, fixtureUser.role],
+      )
+    }
     await client.query(
       `INSERT INTO session
          (id, expires_at, token, created_at, updated_at, user_id, ip_address, user_agent)
@@ -61,6 +127,21 @@ export async function seedReleaseFixture(connectionString: string): Promise<void
              updated_at = now(),
              user_id = EXCLUDED.user_id`,
       [releaseFixture.sessionId, releaseFixture.sessionToken, releaseFixture.userId],
+    )
+    await client.query(
+      `INSERT INTO session
+         (id, expires_at, token, created_at, updated_at, user_id, ip_address, user_agent)
+       VALUES ($1, now() + interval '1 day', $2, now(), now(), $3, '127.0.0.1', 'playwright')
+       ON CONFLICT (id) DO UPDATE
+         SET expires_at = EXCLUDED.expires_at,
+             token = EXCLUDED.token,
+             updated_at = now(),
+             user_id = EXCLUDED.user_id`,
+      [
+        communityFixture.moderatorSessionId,
+        communityFixture.moderatorSessionToken,
+        communityFixture.moderatorId,
+      ],
     )
     await client.query(
       `INSERT INTO category (id, name, created_at, updated_at)
@@ -116,6 +197,47 @@ export async function seedReleaseFixture(connectionString: string): Promise<void
        VALUES ($1, $2)
        ON CONFLICT DO NOTHING`,
       [releaseFixture.projectId, releaseFixture.categoryId],
+    )
+    // Reset only deterministic loopback forum rows. Deleting the threads
+    // cascades replies, reactions and reports so a retried browser run starts
+    // with the same public post and moderator queue.
+    await client.query("DELETE FROM community_thread WHERE id = ANY($1::uuid[])", [
+      [communityFixture.threadId, communityFixture.moderationThreadId],
+    ])
+    await client.query(
+      `DELETE FROM community_thread
+       WHERE author_id = $1 AND lifecycle = 'draft'`,
+      [releaseFixture.userId],
+    )
+    await client.query(
+      `INSERT INTO community_thread
+         (id, author_id, type, project_id, title, body, lifecycle, moderation,
+          published_at, created_at, updated_at)
+       VALUES
+         ($1, $2, 'Shipped', $3, $4, $5, 'published', 'public', now(), now(), now()),
+         ($6, $2, 'Question', NULL, $7, $8, 'published', 'public', now(), now(), now())`,
+      [
+        communityFixture.threadId,
+        communityFixture.authorId,
+        releaseFixture.projectId,
+        communityFixture.threadTitle,
+        communityFixture.threadBody,
+        communityFixture.moderationThreadId,
+        communityFixture.moderationTitle,
+        communityFixture.moderationBody,
+      ],
+    )
+    await client.query(
+      `INSERT INTO community_report
+         (id, reporter_id, thread_id, reason, content_snapshot, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', now())`,
+      [
+        communityFixture.reportId,
+        releaseFixture.userId,
+        communityFixture.moderationThreadId,
+        communityFixture.reportReason,
+        communityFixture.moderationBody,
+      ],
     )
     // Setup is intentionally repeatable: retries start from a deterministic
     // vote count and cannot reuse a checkout row from an earlier attempt.

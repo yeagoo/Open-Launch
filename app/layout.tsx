@@ -5,6 +5,7 @@ import {
   Outfit as FontHeading,
   Inter as FontSans,
 } from "next/font/google"
+import { headers } from "next/headers"
 import Script from "next/script"
 
 import { NextIntlClientProvider } from "next-intl"
@@ -110,19 +111,22 @@ export default async function RootLayout({
   // runtime read rather than a shared module so both call sites can be reverted
   // by the same env change without a rebuild.
   const homeV2Enabled = process.env.HOME_V2 === "1"
-  const [locale, messages, footerTaxonomy] = await Promise.all([
+  const communityEnabled = process.env.COMMUNITY_ENABLED === "1"
+  const [locale, messages, footerTaxonomy, requestHeaders] = await Promise.all([
     getLocale(),
     getMessages(),
     // Cached (1h, shared with the home sidebar's category tag) — the footer
     // renders on every route, so this must never be an uncached query.
     getFooterTaxonomy(),
+    headers(),
   ])
+  const documentLocale = requestHeaders.get("x-aat-community-route") === "1" ? "en" : locale
   const navMessages = pickClientMessages(messages, ["common", "nav", "notifications", "search"])
   const footerMessages = pickClientMessages(messages, ["footer"])
 
   return (
     <html
-      lang={locale}
+      lang={documentLocale}
       // Adopt the redesigned home's action colour app-wide, gated on the same
       // flag that enables the layout (see the [data-app-palette] block in
       // globals.css). Absent when the flag is off, so the legacy site is
@@ -212,7 +216,11 @@ export default async function RootLayout({
               <main className="flex-grow">{children}</main>
             </NextIntlClientProvider>
             <NextIntlClientProvider locale={locale} messages={footerMessages}>
-              <Footer navSites={footerNavSites} taxonomy={footerTaxonomy} />
+              <Footer
+                navSites={footerNavSites}
+                taxonomy={footerTaxonomy}
+                showCommunity={communityEnabled}
+              />
             </NextIntlClientProvider>
           </div>
         </ThemeProvider>

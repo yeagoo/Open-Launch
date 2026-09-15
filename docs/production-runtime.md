@@ -33,6 +33,22 @@ Server logs default to one JSON object per line. `STRUCTURED_LOG_FORMAT=text`
 is an emergency compatibility mode for a legacy collector; it changes framing
 only and never disables redaction.
 
+When `COMMUNITY_ENABLED=1`, slow Community service operations (one second or
+more) emit `community_operation_slow`. Unexpected Community failures emit
+`community_service_error`. Their fixed operation metadata contains only the
+request ID, route family, duration, read/write mode, moderator requirement and
+outcome; it does not include community content, search terms, actor IDs or
+thread IDs. The error uses the standard structured-log redaction. The duration
+covers the service boundary, not full route TTFB, rendering or response
+streaming. Use it with the separate Community staging canary measurements.
+For an operator-exported default JSON log file, run
+`bun run community:telemetry -- --input <structured-log.ndjson>` to review only
+aggregate Community events. It never prints raw event contents, request IDs or
+errors. Any blocking limits are intentionally explicit and apply to the supplied
+observation window; a report with no matching slow/error events does not replace
+the authenticated staff canary. The checker accepts the default JSON lines, not
+the legacy `STRUCTURED_LOG_FORMAT=text` framing.
+
 `PAYMENT_EMAIL_OUTBOX_ENABLED` defaults to `false`. Do not enable it in the
 first Phase 8 deployment: deploy and verify the consumer-capable digest first,
 then approve a separate change to exact lowercase `true`. Once enabled, the
@@ -150,8 +166,9 @@ The manual `Immutable runner validation` workflow packages one exact commit
 from `main` as linux/amd64 using a one-time validation key. It performs one
 BuildKit build with Docker/OCI/local exporters, produces a validation-only OCI
 archive, checksum manifest, SPDX SBOM and max provenance, then starts the final
-read-only runner and checks health, homepage, locale, sitemap, Cron
-authorization and a static asset. Its manifest is explicitly
+read-only runner with the documented bounded Next.js cache tmpfs, then checks
+health, homepage, locale, sitemap, Cron authorization, a static asset, and the
+default-closed Community routing contract. Its manifest is explicitly
 `releasable=false`. It does not use the production Server Actions key, push to a
 registry or deploy production because the private production registry has not
 yet been verified.

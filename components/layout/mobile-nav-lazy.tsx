@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button"
 
 interface MobileNavSheetProps {
   isAuthenticated: boolean
+  showCommunity?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   useHomeAccent?: boolean
@@ -20,9 +21,11 @@ interface MobileNavSheetProps {
  */
 export function MobileNavLazy({
   isAuthenticated,
+  showCommunity = false,
   useHomeAccent = false,
 }: {
   isAuthenticated: boolean
+  showCommunity?: boolean
   useHomeAccent?: boolean
 }) {
   const t = useTranslations("common")
@@ -36,6 +39,7 @@ export function MobileNavLazy({
     return (
       <SheetComponent
         isAuthenticated={isAuthenticated}
+        showCommunity={showCommunity}
         useHomeAccent={useHomeAccent}
         open={open}
         onOpenChange={setOpen}

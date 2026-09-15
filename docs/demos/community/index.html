@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Community · aat.ee preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&amp;family=Outfit:wght@600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --accent: hsl(21, 90%, 40%);
+        --ink: #171717;
+        --muted: #737373;
+        --line: #e8e8e8;
+        --paper: #ffffff;
+        --soft: #fff4eb;
+        --green: #166534;
+        --green-soft: #f0f7ed;
+        --green-line: #d2e4ca;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font:
+          15px/1.6 "Inter",
+          system-ui,
+          sans-serif;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button,
+      a,
+      input,
+      textarea,
+      select {
+        outline-offset: 4px;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+      }
+      button {
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        border: 0;
+        background: none;
+        color: inherit;
+      }
+      header {
+        height: 64px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 max(24px, calc((100vw - 1152px) / 2));
+        gap: 25px;
+      }
+      .brand {
+        font:
+          700 18px "Outfit",
+          "Inter",
+          system-ui,
+          sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        letter-spacing: -0.3px;
+      }
+      .brand span {
+        color: var(--accent);
+      }
+      header nav {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        font-size: 14px;
+      }
+      .current {
+        color: var(--accent);
+        font-weight: 650;
+      }
+      .btn {
+        background: var(--accent);
+        color: #fff;
+        border-radius: 24px;
+        padding: 11px 22px;
+        font-size: 14px;
+        font-weight: 650;
+        display: inline-block;
+      }
+      .avatar {
+        display: inline-grid;
+        place-items: center;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        background: #efe2cf;
+        color: #684e30;
+        font-size: 11px;
+        font-weight: 750;
+        flex-shrink: 0;
+      }
+      .preview {
+        font-size: 11px;
+        color: var(--muted);
+        max-width: 1152px;
+        margin: 17px auto;
+        padding: 0 4px;
+        letter-spacing: 0.03em;
+      }
+      .layout {
+        max-width: 1152px;
+        margin: 36px auto 70px;
+        display: grid;
+        grid-template-columns: 176px minmax(0, 1fr) 240px;
+        gap: 28px;
+      }
+      .side {
+        padding-top: 14px;
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 1.8px;
+        color: var(--muted);
+      }
+      .side button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        margin: 4px 0;
+        border-radius: 7px;
+        font-size: 13px;
+      }
+      .side button.active {
+        background: var(--green-soft);
+        color: var(--green);
+        font-weight: 650;
+      }
+      .side .group {
+        margin-top: 30px;
+      }
+      .side i {
+        font-style: normal;
+        margin-right: 10px;
+        color: var(--green);
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: "Inter", system-ui, sans-serif;
+        font-weight: 650;
+        line-height: 1.25;
+      }
+      h1 {
+        font-size: 36px;
+        letter-spacing: -1.2px;
+        margin: 12px 0 15px;
+      }
+      h2 {
+        font-size: 25px;
+      }
+      h3 {
+        font-size: 18px;
+        margin: 0 0 10px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin-bottom: 27px;
+      }
+      .intro {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .intro .mark {
+        font:
+          52px "Inter",
+          system-ui,
+          sans-serif;
+        color: var(--accent);
+        transform: rotate(-15deg);
+      }
+      .search {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 12px 15px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 24px;
+        border-bottom: 1px solid var(--line);
+        margin-top: 20px;
+      }
+      .toolbar button {
+        padding: 12px 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .toolbar .active {
+        border-bottom: 2px solid var(--accent);
+        color: var(--ink);
+        font-weight: 650;
+      }
+      .row {
+        padding: 25px 0;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+      }
+      .row-body {
+        min-width: 0;
+        flex: 1;
+      }
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+      .pill {
+        background: var(--green-soft);
+        border: 1px solid var(--green-line);
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: var(--green);
+      }
+      .row h3 a:hover {
+        color: var(--accent);
+      }
+      .excerpt {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin: 0 0 15px;
+      }
+      .foot {
+        display: flex;
+        gap: 17px;
+        align-items: center;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .vote {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        min-width: 47px;
+        padding: 7px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 12px;
+        background: #fff;
+      }
+      .vote[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: var(--soft);
+        color: var(--accent);
+      }
+      .callout {
+        background: var(--green-soft);
+        border: 1px solid var(--green-line);
+        border-radius: 10px;
+        padding: 24px;
+        margin-bottom: 30px;
+      }
+      .callout h2 {
+        color: var(--green);
+        margin: 14px 0;
+        font-size: 25px;
+      }
+      .callout p,
+      .rules p {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .callout .btn {
+        padding-inline: 10px;
+        white-space: nowrap;
+        margin-top: 12px;
+        width: 100%;
+        text-align: center;
+      }
+      .rules {
+        padding: 0 8px;
+      }
+      .rule {
+        border-top: 1px solid var(--line);
+        padding: 15px 0;
+      }
+      .rule b {
+        font-size: 12px;
+      }
+      .rules h3 {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+      .small {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .back {
+        font-size: 12px;
+        color: var(--accent);
+        display: inline-block;
+        margin-bottom: 20px;
+      }
+      .detail h1 {
+        font-size: 37px;
+      }
+      .body {
+        white-space: pre-wrap;
+        line-height: 1.9;
+        font-size: 15px;
+        margin: 27px 0;
+      }
+      .reply {
+        background: #fff;
+        border: 1px solid var(--line);
+        padding: 18px;
+        border-radius: 8px;
+        margin: 12px 0;
+      }
+      .reply p {
+        white-space: pre-wrap;
+        font-size: 14px;
+      }
+      .field {
+        display: block;
+        margin: 18px 0;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        display: block;
+        width: 100%;
+        border: 1px solid #d7d2c8;
+        border-radius: 7px;
+        background: #fff;
+        padding: 12px;
+        margin-top: 8px;
+        font-weight: 400;
+      }
+      .field textarea {
+        min-height: 170px;
+        resize: vertical;
+      }
+      .actions {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .empty {
+        padding: 55px 15px;
+        text-align: center;
+      }
+      .empty p {
+        color: var(--muted);
+      }
+      #notice {
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: #fff;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 13px;
+        max-width: 90vw;
+        z-index: 10;
+      }
+      #notice:empty {
+        display: none;
+      }
+      footer {
+        max-width: 1152px;
+        margin: 30px auto;
+        border-top: 1px solid var(--line);
+        padding: 20px 0;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .mobile-new {
+        display: none;
+      }
+      @media (max-width: 1100px) {
+        .layout {
+          margin: 25px;
+          grid-template-columns: 155px minmax(0, 1fr);
+          gap: 30px;
+        }
+        .right {
+          display: none;
+        }
+        .preview,
+        footer {
+          margin: 16px 25px;
+        }
+      }
+      @media (max-width: 640px) {
+        header {
+          height: 66px;
+          padding: 0 20px;
+        }
+        header nav a:not(.current):not(.btn) {
+          display: none;
+        }
+        header nav {
+          gap: 12px;
+        }
+        header .btn {
+          padding: 9px 12px;
+          font-size: 12px;
+        }
+        .layout {
+          display: block;
+          margin: 20px;
+        }
+        .side {
+          display: flex;
+          overflow-x: auto;
+          gap: 5px;
+          padding: 0 0 15px;
+          margin-bottom: 15px;
+        }
+        .side .eyebrow,
+        .side .group {
+          display: none;
+        }
+        .side button {
+          width: auto;
+          white-space: nowrap;
+          padding: 8px;
+        }
+        .intro .mark {
+          display: none;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        .row {
+          gap: 12px;
+        }
+        .row h3 {
+          font-size: 17px;
+        }
+        .preview {
+          margin: 12px 20px;
+        }
+        .toolbar {
+          gap: 21px;
+        }
+        .detail h1 {
+          font-size: 31px;
+        }
+        .foot {
+          flex-wrap: wrap;
+        }
+        footer {
+          margin: 20px;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .row {
+          animation: enter 0.25s ease-out;
+        }
+        @keyframes enter {
+          from {
+            opacity: 0.5;
+            transform: translateY(4px);
+          }
+          to {
+            opacity: 1;
+            transform: none;
+          }
+        }
+      }
+
+      .layout {
+        margin-top: 25px;
+      }
+      h1 {
+        font-size: 29px;
+        letter-spacing: -0.8px;
+        margin: 0 0 8px;
+      }
+      .sub {
+        margin: 0 0 20px;
+      }
+      .composer {
+        border: 1px solid var(--green-line);
+        border-top: 3px solid #78a862;
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 22px;
+      }
+      .composer-head {
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .composer .field {
+        margin: 12px 0;
+      }
+      .composer textarea {
+        min-height: 94px;
+        border-color: var(--line);
+        font-size: 14px;
+      }
+      .composer-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .composer select {
+        padding: 8px;
+        font-size: 12px;
+        border-color: var(--line);
+      }
+      .composer .actions {
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .composer details {
+        margin: 10px 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .composer summary {
+        cursor: pointer;
+      }
+      .post-text {
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.8;
+        margin: 12px 0;
+        overflow-wrap: anywhere;
+      }
+      .row h3 {
+        font-size: 17px;
+        overflow-wrap: anywhere;
+      }
+      .product-card {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 15px 0;
+      }
+      .product-icon {
+        background: var(--green-soft);
+        color: var(--green);
+        border-radius: 9px;
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        font-weight: 650;
+        flex-shrink: 0;
+      }
+      .skip-link {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        transform: translateY(-150%);
+        z-index: 20;
+        background: white;
+        padding: 10px 16px;
+        border: 2px solid var(--green);
+      }
+      .skip-link:focus {
+        transform: none;
+      }
+      .form-error {
+        color: #b42318;
+        font-size: 13px;
+      }
+      .form-error:empty {
+        display: none;
+      }
+      .result-count {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 12px 0 0;
+      }
+      .composer-head .avatar {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+      .callout .eyebrow,
+      .side .group .eyebrow {
+        color: var(--green);
+      }
+      .product-card b {
+        display: block;
+        font-size: 13px;
+      }
+      .product-card small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .foot .vote {
+        flex-direction: row;
+        gap: 6px;
+        min-width: 44px;
+        padding: 4px 9px;
+      }
+      .meta .author {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .side .personal {
+        border-top: 1px solid var(--line);
+        margin-top: 16px;
+        padding-top: 12px;
+      }
+      .body,
+      .reply p {
+        overflow-wrap: anywhere;
+      }
+      @media (max-width: 640px) {
+        h1 {
+          font-size: 26px;
+        }
+        .composer {
+          padding: 14px;
+        }
+        .side .personal {
+          border: 0;
+          margin: 0;
+          padding: 0;
+          display: flex;
+        }
+        .side button {
+          flex-shrink: 0;
+        }
+        .composer-options {
+          gap: 8px;
+        }
+        .composer select {
+          width: 100%;
+          min-width: 0;
+        }
+        .detail h1 {
+          font-size: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <noscript>This interactive preview requires JavaScript. No posts are published.</noscript>
+    <header>
+      <a class="brand" href="https://www.aat.ee/" aria-label="aat.ee home"
+        ><img src="assets/logo.svg" width="24" height="24" alt="" />aat.ee</a
+      >
+      <nav>
+        <a href="https://www.aat.ee/projects">Explore</a><a class="current" href="#">Community</a
+        ><a href="https://www.aat.ee/pricing">Pricing</a
+        ><a class="btn" href="#new">Share an update ↗</a>
+      </nav>
+    </header>
+    <div class="preview">
+      DESIGN PREVIEW · Planned URL: https://www.aat.ee/community · Sample data · Resets on refresh
+    </div>
+    <div class="layout">
+      <aside class="side" id="categories"></aside>
+      <main id="main" tabindex="-1"></main>
+      <aside class="right">
+        <div class="callout">
+          <div class="eyebrow">Made for makers</div>
+          <h2>Build in the open.<br />Learn together.</h2>
+          <p>
+            A small release. An honest lesson. Your next step. There is room for all of it here.
+          </p>
+          <a class="btn" href="#new">Share an update ↗</a>
+        </div>
+        <div class="rules">
+          <h3>A little common ground.</h3>
+          <div class="rule">
+            <b>01 &nbsp; Be useful. Be kind.</b>
+            <p>Share context, ask thoughtful questions, and make room for another perspective.</p>
+          </div>
+          <div class="rule">
+            <b>02 &nbsp; Give your product context.</b>
+            <p>
+              Tell us what you learned or what you need help with. Add your product when it is
+              relevant.
+            </p>
+          </div>
+          <div class="rule">
+            <b>03 &nbsp; Keep it in English.</b>
+            <p>One shared language so everyone can join in.</p>
+          </div>
+          <p class="small">A small space for honest conversations.</p>
+        </div>
+      </aside>
+    </div>
+    <footer>aat.ee community &nbsp; / &nbsp; An open notebook for people building things.</footer>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <script>
+      const types = ["Shipped", "Learning", "Question", "Milestone", "Todo"]
+      const products = {
+        fieldnotes: {
+          name: "Fieldnotes",
+          description: "A research notebook for independent designers",
+          icon: "F",
+        },
+        tallykit: { name: "Tallykit", description: "Simple reporting for small teams", icon: "T" },
+        pocketinvoice: {
+          name: "Pocket Invoice",
+          description: "Invoicing for independent work",
+          icon: "P",
+        },
+      }
+      const prompts = {
+        Shipped: "What did you ship? Who does it help? What changed?",
+        Learning: "What did you try? What happened? What would you do differently?",
+        Question: "What are you stuck on? Share the context and what you have tried.",
+        Milestone: "What did you reach? Tell us about the steps that got you there.",
+        Todo: "What will you work on next? What would a good result look like?",
+      }
+      const categories = ["All posts", ...types, "Saved", "My posts"]
+      const newDraft = () => ({ title: "", body: "", category: "Shipped", product: "" })
+      let active = "All posts",
+        sort = "Latest",
+        query = "",
+        draft = newDraft()
+      const threads = [
+        {
+          id: "small-release",
+          category: "Shipped",
+          author: "Sam Wilson",
+          initials: "SW",
+          time: "1 hour ago",
+          votes: 31,
+          product: "tallykit",
+          body: "CSV export is live in Tallykit. A small release, but it saves our customers from copying reports one row at a time.\n\nThree people asked for it last week. Today, all three are using it. What would make exporting your reports easier?",
+          responses: [
+            {
+              author: "Maya Chen",
+              body: "Let me choose a date range before exporting. That would save another trip through a spreadsheet.",
+            },
+          ],
+        },
+        {
+          id: "landing-feedback",
+          category: "Question",
+          author: "Leo Park",
+          initials: "LP",
+          time: "3 hours ago",
+          votes: 16,
+          product: "fieldnotes",
+          title: "Would you understand Fieldnotes from this description?",
+          body: "I’m building a research notebook for independent designers. The current headline is “Keep your research connected.”\n\nFive testers thought it was a bookmarks app. It actually connects interview notes to design decisions. What would you need to know before trying it?",
+          responses: [],
+        },
+        {
+          id: "first-users",
+          category: "Learning",
+          author: "Maya Chen",
+          initials: "MC",
+          time: "5 hours ago",
+          votes: 24,
+          body: "I spent three weeks polishing a landing page and got no signups. Last week, I spoke to five people who deal with the problem every day.\n\nTwo are now testing the prototype. The useful question was “Show me how you do this today.” Watching their workflow taught me more than asking whether they liked my idea.",
+          responses: [],
+        },
+        {
+          id: "first-customer",
+          category: "Milestone",
+          author: "Ari Patel",
+          initials: "AP",
+          time: "Yesterday",
+          votes: 19,
+          product: "pocketinvoice",
+          body: "Pocket Invoice has its first paying customer today.\n\nShe found it through a guide I wrote about chasing overdue invoices. We fixed one missing tax field together before she subscribed. Next goal: help five freelancers send their first invoice.",
+          responses: [],
+        },
+        {
+          id: "this-week",
+          category: "Todo",
+          author: "Nora Ellis",
+          initials: "NE",
+          time: "Yesterday",
+          votes: 7,
+          body: "This week: cut onboarding from six steps to three.\n\nI’ll remove the workspace setup screen and let people try a sample project first. Success means a new tester can finish their first task in under two minutes. I’ll share what happens on Friday.",
+          responses: [],
+        },
+      ].map((t) => ({ title: "", ...t, replies: t.responses.length }))
+      // Session-only preview IDs: no secure-context API or persistence needed.
+      let nextDemoId = 0
+      const replyDrafts = new Map()
+      const main = document.querySelector("#main")
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+        )
+      function notice(s) {
+        document.querySelector("#notice").textContent = s
+        clearTimeout(notice.timer)
+        notice.timer = setTimeout(() => (document.querySelector("#notice").textContent = ""), 3500)
+      }
+      function feedHash() {
+        const params = new URLSearchParams()
+        if (types.includes(active)) params.set("type", active.toLowerCase())
+        if (active === "Saved") params.set("view", "saved")
+        if (active === "My posts") params.set("view", "mine")
+        if (sort === "Hot") params.set("sort", "hot")
+        if (query) params.set("q", query)
+        return params.size ? "#?" + params : "#"
+      }
+      function readFeedHash(route) {
+        const params = new URLSearchParams(route.startsWith("?") ? route.slice(1) : "")
+        active = types.find((type) => type.toLowerCase() === params.get("type")) || "All posts"
+        if (params.get("view") === "saved") active = "Saved"
+        if (params.get("view") === "mine") active = "My posts"
+        sort = params.get("sort") === "hot" ? "Hot" : "Latest"
+        query = (params.get("q") || "").slice(0, 200)
+      }
+      function focusHeading() {
+        const heading = main.querySelector("h1")
+        if (heading) {
+          heading.tabIndex = -1
+          heading.focus({ preventScroll: true })
+        }
+      }
+      function nav() {
+        document.querySelector("#categories").innerHTML =
+          '<div class="eyebrow">Community</div>' +
+          categories
+            .map(
+              (c, i) =>
+                `${i === 6 ? '<div class="personal">' : ""}<button class="${active === c ? "active" : ""}" data-category="${c}" aria-pressed="${active === c}"><i aria-hidden="true">${["◉", "↗", "◇", "?", "✳", "✓", "♡", "◎"][i]}</i>${c}</button>${i === 7 ? "</div>" : ""}`,
+            )
+            .join("") +
+          '<div class="group"><div class="eyebrow">Every step counts</div><p class="small">Share what shipped.<br>Talk through a challenge.<br>Come back with a lesson.</p></div>'
+      }
+      function vote(t) {
+        return `<button class="vote" data-vote="${t.id}" aria-label="Upvote: ${esc(t.title || t.body.slice(0, 70))}" aria-pressed="${!!t.voted}"><span aria-hidden="true">⌃</span>${t.votes}</button>`
+      }
+      function meta(t) {
+        return `<div class="meta"><span class="avatar">${esc(t.initials)}</span><span class="author">${esc(t.author)}</span><span>· ${esc(t.time)}</span><span class="pill">${esc(t.category)}</span></div>`
+      }
+      function productCard(t) {
+        const p = products[t.product]
+        return p
+          ? `<div class="product-card" aria-label="Associated demo product"><span class="product-icon">${p.icon}</span><div><b>${p.name}</b><small>${p.description} · Demo product</small></div></div>`
+          : ""
+      }
+      function list() {
+        let rows = threads.filter(
+          (t) =>
+            (active === "All posts" ||
+              (active === "Saved" && t.saved) ||
+              (active === "My posts" && t.mine) ||
+              t.category === active) &&
+            `${t.title} ${t.body} ${products[t.product]?.name || ""}`
+              .toLowerCase()
+              .includes(query.toLowerCase()),
+        )
+        if (sort === "Hot") rows.sort((a, b) => b.votes - a.votes)
+        document.querySelector("#result-count").textContent =
+          `${rows.length} ${rows.length === 1 ? "post" : "posts"}${query ? " matching your search" : ""}`
+        document.querySelector("#rows").innerHTML = rows.length
+          ? rows
+              .map(
+                (t) =>
+                  `<article class="row"><div class="row-body">${meta(t)}${t.title ? `<h3><a href="#thread/${t.id}">${esc(t.title)}</a></h3>` : ""}<p class="post-text">${esc(t.body.length > 480 ? t.body.slice(0, 480) + "…" : t.body)}</p>${t.body.length > 480 ? `<a class="back" href="#thread/${t.id}">Read full post →</a>` : ""}${productCard(t)}<div class="foot">${vote(t)}<a href="#thread/${t.id}" aria-label="Open post and ${t.replies} replies">◯ &nbsp;${t.replies} ${t.replies === 1 ? "reply" : "replies"}</a><button data-save="${t.id}" aria-pressed="${!!t.saved}">${t.saved ? "♥ Saved" : "♡ Save"}</button></div></div></article>`,
+              )
+              .join("")
+          : `<div class="empty"><h2>${query ? "No matching posts." : active === "Saved" ? "Your saved posts will appear here." : active === "My posts" ? "Your next step starts here." : "No posts here yet."}</h2><p>${query ? "Try a different phrase or clear your search." : active === "Saved" ? "Save a useful update to come back to it later." : "Share a small release, a lesson, or a question."}</p>${query ? '<button class="btn" data-clear-search>Clear search</button>' : '<a href="#new" class="btn">Share an update</a>'}</div>`
+      }
+      function composerMarkup() {
+        return `<form id="compose" class="composer" novalidate><div class="composer-head"><span class="avatar">YO</span><label for="post-body">What are you building?</label></div><label class="field"><span class="small">Share an update or ask a question · English only</span><textarea id="post-body" aria-describedby="compose-error" name="body" required minlength="20" maxlength="10000" placeholder="${prompts[draft.category]}">${esc(draft.body)}</textarea></label><div class="composer-options"><label class="field">Post type<select name="category">${types.map((c) => `<option ${draft.category === c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label class="field">Related product<select name="product"><option value="">No product</option>${Object.entries(
+          products,
+        )
+          .map(
+            ([id, p]) =>
+              `<option value="${id}" ${draft.product === id ? "selected" : ""}>${p.name}</option>`,
+          )
+          .join(
+            "",
+          )}</select></label></div><details ${draft.title ? "open" : ""}><summary>Add a title (optional)</summary><label class="field">Title<input name="title" maxlength="160" value="${esc(draft.title)}" placeholder="A heading for a longer discussion"></label></details><p id="compose-error" class="form-error" role="alert"></p><div class="actions"><button type="button" id="draft" class="small">Save demo draft</button><button class="btn">Post demo update ↗</button></div></form>`
+      }
+      function bindComposer() {
+        const form = document.querySelector("#compose")
+        const read = () => Object.fromEntries(new FormData(form))
+        form.oninput = form.onchange = () => {
+          draft = read()
+          form.elements.namedItem("body").placeholder = prompts[draft.category] || prompts.Shipped
+          form.querySelector("#compose-error").textContent = ""
+          for (const field of form.querySelectorAll('[aria-invalid="true"]'))
+            field.removeAttribute("aria-invalid")
+        }
+        document.querySelector("#draft").onclick = () => {
+          draft = read()
+          notice("Draft kept in this preview. Refresh clears it.")
+        }
+        form.onsubmit = (e) => {
+          e.preventDefault()
+          const values = read()
+          const fail = (field, message) => {
+            form.querySelector("#compose-error").textContent = message
+            const input = form.elements.namedItem(field)
+            const details = input.closest("details")
+            if (details) details.open = true
+            input.setAttribute("aria-invalid", "true")
+            input.setAttribute("aria-describedby", "compose-error")
+            input.focus()
+          }
+          if (values.body.trim().length < 20 || values.body.length > 10000) {
+            fail("body", "Please write 20–10,000 characters of context.")
+            return
+          }
+          if (values.title.length > 160) {
+            fail("title", "Keep the title to 160 characters or fewer.")
+            return
+          }
+          if (!types.includes(values.category)) {
+            fail("category", "Choose a post type.")
+            return
+          }
+          if (values.product && !Object.hasOwn(products, values.product)) {
+            fail("product", "Choose one of the demo products or No product.")
+            return
+          }
+          if (form.dataset.submitted) return
+          form.dataset.submitted = "true"
+          form.querySelector('button:not([type="button"])').disabled = true
+          const t = {
+            ...values,
+            title: values.title.trim(),
+            body: values.body.trim(),
+            id: "demo-" + ++nextDemoId,
+            author: "You · Demo member",
+            initials: "YO",
+            time: "Just now",
+            votes: 0,
+            replies: 0,
+            responses: [],
+            mine: true,
+          }
+          threads.unshift(t)
+          draft = newDraft()
+          location.hash = "thread/" + t.id
+          notice("Demo update created locally. Refresh clears it.")
+        }
+      }
+      function feed() {
+        main.innerHTML = `<h1>${active === "All posts" ? "Build. Share. Keep going." : esc(active)}</h1><p class="sub">Small releases, honest lessons, and what comes next.</p>${composerMarkup()}<input class="search" maxlength="200" aria-label="Search posts" placeholder="Search posts or products…" value="${esc(query)}"><div class="toolbar" role="group" aria-label="Sort posts">${["Latest", "Hot"].map((s) => `<button data-sort="${s}" aria-pressed="${s === sort}" class="${s === sort ? "active" : ""}">${s}</button>`).join("")}</div><p id="result-count" class="result-count" role="status" aria-live="polite"></p><div id="rows"></div>`
+        list()
+        bindComposer()
+        main.querySelector(".search").oninput = (e) => {
+          query = e.target.value.slice(0, 200)
+          history.replaceState(null, "", feedHash())
+          list()
+        }
+      }
+      function detail(t) {
+        main.innerHTML = `<div class="detail"><a href="${esc(feedHash())}" class="back">← Back to feed</a>${meta(t)}<h1>${esc(t.title || t.category + " update")}</h1><div class="body">${esc(t.body)}</div>${productCard(t)}<div class="actions">${vote(t)}<button data-save="${t.id}" aria-pressed="${!!t.saved}">${t.saved ? "♥ Saved" : "♡ Save"}</button></div><hr style="border:0;border-top:1px solid var(--line);margin:30px 0"><h2>Replies · ${t.replies}</h2>${t.responses.map((r) => `<article class="reply"><b>${esc(r.author)}</b><p>${esc(r.body)}</p></article>`).join("")}<form id="reply-form" novalidate><label class="field">Your reply<textarea name="reply" aria-describedby="reply-error" required maxlength="4000" placeholder="Share a useful thought or ask a follow-up…">${esc(replyDrafts.get(t.id) || "")}</textarea></label><p id="reply-error" class="form-error" role="alert"></p><button class="btn">Post demo reply</button></form></div>`
+        const replyForm = document.querySelector("#reply-form")
+        replyForm.oninput = () => {
+          replyDrafts.set(t.id, replyForm.elements.namedItem("reply").value)
+          replyForm.querySelector("#reply-error").textContent = ""
+          replyForm.elements.namedItem("reply").removeAttribute("aria-invalid")
+        }
+        replyForm.onsubmit = (e) => {
+          e.preventDefault()
+          const body = e.target.elements.namedItem("reply").value.trim()
+          if (!body || e.target.elements.namedItem("reply").value.length > 4000) {
+            replyForm.querySelector("#reply-error").textContent =
+              "Write a reply of 1–4,000 characters."
+            replyForm.elements.namedItem("reply").setAttribute("aria-invalid", "true")
+            replyForm.elements.namedItem("reply").focus()
+            return
+          }
+          replyDrafts.delete(t.id)
+          t.responses.push({ author: "You · Demo member", body })
+          t.replies = t.responses.length
+          detail(t)
+          document.querySelector("#reply-form textarea").focus()
+          notice("Demo reply added. Refresh clears it.")
+        }
+      }
+      function composer() {
+        main.innerHTML = `<a href="${esc(feedHash())}" class="back">← Back to feed</a><h1>Share your next step.</h1><p class="sub">A little context helps other makers join in.</p>${composerMarkup()}<p class="small">Fictional products and local demo posts. Nothing is published.</p>`
+        bindComposer()
+      }
+      function render() {
+        const route = location.hash.slice(1)
+        if (!route || route.startsWith("?")) readFeedHash(route)
+        nav()
+        if (route === "new") composer()
+        else if (route.startsWith("thread/")) {
+          const t = threads.find((t) => t.id === route.slice(7))
+          if (t) detail(t)
+          else
+            main.innerHTML =
+              '<h1>Post not found.</h1><p>This demo post may have been cleared by a refresh.</p><a href="#">Back to community</a>'
+        } else if (!route || route.startsWith("?")) feed()
+        else main.innerHTML = '<h1>Page not found.</h1><a href="#">Back to community</a>'
+        document.title = `${main.querySelector("h1")?.textContent || "Community"} · aat.ee preview`
+      }
+      function navigateFeed() {
+        if (location.hash === feedHash() || (!location.hash && feedHash() === "#")) render()
+        else location.hash = feedHash()
+      }
+      document.onclick = (e) => {
+        if (e.target.closest(".skip-link")) {
+          e.preventDefault()
+          main.focus()
+          return
+        }
+        const categoryButton = e.target.closest("[data-category]")
+        if (categoryButton) {
+          active = categoryButton.dataset.category
+          navigateFeed()
+          return
+        }
+        const sortButton = e.target.closest("[data-sort]")
+        if (sortButton) {
+          sort = sortButton.dataset.sort
+          navigateFeed()
+          return
+        }
+        if (e.target.closest("[data-clear-search]")) {
+          query = ""
+          navigateFeed()
+          return
+        }
+        const voteButton = e.target.closest("[data-vote]")
+        if (voteButton) {
+          const t = threads.find((t) => t.id === voteButton.dataset.vote)
+          if (!t) return
+          t.voted = !t.voted
+          t.votes += t.voted ? 1 : -1
+          // Keep the button node and focus; Hot order stays stable until revisiting.
+          voteButton.setAttribute("aria-pressed", String(t.voted))
+          voteButton.innerHTML = `<span aria-hidden="true">⌃</span>${t.votes}`
+        }
+        const saveButton = e.target.closest("[data-save]")
+        if (saveButton) {
+          const t = threads.find((t) => t.id === saveButton.dataset.save)
+          if (!t) return
+          t.saved = !t.saved
+          saveButton.textContent = t.saved ? "♥ Saved" : "♡ Save"
+          saveButton.setAttribute("aria-pressed", String(t.saved))
+          if (active === "Saved" && main.querySelector("#rows")) {
+            list()
+            const nextButton = main.querySelector("[data-save]")
+            if (nextButton) nextButton.focus()
+            else focusHeading()
+          }
+        }
+      }
+      window.onhashchange = () => {
+        render()
+        window.scrollTo(0, 0)
+        focusHeading()
+      }
+      render()
+    </script>
+  </body>
+</html>

@@ -2,10 +2,11 @@
 "use client"
 
 import type * as React from "react"
+import NextLink from "next/link"
 import { usePathname } from "next/navigation"
 
 import { Link } from "@/i18n/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import { LanguageSwitcher } from "./language-switcher"
 
@@ -81,16 +82,19 @@ const linkClass = "text-muted-foreground hover:text-foreground text-sm transitio
 export default function FooterSection({
   navSites,
   taxonomy,
+  showCommunity = false,
 }: {
   navSites: NavSite[]
   taxonomy: FooterTaxonomy
+  showCommunity?: boolean
 }) {
   const pathname = usePathname()
   const isHomePage = pathname === "/" || /^\/[a-z]{2}$/.test(pathname)
+  const locale = useLocale()
   const t = useTranslations("footer")
   const tLinks = useTranslations("footer.links")
   return (
-    <footer className="bg-background border-t pt-8 pb-10">
+    <footer lang={locale} className="bg-background border-t pt-8 pb-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-12 md:gap-x-8">
           {/* Left Section: Brand, Copyright */}
@@ -123,6 +127,14 @@ export default function FooterSection({
                   )}
                 </li>
               ))}
+              {showCommunity && (
+                <li>
+                  {/* Community is English-only and therefore stays outside locale routing. */}
+                  <NextLink href="/community" className={linkClass}>
+                    Community
+                  </NextLink>
+                </li>
+              )}
             </LinkColumn>
 
             {/* Categories Column — real counts, real landing pages. */}

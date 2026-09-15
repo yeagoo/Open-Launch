@@ -2,7 +2,7 @@
 import { Link } from "@/i18n/navigation"
 import { RiLoginBoxLine } from "@remixicon/react"
 import { User } from "better-auth"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { getServerSession } from "@/lib/server-auth"
 
@@ -16,7 +16,11 @@ import { SearchCommandLazy } from "./search-command-lazy"
 import { UserNav } from "./user-nav"
 
 export default async function Nav() {
-  const [session, t] = await Promise.all([getServerSession(), getTranslations("nav")])
+  const [session, t, locale] = await Promise.all([
+    getServerSession(),
+    getTranslations("nav"),
+    getLocale(),
+  ])
   const user = session?.user
 
   // During the staged rollout both home pages are live, so the nav's Submit CTA
@@ -24,9 +28,13 @@ export default async function Nav() {
   // orange CTA sits next to a green nav button (two competing action colours on
   // one screen) — or the reverse on the legacy home.
   const useHomeAccent = process.env.HOME_V2 === "1"
+  const showCommunity = process.env.COMMUNITY_ENABLED === "1"
 
   return (
-    <nav className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm">
+    <nav
+      lang={locale}
+      className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm"
+    >
       <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <div className="flex items-center gap-8">
@@ -38,7 +46,11 @@ export default async function Nav() {
           </Link>
 
           {/* Navigation principale */}
-          <NavMenu showDashboard={!!session} useHomeAccent={useHomeAccent} />
+          <NavMenu
+            showDashboard={!!session}
+            showCommunity={showCommunity}
+            useHomeAccent={useHomeAccent}
+          />
         </div>
 
         {/* Version Desktop - Recherche et actions */}
@@ -73,7 +85,11 @@ export default async function Nav() {
               </Link>
             </Button>
           )}
-          <MobileNavLazy isAuthenticated={Boolean(session)} useHomeAccent={useHomeAccent} />
+          <MobileNavLazy
+            isAuthenticated={Boolean(session)}
+            showCommunity={showCommunity}
+            useHomeAccent={useHomeAccent}
+          />
         </div>
       </div>
     </nav>

@@ -1,3 +1,5 @@
+import type { CommunityPost } from "@/lib/community/contracts"
+import { communityPostDescription, communityPostHeadline } from "@/lib/community/metadata"
 import { serializeJsonLd } from "@/lib/safe-json-ld"
 
 const baseUrl = process.env.NEXT_PUBLIC_URL || "https://www.aat.ee"
@@ -165,6 +167,63 @@ export function ArticleSchema({
   return (
     <script
       id="schema-article"
+      type="application/ld+json"
+      /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
+    />
+  )
+}
+
+/** Public community posts use schema.org's discussion-specific type. */
+export function CommunityThreadSchema({ post }: { post: CommunityPost }) {
+  const interactionStatistic: Array<Record<string, unknown>> = []
+  if (post.votes > 0) {
+    interactionStatistic.push({
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/LikeAction",
+      userInteractionCount: post.votes,
+    })
+  }
+  if ((post.replyCount ?? post.replies.length) > 0) {
+    interactionStatistic.push({
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/CommentAction",
+      userInteractionCount: post.replyCount ?? post.replies.length,
+    })
+  }
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    headline: communityPostHeadline(post),
+    text: post.body,
+    datePublished: new Date(post.createdAt).toISOString(),
+    url: `${baseUrl}/community/t/${encodeURIComponent(post.id)}`,
+    author: {
+      "@type": "Person",
+      name: post.author || "Former member",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "aat.ee",
+      url: baseUrl,
+    },
+    ...(post.product && {
+      about: {
+        "@type": "Thing",
+        name: post.product.name,
+      },
+    }),
+    ...(interactionStatistic.length > 0 && { interactionStatistic }),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${baseUrl}/community/t/${encodeURIComponent(post.id)}`,
+    },
+    description: communityPostDescription(post),
+  }
+
+  return (
+    <script
+      id="schema-community-thread"
       type="application/ld+json"
       /* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml -- serializeJsonLd escapes HTML-significant characters and has injection regression coverage. */
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
