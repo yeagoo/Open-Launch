@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from "re
 import { RiLoader4Line, RiSearchLine } from "@remixicon/react"
 import { useTranslations } from "next-intl"
 
+import { cn } from "@/lib/utils"
+
 interface SearchDialogProps {
   isAuthenticated?: boolean
   open: boolean
@@ -17,11 +19,13 @@ interface SearchDialogProps {
  * result UI are fetched only on first use.
  */
 interface SearchCommandLazyProps {
+  className?: string
   isAuthenticated?: boolean
   enableShortcut?: boolean
 }
 
 export function SearchCommandLazy({
+  className,
   isAuthenticated = false,
   enableShortcut = true,
 }: SearchCommandLazyProps) {
@@ -86,15 +90,18 @@ export function SearchCommandLazy({
         aria-expanded={open}
         aria-haspopup="dialog"
         disabled={loading}
-        className="text-muted-foreground bg-muted/60 hover:bg-muted flex h-8 w-64 cursor-pointer items-center justify-start rounded-md border-none px-2 text-sm transition-colors focus:outline-none disabled:cursor-wait"
+        className={cn(
+          "text-muted-foreground bg-muted/60 hover:bg-muted flex h-8 w-64 cursor-pointer items-center justify-start rounded-md border-none px-2 text-sm transition-colors focus:outline-none disabled:cursor-wait",
+          className,
+        )}
         onClick={() => void loadAndOpen()}
       >
         {loading ? (
-          <RiLoader4Line className="mr-2 h-3.5 w-3.5 animate-spin" />
+          <RiLoader4Line className="mr-2 h-3.5 w-3.5 shrink-0 animate-spin" />
         ) : (
-          <RiSearchLine className="mr-2 h-3.5 w-3.5" />
+          <RiSearchLine className="mr-2 h-3.5 w-3.5 shrink-0" />
         )}
-        <span>{t("placeholder")}</span>
+        <span className="min-w-0 flex-1 truncate whitespace-nowrap">{t("placeholder")}</span>
         <kbd className="bg-muted pointer-events-none ml-auto hidden h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>

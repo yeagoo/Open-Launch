@@ -35,9 +35,9 @@ export default async function Nav() {
       lang={locale}
       className="bg-background/95 border-border/40 sticky top-0 z-50 border-b backdrop-blur-sm"
     >
-      <div className="container mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
         {/* Logo */}
-        <div className="flex items-center gap-8">
+        <div className="flex min-w-0 items-center gap-5 xl:gap-6">
           <Link href="/" className="font-heading flex items-center">
             <span className="font-heading flex items-center text-lg font-bold">
               <img src="/logo.svg" alt="logo" className="mr-1 h-6 w-6" />
@@ -54,20 +54,29 @@ export default async function Nav() {
         </div>
 
         {/* Version Desktop - Recherche et actions */}
-        <div className="hidden items-center gap-3 md:flex">
-          <SearchCommandLazy isAuthenticated={!!session} />
+        <div className="ml-auto hidden shrink-0 items-center gap-2 lg:flex">
+          <SearchCommandLazy
+            isAuthenticated={!!session}
+            className="w-40 min-[1100px]:w-48 xl:w-52"
+          />
           {session && <NotificationBell />}
 
+          <span aria-hidden="true" className="bg-border/70 mx-0.5 h-5 w-px" />
           <LanguageSwitcher />
           <ThemeToggle />
           {session ? (
             <UserNav user={user as User} />
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="px-2.5">
                 <Link href="/sign-in">{t("signIn")}</Link>
               </Button>
-              <Button size="sm" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className={useHomeAccent ? "rounded-home-pill px-3.5" : "px-3.5"}
+              >
                 <Link href="/sign-up">{t("signUp")}</Link>
               </Button>
             </>
@@ -75,7 +84,7 @@ export default async function Nav() {
         </div>
 
         {/* Version Mobile - Menu Drawer */}
-        <div className="flex items-center md:hidden">
+        <div className="ml-auto flex items-center lg:hidden">
           {session && <UserNav user={user as User} />}
           {!session && (
             <Button variant="default" size="sm" asChild className="mr-2">

@@ -28,7 +28,7 @@ const LOCALE_LABELS: Record<(typeof routing.locales)[number], string> = {
 }
 
 interface LanguageSwitcherProps {
-  variant?: "default" | "footer"
+  variant?: "default" | "footer" | "menu"
 }
 
 export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps) {
@@ -46,7 +46,12 @@ export function LanguageSwitcher({ variant = "default" }: LanguageSwitcherProps)
     window.location.assign(target)
   }
 
-  const triggerClass = variant === "footer" ? "h-7 gap-1 px-2 text-xs" : "h-9 gap-1 px-2 text-sm"
+  const triggerClass =
+    variant === "footer"
+      ? "h-7 gap-1 px-2 text-xs"
+      : variant === "menu"
+        ? "h-auto w-full justify-start gap-3 rounded-none px-6 py-2.5 text-sm font-normal"
+        : "h-8 gap-1.5 px-2.5 text-sm"
 
   return (
     <DropdownMenu>

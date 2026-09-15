@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sheet"
 
 import { ThemeToggleMenu } from "../theme/theme-toggle-menu"
+import { LanguageSwitcher } from "./language-switcher"
 import { SearchCommandLazy } from "./search-command-lazy"
 
 interface MobileNavSheetProps {
@@ -84,7 +85,11 @@ export function MobileNavSheet({
             </div>
 
             <div className="mt-2 mb-6 px-6">
-              <SearchCommandLazy isAuthenticated={isAuthenticated} enableShortcut={false} />
+              <SearchCommandLazy
+                isAuthenticated={isAuthenticated}
+                enableShortcut={false}
+                className="w-full"
+              />
             </div>
             {showCommunity && (
               <div className="space-y-1">
@@ -183,6 +188,7 @@ export function MobileNavSheet({
               <div className="mb-2 px-6">
                 <h3 className="text-muted-foreground mb-2 text-xs font-medium">{t("actions")}</h3>
               </div>
+              <LanguageSwitcher variant="menu" />
               <ThemeToggleMenu />
 
               {!isAuthenticated && (

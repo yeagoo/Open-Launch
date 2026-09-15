@@ -36,10 +36,10 @@ export function NavMenu({
   const t = useTranslations("nav")
   const tDesc = useTranslations("nav.exploreDesc")
   return (
-    <NavigationMenu className="hidden md:flex">
-      <NavigationMenuList className="gap-1">
+    <NavigationMenu className="hidden lg:flex">
+      <NavigationMenuList className="gap-0.5">
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="h-9 cursor-pointer px-3 text-sm">
+          <NavigationMenuTrigger className="h-8 cursor-pointer px-2.5 text-sm">
             {t("explore")}
           </NavigationMenuTrigger>
           <NavigationMenuContent>
@@ -119,7 +119,7 @@ export function NavMenu({
               {/* Community is deliberately English-only and bypasses next-intl routing. */}
               <NextLink
                 href="/community"
-                className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}
+                className={`${navigationMenuTriggerStyle()} h-8 px-2.5 text-sm`}
               >
                 Community
               </NextLink>
@@ -132,7 +132,7 @@ export function NavMenu({
             <NavigationMenuLink asChild>
               <Link
                 href="/dashboard"
-                className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}
+                className={`${navigationMenuTriggerStyle()} h-8 px-2.5 text-sm`}
               >
                 {t("dashboard")}
               </Link>
@@ -142,15 +142,15 @@ export function NavMenu({
 
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
-            <Link href="/pricing" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
+            <Link href="/pricing" className={`${navigationMenuTriggerStyle()} h-8 px-2.5 text-sm`}>
               {t("pricing")}
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
 
-        <NavigationMenuItem>
+        <NavigationMenuItem className="hidden xl:block">
           <NavigationMenuLink asChild>
-            <Link href="/badge" className={`${navigationMenuTriggerStyle()} h-9 px-3 text-sm`}>
+            <Link href="/badge" className={`${navigationMenuTriggerStyle()} h-8 px-2.5 text-sm`}>
               {t("fastTrack")}
             </Link>
           </NavigationMenuLink>
@@ -168,9 +168,9 @@ export function NavMenu({
         <NavigationMenuItem>
           <Link
             href="/projects/submit"
-            className={`bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center gap-1.5 transition-colors ${
+            className={`bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap transition-colors ${
               useHomeAccent
-                ? "rounded-home-pill px-4 text-sm font-semibold"
+                ? "rounded-home-pill px-3.5 text-sm font-semibold"
                 : "rounded-md px-3 text-sm font-medium"
             }`}
           >
