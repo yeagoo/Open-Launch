@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260915143610`; the independent repository check is
-`check-restic-idrive-e2-20260915143753`. Both completed successfully without
+`backup-aat-ee-restic-20260915151409`; the independent repository check is
+`check-restic-idrive-e2-20260915151554`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -163,9 +163,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.community-r41.yml`
+  `compose.community-enable-r42.yml`
 - deployment marker:
-  `20260915-community-r41`
+  `20260915-community-enable-r42`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
@@ -173,11 +173,11 @@ Current runtime facts:
 - the one-shot migration container completed with exit code 0 before the app
   started; this release includes `0063_community_core.sql` and
   `0064_community_search_indexes.sql`
-- the Community schema is present, but `COMMUNITY_ENABLED` remains unset:
-  `/community` intentionally returns 404 and no Community navigation is shown
+- `COMMUNITY_ENABLED=1` is enabled in the Compose contract: the English-only
+  `/community` route, navigation entry, and sitemap entry are public
 - blog data state: 13 published articles have assigned WebP covers; every
   Chinese translation is current with its English source
-- last post-deploy backup: `backup-aat-ee-restic-20260915143610`, with
+- last post-deploy backup: `backup-aat-ee-restic-20260915151409`, with
   `opsctl-backup-run@aat-ee.service` returning `Result=success` /
   `ExecMainStatus=0`
 
