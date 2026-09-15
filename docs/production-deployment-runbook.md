@@ -1,6 +1,6 @@
 # aat.ee production deployment runbook
 
-Last verified: 2026-09-15 (Asia/Shanghai)
+Last verified: 2026-09-16 (Asia/Shanghai)
 
 This is the canonical operator handoff for the current aat.ee production
 deployment. It records connection facts and commands, but never credential
@@ -146,8 +146,8 @@ At the last verification, `status --json` reported:
 - snapshot coverage `ready`
 
 The current post-deploy backup is
-`backup-aat-ee-restic-20260915151409`; the independent repository check is
-`check-restic-idrive-e2-20260915151554`. Both completed successfully without
+`backup-aat-ee-restic-20260915162630`; the independent repository check is
+`check-restic-idrive-e2-20260915162858`. Both completed successfully without
 limitations.
 
 ## Current application state
@@ -155,7 +155,7 @@ limitations.
 The application artifact currently serving public traffic was built from:
 
 ```text
-c7b46ad73d45efa1985a306386a998af2f706f00
+14c72d2b265aed540196150f03c193543d924ef8
 ```
 
 Current runtime facts:
@@ -163,9 +163,9 @@ Current runtime facts:
 - application container: `aat-ee-app`
 - container status after deployment: running and healthy, restart count 0
 - Compose contract:
-  `compose.community-enable-r42.yml`
+  `compose.nav-r43.yml`
 - deployment marker:
-  `20260915-community-enable-r42`
+  `20260916-nav-r43`
 - runtime: Node `v24.18.0`, Linux `x64`, `sharp 0.35.4`
 - `HOME_V2=1` — the redesigned home page is **enabled**
 - root filesystem remains read-only
@@ -175,9 +175,12 @@ Current runtime facts:
   `0064_community_search_indexes.sql`
 - `COMMUNITY_ENABLED=1` is enabled in the Compose contract: the English-only
   `/community` route, navigation entry, and sitemap entry are public
+- r43 rebalances responsive navigation: at 1024px and above, the compact
+  desktop header keeps the submit and sign-up actions on one line; below 1024px
+  it uses the menu drawer, which includes the language control
 - blog data state: 13 published articles have assigned WebP covers; every
   Chinese translation is current with its English source
-- last post-deploy backup: `backup-aat-ee-restic-20260915151409`, with
+- last post-deploy backup: `backup-aat-ee-restic-20260915162630`, with
   `opsctl-backup-run@aat-ee.service` returning `Result=success` /
   `ExecMainStatus=0`
 
